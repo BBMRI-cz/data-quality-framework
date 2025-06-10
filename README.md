@@ -17,10 +17,10 @@ the [BBMRI.de FHIR profiles](https://simplifier.net/BBMRI.de).
 
 ## Getting Started
 
-1. Pull the latest image from GitHub Container Registry:
-   ```shell
-   docker pull ghcr.io/bbmri-cz/data-quality-agent:latest
-   ```
+Pull the latest image from GitHub Container Registry:
+```shell
+docker pull ghcr.io/bbmri-cz/data-quality-agent:latest
+```
 
 Run the application, specifying the FHIR server URL:
 
@@ -29,7 +29,8 @@ docker run -d --name quality-agent -p 8081:8081 -e EU_BBMRI_ERIC_QUALITY_AGENT_F
 ```
 
 Access the dashboard at http://localhost:8081.
-
+Setup a FHIR store.
+We recommend using the [Blaze store](https://github.com/samply/blaze) along with its suite of support tools such as [Blazectl](https://github.com/samply/blazectl).
 > [!WARNING]  
 > Warning: If running the FHIR store locally (e.g., in another Docker container), ensure both containers are on the same
 > Docker network to communicate. Create a network and attach both containers:
@@ -41,7 +42,10 @@ Access the dashboard at http://localhost:8081.
 > ```
 
 Replace <fhir_image> and <fhir_port> with your FHIR store's image and port.
-Configuration
+### Test Data
+Compatible test data can be found in the _test_data_ directory. This synthetic test data was generated using this [Generator](https://github.com/samply/bbmri-fhir-gen).
+
+## Configuration
 
 ## Environment Variables:
 
