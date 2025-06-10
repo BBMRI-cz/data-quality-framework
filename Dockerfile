@@ -12,7 +12,7 @@ RUN npm run build
 
 # Stage 2: Build Spring Boot backend
 FROM maven:3.9.9-eclipse-temurin-21 AS backend-builder
-
+ARG ARTIFACT_VERSION=unknown
 WORKDIR /app/backend
 
 # Copy Spring Boot project files
@@ -22,7 +22,7 @@ RUN mvn dependency:go-offline
 COPY modules/backend/src ./src
 # Copy built Vue.js assets to Spring Boot's static resources
 COPY --from=frontend-builder /app/frontend/dist ./src/main/resources/static
-
+RUN mvn --quiet -B versions:set -DnewVersion=$ARTIFACT_VERSION
 RUN mvn package -DskipTests
 
 # Stage 3: Final image
