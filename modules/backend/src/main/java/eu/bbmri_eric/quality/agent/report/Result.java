@@ -22,7 +22,15 @@ public class Result {
 
   protected Result() {}
 
-  public Result(String checkName, Long checkId, int rawValue, int obfuscatedValue, int warningThreshold, int errorThreshold, float epsilon, String error) {
+  public Result(
+      String checkName,
+      Long checkId,
+      int rawValue,
+      int obfuscatedValue,
+      int warningThreshold,
+      int errorThreshold,
+      float epsilon,
+      String error) {
     this.checkName = checkName;
     this.checkId = checkId;
     this.rawValue = rawValue;

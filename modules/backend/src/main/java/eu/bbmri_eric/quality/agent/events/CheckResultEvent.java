@@ -15,14 +15,15 @@ public class CheckResultEvent extends ApplicationEvent {
   private final float epsilon;
 
   public CheckResultEvent(
-          Object source,
-          Long checkId,
-          String checkName,
-          int rawValue,
-          String error,
-          LocalDateTime finishedAt,
-          int warningThreshold,
-          int errorThreshold, float epsilon) {
+      Object source,
+      Long checkId,
+      String checkName,
+      int rawValue,
+      String error,
+      LocalDateTime finishedAt,
+      int warningThreshold,
+      int errorThreshold,
+      float epsilon) {
     super(source);
     this.checkId = checkId;
     this.checkName = checkName;
@@ -31,7 +32,7 @@ public class CheckResultEvent extends ApplicationEvent {
     this.finishedAt = finishedAt;
     this.warningThreshold = warningThreshold;
     this.errorThreshold = errorThreshold;
-      this.epsilon = epsilon;
+    this.epsilon = epsilon;
   }
 
   public Long getCheckId() {

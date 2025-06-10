@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 @Entity(name = "cql_check")
 public class CQLCheck implements Check {
   private static final Logger log = LoggerFactory.getLogger(CQLCheck.class);
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -54,7 +55,7 @@ public class CQLCheck implements Check {
               .optInt("count", 0);
       return new Result(count, "Patient");
     } catch (Exception | NoSuchMethodError e) {
-      log.error("Check {} failed {}", id ,e.getMessage());
+      log.error("Check {} failed {}", id, e.getMessage());
       return new Result(e.getMessage());
     }
   }
@@ -109,11 +110,11 @@ public class CQLCheck implements Check {
     this.errorThreshold = errorThreshold;
   }
 
-    public float getEpsilonBudget() {
-        return epsilonBudget;
-    }
+  public float getEpsilonBudget() {
+    return epsilonBudget;
+  }
 
-    public void setEpsilonBudget(float epsilonBudget) {
-        this.epsilonBudget = epsilonBudget;
-    }
+  public void setEpsilonBudget(float epsilonBudget) {
+    this.epsilonBudget = epsilonBudget;
+  }
 }
