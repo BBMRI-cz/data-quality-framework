@@ -1,7 +1,6 @@
 package eu.bbmri_eric.quality.agent.fhir;
 
 import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.fhirpath.IFhirPathEvaluationContext;
 import ca.uhn.fhir.rest.api.SummaryEnum;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import eu.bbmri_eric.quality.agent.common.ApplicationProperties;
@@ -17,16 +16,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+
 @Component
 public class Blaze implements FHIRStore {
   private final ApplicationProperties applicationProperties;
   private static final Logger log = LoggerFactory.getLogger(Blaze.class);
 
-    public Blaze(ApplicationProperties applicationProperties) {
-        this.applicationProperties = applicationProperties;
-    }
+  public Blaze(ApplicationProperties applicationProperties) {
+    this.applicationProperties = applicationProperties;
+  }
 
-    public JSONObject libraryTemplate() {
+  public JSONObject libraryTemplate() {
     JSONObject library = new JSONObject();
     library.put("resourceType", "Library");
     library.put("status", "active");
@@ -131,7 +131,10 @@ public class Blaze implements FHIRStore {
     try {
       ResponseEntity<String> response =
           restTemplate.exchange(
-              applicationProperties.getBaseFHIRUrl() + "/" + resourceType, HttpMethod.POST, entity, String.class);
+              applicationProperties.getBaseFHIRUrl() + "/" + resourceType,
+              HttpMethod.POST,
+              entity,
+              String.class);
       return new JSONObject(response.getBody());
     } catch (HttpClientErrorException e) {
       throw new RuntimeException("HTTP error: " + e.getStatusCode(), e);
@@ -141,7 +144,10 @@ public class Blaze implements FHIRStore {
   public JSONObject evaluateMeasure(String measureId) {
     RestTemplate restTemplate = new RestTemplate();
     String url =
-        applicationProperties.getBaseFHIRUrl() + "/Measure/" + measureId + "/$evaluate-measure?periodStart=2000&periodEnd=2030";
+        applicationProperties.getBaseFHIRUrl()
+            + "/Measure/"
+            + measureId
+            + "/$evaluate-measure?periodStart=2000&periodEnd=2030";
     try {
       ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
       return new JSONObject(response.getBody());
@@ -191,7 +197,8 @@ public class Blaze implements FHIRStore {
     try {
       IGenericClient client =
           FhirContext.forR4().newRestfulGenericClient(applicationProperties.getBaseFHIRUrl());
-      Bundle bundle = client
+      Bundle bundle =
+          client
               .search()
               .forResource(resourceType)
               .summaryMode(SummaryEnum.COUNT)

@@ -3,7 +3,6 @@ package eu.bbmri_eric.quality.agent.report;
 import eu.bbmri_eric.quality.agent.events.FinishedReportEvent;
 import eu.bbmri_eric.quality.agent.events.NewReportEvent;
 import eu.bbmri_eric.quality.agent.fhir.FHIRStore;
-import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
@@ -21,10 +20,11 @@ class ReportRestEventHandler {
   private final ReportRepository reportRepository;
   private final FHIRStore fhirStore;
 
-  public ReportRestEventHandler(ApplicationEventPublisher publisher, ReportRepository reportRepository, FHIRStore fhirStore) {
+  public ReportRestEventHandler(
+      ApplicationEventPublisher publisher, ReportRepository reportRepository, FHIRStore fhirStore) {
     this.publisher = publisher;
-      this.reportRepository = reportRepository;
-      this.fhirStore = fhirStore;
+    this.reportRepository = reportRepository;
+    this.fhirStore = fhirStore;
   }
 
   @HandleAfterCreate
@@ -35,12 +35,16 @@ class ReportRestEventHandler {
     report.setNumberOfEntities(count);
     reportRepository.save(report);
   }
+
   @EventListener
   void onFinished(FinishedReportEvent event) {
-    reportRepository.findById(event.getReportId()).ifPresent(report -> {
-      report.setStatus(Status.GENERATED);
-      reportRepository.save(report);
-      log.info("✅ Report {} has been generated", report.getId());
-    });
+    reportRepository
+        .findById(event.getReportId())
+        .ifPresent(
+            report -> {
+              report.setStatus(Status.GENERATED);
+              reportRepository.save(report);
+              log.info("✅ Report {} has been generated", report.getId());
+            });
   }
 }

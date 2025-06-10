@@ -38,8 +38,7 @@ public class CQLCheck implements Check {
       JSONObject libraryResource = fhirStore.createLibrary(libraryUri, cqlData);
       fhirStore.postResource("Library", libraryResource);
       JSONObject measureResource = fhirStore.createMeasure(measureUri, libraryUri, "Patient");
-      JSONObject measureResponse =
-              fhirStore.postResource("Measure", measureResource);
+      JSONObject measureResponse = fhirStore.postResource("Measure", measureResource);
       String measureId = measureResponse.getString("id");
       JSONObject measureReport = fhirStore.evaluateMeasure(measureId);
       int count =

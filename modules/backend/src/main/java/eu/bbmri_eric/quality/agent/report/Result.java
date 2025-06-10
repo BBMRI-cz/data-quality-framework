@@ -7,75 +7,88 @@ import jakarta.persistence.Id;
 
 @Entity
 public class Result {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    private String checkName;
-    private Long checkId;
-    private int rawValue;
-    private int obfuscatedValue;
-    private int warningThreshold;
-    private int errorThreshold;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    protected Result() {
-    }
+  private String checkName;
+  private Long checkId;
+  private int rawValue;
+  private int obfuscatedValue;
+  private int warningThreshold;
+  private int errorThreshold;
 
-    public Result(Long id, String checkName, Long checkId, int rawValue, int obfuscatedValue, int warningThreshold, int errorThreshold) {
-        this.id = id;
-        this.checkName = checkName;
-        this.checkId = checkId;
-        this.rawValue = rawValue;
-        this.obfuscatedValue = obfuscatedValue;
-        this.warningThreshold = warningThreshold;
-        this.errorThreshold = errorThreshold;
-    }
+  protected Result() {}
 
-    public Result(String checkName, Long checkId, int rawValue, int obfuscatedValue, int warningThreshold, int errorThreshold) {
-        this.checkName = checkName;
-        this.checkId = checkId;
-        this.rawValue = rawValue;
-        this.obfuscatedValue = obfuscatedValue;
-        this.warningThreshold = warningThreshold;
-        this.errorThreshold = errorThreshold;
-    }
+  public Result(
+      Long id,
+      String checkName,
+      Long checkId,
+      int rawValue,
+      int obfuscatedValue,
+      int warningThreshold,
+      int errorThreshold) {
+    this.id = id;
+    this.checkName = checkName;
+    this.checkId = checkId;
+    this.rawValue = rawValue;
+    this.obfuscatedValue = obfuscatedValue;
+    this.warningThreshold = warningThreshold;
+    this.errorThreshold = errorThreshold;
+  }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+  public Result(
+      String checkName,
+      Long checkId,
+      int rawValue,
+      int obfuscatedValue,
+      int warningThreshold,
+      int errorThreshold) {
+    this.checkName = checkName;
+    this.checkId = checkId;
+    this.rawValue = rawValue;
+    this.obfuscatedValue = obfuscatedValue;
+    this.warningThreshold = warningThreshold;
+    this.errorThreshold = errorThreshold;
+  }
 
-    public Long getId() {
-        return id;
-    }
+  public void setId(Long id) {
+    this.id = id;
+  }
 
-    public String getCheckName() {
-        return checkName;
-    }
+  public Long getId() {
+    return id;
+  }
 
-    public Long getCheckId() {
-        return checkId;
-    }
+  public String getCheckName() {
+    return checkName;
+  }
 
-    public int getRawValue() {
-        return rawValue;
-    }
+  public Long getCheckId() {
+    return checkId;
+  }
 
-    public int getObfuscatedValue() {
-        return obfuscatedValue;
-    }
+  public int getRawValue() {
+    return rawValue;
+  }
 
-    public int getWarningThreshold() {
-        return warningThreshold;
-    }
+  public int getObfuscatedValue() {
+    return obfuscatedValue;
+  }
 
-    public void setWarningThreshold(int warningThreshold) {
-        this.warningThreshold = warningThreshold;
-    }
+  public int getWarningThreshold() {
+    return warningThreshold;
+  }
 
-    public int getErrorThreshold() {
-        return errorThreshold;
-    }
+  public void setWarningThreshold(int warningThreshold) {
+    this.warningThreshold = warningThreshold;
+  }
 
-    public void setErrorThreshold(int errorThreshold) {
-        this.errorThreshold = errorThreshold;
-    }
+  public int getErrorThreshold() {
+    return errorThreshold;
+  }
+
+  public void setErrorThreshold(int errorThreshold) {
+    this.errorThreshold = errorThreshold;
+  }
 }

@@ -110,6 +110,11 @@
     <build>
         <plugins>
             <plugin>
+                <artifactId>fmt-maven-plugin</artifactId>
+                <groupId>com.spotify.fmt</groupId>
+                <version>2.25</version>
+            </plugin>
+            <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
