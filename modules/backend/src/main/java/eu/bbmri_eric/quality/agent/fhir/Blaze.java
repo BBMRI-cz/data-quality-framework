@@ -1,17 +1,32 @@
 package eu.bbmri_eric.quality.agent.fhir;
 
+import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.fhirpath.IFhirPathEvaluationContext;
+import ca.uhn.fhir.rest.api.SummaryEnum;
+import ca.uhn.fhir.rest.client.api.IGenericClient;
+import eu.bbmri_eric.quality.agent.common.ApplicationProperties;
+import org.hl7.fhir.r4.model.Bundle;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+@Component
+public class Blaze implements FHIRStore {
+  private final ApplicationProperties applicationProperties;
+  private static final Logger log = LoggerFactory.getLogger(Blaze.class);
 
-public class Utils {
+    public Blaze(ApplicationProperties applicationProperties) {
+        this.applicationProperties = applicationProperties;
+    }
 
-  public static JSONObject libraryTemplate() {
+    public JSONObject libraryTemplate() {
     JSONObject library = new JSONObject();
     library.put("resourceType", "Library");
     library.put("status", "active");
@@ -34,7 +49,7 @@ public class Utils {
     return library;
   }
 
-  public static JSONObject measureTemplate() {
+  public JSONObject measureTemplate() {
     JSONObject measure = new JSONObject();
     measure.put("resourceType", "Measure");
     measure.put("status", "active");
@@ -57,6 +72,13 @@ public class Utils {
     scoring.put("coding", scoringCoding);
     measure.put("scoring", scoring);
 
+    JSONArray group = getJsonArray();
+    measure.put("group", group);
+
+    return measure;
+  }
+
+  private static JSONArray getJsonArray() {
     JSONArray group = new JSONArray();
     JSONObject groupEntry = new JSONObject();
     JSONArray population = new JSONArray();
@@ -76,19 +98,17 @@ public class Utils {
     population.put(populationEntry);
     groupEntry.put("population", population);
     group.put(groupEntry);
-    measure.put("group", group);
-
-    return measure;
+    return group;
   }
 
-  public static JSONObject createLibrary(String libraryUri, String cqlData) {
+  public JSONObject createLibrary(String libraryUri, String cqlData) {
     JSONObject library = libraryTemplate();
     library.put("url", "urn:uuid:" + libraryUri);
     library.getJSONArray("content").getJSONObject(0).put("data", cqlData);
     return library;
   }
 
-  public static JSONObject createMeasure(String measureUri, String libraryUri, String subjectType) {
+  public JSONObject createMeasure(String measureUri, String libraryUri, String subjectType) {
     JSONObject measure = measureTemplate();
     measure.put("url", "urn:uuid:" + measureUri);
     JSONArray libraryArray = new JSONArray();
@@ -102,7 +122,7 @@ public class Utils {
     return measure;
   }
 
-  public static JSONObject postResource(String baseUrl, String resourceType, JSONObject resource) {
+  public JSONObject postResource(String resourceType, JSONObject resource) {
     RestTemplate restTemplate = new RestTemplate();
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
@@ -111,17 +131,17 @@ public class Utils {
     try {
       ResponseEntity<String> response =
           restTemplate.exchange(
-              baseUrl + "/" + resourceType, HttpMethod.POST, entity, String.class);
+              applicationProperties.getBaseFHIRUrl() + "/" + resourceType, HttpMethod.POST, entity, String.class);
       return new JSONObject(response.getBody());
     } catch (HttpClientErrorException e) {
       throw new RuntimeException("HTTP error: " + e.getStatusCode(), e);
     }
   }
 
-  public static JSONObject evaluateMeasure(String baseUrl, String measureId) {
+  public JSONObject evaluateMeasure(String measureId) {
     RestTemplate restTemplate = new RestTemplate();
     String url =
-        baseUrl + "/Measure/" + measureId + "/$evaluate-measure?periodStart=2000&periodEnd=2030";
+        applicationProperties.getBaseFHIRUrl() + "/Measure/" + measureId + "/$evaluate-measure?periodStart=2000&periodEnd=2030";
     try {
       ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
       return new JSONObject(response.getBody());
@@ -130,7 +150,7 @@ public class Utils {
     }
   }
 
-  public static JSONObject evaluateMeasureList(String baseUrl, String measureId) {
+  public JSONObject evaluateMeasureList(String baseUrl, String measureId) {
     RestTemplate restTemplate = new RestTemplate();
     JSONObject payload = new JSONObject();
     payload.put("resourceType", "Parameters");
@@ -163,6 +183,25 @@ public class Utils {
       return new JSONObject(response.getBody());
     } catch (HttpClientErrorException e) {
       throw new RuntimeException("HTTP error: " + e.getStatusCode(), e);
+    }
+  }
+
+  @Override
+  public int countResources(String resourceType) {
+    try {
+      IGenericClient client =
+          FhirContext.forR4().newRestfulGenericClient(applicationProperties.getBaseFHIRUrl());
+      Bundle bundle = client
+              .search()
+              .forResource(resourceType)
+              .summaryMode(SummaryEnum.COUNT)
+              .returnBundle(Bundle.class)
+              .execute();
+
+      return bundle.getTotal(); // no parsing of entries happens
+    } catch (Exception e) {
+      log.error("Failed to count resources of type: {}", resourceType, e);
+      return -1; // Or throw a custom exception if preferred
     }
   }
 }

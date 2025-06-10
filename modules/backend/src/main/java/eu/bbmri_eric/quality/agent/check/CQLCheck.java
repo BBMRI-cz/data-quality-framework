@@ -1,6 +1,6 @@
 package eu.bbmri_eric.quality.agent.check;
 
-import eu.bbmri_eric.quality.agent.fhir.Utils;
+import eu.bbmri_eric.quality.agent.fhir.FHIRStore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -9,7 +9,7 @@ import java.util.Base64;
 import org.json.JSONObject;
 
 @Entity(name = "cql_check")
-class CQLCheck implements Check {
+public class CQLCheck implements Check {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -17,10 +17,12 @@ class CQLCheck implements Check {
   private String name;
   private String description;
   private String query;
+  private int warningThreshold = 10;
+  private int errorThreshold = 30;
 
   protected CQLCheck() {}
 
-  CQLCheck(Long id, String name, String description, String query) {
+  public CQLCheck(Long id, String name, String description, String query) {
     this.id = id;
     this.name = name;
     this.description = description;
@@ -28,18 +30,18 @@ class CQLCheck implements Check {
   }
 
   @Override
-  public Result execute() {
+  public Result execute(FHIRStore fhirStore) {
     try {
       String cqlData = Base64.getEncoder().encodeToString(query.getBytes());
       String libraryUri = java.util.UUID.randomUUID().toString().toLowerCase();
       String measureUri = java.util.UUID.randomUUID().toString().toLowerCase();
-      JSONObject libraryResource = Utils.createLibrary(libraryUri, cqlData);
-      Utils.postResource("http://localhost:8080/fhir", "Library", libraryResource);
-      JSONObject measureResource = Utils.createMeasure(measureUri, libraryUri, "Patient");
+      JSONObject libraryResource = fhirStore.createLibrary(libraryUri, cqlData);
+      fhirStore.postResource("Library", libraryResource);
+      JSONObject measureResource = fhirStore.createMeasure(measureUri, libraryUri, "Patient");
       JSONObject measureResponse =
-          Utils.postResource("http://localhost:8080/fhir", "Measure", measureResource);
+              fhirStore.postResource("Measure", measureResource);
       String measureId = measureResponse.getString("id");
-      JSONObject measureReport = Utils.evaluateMeasure("http://localhost:8080/fhir", measureId);
+      JSONObject measureReport = fhirStore.evaluateMeasure(measureId);
       int count =
           measureReport
               .getJSONArray("group")
@@ -48,8 +50,8 @@ class CQLCheck implements Check {
               .optJSONObject(0, new JSONObject())
               .optInt("count", 0);
       return new Result(count, "Patient");
-    } catch (Exception e) {
-      return new Result(-1, "Error: " + e.getMessage());
+    } catch (Exception | NoSuchMethodError e) {
+      return new Result(e.getMessage());
     }
   }
 
@@ -85,5 +87,21 @@ class CQLCheck implements Check {
 
   public void setQuery(String query) {
     this.query = query;
+  }
+
+  public int getWarningThreshold() {
+    return warningThreshold;
+  }
+
+  public void setWarningThreshold(int warningThreshold) {
+    this.warningThreshold = warningThreshold;
+  }
+
+  public int getErrorThreshold() {
+    return errorThreshold;
+  }
+
+  public void setErrorThreshold(int errorThreshold) {
+    this.errorThreshold = errorThreshold;
   }
 }

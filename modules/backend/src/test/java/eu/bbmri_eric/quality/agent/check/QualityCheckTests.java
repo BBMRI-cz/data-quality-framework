@@ -39,6 +39,6 @@ public class QualityCheckTests {
   @Test
   void testExecuteDoesNotThrow() {
     CQLCheck check = new CQLCheck();
-    assertDoesNotThrow(check::execute);
+    assertDoesNotThrow(() -> check.execute(null));
   }
 }

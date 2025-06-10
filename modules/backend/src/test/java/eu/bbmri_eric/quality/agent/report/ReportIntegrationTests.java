@@ -44,7 +44,7 @@ public class ReportIntegrationTests {
     mockMvc
         .perform(get(location))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.status").value("GENERATING"))
+        .andExpect(jsonPath("$.status").value("GENERATED"))
         .andExpect(jsonPath("$.generatedAt").exists());
   }
 

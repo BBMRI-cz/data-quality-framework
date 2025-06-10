@@ -1,4 +1,4 @@
-package eu.bbmri_eric.quality.agent;
+package eu.bbmri_eric.quality.agent.common;
 
 import java.sql.SQLException;
 import org.h2.tools.Server;

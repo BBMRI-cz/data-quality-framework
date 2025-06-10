@@ -1,15 +1,21 @@
 package eu.bbmri_eric.quality.agent.report;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
-class Report {
+public class Report {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,6 +25,14 @@ class Report {
   private LocalDateTime generatedAt;
 
   private Status status = Status.GENERATING;
+
+  private float epsilonBudget = 1.0f;
+
+  private int numberOfEntities;
+
+  @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+  @JoinColumn(name = "report_id")
+  private List<Result> results = new ArrayList<>();
 
   public Long getId() {
     return id;
@@ -34,6 +48,30 @@ class Report {
 
   public void setStatus(Status status) {
     this.status = status;
+  }
+
+  public void addResult(Result result) {
+    results.add(result);
+  }
+
+  public List<Result> getResults() {
+    return results;
+  }
+
+  public float getEpsilonBudget() {
+    return epsilonBudget;
+  }
+
+  public void setEpsilonBudget(float epsilonBudget) {
+    this.epsilonBudget = epsilonBudget;
+  }
+
+  public int getNumberOfEntities() {
+    return numberOfEntities;
+  }
+
+  public void setNumberOfEntities(int numberOfEntities) {
+    this.numberOfEntities = numberOfEntities;
   }
 
   @PrePersist

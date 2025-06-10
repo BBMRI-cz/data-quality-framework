@@ -1,4 +1,4 @@
-package eu.bbmri_eric.quality.agent.report;
+package eu.bbmri_eric.quality.agent.events;
 
 import org.springframework.context.ApplicationEvent;
 
