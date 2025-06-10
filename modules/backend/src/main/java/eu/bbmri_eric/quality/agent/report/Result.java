@@ -17,39 +17,20 @@ public class Result {
   private int obfuscatedValue;
   private int warningThreshold;
   private int errorThreshold;
+  private float epsilon;
+  private String error;
 
   protected Result() {}
 
-  public Result(
-      Long id,
-      String checkName,
-      Long checkId,
-      int rawValue,
-      int obfuscatedValue,
-      int warningThreshold,
-      int errorThreshold) {
-    this.id = id;
+  public Result(String checkName, Long checkId, int rawValue, int obfuscatedValue, int warningThreshold, int errorThreshold, float epsilon, String error) {
     this.checkName = checkName;
     this.checkId = checkId;
     this.rawValue = rawValue;
     this.obfuscatedValue = obfuscatedValue;
     this.warningThreshold = warningThreshold;
     this.errorThreshold = errorThreshold;
-  }
-
-  public Result(
-      String checkName,
-      Long checkId,
-      int rawValue,
-      int obfuscatedValue,
-      int warningThreshold,
-      int errorThreshold) {
-    this.checkName = checkName;
-    this.checkId = checkId;
-    this.rawValue = rawValue;
-    this.obfuscatedValue = obfuscatedValue;
-    this.warningThreshold = warningThreshold;
-    this.errorThreshold = errorThreshold;
+    this.epsilon = epsilon;
+    this.error = error;
   }
 
   public void setId(Long id) {
@@ -90,5 +71,21 @@ public class Result {
 
   public void setErrorThreshold(int errorThreshold) {
     this.errorThreshold = errorThreshold;
+  }
+
+  public float getEpsilon() {
+    return epsilon;
+  }
+
+  public void setEpsilon(float epsilon) {
+    this.epsilon = epsilon;
+  }
+
+  public String getError() {
+    return error;
+  }
+
+  public void setError(String error) {
+    this.error = error;
   }
 }

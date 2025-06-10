@@ -7,9 +7,12 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import java.util.Base64;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Entity(name = "cql_check")
 public class CQLCheck implements Check {
+  private static final Logger log = LoggerFactory.getLogger(CQLCheck.class);
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -19,6 +22,7 @@ public class CQLCheck implements Check {
   private String query;
   private int warningThreshold = 10;
   private int errorThreshold = 30;
+  private float epsilonBudget = 1.0f;
 
   protected CQLCheck() {}
 
@@ -50,6 +54,7 @@ public class CQLCheck implements Check {
               .optInt("count", 0);
       return new Result(count, "Patient");
     } catch (Exception | NoSuchMethodError e) {
+      log.error("Check {} failed {}", id ,e.getMessage());
       return new Result(e.getMessage());
     }
   }
@@ -103,4 +108,12 @@ public class CQLCheck implements Check {
   public void setErrorThreshold(int errorThreshold) {
     this.errorThreshold = errorThreshold;
   }
+
+    public float getEpsilonBudget() {
+        return epsilonBudget;
+    }
+
+    public void setEpsilonBudget(float epsilonBudget) {
+        this.epsilonBudget = epsilonBudget;
+    }
 }

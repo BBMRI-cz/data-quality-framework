@@ -14,7 +14,8 @@ CREATE TABLE cql_check
     description VARCHAR(1024),
     query       CLOB,
     warning_threshold int,
-    error_threshold int
+    error_threshold int,
+    epsilon_budget float default 1.0
 
 );
 
@@ -28,5 +29,7 @@ CREATE TABLE result
     report_id        BIGINT,
     warning_threshold int,
     error_threshold int,
+    epsilon float,
+    error VARCHAR(255),
     CONSTRAINT fk_result_report FOREIGN KEY (report_id) REFERENCES report(id) ON DELETE CASCADE
 );

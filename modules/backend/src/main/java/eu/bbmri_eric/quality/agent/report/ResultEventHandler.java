@@ -29,9 +29,11 @@ class ResultEventHandler {
                   event.getCheckName(),
                   event.getCheckId(),
                   event.getRawValue(),
-                  event.getRawValue(),
+                  LaplaceNoise.addLaplaceNoise(event.getRawValue(), 0.5, 1),
                   event.getWarningThreshold(),
-                  event.getErrorThreshold()));
+                  event.getErrorThreshold(),
+                  event.getEpsilon(),
+                  event.getError()));
         });
   }
 }

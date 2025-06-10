@@ -26,7 +26,12 @@
               <div class="d-flex gap-3" >
                 <p><strong>Generated At:</strong> {{ formatDate(latestReport.generatedAt) }}</p>
 <!--                <p><strong>Status:</strong> {{ latestReport.status }}</p>-->
-                <p><strong>Epsilon Budget:</strong> {{ latestReport.epsilonBudget }}</p>
+                <div v-if="isOverBudget" class="warning">
+                  <span class="warning-icon">
+                    <i class="bi bi-exclamation-triangle"></i>
+                  </span>
+                  Epsilon budget exceeded! Total epsilon: {{ calculateEpsilonUsed().toFixed(2) }} (Budget: {{ latestReport.epsilonBudget.toFixed(2) }})
+                </div>
                 <p><strong>Total Entities:</strong> {{ latestReport.numberOfEntities }}</p>
               </div>
               <h4 class="h6 mt-3">Results</h4>
@@ -38,8 +43,8 @@
                 >
                   <div class="card-body p-2 text-start">
                     <h5 class="card-title fs-6">{{ result.checkName }}</h5>
-<!--                    <p class="card-text mb-1"><strong>Raw Value:</strong> {{ result.rawValue }}</p>-->
-<!--                    <p class="card-text mb-1"><strong>Obfuscated Value:</strong> {{ result.obfuscatedValue }}</p>-->
+                    <p class="card-text mb-1"><strong>Raw Value:</strong> {{ result.error }}</p>
+                    <p class="card-text mb-1"><strong>Epsilon Used:</strong> {{ result.epsilon }}</p>
                     <p class="card-text mb-0"><strong>Error rate:</strong> {{ calculatePercentage(result.obfuscatedValue) }}%</p>
                   </div>
                 </div>
@@ -138,11 +143,16 @@ const calculatePercentage = (value) => {
   const total = latestReport.value?.numberOfEntities || 1
   return ((value / total) * 100).toFixed(2)
 }
-
+const calculateEpsilonUsed = (value) => {
+  return latestReport.value.results.reduce((sum, result) => sum + result.epsilon, 0);
+}
+const isOverBudget = (value) => {
+  return calculateEpsilonUsed() > latestReport.value.epsilonBudget;
+}
 // Determines card class based on thresholds
 const getResultClass = (result) => {
   const percentage = parseFloat(calculatePercentage(result.obfuscatedValue))
-  if (percentage >= result.errorThreshold) {
+  if (percentage >= result.errorThreshold || result.error) {
     return 'bg-danger bg-opacity-25'
   } else if (percentage >= result.warningThreshold) {
     return 'bg-warning bg-opacity-25'
@@ -162,6 +172,9 @@ onMounted(fetchReports)
 }
 .gap-3 {
   gap: 1rem;
+}
+.bi-exclamation-triangle{
+  color: red;
 }
 .text-start {
   text-align: left !important;

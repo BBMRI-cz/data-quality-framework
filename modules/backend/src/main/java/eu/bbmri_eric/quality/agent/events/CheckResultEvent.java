@@ -12,16 +12,17 @@ public class CheckResultEvent extends ApplicationEvent {
   private final LocalDateTime finishedAt;
   private final int warningThreshold;
   private final int errorThreshold;
+  private final float epsilon;
 
   public CheckResultEvent(
-      Object source,
-      Long checkId,
-      String checkName,
-      int rawValue,
-      String error,
-      LocalDateTime finishedAt,
-      int warningThreshold,
-      int errorThreshold) {
+          Object source,
+          Long checkId,
+          String checkName,
+          int rawValue,
+          String error,
+          LocalDateTime finishedAt,
+          int warningThreshold,
+          int errorThreshold, float epsilon) {
     super(source);
     this.checkId = checkId;
     this.checkName = checkName;
@@ -30,6 +31,7 @@ public class CheckResultEvent extends ApplicationEvent {
     this.finishedAt = finishedAt;
     this.warningThreshold = warningThreshold;
     this.errorThreshold = errorThreshold;
+      this.epsilon = epsilon;
   }
 
   public Long getCheckId() {
@@ -58,5 +60,9 @@ public class CheckResultEvent extends ApplicationEvent {
 
   public String getCheckName() {
     return checkName;
+  }
+
+  public float getEpsilon() {
+    return epsilon;
   }
 }

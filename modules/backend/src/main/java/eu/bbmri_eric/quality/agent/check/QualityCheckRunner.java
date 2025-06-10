@@ -41,10 +41,11 @@ class QualityCheckRunner {
               check.getId(),
               check.getName(),
               result.numberOfEntities(),
-              null,
+              result.error(),
               LocalDateTime.now(),
               check.getWarningThreshold(),
-              check.getErrorThreshold()));
+              check.getErrorThreshold(),
+              check.getEpsilonBudget()));
     }
     eventPublisher.publishEvent(new FinishedReportEvent(this, event.getReportId()));
   }

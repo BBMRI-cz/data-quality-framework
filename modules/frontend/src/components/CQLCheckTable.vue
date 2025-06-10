@@ -1,150 +1,227 @@
 <template>
-  <div class="card">
-    <div class="card-header">
+  <div class="container">
+    <div class="d-flex align-items-center justify-content-between mb-3">
       <h2 class="mb-0">CQL Checks</h2>
+      <button class="btn btn-success" @click="openAddModal">
+        <i class="bi bi-plus me-1"></i>Add Check
+      </button>
     </div>
-    <div class="card-body">
-      <table class="table table-bordered table-sm">
-        <thead class="table-light">
-        <tr>
-          <th>ID</th>
-          <th>Name</th>
-          <th>Description</th>
-          <th>Query</th>
-          <th>Actions</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr v-for="check in checks" :key="check.id">
-          <td>{{ check.id }}</td>
-          <td>
-            <input
-                v-model="check.name"
-                class="form-control form-control-sm"
-                placeholder="Enter check name"
-            />
-          </td>
-          <td>
-            <input
-                v-model="check.description"
-                class="form-control form-control-sm"
-                placeholder="Enter description"
-            />
-          </td>
-          <td>
-              <textarea
-                  v-model="check.query"
-                  class="form-control form-control-sm"
-                  rows="2"
-                  placeholder="Enter CQL query"
-              />
-          </td>
-          <td>
-            <button
-                @click="updateCheck(check)"
-                class="btn btn-sm btn-primary me-2"
-                title="Save"
-            >
-              💾
+    <div>
+      <div v-for="check in checks" :key="check.id" class="card mb-2">
+        <div class="card-body">
+          <h5 class="card-title">{{ check.name }}</h5>
+          <p class="card-text text-start"><strong>ID:</strong> {{ check.id }}</p>
+          <p class="card-text text-start"><strong>Description:</strong> {{ check.description }}</p>
+          <p class="card-text text-start"><strong>Query:</strong> {{ truncateQuery(check.query) }}</p>
+          <p class="card-text text-start"><strong>Warning Threshold:</strong> {{ check.warningThreshold }}</p>
+          <p class="card-text text-start"><strong>Error Threshold:</strong> {{ check.errorThreshold }}</p>
+          <p class="card-text text-start"><strong>Epsilon Budget:</strong> {{ check.epsilonBudget.toFixed(2) }}</p>
+          <div class="card-actions mt-2">
+            <button class="btn btn-sm btn-primary me-2" @click="openEditModal(check)" title="Edit">
+              <i class="bi bi-pencil"></i>
             </button>
-            <button
-                @click="deleteCheck(check.id)"
-                class="btn btn-sm btn-danger"
-                title="Delete"
-            >
-              🗑️
+            <button class="btn btn-sm btn-danger" @click="confirmDelete(check.id)" title="Delete">
+              <i class="bi bi-trash"></i>
             </button>
-          </td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>
-            <input
-                v-model="newCheck.name"
-                class="form-control form-control-sm"
-                placeholder="New check name"
-            />
-          </td>
-          <td>
-            <input
-                v-model="newCheck.description"
-                class="form-control form-control-sm"
-                placeholder="New description"
-            />
-          </td>
-          <td>
-              <textarea
-                  v-model="newCheck.query"
-                  class="form-control form-control-sm"
-                  rows="2"
-                  placeholder="New CQL query"
-              />
-          </td>
-          <td>
-            <button
-                @click="addCheck"
-                class="btn btn-sm btn-success"
-                title="Add Check"
-            >
-              ➕
-            </button>
-          </td>
-        </tr>
-        </tbody>
-      </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit/Create Modal -->
+    <div class="modal fade" id="checkModal" tabindex="-1" aria-labelledby="checkModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="checkModalLabel">{{ isEditing ? 'Edit Check' : 'Add Check' }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="checkName" class="form-label">Name</label>
+              <input v-model="currentCheck.name" class="form-control" id="checkName" placeholder="Enter check name" />
+            </div>
+            <div class="mb-3">
+              <label for="checkDescription" class="form-label">Description</label>
+              <input v-model="currentCheck.description" class="form-control" id="checkDescription" placeholder="Enter description" />
+            </div>
+            <div class="mb-3">
+              <label for="checkQuery" class="form-label">CQL Query</label>
+              <textarea v-model="currentCheck.query" class="form-control" id="checkQuery" rows="4" placeholder="Enter CQL query"></textarea>
+            </div>
+            <div class="mb-3">
+              <label for="checkWarningThreshold" class="form-label">Warning Threshold</label>
+              <input v-model.number="currentCheck.warningThreshold" type="number" class="form-control" id="checkWarningThreshold" placeholder="Enter warning threshold" />
+            </div>
+            <div class="mb-3">
+              <label for="checkErrorThreshold" class="form-label">Error Threshold</label>
+              <input v-model.number="currentCheck.errorThreshold" type="number" class="form-control" id="checkErrorThreshold" placeholder="Enter error threshold" />
+            </div>
+            <div class="mb-3">
+              <label for="checkEpsilonBudget" class="form-label">Epsilon Budget</label>
+              <input v-model.number="currentCheck.epsilonBudget" type="number" step="0.1" class="form-control" id="checkEpsilonBudget" placeholder="Enter epsilon budget" />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" @click="saveCheck">{{ isEditing ? 'Update' : 'Create' }}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            Are you sure you want to delete this check?
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-danger" @click="deleteCheck">Delete</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
-import axios from 'axios'
+import { onMounted, reactive, ref } from 'vue';
+import axios from 'axios';
+import * as bootstrap from 'bootstrap';
 
-const checks = ref([])
-const newCheck = reactive({
+const checks = ref([]);
+const currentCheck = reactive({
+  id: null,
   name: '',
   description: '',
-  query: ''
-})
+  query: '',
+  warningThreshold: 10,
+  errorThreshold: 30,
+  epsilonBudget: 1.0,
+});
+const isEditing = ref(false);
+const deleteId = ref(null);
+
+const url = '/api/cQLChecks';
 
 const fetchChecks = async () => {
   try {
-    const { data } = await axios.get('/api/cQLChecks')
-    checks.value = data._embedded?.cqlChecks || []
+    const { data } = await axios.get(url);
+    checks.value = data._embedded?.cqlChecks || [];
   } catch (error) {
-    console.error('Error fetching checks:', error)
-    checks.value = []
+    console.error('Error fetching checks:', error);
+    checks.value = [];
   }
-}
+};
 
-const addCheck = async () => {
+const openAddModal = () => {
+  isEditing.value = false;
+  Object.assign(currentCheck, { id: null, name: '', description: '', query: '', warningThreshold: 10, errorThreshold: 30, epsilonBudget: 1.0 });
+  new bootstrap.Modal(document.getElementById('checkModal')).show();
+};
+
+const openEditModal = (check) => {
+  isEditing.value = true;
+  Object.assign(currentCheck, { ...check });
+  new bootstrap.Modal(document.getElementById('checkModal')).show();
+};
+
+const saveCheck = async () => {
   try {
-    await axios.post('/api/cQLChecks', newCheck)
-    newCheck.name = ''
-    newCheck.description = ''
-    newCheck.query = ''
-    await fetchChecks()
+    if (isEditing.value) {
+      await axios.put(`${url}/${currentCheck.id}`, currentCheck);
+    } else {
+      await axios.post(url, currentCheck);
+    }
+    await fetchChecks();
+    bootstrap.Modal.getInstance(document.getElementById('checkModal')).hide();
   } catch (error) {
-    console.error('Error adding check:', error)
+    console.error(`Error ${isEditing.value ? 'updating' : 'adding'} check:`, error);
   }
-}
+};
 
-const updateCheck = async (check) => {
+const confirmDelete = (id) => {
+  deleteId.value = id;
+  new bootstrap.Modal(document.getElementById('deleteModal')).show();
+};
+
+const deleteCheck = async () => {
   try {
-    await axios.put(`/api/cQLChecks/${check.id}`, check)
+    await axios.delete(`${url}/${deleteId.value}`);
+    await fetchChecks();
+    bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
   } catch (error) {
-    console.error('Error updating check:', error)
+    console.error('Error deleting check:', error);
   }
-}
+};
 
-const deleteCheck = async (id) => {
-  try {
-    await axios.delete(`/api/cQLChecks/${id}`)
-    await fetchChecks()
-  } catch (error) {
-    console.error('Error deleting check:', error)
-  }
-}
+const getCheckResult = (check) => {
+  // Mock result based on CQLCheck.execute (replace with actual API call if available)
+  return Math.random() * 2;
+};
 
-onMounted(fetchChecks)
+const isEpsilonOverBudget = (check) => {
+  return getCheckResult(check) > check.epsilonBudget;
+};
+
+const truncateQuery = (query) => {
+  const maxLength = 50;
+  return query.length > maxLength ? `${query.slice(0, maxLength)}...` : query;
+};
+
+onMounted(fetchChecks);
 </script>
+
+<style scoped>
+.card {
+  border: 1px solid #dee2e6;
+  border-radius: 0.375rem;
+  margin-left: auto;
+  margin-right: auto;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
+}
+.card:hover {
+  transform: translateY(-2px);
+}
+.card-body {
+  padding: 0.75rem;
+}
+.card-title {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+.card-text {
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+.card-actions {
+  margin-top: 0.5rem;
+}
+.warning {
+  background-color: #fef2f2;
+  color: #b91c1c;
+  padding: 0.5rem;
+  border: 1px solid #b91c1c;
+  border-radius: 0.25rem;
+  display: flex;
+  align-items: center;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}
+.warning-icon {
+  margin-right: 0.5rem;
+  font-size: 1rem;
+}
+.btn-sm {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+}
+</style>
