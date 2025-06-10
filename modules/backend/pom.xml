@@ -10,7 +10,7 @@
     </parent>
     <groupId>eu.bbmri_eric.quality</groupId>
     <artifactId>agent</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>unknown</version>
     <name>Data Quality Metrics Agent</name>
     <description>A data quality tool generating reports with differential privacy</description>
     <url/>
