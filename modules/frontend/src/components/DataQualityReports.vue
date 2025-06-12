@@ -23,19 +23,30 @@
           <h3 class="h5">Latest Report (ID: {{ latestReport.id }})</h3>
           <div class="card">
             <div class="card-body">
-              <div class="d-flex gap-3" >
+              <div class="d-flex gap-3">
                 <p><strong>Generated At:</strong> {{ formatDate(latestReport.generatedAt) }}</p>
-<!--                <p><strong>Status:</strong> {{ latestReport.status }}</p>-->
-                <div v-if="isOverBudget" class="warning">
+                <div v-if="isOverBudget()" class="warning">
                   <span class="warning-icon">
                     <i class="bi bi-exclamation-triangle"></i>
                   </span>
                   Epsilon budget exceeded! Total epsilon: {{ calculateEpsilonUsed().toFixed(2) }} (Budget: {{ latestReport.epsilonBudget.toFixed(2) }})
                 </div>
-                <p><strong>Total Entities:</strong> {{ latestReport.numberOfEntities }}</p>
+                <div v-else>
+                  Total epsilon: {{ calculateEpsilonUsed().toFixed(2) }} (Budget: {{ latestReport.epsilonBudget.toFixed(2) }})
+                </div>
+                <p v-if="showValues"><strong>Total Entities:</strong> {{ latestReport.numberOfEntities }}</p>
               </div>
-              <h4 class="h6 mt-3">Results</h4>
-              <div class="d-flex flex-column gap-3">
+              <div class="d-flex justify-content-between align-items-center mt-3">
+                <h4 class="h6 mb-0">Results</h4>
+                <button
+                    class="btn btn-sm btn-outline-secondary"
+                    @click="toggleValues"
+                    :title="showValues ? 'Hide values' : 'Show values'"
+                >
+                  <i :class="['bi', showValues ? 'bi-eye-slash' : 'bi-eye']"></i>
+                </button>
+              </div>
+              <div class="d-flex flex-column gap-3 mt-2">
                 <div
                     v-for="result in latestReport.results"
                     :key="result.checkId"
@@ -43,9 +54,10 @@
                 >
                   <div class="card-body p-2 text-start">
                     <h5 class="card-title fs-6">{{ result.checkName }}</h5>
-                    <p class="card-text mb-1"><strong>Raw Value:</strong> {{ result.error }}</p>
                     <p class="card-text mb-1"><strong>Epsilon Used:</strong> {{ result.epsilon }}</p>
-                    <p class="card-text mb-0"><strong>Error rate:</strong> {{ calculatePercentage(result.obfuscatedValue) }}%</p>
+                    <p class="card-text mb-1"v-if="showValues"><strong>Raw value</strong> {{ result.rawValue }}</p>
+                    <p class="card-text mb-0"><strong>Occurrence rate:</strong> {{ calculatePercentage(result.obfuscatedValue) }}%</p>
+                    <p class="card-text mb-1" v-if="result.error"><strong>Error message:</strong> {{ result.error }}</p>
                   </div>
                 </div>
               </div>
@@ -84,6 +96,7 @@ import axios from 'axios'
 
 const reports = ref([])
 const isGenerating = ref(false)
+const showValues = ref(true) // Reactive state for toggling visibility
 
 const fetchReports = async () => {
   try {
@@ -114,6 +127,10 @@ const generateReport = async () => {
   }
 }
 
+const toggleValues = () => {
+  showValues.value = !showValues.value
+}
+
 const latestReport = computed(() => {
   if (reports.value.length === 0) return null
   return [...reports.value].sort((a, b) => new Date(b.generatedAt) - new Date(a.generatedAt))[0]
@@ -138,18 +155,19 @@ const formatDate = (dateString) => {
   })
 }
 
-// Computes percentage for a result
 const calculatePercentage = (value) => {
   const total = latestReport.value?.numberOfEntities || 1
   return ((value / total) * 100).toFixed(2)
 }
-const calculateEpsilonUsed = (value) => {
-  return latestReport.value.results.reduce((sum, result) => sum + result.epsilon, 0);
+
+const calculateEpsilonUsed = () => {
+  return latestReport.value.results.reduce((sum, result) => sum + result.epsilon, 0)
 }
-const isOverBudget = (value) => {
-  return calculateEpsilonUsed() > latestReport.value.epsilonBudget;
+
+const isOverBudget = () => {
+  return calculateEpsilonUsed() > latestReport.value.epsilonBudget
 }
-// Determines card class based on thresholds
+
 const getResultClass = (result) => {
   const percentage = parseFloat(calculatePercentage(result.obfuscatedValue))
   if (percentage >= result.errorThreshold || result.error) {
@@ -173,7 +191,7 @@ onMounted(fetchReports)
 .gap-3 {
   gap: 1rem;
 }
-.bi-exclamation-triangle{
+.bi-exclamation-triangle {
   color: red;
 }
 .text-start {

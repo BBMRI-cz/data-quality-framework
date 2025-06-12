@@ -3,6 +3,7 @@ package eu.bbmri_eric.quality.agent.report;
 import eu.bbmri_eric.quality.agent.events.FinishedReportEvent;
 import eu.bbmri_eric.quality.agent.events.NewReportEvent;
 import eu.bbmri_eric.quality.agent.fhir.FHIRStore;
+import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
@@ -31,19 +32,18 @@ class ReportRestEventHandler {
   public void onAfterCreate(Report report) {
     publisher.publishEvent(new NewReportEvent(this, report.getId()));
     int count = fhirStore.countResources("Patient");
-    log.info("Found {} patients", count);
     report.setNumberOfEntities(count);
     reportRepository.save(report);
   }
 
   @EventListener
+  @Transactional
   void onFinished(FinishedReportEvent event) {
     reportRepository
         .findById(event.getReportId())
         .ifPresent(
             report -> {
               report.setStatus(Status.GENERATED);
-              reportRepository.save(report);
               log.info("✅ Report {} has been generated", report.getId());
             });
   }

@@ -6,6 +6,7 @@ public class LaplaceNoise {
   private static final Random random = new Random();
 
   public static int addLaplaceNoise(int count, double epsilon, double sensitivity) {
+    System.out.println(epsilon);
     double scale = sensitivity / epsilon;
     double noise = generateLaplaceNoise(scale);
     double noisyCount = count + noise;

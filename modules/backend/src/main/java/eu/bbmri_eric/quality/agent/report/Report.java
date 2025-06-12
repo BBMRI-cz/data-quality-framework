@@ -25,7 +25,7 @@ public class Report {
 
   private Status status = Status.GENERATING;
 
-  private float epsilonBudget = 1.0f;
+  private float epsilonBudget = 2.0f;
 
   private int numberOfEntities;
 

@@ -8,4 +8,9 @@ interface Check {
   String getName();
 
   String getDescription();
+
+  int getWarningThreshold();
+  int getErrorThreshold();
+  float getEpsilonBudget();
+  Long getId();
 }

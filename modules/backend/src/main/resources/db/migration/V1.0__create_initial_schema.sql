@@ -2,7 +2,7 @@ CREATE TABLE report
 (
     id           BIGINT AUTO_INCREMENT PRIMARY KEY,
     generated_at TIMESTAMP,
-    epsilon_budget int,
+    epsilon_budget float default 2.0,
     number_of_entities int,
     status       VARCHAR(50) DEFAULT 'GENERATING'
 );
@@ -15,7 +15,7 @@ CREATE TABLE cql_check
     query       CLOB,
     warning_threshold int,
     error_threshold int,
-    epsilon_budget float default 1.0
+    epsilon_budget float default 0.2
 
 );
 

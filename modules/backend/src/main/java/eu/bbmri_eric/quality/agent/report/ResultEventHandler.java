@@ -3,6 +3,8 @@ package eu.bbmri_eric.quality.agent.report;
 import eu.bbmri_eric.quality.agent.events.CheckResultEvent;
 import jakarta.transaction.Transactional;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
@@ -22,6 +24,7 @@ class ResultEventHandler {
   @Transactional
   void onNewReport(CheckResultEvent event) {
     List<Report> reports = reportRepository.findAllByStatusIs(Status.GENERATING);
+
     reports.forEach(
         report -> {
           report.addResult(
@@ -29,7 +32,7 @@ class ResultEventHandler {
                   event.getCheckName(),
                   event.getCheckId(),
                   event.getRawValue(),
-                  LaplaceNoise.addLaplaceNoise(event.getRawValue(), 0.5, 1),
+                  LaplaceNoise.addLaplaceNoise(event.getRawValue(), event.getEpsilon(), 1),
                   event.getWarningThreshold(),
                   event.getErrorThreshold(),
                   event.getEpsilon(),

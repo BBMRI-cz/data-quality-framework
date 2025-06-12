@@ -1,5 +1,5 @@
 INSERT INTO cql_check (name, description, query, warning_threshold, error_threshold)
-VALUES ('Gender Presence Check',
+VALUES ('Missing Gender attribute',
         'How many patients do not have the Gender attribute',
         $$
 library GenderPresenceCheck version '1.0.0'
@@ -18,7 +18,7 @@ $$, 10, 30);
 -- Birth Date Check
 INSERT INTO cql_check (name, description, query, warning_threshold, error_threshold)
 VALUES (
-           'Birth Date Validity Check',
+           'Impossible birth date (in the future or before 20th century)',
            'How many patients have birth dates before 1900 or in the future',
            $$
 library BirthDateCheck version '1.0.0'
@@ -40,7 +40,7 @@ $$,
 -- Gender-Incompatible Diagnosis Check
 INSERT INTO cql_check (name, description, query, warning_threshold, error_threshold)
 VALUES (
-           'Gender-Incompatible Diagnosis Check',
+           'Gender-Incompatible Diagnosis',
            'How many patients have a diagnosis incompatible with their gender',
            $$
 library "GenderIncompatibleDiagnosis"
@@ -80,7 +80,7 @@ $$,
 -- Condition Coverage Check
 INSERT INTO cql_check (name, description, query, warning_threshold, error_threshold)
 VALUES (
-           'Condition Coverage Check',
+           'Missing diagnosis or condition',
            'How many patients have no diagnosis or a diagnosis without a code',
            $$
 library PatientConditionChecks version '1.0.0'
@@ -111,7 +111,7 @@ $$,
 -- Unsupported Gender Value Check
 INSERT INTO cql_check (name, description, query, warning_threshold, error_threshold)
 VALUES (
-           'Unsupported Gender Value Check',
+           'Unsupported Gender Value',
            'How many patients have unsupported or undefined gender values',
            $$
 library UnsupportedGenderPatients version '1.0.0'
@@ -133,7 +133,7 @@ $$,
 -- Patients Updated in 2025
 INSERT INTO cql_check (name, description, query, warning_threshold, error_threshold)
 VALUES (
-           'Patients Updated in 2025',
+           'Last update happened more than a year ago',
            'How many patients were last updated in 2025',
            $$
 library PatientsUpdatedIn2025 version '1.0.0'
