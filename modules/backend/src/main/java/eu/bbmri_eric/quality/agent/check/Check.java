@@ -10,7 +10,10 @@ interface Check {
   String getDescription();
 
   int getWarningThreshold();
+
   int getErrorThreshold();
+
   float getEpsilonBudget();
+
   Long getId();
 }

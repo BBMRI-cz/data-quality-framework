@@ -1,12 +1,13 @@
 package eu.bbmri_eric.quality.agent.fhir;
 
 import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.parser.DataFormatException;
 import ca.uhn.fhir.parser.LenientErrorHandler;
 import ca.uhn.fhir.rest.api.SummaryEnum;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.api.ServerValidationModeEnum;
 import eu.bbmri_eric.quality.agent.common.ApplicationProperties;
+import java.util.ArrayList;
+import java.util.List;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Resource;
 import org.json.JSONArray;
@@ -21,9 +22,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Component
 public class Blaze implements FHIRStore {
   private final ApplicationProperties applicationProperties;
@@ -32,7 +30,9 @@ public class Blaze implements FHIRStore {
 
   public Blaze(ApplicationProperties applicationProperties) {
     this.applicationProperties = applicationProperties;
-    FhirContext ctx = FhirContext.forR4().setParserErrorHandler(new LenientErrorHandler().setErrorOnInvalidValue(false));
+    FhirContext ctx =
+        FhirContext.forR4()
+            .setParserErrorHandler(new LenientErrorHandler().setErrorOnInvalidValue(false));
     ctx.getRestfulClientFactory().setServerValidationMode(ServerValidationModeEnum.NEVER);
     client = ctx.newRestfulGenericClient(applicationProperties.getBaseFHIRUrl());
   }
@@ -226,10 +226,11 @@ public class Blaze implements FHIRStore {
     List<Resource> resources = new ArrayList<>();
     try {
       // Build the search query with _elements parameter
-      Bundle bundle = client
+      Bundle bundle =
+          client
               .search()
               .forResource(resourceType)
-              .withAdditionalHeader("Prefer", "handling=lenient")// Request lenient validation
+              .withAdditionalHeader("Prefer", "handling=lenient") // Request lenient validation
               .returnBundle(Bundle.class)
               .execute();
 
@@ -244,17 +245,15 @@ public class Blaze implements FHIRStore {
 
         // Check for next page
         if (bundle.getLink(Bundle.LINK_NEXT) != null) {
-          bundle = client
-                  .loadPage()
-                  .next(bundle)
-                  .execute();
+          bundle = client.loadPage().next(bundle).execute();
         } else {
           bundle = null;
         }
       }
       return resources;
     } catch (Exception e) {
-      throw new RuntimeException("Error fetching resources of type " + resourceType + ": " + e.getMessage(), e);
+      throw new RuntimeException(
+          "Error fetching resources of type " + resourceType + ": " + e.getMessage(), e);
     }
   }
 }

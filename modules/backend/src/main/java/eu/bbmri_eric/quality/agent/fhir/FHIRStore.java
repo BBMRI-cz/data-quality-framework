@@ -1,9 +1,8 @@
 package eu.bbmri_eric.quality.agent.fhir;
 
+import java.util.List;
 import org.hl7.fhir.r4.model.Resource;
 import org.json.JSONObject;
-
-import java.util.List;
 
 public interface FHIRStore {
   public JSONObject libraryTemplate();
@@ -21,5 +20,6 @@ public interface FHIRStore {
   JSONObject evaluateMeasureList(String baseUrl, String measureId);
 
   int countResources(String resourceType);
+
   List<Resource> fetchAllResources(String resourceType, List<String> elements);
 }
