@@ -38,6 +38,7 @@ class QualityCheckRunner {
         new ArrayList<>(repository.findAll().stream().map(Check.class::cast).toList());
     checks.add(new DuplicateIdentifierCheck());
     checks.add(new SurvivalRateCheck());
+    checks.add(new InvalidConditionICDCheck());
     for (Check check : checks) {
       if (check instanceof CheckWithStratification) {
         Map<String, Result> results =

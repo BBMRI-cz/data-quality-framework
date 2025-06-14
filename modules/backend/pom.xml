@@ -94,6 +94,11 @@
             <artifactId>hapi-fhir-structures-r4</artifactId>
             <version>7.6.1</version>
         </dependency>
+        <dependency>
+            <groupId>io.github.radovantomik</groupId>
+            <artifactId>icd-validator</artifactId>
+            <version>0.1.0</version>
+        </dependency>
     </dependencies>
     <dependencyManagement>
         <dependencies>
