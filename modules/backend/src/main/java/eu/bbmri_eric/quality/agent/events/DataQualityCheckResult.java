@@ -3,7 +3,7 @@ package eu.bbmri_eric.quality.agent.events;
 import java.time.LocalDateTime;
 import org.springframework.context.ApplicationEvent;
 
-public class CheckResultEvent extends ApplicationEvent {
+public class DataQualityCheckResult extends ApplicationEvent {
 
   private final Long checkId;
   private final String checkName;
@@ -14,7 +14,7 @@ public class CheckResultEvent extends ApplicationEvent {
   private final int errorThreshold;
   private final float epsilon;
 
-  public CheckResultEvent(
+  public DataQualityCheckResult(
       Object source,
       Long checkId,
       String checkName,

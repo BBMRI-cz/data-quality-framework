@@ -1,6 +1,6 @@
 package eu.bbmri_eric.quality.agent.check;
 
-import eu.bbmri_eric.quality.agent.events.CheckResultEvent;
+import eu.bbmri_eric.quality.agent.events.DataQualityCheckResult;
 import eu.bbmri_eric.quality.agent.events.FinishedReportEvent;
 import eu.bbmri_eric.quality.agent.events.NewReportEvent;
 import eu.bbmri_eric.quality.agent.fhir.FHIRStore;
@@ -46,7 +46,7 @@ class DataQualityChecksRunner {
         int count = results.size();
         for (Map.Entry<String, Result> result : results.entrySet()) {
           eventPublisher.publishEvent(
-              new CheckResultEvent(
+              new DataQualityCheckResult(
                   this,
                   dataQualityCheck.getId(),
                   dataQualityCheck.getName() + " (%s)".formatted(result.getKey()),
@@ -60,7 +60,7 @@ class DataQualityChecksRunner {
       } else {
         Result result = dataQualityCheck.execute(fhirStore);
         eventPublisher.publishEvent(
-            new CheckResultEvent(
+            new DataQualityCheckResult(
                 this,
                 dataQualityCheck.getId(),
                 dataQualityCheck.getName(),

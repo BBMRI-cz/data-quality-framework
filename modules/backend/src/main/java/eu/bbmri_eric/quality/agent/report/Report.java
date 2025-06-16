@@ -14,8 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-public class Report {
-
+class Report {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -32,6 +31,9 @@ public class Report {
   @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
   @JoinColumn(name = "report_id")
   private List<Result> results = new ArrayList<>();
+
+  protected Report() {
+  }
 
   public Long getId() {
     return id;

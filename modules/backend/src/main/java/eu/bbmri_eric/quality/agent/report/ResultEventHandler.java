@@ -1,6 +1,6 @@
 package eu.bbmri_eric.quality.agent.report;
 
-import eu.bbmri_eric.quality.agent.events.CheckResultEvent;
+import eu.bbmri_eric.quality.agent.events.DataQualityCheckResult;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import org.slf4j.Logger;
@@ -20,7 +20,7 @@ class ResultEventHandler {
 
   @EventListener
   @Transactional
-  void onNewReport(CheckResultEvent event) {
+  void onNewReport(DataQualityCheckResult event) {
     List<Report> reports = reportRepository.findAllByStatusIs(Status.GENERATING);
 
     reports.forEach(
@@ -30,7 +30,7 @@ class ResultEventHandler {
                   event.getCheckName(),
                   event.getCheckId(),
                   event.getRawValue(),
-                  LaplaceNoise.addLaplaceNoise(event.getRawValue(), event.getEpsilon(), 1),
+                  DifferentialPrivacyUtil.addLaplaceNoise(event.getRawValue(), event.getEpsilon(), 1),
                   event.getWarningThreshold(),
                   event.getErrorThreshold(),
                   event.getEpsilon(),

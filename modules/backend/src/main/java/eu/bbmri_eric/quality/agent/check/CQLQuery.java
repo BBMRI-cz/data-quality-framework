@@ -6,23 +6,24 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import java.util.Base64;
-import org.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import jakarta.validation.constraints.NotBlank;
+import org.json.JSONObject;
+import jakarta.validation.constraints.NotNull;
 /**
  * A data quality check utilizing the Hl7 Clinical Quality Language queries for evaluation.
  */
 @Entity(name = "cql_check")
-public class CQLQuery implements DataQualityCheck {
-  private static final Logger log = LoggerFactory.getLogger(CQLQuery.class);
+class CQLQuery implements DataQualityCheck {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
-
+  @NotNull
   private String name;
+  @NotBlank
   private String description;
+  @NotNull
   private String query;
   private int warningThreshold = 10;
   private int errorThreshold = 30;
@@ -30,8 +31,14 @@ public class CQLQuery implements DataQualityCheck {
 
   protected CQLQuery() {}
 
-  public CQLQuery(Long id, String name, String description, String query) {
+  public CQLQuery(Long id, @NotNull String name, @NotNull String description, @NotNull String query) {
     this.id = id;
+    this.name = name;
+    this.description = description;
+    this.query = query;
+  }
+
+  public CQLQuery(String name, String description, String query) {
     this.name = name;
     this.description = description;
     this.query = query;
@@ -58,7 +65,6 @@ public class CQLQuery implements DataQualityCheck {
               .optInt("count", 0);
       return new Result(count, "Patient");
     } catch (Exception | NoSuchMethodError e) {
-      log.error("DataQualityCheck {} failed {}", id, e.getMessage());
       return new Result(e.getMessage());
     }
   }

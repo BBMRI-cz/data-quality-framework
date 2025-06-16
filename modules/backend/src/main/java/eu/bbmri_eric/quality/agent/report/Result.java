@@ -6,7 +6,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
 @Entity
-public class Result {
+class Result {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -22,7 +22,7 @@ public class Result {
 
   protected Result() {}
 
-  public Result(
+  protected Result(
       String checkName,
       Long checkId,
       int rawValue,

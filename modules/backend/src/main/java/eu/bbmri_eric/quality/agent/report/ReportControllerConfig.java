@@ -6,7 +6,7 @@ import org.springframework.data.rest.webmvc.config.RepositoryRestConfigurer;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 
 @Configuration
-public class RestConfiguration implements RepositoryRestConfigurer {
+class ReportControllerConfig implements RepositoryRestConfigurer {
 
   @Override
   public void configureRepositoryRestConfiguration(
