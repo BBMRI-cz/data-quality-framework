@@ -11,6 +11,8 @@ class Result {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  private static final int MAX_ERROR_LENGTH = 255;
+
   private String checkName;
   private Long checkId;
   private int rawValue;
@@ -38,7 +40,7 @@ class Result {
     this.warningThreshold = warningThreshold;
     this.errorThreshold = errorThreshold;
     this.epsilon = epsilon;
-    this.error = error;
+    setError(error);
   }
 
   public void setId(Long id) {
@@ -94,6 +96,10 @@ class Result {
   }
 
   public void setError(String error) {
-    this.error = error;
+    if (error != null && error.length() > MAX_ERROR_LENGTH) {
+      this.error = error.substring(0, MAX_ERROR_LENGTH - 20) + "...[truncated]";
+    } else {
+      this.error = error;
+    }
   }
 }

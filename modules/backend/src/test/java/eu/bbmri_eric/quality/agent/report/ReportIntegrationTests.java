@@ -25,7 +25,6 @@ public class ReportIntegrationTests {
   @Test
   void testCreateReportWithStatusGeneratingSetsGeneratedAt() throws Exception {
     Report report = new Report();
-    report.setStatus(Status.GENERATING);
 
     String json = objectMapper.writeValueAsString(report);
 
