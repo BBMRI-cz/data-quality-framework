@@ -7,7 +7,7 @@ import eu.bbmri_eric.quality.agent.fhir.FHIRStore;
  * Implementations of this interface encapsulate the logic for evaluating data quality
  * against a given FHIR data store.
  */
-public interface DataQualityCheck {
+interface DataQualityCheck {
 
   /**
    * Executes the data quality check against the specified FHIR store.

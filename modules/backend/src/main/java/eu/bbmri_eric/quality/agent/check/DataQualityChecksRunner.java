@@ -15,14 +15,14 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 @Component
-class QualityCheckRunner {
+class DataQualityChecksRunner {
 
-  private static final Logger log = LoggerFactory.getLogger(QualityCheckRunner.class);
+  private static final Logger log = LoggerFactory.getLogger(DataQualityChecksRunner.class);
   private final CQLCheckRepository repository;
   private final ApplicationEventPublisher eventPublisher;
   private final FHIRStore fhirStore;
 
-  QualityCheckRunner(
+  DataQualityChecksRunner(
       CQLCheckRepository repository,
       ApplicationEventPublisher eventPublisher,
       FHIRStore fhirStore) {
@@ -40,9 +40,9 @@ class QualityCheckRunner {
     dataQualityChecks.add(new SurvivalRateCheck());
     dataQualityChecks.add(new InvalidConditionICDCheck());
     for (DataQualityCheck dataQualityCheck : dataQualityChecks) {
-      if (dataQualityCheck instanceof CheckWithStratification) {
+      if (dataQualityCheck instanceof StratifiedDataQualityCheck) {
         Map<String, Result> results =
-            ((CheckWithStratification) dataQualityCheck).executeWithStratification(fhirStore);
+            ((StratifiedDataQualityCheck) dataQualityCheck).executeWithStratification(fhirStore);
         int count = results.size();
         for (Map.Entry<String, Result> result : results.entrySet()) {
           eventPublisher.publishEvent(

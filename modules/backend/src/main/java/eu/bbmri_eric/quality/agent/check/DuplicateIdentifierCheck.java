@@ -13,21 +13,23 @@ import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DuplicateIdentifierCheck implements DataQualityCheck {
+class DuplicateIdentifierCheck implements DataQualityCheck {
   private static final Logger log = LoggerFactory.getLogger(DuplicateIdentifierCheck.class);
   private final String name;
   private final String description;
   private final String identifierSystem;
 
-  public DuplicateIdentifierCheck() {
+  DuplicateIdentifierCheck() {
     this("https://fhir.bbmri.de/id/patient");
   }
 
-  public DuplicateIdentifierCheck(String identifierSystem) {
+  DuplicateIdentifierCheck(String identifierSystem) {
     this.name = "Duplicate identifiers";
     this.description = "Duplicate patients";
     this.identifierSystem = identifierSystem;
   }
+
+
 
   @Override
   public Result execute(FHIRStore fhirStore) {
@@ -40,7 +42,7 @@ public class DuplicateIdentifierCheck implements DataQualityCheck {
         List<Identifier> identifiers = patient.getIdentifier();
         for (Identifier ident : identifiers) {
           log.info(ident.toString());
-          if (identifierSystem.equals(ident.getSystem())) {
+          if (getIdentifierSystem().equals(ident.getSystem())) {
             String identValue = ident.getValue();
             log.info(identValue);
             if (identValue != null && !identValue.isEmpty()) {
@@ -61,7 +63,7 @@ public class DuplicateIdentifierCheck implements DataQualityCheck {
       int count = duplicateIds.size();
       return new Result(count, "Patient");
     } catch (Exception e) {
-      log.error("Error processing {}: {}", name, e.getMessage());
+      log.error("Error processing {}: {}", getName(), e.getMessage());
       return new Result(e.getMessage());
     }
   }
@@ -94,5 +96,9 @@ public class DuplicateIdentifierCheck implements DataQualityCheck {
   @Override
   public Long getId() {
     return 1000L;
+  }
+
+  private String getIdentifierSystem() {
+    return identifierSystem;
   }
 }

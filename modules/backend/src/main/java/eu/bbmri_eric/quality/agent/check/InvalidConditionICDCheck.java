@@ -10,11 +10,11 @@ import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Condition;
 import org.hl7.fhir.r4.model.Resource;
 
-public class InvalidConditionICDCheck implements DataQualityCheck {
+class InvalidConditionICDCheck implements DataQualityCheck {
   private final String name;
   private final String description;
 
-  public InvalidConditionICDCheck() {
+  InvalidConditionICDCheck() {
     this.name = "Invalid ICD-10 Codes";
     this.description = "How many conditions have invalid ICD-10 codes";
   }

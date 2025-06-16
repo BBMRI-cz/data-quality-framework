@@ -10,9 +10,12 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * A data quality check utilizing the Hl7 Clinical Quality Language queries for evaluation.
+ */
 @Entity(name = "cql_check")
-public class CQLCheck implements DataQualityCheck {
-  private static final Logger log = LoggerFactory.getLogger(CQLCheck.class);
+public class CQLQuery implements DataQualityCheck {
+  private static final Logger log = LoggerFactory.getLogger(CQLQuery.class);
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,9 +28,9 @@ public class CQLCheck implements DataQualityCheck {
   private int errorThreshold = 30;
   private float epsilonBudget = 1.0f;
 
-  protected CQLCheck() {}
+  protected CQLQuery() {}
 
-  public CQLCheck(Long id, String name, String description, String query) {
+  public CQLQuery(Long id, String name, String description, String query) {
     this.id = id;
     this.name = name;
     this.description = description;

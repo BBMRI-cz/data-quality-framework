@@ -8,14 +8,14 @@ import java.util.Map;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Resource;
 
-public class SurvivalRateCheck implements CheckWithStratification {
+class SurvivalRateCheck implements StratifiedDataQualityCheck {
   private final String name;
   private final String description;
   private final List<String> genders;
   private final int warningThreshold;
   private final int errorThreshold;
 
-  public SurvivalRateCheck() {
+  SurvivalRateCheck() {
     this.name = "Survival rate, stratified per gender value";
     this.description = "What is the survival rate for different gender values";
     this.genders = Arrays.asList("male", "female");
