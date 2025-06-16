@@ -19,7 +19,7 @@
     <!-- Main content -->
     <main class="main-content text-center">
       <data-quality-reports></data-quality-reports>
-      <c-q-l-check-table></c-q-l-check-table>
+      <c-q-l-dataQualityCheck-table></c-q-l-dataQualityCheck-table>
     </main>
 
     <!-- Centered Footer -->

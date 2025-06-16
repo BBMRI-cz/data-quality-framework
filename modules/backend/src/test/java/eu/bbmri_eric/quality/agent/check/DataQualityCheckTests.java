@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
-public class QualityCheckTests {
+public class DataQualityCheckTests {
   @Test
   void testConstructorInitializesFields() {
     Long id = 1L;
@@ -26,12 +26,12 @@ public class QualityCheckTests {
     CQLCheck check = new CQLCheck();
 
     check.setId(100L);
-    check.setName("Test Check");
+    check.setName("Test DataQualityCheck");
     check.setDescription("Just testing");
     check.setQuery("SELECT * FROM test");
 
     assertEquals(100L, check.getId());
-    assertEquals("Test Check", check.getName());
+    assertEquals("Test DataQualityCheck", check.getName());
     assertEquals("Just testing", check.getDescription());
     assertEquals("SELECT * FROM test", check.getQuery());
   }

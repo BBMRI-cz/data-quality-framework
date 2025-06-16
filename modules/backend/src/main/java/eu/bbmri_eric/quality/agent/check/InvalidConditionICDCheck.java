@@ -10,7 +10,7 @@ import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Condition;
 import org.hl7.fhir.r4.model.Resource;
 
-public class InvalidConditionICDCheck implements Check {
+public class InvalidConditionICDCheck implements DataQualityCheck {
   private final String name;
   private final String description;
 

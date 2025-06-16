@@ -7,20 +7,20 @@
       </button>
     </div>
     <div>
-      <div v-for="check in checks" :key="check.id" class="card mb-2">
+      <div v-for="dataQualityCheck in qualityChecks" :key="dataQualityCheck.id" class="card mb-2">
         <div class="card-body">
-          <h5 class="card-title">{{ check.name }}</h5>
-          <p class="card-text text-start"><strong>ID:</strong> {{ check.id }}</p>
-          <p class="card-text text-start"><strong>Description:</strong> {{ check.description }}</p>
-          <p class="card-text text-start"><strong>Query:</strong> {{ truncateQuery(check.query) }}</p>
-          <p class="card-text text-start"><strong>Warning Threshold:</strong> {{ check.warningThreshold }}</p>
-          <p class="card-text text-start"><strong>Error Threshold:</strong> {{ check.errorThreshold }}</p>
-          <p class="card-text text-start"><strong>Epsilon Budget:</strong> {{ check.epsilonBudget.toFixed(2) }}</p>
+          <h5 class="card-title">{{ dataQualityCheck.name }}</h5>
+          <p class="card-text text-start"><strong>ID:</strong> {{ dataQualityCheck.id }}</p>
+          <p class="card-text text-start"><strong>Description:</strong> {{ dataQualityCheck.description }}</p>
+          <p class="card-text text-start"><strong>Query:</strong> {{ truncateQuery(dataQualityCheck.query) }}</p>
+          <p class="card-text text-start"><strong>Warning Threshold:</strong> {{ dataQualityCheck.warningThreshold }}</p>
+          <p class="card-text text-start"><strong>Error Threshold:</strong> {{ dataQualityCheck.errorThreshold }}</p>
+          <p class="card-text text-start"><strong>Epsilon Budget:</strong> {{ dataQualityCheck.epsilonBudget.toFixed(2) }}</p>
           <div class="card-actions mt-2">
-            <button class="btn btn-sm btn-primary me-2" @click="openEditModal(check)" title="Edit">
+            <button class="btn btn-sm btn-primary me-2" @click="openEditModal(dataQualityCheck)" title="Edit">
               <i class="bi bi-pencil"></i>
             </button>
-            <button class="btn btn-sm btn-danger" @click="confirmDelete(check.id)" title="Delete">
+            <button class="btn btn-sm btn-danger" @click="confirmDelete(dataQualityCheck.id)" title="Delete">
               <i class="bi bi-trash"></i>
             </button>
           </div>
@@ -39,7 +39,7 @@
           <div class="modal-body">
             <div class="mb-3">
               <label for="checkName" class="form-label">Name</label>
-              <input v-model="currentCheck.name" class="form-control" id="checkName" placeholder="Enter check name" />
+              <input v-model="currentCheck.name" class="form-control" id="checkName" placeholder="Enter dataQualityCheck name" />
             </div>
             <div class="mb-3">
               <label for="checkDescription" class="form-label">Description</label>
@@ -79,7 +79,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            Are you sure you want to delete this check?
+            Are you sure you want to delete this dataQualityCheck?
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -96,7 +96,7 @@ import { onMounted, reactive, ref } from 'vue';
 import axios from 'axios';
 import * as bootstrap from 'bootstrap';
 
-const checks = ref([]);
+const qualityChecks = ref([]);
 const currentCheck = reactive({
   id: null,
   name: '',
@@ -114,10 +114,10 @@ const url = '/api/cQLChecks';
 const fetchChecks = async () => {
   try {
     const { data } = await axios.get(url);
-    checks.value = data._embedded?.cqlChecks || [];
+    qualityChecks.value = data._embedded?.cqlChecks || [];
   } catch (error) {
-    console.error('Error fetching checks:', error);
-    checks.value = [];
+    console.error('Error fetching qualityChecks:', error);
+    qualityChecks.value = [];
   }
 };
 
@@ -127,9 +127,9 @@ const openAddModal = () => {
   new bootstrap.Modal(document.getElementById('checkModal')).show();
 };
 
-const openEditModal = (check) => {
+const openEditModal = (dataQualityCheck) => {
   isEditing.value = true;
-  Object.assign(currentCheck, { ...check });
+  Object.assign(currentCheck, { ...dataQualityCheck });
   new bootstrap.Modal(document.getElementById('checkModal')).show();
 };
 
@@ -143,7 +143,7 @@ const saveCheck = async () => {
     await fetchChecks();
     bootstrap.Modal.getInstance(document.getElementById('checkModal')).hide();
   } catch (error) {
-    console.error(`Error ${isEditing.value ? 'updating' : 'adding'} check:`, error);
+    console.error(`Error ${isEditing.value ? 'updating' : 'adding'} dataQualityCheck:`, error);
   }
 };
 
@@ -158,17 +158,17 @@ const deleteCheck = async () => {
     await fetchChecks();
     bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
   } catch (error) {
-    console.error('Error deleting check:', error);
+    console.error('Error deleting dataQualityCheck:', error);
   }
 };
 
-const getCheckResult = (check) => {
+const getCheckResult = (dataQualityCheck) => {
   // Mock result based on CQLCheck.execute (replace with actual API call if available)
   return Math.random() * 2;
 };
 
-const isEpsilonOverBudget = (check) => {
-  return getCheckResult(check) > check.epsilonBudget;
+const isEpsilonOverBudget = (dataQualityCheck) => {
+  return getCheckResult(dataQualityCheck) > dataQualityCheck.epsilonBudget;
 };
 
 const truncateQuery = (query) => {

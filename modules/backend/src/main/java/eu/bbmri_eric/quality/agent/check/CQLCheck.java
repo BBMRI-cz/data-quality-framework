@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Entity(name = "cql_check")
-public class CQLCheck implements Check {
+public class CQLCheck implements DataQualityCheck {
   private static final Logger log = LoggerFactory.getLogger(CQLCheck.class);
 
   @Id
@@ -55,7 +55,7 @@ public class CQLCheck implements Check {
               .optInt("count", 0);
       return new Result(count, "Patient");
     } catch (Exception | NoSuchMethodError e) {
-      log.error("Check {} failed {}", id, e.getMessage());
+      log.error("DataQualityCheck {} failed {}", id, e.getMessage());
       return new Result(e.getMessage());
     }
   }

@@ -14,7 +14,7 @@
 
     <div class="card-body">
       <div v-if="reports.length === 0 && !isGenerating" class="text-muted">
-        No reports available. Please check back later.
+        No reports available. Please dataQualityCheck back later.
       </div>
 
       <div v-else-if="latestReport">

@@ -34,42 +34,42 @@ class QualityCheckRunner {
   @EventListener
   void onNewReport(NewReportEvent event) {
     log.info("New report received: {} | Running Quality Checks...", event.getReportId());
-    List<Check> checks =
-        new ArrayList<>(repository.findAll().stream().map(Check.class::cast).toList());
-    checks.add(new DuplicateIdentifierCheck());
-    checks.add(new SurvivalRateCheck());
-    checks.add(new InvalidConditionICDCheck());
-    for (Check check : checks) {
-      if (check instanceof CheckWithStratification) {
+    List<DataQualityCheck> dataQualityChecks =
+        new ArrayList<>(repository.findAll().stream().map(DataQualityCheck.class::cast).toList());
+    dataQualityChecks.add(new DuplicateIdentifierCheck());
+    dataQualityChecks.add(new SurvivalRateCheck());
+    dataQualityChecks.add(new InvalidConditionICDCheck());
+    for (DataQualityCheck dataQualityCheck : dataQualityChecks) {
+      if (dataQualityCheck instanceof CheckWithStratification) {
         Map<String, Result> results =
-            ((CheckWithStratification) check).executeWithStratification(fhirStore);
+            ((CheckWithStratification) dataQualityCheck).executeWithStratification(fhirStore);
         int count = results.size();
         for (Map.Entry<String, Result> result : results.entrySet()) {
           eventPublisher.publishEvent(
               new CheckResultEvent(
                   this,
-                  check.getId(),
-                  check.getName() + " (%s)".formatted(result.getKey()),
+                  dataQualityCheck.getId(),
+                  dataQualityCheck.getName() + " (%s)".formatted(result.getKey()),
                   result.getValue().numberOfEntities(),
                   result.getValue().error(),
                   LocalDateTime.now(),
-                  check.getWarningThreshold(),
-                  check.getErrorThreshold(),
-                  check.getEpsilonBudget() / count));
+                  dataQualityCheck.getWarningThreshold(),
+                  dataQualityCheck.getErrorThreshold(),
+                  dataQualityCheck.getEpsilonBudget() / count));
         }
       } else {
-        Result result = check.execute(fhirStore);
+        Result result = dataQualityCheck.execute(fhirStore);
         eventPublisher.publishEvent(
             new CheckResultEvent(
                 this,
-                check.getId(),
-                check.getName(),
+                dataQualityCheck.getId(),
+                dataQualityCheck.getName(),
                 result.numberOfEntities(),
                 result.error(),
                 LocalDateTime.now(),
-                check.getWarningThreshold(),
-                check.getErrorThreshold(),
-                check.getEpsilonBudget()));
+                dataQualityCheck.getWarningThreshold(),
+                dataQualityCheck.getErrorThreshold(),
+                dataQualityCheck.getEpsilonBudget()));
       }
     }
     eventPublisher.publishEvent(new FinishedReportEvent(this, event.getReportId()));

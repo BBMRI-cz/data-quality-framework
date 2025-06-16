@@ -13,7 +13,7 @@ import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DuplicateIdentifierCheck implements Check {
+public class DuplicateIdentifierCheck implements DataQualityCheck {
   private static final Logger log = LoggerFactory.getLogger(DuplicateIdentifierCheck.class);
   private final String name;
   private final String description;
