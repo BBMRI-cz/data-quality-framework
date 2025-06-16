@@ -30,7 +30,8 @@ class ResultEventHandler {
                   event.getCheckName(),
                   event.getCheckId(),
                   event.getRawValue(),
-                  DifferentialPrivacyUtil.addLaplaceNoise(event.getRawValue(), event.getEpsilon(), 1),
+                  DifferentialPrivacyUtil.addLaplaceNoise(
+                      event.getRawValue(), event.getEpsilon(), 1),
                   event.getWarningThreshold(),
                   event.getErrorThreshold(),
                   event.getEpsilon(),

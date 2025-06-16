@@ -5,33 +5,30 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import java.util.Base64;
-
 import jakarta.validation.constraints.NotBlank;
-import org.json.JSONObject;
 import jakarta.validation.constraints.NotNull;
-/**
- * A data quality check utilizing the Hl7 Clinical Quality Language queries for evaluation.
- */
+import java.util.Base64;
+import org.json.JSONObject;
+
+/** A data quality check utilizing the Hl7 Clinical Quality Language queries for evaluation. */
 @Entity(name = "cql_check")
 class CQLQuery implements DataQualityCheck {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
-  @NotNull
-  private String name;
-  @NotBlank
-  private String description;
-  @NotNull
-  private String query;
+
+  @NotNull private String name;
+  @NotBlank private String description;
+  @NotNull private String query;
   private int warningThreshold = 10;
   private int errorThreshold = 30;
   private float epsilonBudget = 1.0f;
 
   protected CQLQuery() {}
 
-  public CQLQuery(Long id, @NotNull String name, @NotNull String description, @NotNull String query) {
+  public CQLQuery(
+      Long id, @NotNull String name, @NotNull String description, @NotNull String query) {
     this.id = id;
     this.name = name;
     this.description = description;

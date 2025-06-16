@@ -5,7 +5,7 @@ record Result(Integer numberOfEntities, String entityType, String error) {
     this(numberOfEntities, entityType, null);
   }
 
-   Result(String error) {
+  Result(String error) {
     this(-1, "", error);
   }
 }

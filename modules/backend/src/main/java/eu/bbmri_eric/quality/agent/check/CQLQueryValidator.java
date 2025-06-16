@@ -10,13 +10,13 @@ import org.springframework.stereotype.Component;
 @RepositoryEventHandler
 class CQLQueryValidator {
 
-    @HandleBeforeCreate
-    public void validateBeforeCreate(@Valid CQLQuery query) {
-        // validation is triggered automatically
-    }
+  @HandleBeforeCreate
+  public void validateBeforeCreate(@Valid CQLQuery query) {
+    // validation is triggered automatically
+  }
 
-    @HandleBeforeSave
-    public void validateBeforeSave(@Valid CQLQuery query) {
-        // validation is triggered automatically
-    }
+  @HandleBeforeSave
+  public void validateBeforeSave(@Valid CQLQuery query) {
+    // validation is triggered automatically
+  }
 }

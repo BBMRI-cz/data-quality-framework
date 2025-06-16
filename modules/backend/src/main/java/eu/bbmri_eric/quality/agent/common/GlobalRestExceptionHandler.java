@@ -8,12 +8,13 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 
 @ControllerAdvice
 public class GlobalRestExceptionHandler {
-    @ExceptionHandler(org.hibernate.StaleStateException.class)
-    public ResponseEntity<String> handleStaleState(RuntimeException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Entity not found");
-    }
-    @ExceptionHandler(ConversionFailedException.class)
-    public ResponseEntity<String> handleFailedConversion(RuntimeException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
-    }
+  @ExceptionHandler(org.hibernate.StaleStateException.class)
+  public ResponseEntity<String> handleStaleState(RuntimeException ex) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Entity not found");
+  }
+
+  @ExceptionHandler(ConversionFailedException.class)
+  public ResponseEntity<String> handleFailedConversion(RuntimeException ex) {
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+  }
 }

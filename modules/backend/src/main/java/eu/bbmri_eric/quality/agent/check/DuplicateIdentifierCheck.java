@@ -29,8 +29,6 @@ class DuplicateIdentifierCheck implements DataQualityCheck {
     this.identifierSystem = identifierSystem;
   }
 
-
-
   @Override
   public Result execute(FHIRStore fhirStore) {
     try {

@@ -32,8 +32,7 @@ class Report {
   @JoinColumn(name = "report_id")
   private List<Result> results = new ArrayList<>();
 
-  protected Report() {
-  }
+  protected Report() {}
 
   public Long getId() {
     return id;

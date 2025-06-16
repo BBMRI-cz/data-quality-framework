@@ -4,8 +4,8 @@ import eu.bbmri_eric.quality.agent.fhir.FHIRStore;
 
 /**
  * Represents a singular executable query that determines a specific aspect of data quality.
- * Implementations of this interface encapsulate the logic for evaluating data quality
- * against a given FHIR data store.
+ * Implementations of this interface encapsulate the logic for evaluating data quality against a
+ * given FHIR data store.
  */
 interface DataQualityCheck {
 
@@ -32,24 +32,23 @@ interface DataQualityCheck {
   String getDescription();
 
   /**
-   * Returns the warning threshold used to classify results that are suboptimal,
-   * but not critical.
+   * Returns the warning threshold used to classify results that are suboptimal, but not critical.
    *
    * @return the warning threshold
    */
   int getWarningThreshold();
 
   /**
-   * Returns the error threshold used to classify results that indicate a serious
-   * data quality issue.
+   * Returns the error threshold used to classify results that indicate a serious data quality
+   * issue.
    *
    * @return the error threshold
    */
   int getErrorThreshold();
 
   /**
-   * Returns the epsilon budget associated with this check, if any.
-   * This value can be used for differential privacy or similar statistical constraints.
+   * Returns the epsilon budget associated with this check, if any. This value can be used for
+   * differential privacy or similar statistical constraints.
    *
    * @return the epsilon budget
    */

@@ -23,7 +23,8 @@ class ControllerConfig implements RepositoryRestConfigurer {
   }
 
   @Override
-  public void configureValidatingRepositoryEventListener(ValidatingRepositoryEventListener validatingListener) {
+  public void configureValidatingRepositoryEventListener(
+      ValidatingRepositoryEventListener validatingListener) {
     RepositoryRestConfigurer.super.configureValidatingRepositoryEventListener(validatingListener);
     validatingListener.addValidator("beforeCreate", validator);
     validatingListener.addValidator("beforeSave", validator);
