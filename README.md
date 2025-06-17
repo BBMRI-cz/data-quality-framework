@@ -12,8 +12,7 @@ the [BBMRI.de FHIR profiles](https://simplifier.net/BBMRI.de).
 
 - **Docker**: Ensure Docker is installed and running.
 - **FHIR Store**: Access to an HL7 FHIR server with BBMRI.de-compliant data.
-- **Network Configuration**: If running the FHIR store locally, configure Docker networking (
-  see [Networking](#networking)).
+- **Network Configuration**: If running the FHIR store locally, configure Docker networking.
 
 ## Getting Started
 
