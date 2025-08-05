@@ -22,13 +22,15 @@ class Result {
   private String error;
   private String stratum;
 
-  @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+  @ManyToMany(
+      fetch = FetchType.EAGER,
+      cascade = {CascadeType.PERSIST, CascadeType.MERGE})
   @JoinTable(
       name = "result_patients",
       joinColumns = @JoinColumn(name = "result_id"),
-      inverseJoinColumns = @JoinColumn(name = "patient_id")
-  )
+      inverseJoinColumns = @JoinColumn(name = "patient_id"))
   private List<Patient> patients = new ArrayList<>();
+
   protected Result() {}
 
   protected Result(
@@ -112,7 +114,9 @@ class Result {
     }
   }
 
-  public void setPatients(List<Patient> patients) {this.patients = patients;}
+  public void setPatients(List<Patient> patients) {
+    this.patients = patients;
+  }
 
   public List<Patient> getPatients() {
     return patients;
@@ -121,5 +125,4 @@ class Result {
   public String getStratum() {
     return stratum;
   }
-
 }

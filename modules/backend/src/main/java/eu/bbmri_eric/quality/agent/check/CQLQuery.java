@@ -64,7 +64,7 @@ class CQLQuery implements DataQualityCheck {
               .optJSONObject(0, new JSONObject())
               .optInt("count", 0);
       List<String> idList = new ArrayList<String>();
-      if(count != 0){
+      if (count != 0) {
         String listId =
             measureReport
                 .getJSONArray("group")
@@ -74,7 +74,7 @@ class CQLQuery implements DataQualityCheck {
                 .optJSONObject("subjectResults", new JSONObject())
                 .optString("reference")
                 .replace("List/", "");
-        JSONObject listResource  = fhirStore.getPatientList(listId);
+        JSONObject listResource = fhirStore.getPatientList(listId);
         JSONArray entries = listResource.getJSONArray("entry");
         for (int i = 0; i < entries.length(); i++) {
           String reference = entries.getJSONObject(i).getJSONObject("item").getString("reference");

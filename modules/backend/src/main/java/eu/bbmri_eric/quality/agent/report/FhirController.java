@@ -12,19 +12,20 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/fhir")
 public class FhirController {
-    private final FHIRStore fhirStore;
-    public FhirController(FHIRStore fhirStore) {
-        this.fhirStore = fhirStore;
-    }
+  private final FHIRStore fhirStore;
 
-    @GetMapping("/Patient/{id}/$everything")
-    public ResponseEntity<String> getPatientEverything(@PathVariable String id) {
-        try {
-            JSONObject patientEverything = fhirStore.getPatientEverything(id);
-            return new ResponseEntity<>(patientEverything.toString(), HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>("Failed to retrieve patient everything:" + e,
-                HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+  public FhirController(FHIRStore fhirStore) {
+    this.fhirStore = fhirStore;
+  }
+
+  @GetMapping("/Patient/{id}/$everything")
+  public ResponseEntity<String> getPatientEverything(@PathVariable String id) {
+    try {
+      JSONObject patientEverything = fhirStore.getPatientEverything(id);
+      return new ResponseEntity<>(patientEverything.toString(), HttpStatus.OK);
+    } catch (Exception e) {
+      return new ResponseEntity<>(
+          "Failed to retrieve patient everything:" + e, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  }
 }

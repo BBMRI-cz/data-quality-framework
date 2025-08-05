@@ -54,12 +54,14 @@ class DuplicateIdentifierCheck implements DataQualityCheck {
       }
       log.info("Duplicate identifiers: {}", duplicateIds);
       int count = duplicateIds.size();
-      List<String> patientIds = duplicateIds.stream()
-        .map(path -> {
-            String[] split = path.split("/");
-            return split[split.length - 1];
-        })
-        .toList();
+      List<String> patientIds =
+          duplicateIds.stream()
+              .map(
+                  path -> {
+                    String[] split = path.split("/");
+                    return split[split.length - 1];
+                  })
+              .toList();
       return new Result(count, "Patient", patientIds);
     } catch (Exception e) {
       log.error("Error processing {}: {}", getName(), e.getMessage());

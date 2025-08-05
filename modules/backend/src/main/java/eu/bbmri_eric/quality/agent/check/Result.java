@@ -5,7 +5,7 @@ import java.util.List;
 
 record Result(Integer numberOfEntities, String entityType, List<String> idList, String error) {
   Result(Integer numberOfEntities, String entityType, List<String> idList) {
-    this(numberOfEntities, entityType, idList,null);
+    this(numberOfEntities, entityType, idList, null);
   }
 
   Result(String error) {

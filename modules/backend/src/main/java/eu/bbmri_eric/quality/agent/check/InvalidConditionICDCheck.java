@@ -57,12 +57,14 @@ class InvalidConditionICDCheck implements DataQualityCheck {
       }
 
       int count = invalidIds.size();
-      List<String> patientIds = invalidIds.stream()
-          .map(path -> {
-            String[] split = path.split("/");
-            return split[split.length - 1];
-          })
-          .toList();
+      List<String> patientIds =
+          invalidIds.stream()
+              .map(
+                  path -> {
+                    String[] split = path.split("/");
+                    return split[split.length - 1];
+                  })
+              .toList();
       return new Result(count, "Patient", patientIds);
     } catch (Exception e) {
       System.err.println("Error processing " + name + ": " + e.getMessage());

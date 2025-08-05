@@ -193,7 +193,10 @@ public class Blaze implements FHIRStore {
     try {
       ResponseEntity<String> response =
           restTemplate.exchange(
-              applicationProperties.getBaseFHIRUrl() + "/Measure/" + measureId + "/$evaluate-measure",
+              applicationProperties.getBaseFHIRUrl()
+                  + "/Measure/"
+                  + measureId
+                  + "/$evaluate-measure",
               HttpMethod.POST,
               entity,
               String.class);
@@ -205,10 +208,7 @@ public class Blaze implements FHIRStore {
 
   public JSONObject getPatientList(String listId) {
     RestTemplate restTemplate = new RestTemplate();
-    String url =
-            applicationProperties.getBaseFHIRUrl() +
-                    "/List/" +
-                    listId;
+    String url = applicationProperties.getBaseFHIRUrl() + "/List/" + listId;
     try {
       ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
       return new JSONObject(response.getBody());
@@ -219,11 +219,7 @@ public class Blaze implements FHIRStore {
 
   public JSONObject getPatientEverything(String patientId) {
     RestTemplate restTemplate = new RestTemplate();
-    String url =
-        applicationProperties.getBaseFHIRUrl() +
-            "/Patient/"+
-            patientId +
-            "/$everything";
+    String url = applicationProperties.getBaseFHIRUrl() + "/Patient/" + patientId + "/$everything";
     try {
       ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
       return new JSONObject(response.getBody());
