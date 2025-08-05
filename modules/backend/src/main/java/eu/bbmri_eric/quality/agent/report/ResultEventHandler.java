@@ -13,9 +13,11 @@ class ResultEventHandler {
 
   private static final Logger log = LoggerFactory.getLogger(ResultEventHandler.class);
   private final ReportRepository reportRepository;
+  private final PatientRepository patientRepository;
 
-  ResultEventHandler(ReportRepository reportRepository) {
+  ResultEventHandler(ReportRepository reportRepository, PatientRepository patientRepository) {
     this.reportRepository = reportRepository;
+    this.patientRepository = patientRepository;
   }
 
   @EventListener
@@ -23,19 +25,33 @@ class ResultEventHandler {
   void onNewReport(DataQualityCheckResult event) {
     List<Report> reports = reportRepository.findAllByStatusIs(Status.GENERATING);
 
-    reports.forEach(
+    List<Patient> patients = event.getPatientList().stream()
+        .map(id -> patientRepository.findById(id).orElseGet(() -> new Patient(id)))
+        .toList();
+
+    List<Patient> newPatients = patients.stream()
+        .filter(p -> !patientRepository.existsById(p.getId()))
+        .toList();
+    patientRepository.saveAll(newPatients);
+
+      reports.forEach(
         report -> {
-          report.addResult(
-              new Result(
-                  event.getCheckName(),
-                  event.getCheckId(),
-                  event.getRawValue(),
-                  DifferentialPrivacyUtil.addLaplaceNoise(
-                      event.getRawValue(), event.getEpsilon(), 1),
-                  event.getWarningThreshold(),
-                  event.getErrorThreshold(),
-                  event.getEpsilon(),
-                  event.getError()));
+          Result result = new Result(
+              event.getCheckName(),
+              event.getCheckId(),
+              event.getRawValue(),
+              DifferentialPrivacyUtil.addLaplaceNoise(
+                  event.getRawValue(), event.getEpsilon(), 1),
+              event.getWarningThreshold(),
+              event.getErrorThreshold(),
+              event.getEpsilon(),
+              event.getError(),
+              event.getStratum());
+
+          result.setPatients(patients);
+
+          report.addResult(result);
+          reportRepository.save(report);
         });
   }
 }

@@ -7,7 +7,10 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 /** A data quality check utilizing the Hl7 Clinical Quality Language queries for evaluation. */
@@ -52,7 +55,7 @@ class CQLQuery implements DataQualityCheck {
       JSONObject measureResource = fhirStore.createMeasure(measureUri, libraryUri, "Patient");
       JSONObject measureResponse = fhirStore.postResource("Measure", measureResource);
       String measureId = measureResponse.getString("id");
-      JSONObject measureReport = fhirStore.evaluateMeasure(measureId);
+      JSONObject measureReport = fhirStore.evaluateMeasureList(measureId);
       int count =
           measureReport
               .getJSONArray("group")
@@ -60,7 +63,25 @@ class CQLQuery implements DataQualityCheck {
               .getJSONArray("population")
               .optJSONObject(0, new JSONObject())
               .optInt("count", 0);
-      return new Result(count, "Patient");
+      List<String> idList = new ArrayList<String>();
+      if(count != 0){
+        String listId =
+            measureReport
+                .getJSONArray("group")
+                .optJSONObject(0, new JSONObject())
+                .getJSONArray("population")
+                .optJSONObject(0, new JSONObject())
+                .optJSONObject("subjectResults", new JSONObject())
+                .optString("reference")
+                .replace("List/", "");
+        JSONObject listResource  = fhirStore.getPatientList(listId);
+        JSONArray entries = listResource.getJSONArray("entry");
+        for (int i = 0; i < entries.length(); i++) {
+          String reference = entries.getJSONObject(i).getJSONObject("item").getString("reference");
+          idList.add(reference.split("/")[1]);
+        }
+      }
+      return new Result(count, "Patient", idList);
     } catch (Exception | NoSuchMethodError e) {
       return new Result(e.getMessage());
     }

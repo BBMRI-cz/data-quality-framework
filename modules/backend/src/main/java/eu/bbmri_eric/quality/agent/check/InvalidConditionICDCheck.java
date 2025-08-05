@@ -3,9 +3,7 @@ package eu.bbmri_eric.quality.agent.check;
 import eu.bbmri_eric.ICD10Validator;
 import eu.bbmri_eric.ICDValidator;
 import eu.bbmri_eric.quality.agent.fhir.FHIRStore;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Condition;
 import org.hl7.fhir.r4.model.Resource;
@@ -59,7 +57,13 @@ class InvalidConditionICDCheck implements DataQualityCheck {
       }
 
       int count = invalidIds.size();
-      return new Result(count, "Patient", null);
+      List<String> patientIds = invalidIds.stream()
+          .map(path -> {
+            String[] split = path.split("/");
+            return split[split.length - 1];
+          })
+          .toList();
+      return new Result(count, "Patient", patientIds);
     } catch (Exception e) {
       System.err.println("Error processing " + name + ": " + e.getMessage());
       return new Result(e.getMessage());

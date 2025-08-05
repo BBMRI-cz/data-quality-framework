@@ -109,7 +109,7 @@ const currentCheck = reactive({
 const isEditing = ref(false);
 const deleteId = ref(null);
 
-const url = '/api/cQLChecks';
+const url = '/api/cql-queries';
 
 const fetchChecks = async () => {
   try {

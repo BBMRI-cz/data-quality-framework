@@ -49,15 +49,58 @@
               <div class="d-flex flex-column gap-3 mt-2">
                 <div
                     v-for="result in latestReport.results"
-                    :key="result.checkId"
+                    :key="getCheckIdKey(result)"
                     :class="['card', getResultClass(result)]"
                 >
                   <div class="card-body p-2 text-start">
-                    <h5 class="card-title fs-6">{{ result.checkName }}</h5>
-                    <p class="card-text mb-1"><strong>Epsilon Used:</strong> {{ result.epsilon }}</p>
-                    <p class="card-text mb-1"v-if="showValues"><strong>Raw value</strong> {{ result.rawValue }}</p>
-                    <p class="card-text mb-0"><strong>Occurrence rate:</strong> {{ calculatePercentage(result.obfuscatedValue) }}%</p>
-                    <p class="card-text mb-1" v-if="result.error"><strong>Error message:</strong> {{ result.error }}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div>
+                        <h5 class="card-title fs-6">{{ result.checkName }}</h5>
+                        <p class="card-text mb-1"><strong>Epsilon Used:</strong> {{ result.epsilon }}</p>
+                        <p class="card-text mb-1"v-if="showValues"><strong>Raw value</strong> {{ result.rawValue }}</p>
+                        <p class="card-text mb-0"><strong>Occurrence rate:</strong> {{ calculatePercentage(result.obfuscatedValue) }}%</p>
+                        <p class="card-text mb-1" v-if="result.error"><strong>Error message:</strong> {{ result.error }}</p>
+                      </div>
+                      <button
+                          class="btn btn-sm btn-outline-secondary"
+                          @click="toggleIds(getCheckIdKey(result))"
+                          :title="openIds[getCheckIdKey(result)] ? 'Hide Ids' : 'Show Ids'"
+                      >
+                        <i class="bi bi-person-lines-fill"></i>
+                      </button>
+                    </div>
+                    <div
+                        v-if="Array.isArray(result._links?.patients)
+                               && result._links.patients.length > 0
+                               && openIds[getCheckIdKey(result)]">
+                      <p class="card-text mb-1 mt-1"><strong>Patient Identifiers:</strong></p>
+                      <table class="table table-sm table-inner-only table-striped text-center w-100 rounded-3 overflow-hidden"
+                        style="opacity: 90%">
+                        <tbody>
+                        <tr v-for="(row, rowIndex) in patientTableRows(result)" :key="rowIndex">
+                          <td v-for="(patient, colIndex) in row" :key="colIndex" style="max-width: 16.6%">
+                            <a href="#"
+                               v-if="patient"
+                               @click.prevent="showPatientDetail(patient.href)"
+                               target="_blank">
+                              {{ patient.href.split('/').pop() }}
+                            </a>
+                          </td>
+                        </tr>
+                        </tbody>
+                      </table>
+                      <PatientModal ref="patientModalRef" :patient-id="modalPatientId"></PatientModal>
+                      <nav class="d-flex justify-content-center"
+                          v-if="result._links.patients.length > pageSize"
+                      >
+                        <Pagination :current-page="idPage[getCheckIdKey(result)] || 1"
+                                    :page-size="pageSize"
+                                    :total-pages="Math.ceil((result._links?.patients?.length || 0) / pageSize)"
+                                    :max-visible-buttons="5"
+                                    @page-changed="page => changePage(getCheckIdKey(result), page)"
+                        ></Pagination>
+                      </nav>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -92,11 +135,18 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import PatientModal from "./PatientModal.vue";
+import Pagination from "./Pagination.vue";
 import axios from 'axios'
 
 const reports = ref([])
 const isGenerating = ref(false)
 const showValues = ref(true) // Reactive state for toggling visibility
+const openIds = ref({})
+const pageSize = 60
+const idPage = ref({})
+const patientModalRef = ref(null)
+const modalPatientId = ref('')
 
 const fetchReports = async () => {
   try {
@@ -124,11 +174,51 @@ const generateReport = async () => {
     console.error('Error generating report:', error)
   } finally {
     isGenerating.value = false
+    openIds.value = {}
+    idPage.value = {}
   }
 }
 
 const toggleValues = () => {
   showValues.value = !showValues.value
+}
+
+function toggleIds(checkId) {
+  openIds.value[checkId] = !openIds.value[checkId]
+}
+
+function changePage(checkId, page) {
+  idPage.value[checkId] = page;
+}
+
+function paginatedPatients(result) {
+  const all = result._links?.patients || [];
+  const currentPage = idPage.value[getCheckIdKey(result)] || 1;
+  const start = (currentPage - 1) * pageSize;
+  return all.slice(start, start + pageSize);
+}
+
+function patientTableRows(result) {
+  const patients = paginatedPatients(result);
+  const rows = [];
+  for (let i = 0; i < patients.length; i += 6) {
+    rows.push(patients.slice(i, i + 6));
+  }
+  return rows;
+}
+
+function showPatientDetail(patient) {
+  modalPatientId.value = patient.split('/').pop() || ''
+  const modalInstance = patientModalRef.value?.[0]
+  if (modalInstance?.open) {
+    modalInstance.open()
+  } else {
+    console.warn('Modal instance not found or method not exposed.')
+  }
+}
+
+function getCheckIdKey(result) {
+  return result.checkId + '_' + (result.stratum || 'all')
 }
 
 const latestReport = computed(() => {
@@ -197,4 +287,22 @@ onMounted(fetchReports)
 .text-start {
   text-align: left !important;
 }
+
+.table-inner-only {
+  border-collapse: collapse;
+  border: none;
+}
+
+.table-inner-only td {
+  border: none;
+}
+
+.table-inner-only td + td {
+  border-left: 1px solid #dee2e6;
+}
+
+.table-inner-only tr + tr td {
+  border-top: 1px solid #dee2e6;
+}
+
 </style>

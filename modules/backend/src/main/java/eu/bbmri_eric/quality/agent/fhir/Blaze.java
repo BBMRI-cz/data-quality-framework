@@ -167,7 +167,7 @@ public class Blaze implements FHIRStore {
     }
   }
 
-  public JSONObject evaluateMeasureList(String baseUrl, String measureId) {
+  public JSONObject evaluateMeasureList(String measureId) {
     RestTemplate restTemplate = new RestTemplate();
     JSONObject payload = new JSONObject();
     payload.put("resourceType", "Parameters");
@@ -193,10 +193,39 @@ public class Blaze implements FHIRStore {
     try {
       ResponseEntity<String> response =
           restTemplate.exchange(
-              baseUrl + "/Measure/" + measureId + "/$evaluate-measure",
+              applicationProperties.getBaseFHIRUrl() + "/Measure/" + measureId + "/$evaluate-measure",
               HttpMethod.POST,
               entity,
               String.class);
+      return new JSONObject(response.getBody());
+    } catch (HttpClientErrorException e) {
+      throw new RuntimeException("HTTP error: " + e.getStatusCode(), e);
+    }
+  }
+
+  public JSONObject getPatientList(String listId) {
+    RestTemplate restTemplate = new RestTemplate();
+    String url =
+            applicationProperties.getBaseFHIRUrl() +
+                    "/List/" +
+                    listId;
+    try {
+      ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+      return new JSONObject(response.getBody());
+    } catch (HttpClientErrorException e) {
+      throw new RuntimeException("HTTP error: " + e.getStatusCode(), e);
+    }
+  }
+
+  public JSONObject getPatientEverything(String patientId) {
+    RestTemplate restTemplate = new RestTemplate();
+    String url =
+        applicationProperties.getBaseFHIRUrl() +
+            "/Patient/"+
+            patientId +
+            "/$everything";
+    try {
+      ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
       return new JSONObject(response.getBody());
     } catch (HttpClientErrorException e) {
       throw new RuntimeException("HTTP error: " + e.getStatusCode(), e);

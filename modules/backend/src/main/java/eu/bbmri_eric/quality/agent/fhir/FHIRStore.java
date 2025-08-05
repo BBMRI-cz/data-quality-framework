@@ -64,11 +64,26 @@ public interface FHIRStore {
   /**
    * Evaluates a Measure using a specific base URL context (e.g., subject list).
    *
-   * @param baseUrl the base URL for the evaluation context (e.g., a List resource)
    * @param measureId the ID of the Measure to evaluate
    * @return the JSON result of the Measure evaluation
    */
-  JSONObject evaluateMeasureList(String baseUrl, String measureId);
+  JSONObject evaluateMeasureList(String measureId);
+
+  /**
+   * Retrieves a FHIR list resource
+   *
+   * @param listId the ID of reference Patient list from Measure
+   * @return the JSON result of Patient list
+   */
+  JSONObject getPatientList(String listId);
+
+  /**
+   * Retrieves all available data related to a patient based on ID
+   *
+   * @param patientId the ID of patient
+   * @return the JSON result of patient data
+   */
+  JSONObject getPatientEverything(String patientId);
 
   /**
    * Counts the total number of resources of the given type in the store.

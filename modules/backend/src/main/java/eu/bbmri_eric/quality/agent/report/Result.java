@@ -1,9 +1,8 @@
 package eu.bbmri_eric.quality.agent.report;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 class Result {
@@ -21,7 +20,15 @@ class Result {
   private int errorThreshold;
   private float epsilon;
   private String error;
+  private String stratum;
 
+  @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+  @JoinTable(
+      name = "result_patients",
+      joinColumns = @JoinColumn(name = "result_id"),
+      inverseJoinColumns = @JoinColumn(name = "patient_id")
+  )
+  private List<Patient> patients = new ArrayList<>();
   protected Result() {}
 
   protected Result(
@@ -32,7 +39,8 @@ class Result {
       int warningThreshold,
       int errorThreshold,
       float epsilon,
-      String error) {
+      String error,
+      String stratum) {
     this.checkName = checkName;
     this.checkId = checkId;
     this.rawValue = rawValue;
@@ -41,6 +49,7 @@ class Result {
     this.errorThreshold = errorThreshold;
     this.epsilon = epsilon;
     setError(error);
+    this.stratum = stratum;
   }
 
   public void setId(Long id) {
@@ -102,4 +111,15 @@ class Result {
       this.error = error;
     }
   }
+
+  public void setPatients(List<Patient> patients) {this.patients = patients;}
+
+  public List<Patient> getPatients() {
+    return patients;
+  }
+
+  public String getStratum() {
+    return stratum;
+  }
+
 }
