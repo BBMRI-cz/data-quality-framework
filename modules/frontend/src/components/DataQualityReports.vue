@@ -62,6 +62,8 @@
                         <p class="card-text mb-1" v-if="result.error"><strong>Error message:</strong> {{ result.error }}</p>
                       </div>
                       <button
+                          v-if="Array.isArray(result.patients)
+                               && result.patients.length > 0"
                           class="btn btn-sm btn-outline-secondary"
                           @click="toggleIds(getCheckIdKey(result))"
                           :title="openIds[getCheckIdKey(result)] ? 'Hide Ids' : 'Show Ids'"
@@ -70,8 +72,8 @@
                       </button>
                     </div>
                     <div
-                        v-if="Array.isArray(result._links?.patients)
-                               && result._links.patients.length > 0
+                        v-if="Array.isArray(result.patients)
+                               && result.patients.length > 0
                                && openIds[getCheckIdKey(result)]">
                       <p class="card-text mb-1 mt-1"><strong>Patient Identifiers:</strong></p>
                       <table class="table table-sm table-inner-only table-striped text-center w-100 rounded-3 overflow-hidden"
@@ -81,21 +83,20 @@
                           <td v-for="(patient, colIndex) in row" :key="colIndex" style="max-width: 16.6%">
                             <a href="#"
                                v-if="patient"
-                               @click.prevent="showPatientDetail(patient.href)"
+                               @click.prevent="showPatientDetail(patient)"
                                target="_blank">
-                              {{ patient.href.split('/').pop() }}
+                              {{ patient}}
                             </a>
                           </td>
                         </tr>
                         </tbody>
                       </table>
-                      <PatientModal ref="patientModalRef" :patient-id="modalPatientId"></PatientModal>
                       <nav class="d-flex justify-content-center"
-                          v-if="result._links.patients.length > pageSize"
+                          v-if="result.patients.length > pageSize"
                       >
                         <Pagination :current-page="idPage[getCheckIdKey(result)] || 1"
                                     :page-size="pageSize"
-                                    :total-pages="Math.ceil((result._links?.patients?.length || 0) / pageSize)"
+                                    :total-pages="Math.ceil((result.patients?.length || 0) / pageSize)"
                                     :max-visible-buttons="5"
                                     @page-changed="page => changePage(getCheckIdKey(result), page)"
                         ></Pagination>
@@ -103,6 +104,7 @@
                     </div>
                   </div>
                 </div>
+                <PatientModal ref="patientModalRef" :patient-id="modalPatientId"></PatientModal>
               </div>
               <p class="mt-3">
                 <strong>Link:</strong>
@@ -192,7 +194,7 @@ function changePage(checkId, page) {
 }
 
 function paginatedPatients(result) {
-  const all = result._links?.patients || [];
+  const all = result.patients || [];
   const currentPage = idPage.value[getCheckIdKey(result)] || 1;
   const start = (currentPage - 1) * pageSize;
   return all.slice(start, start + pageSize);
@@ -208,13 +210,8 @@ function patientTableRows(result) {
 }
 
 function showPatientDetail(patient) {
-  modalPatientId.value = patient.split('/').pop() || ''
-  const modalInstance = patientModalRef.value?.[0]
-  if (modalInstance?.open) {
-    modalInstance.open()
-  } else {
-    console.warn('Modal instance not found or method not exposed.')
-  }
+  modalPatientId.value = patient
+  patientModalRef.value.open()
 }
 
 function getCheckIdKey(result) {

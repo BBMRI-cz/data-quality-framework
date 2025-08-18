@@ -1,8 +1,15 @@
 package eu.bbmri_eric.quality.agent.report;
 
-import jakarta.persistence.*;
-import java.util.ArrayList;
-import java.util.List;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 class Result {
@@ -22,14 +29,10 @@ class Result {
   private String error;
   private String stratum;
 
-  @ManyToMany(
-      fetch = FetchType.EAGER,
-      cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-  @JoinTable(
-      name = "result_patients",
-      joinColumns = @JoinColumn(name = "result_id"),
-      inverseJoinColumns = @JoinColumn(name = "patient_id"))
-  private List<Patient> patients = new ArrayList<>();
+  @ElementCollection
+  @CollectionTable(name = "result_patient_ids", joinColumns = @JoinColumn(name = "result_id"))
+  @Column(name = "patient_id")
+  private Set<String> patients = new HashSet<>();
 
   protected Result() {}
 
@@ -114,11 +117,11 @@ class Result {
     }
   }
 
-  public void setPatients(List<Patient> patients) {
+  public void setPatients(Set<String> patients) {
     this.patients = patients;
   }
 
-  public List<Patient> getPatients() {
+  public Set<String> getPatients() {
     return patients;
   }
 

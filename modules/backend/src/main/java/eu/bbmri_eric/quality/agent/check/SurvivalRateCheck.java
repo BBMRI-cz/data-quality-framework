@@ -1,7 +1,13 @@
 package eu.bbmri_eric.quality.agent.check;
 
 import eu.bbmri_eric.quality.agent.fhir.FHIRStore;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Resource;
 
@@ -37,7 +43,7 @@ class SurvivalRateCheck implements StratifiedDataQualityCheck {
         totalCount++;
       }
 
-      return new Result(totalAlive, "Patient", Collections.emptyList());
+      return new Result(totalAlive, "Patient", Collections.emptySet());
     } catch (Exception e) {
       System.err.println("Error processing " + name + ": " + e.getMessage());
       return new Result(e.getMessage());
@@ -52,7 +58,7 @@ class SurvivalRateCheck implements StratifiedDataQualityCheck {
           fhirStore.fetchAllResources("Patient", List.of("id", "gender", "deceased"));
       // Stratified by gender
       for (String gender : genders) {
-        List<String> genderAliveIds = getGenderAlive(gender, patients);
+        Set<String> genderAliveIds = getGenderAlive(gender, patients);
         int genderAlive = genderAliveIds.size();
 
         results.put(gender, new Result(genderAlive, "Patient", genderAliveIds));
@@ -65,8 +71,8 @@ class SurvivalRateCheck implements StratifiedDataQualityCheck {
     }
   }
 
-  private static List<String> getGenderAlive(String gender, List<Resource> patients) {
-    List<String> genderAliveIds = new ArrayList<>();
+  private static Set<String> getGenderAlive(String gender, List<Resource> patients) {
+    Set<String> genderAliveIds = new HashSet<>();
     int genderCount = 0;
 
     for (Resource resource : patients) {

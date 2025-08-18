@@ -1,7 +1,12 @@
 package eu.bbmri_eric.quality.agent.check;
 
 import eu.bbmri_eric.quality.agent.fhir.FHIRStore;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Resource;
@@ -53,16 +58,7 @@ class DuplicateIdentifierCheck implements DataQualityCheck {
         }
       }
       log.info("Duplicate identifiers: {}", duplicateIds);
-      int count = duplicateIds.size();
-      List<String> patientIds =
-          duplicateIds.stream()
-              .map(
-                  path -> {
-                    String[] split = path.split("/");
-                    return split[split.length - 1];
-                  })
-              .toList();
-      return new Result(count, "Patient", patientIds);
+      return Result.resultFromIdPaths(duplicateIds, "Patient");
     } catch (Exception e) {
       log.error("Error processing {}: {}", getName(), e.getMessage());
       return new Result(e.getMessage());

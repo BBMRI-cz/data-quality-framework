@@ -281,4 +281,8 @@ public class Blaze implements FHIRStore {
           "Error fetching resources of type " + resourceType + ": " + e.getMessage(), e);
     }
   }
+
+  protected IGenericClient getClient() {
+    return client;
+  }
 }

@@ -1,7 +1,7 @@
 package eu.bbmri_eric.quality.agent.events;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Set;
 import org.springframework.context.ApplicationEvent;
 
 public class DataQualityCheckResult extends ApplicationEvent {
@@ -9,7 +9,7 @@ public class DataQualityCheckResult extends ApplicationEvent {
   private final Long checkId;
   private final String checkName;
   private final int rawValue;
-  private final List<String> patientList;
+  private final Set<String> patientSet;
   private final String error;
   private final LocalDateTime finishedAt;
   private final int warningThreshold;
@@ -22,7 +22,7 @@ public class DataQualityCheckResult extends ApplicationEvent {
       Long checkId,
       String checkName,
       int rawValue,
-      List<String> patientList,
+      Set<String> patientSet,
       String error,
       LocalDateTime finishedAt,
       int warningThreshold,
@@ -33,7 +33,7 @@ public class DataQualityCheckResult extends ApplicationEvent {
     this.checkId = checkId;
     this.checkName = checkName;
     this.rawValue = rawValue;
-    this.patientList = patientList;
+    this.patientSet = patientSet;
     this.error = error;
     this.finishedAt = finishedAt;
     this.warningThreshold = warningThreshold;
@@ -74,8 +74,8 @@ public class DataQualityCheckResult extends ApplicationEvent {
     return epsilon;
   }
 
-  public List<String> getPatientList() {
-    return patientList;
+  public Set<String> getPatientSet() {
+    return patientSet;
   }
 
   public String getStratum() {

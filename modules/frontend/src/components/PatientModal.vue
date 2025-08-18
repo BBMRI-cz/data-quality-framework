@@ -10,7 +10,9 @@
         </div>
         <div class="modal-body">
           <div v-if="patientData">
-            <pre>{{ JSON.stringify(patientData, null, 2) }}</pre>
+            <pre style="text-align: left;">
+              {{ JSON.stringify(patientData, null, 2) }}
+            </pre>
           </div>
           <div v-else>
             Loading patient data for ID: {{ patientId }}...
@@ -41,7 +43,7 @@ let modalInstance = null
 const patientData = ref(null)
 
 function _open() {
-  if(modalInstance){
+  if (modalInstance){
     modalInstance.show()
   }
 }
@@ -60,10 +62,10 @@ watch(() => props.patientId, (newId) => {
 })
 
 async function fetchPatientData(patientId) {
-  try{
-    const response = await axios.get(`api/fhir/Patient/${patientId}/$everything`)
+  try {
+    const response = await axios.get(`api/entities/Patient/${patientId}`)
     patientData.value = response.data
-  }catch(error){
+  } catch (error) {
     console.error('Failed to fetch patientData', error)
   }
 }

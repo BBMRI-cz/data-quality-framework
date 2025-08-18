@@ -13,26 +13,15 @@ class ResultEventHandler {
 
   private static final Logger log = LoggerFactory.getLogger(ResultEventHandler.class);
   private final ReportRepository reportRepository;
-  private final PatientRepository patientRepository;
 
-  ResultEventHandler(ReportRepository reportRepository, PatientRepository patientRepository) {
+  ResultEventHandler(ReportRepository reportRepository) {
     this.reportRepository = reportRepository;
-    this.patientRepository = patientRepository;
   }
 
   @EventListener
   @Transactional
   void onNewReport(DataQualityCheckResult event) {
     List<Report> reports = reportRepository.findAllByStatusIs(Status.GENERATING);
-
-    List<Patient> patients =
-        event.getPatientList().stream()
-            .map(id -> patientRepository.findById(id).orElseGet(() -> new Patient(id)))
-            .toList();
-
-    List<Patient> newPatients =
-        patients.stream().filter(p -> !patientRepository.existsById(p.getId())).toList();
-    patientRepository.saveAll(newPatients);
 
     reports.forEach(
         report -> {
@@ -49,7 +38,7 @@ class ResultEventHandler {
                   event.getError(),
                   event.getStratum());
 
-          result.setPatients(patients);
+          result.setPatients(event.getPatientSet());
 
           report.addResult(result);
           reportRepository.save(report);
