@@ -1,5 +1,7 @@
 package eu.bbmri_eric.quality.agent.check;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.agent.fhir.FHIRStore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -8,6 +10,8 @@ import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.util.Base64;
+import java.util.HashSet;
+import java.util.Set;
 import org.json.JSONObject;
 
 /** A data quality check utilizing the Hl7 Clinical Quality Language queries for evaluation. */
@@ -41,6 +45,8 @@ class CQLQuery implements DataQualityCheck {
     this.query = query;
   }
 
+  private static final ObjectMapper mapper = new ObjectMapper();
+
   @Override
   public Result execute(FHIRStore fhirStore) {
     try {
@@ -52,15 +58,29 @@ class CQLQuery implements DataQualityCheck {
       JSONObject measureResource = fhirStore.createMeasure(measureUri, libraryUri, "Patient");
       JSONObject measureResponse = fhirStore.postResource("Measure", measureResource);
       String measureId = measureResponse.getString("id");
-      JSONObject measureReport = fhirStore.evaluateMeasure(measureId);
-      int count =
-          measureReport
-              .getJSONArray("group")
-              .optJSONObject(0, new JSONObject())
-              .getJSONArray("population")
-              .optJSONObject(0, new JSONObject())
-              .optInt("count", 0);
-      return new Result(count, "Patient");
+      JSONObject measureReport = fhirStore.evaluateMeasureList(measureId);
+      JsonNode mr = mapper.readTree(measureReport.toString());
+
+      int count = mr.at("/group/0/population/0/count").asInt();
+      Set<String> idSet = new HashSet<>();
+      if (count != 0) {
+        String listRef = mr.at("/group/0/population/0/subjectResults/reference").asText(null);
+        if (listRef != null && listRef.startsWith("List/")) {
+          String listId = listRef.substring("List/".length());
+
+          JSONObject listResource = fhirStore.getPatientList(listId);
+          JsonNode lr = mapper.readTree(listResource.toString());
+
+          for (JsonNode entry : lr.withArray("entry")) {
+            String ref = entry.at("/item/reference").asText(null);
+            if (ref != null && ref.startsWith("Patient/")) {
+              idSet.add(ref.substring("Patient/".length()));
+            }
+          }
+        }
+      }
+
+      return new Result(count, "Patient", idSet);
     } catch (Exception | NoSuchMethodError e) {
       return new Result(e.getMessage());
     }

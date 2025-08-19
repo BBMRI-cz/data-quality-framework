@@ -58,8 +58,7 @@ class DuplicateIdentifierCheck implements DataQualityCheck {
         }
       }
       log.info("Duplicate identifiers: {}", duplicateIds);
-      int count = duplicateIds.size();
-      return new Result(count, "Patient");
+      return Result.resultFromIdPaths(duplicateIds, "Patient");
     } catch (Exception e) {
       log.error("Error processing {}: {}", getName(), e.getMessage());
       return new Result(e.getMessage());

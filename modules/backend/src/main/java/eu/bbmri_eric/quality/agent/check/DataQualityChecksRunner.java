@@ -45,17 +45,20 @@ class DataQualityChecksRunner {
             ((StratifiedDataQualityCheck) dataQualityCheck).executeWithStratification(fhirStore);
         int count = results.size();
         for (Map.Entry<String, Result> result : results.entrySet()) {
+          String stratum = result.getKey();
           eventPublisher.publishEvent(
               new DataQualityCheckResult(
                   this,
                   dataQualityCheck.getId(),
                   dataQualityCheck.getName() + " (%s)".formatted(result.getKey()),
                   result.getValue().numberOfEntities(),
+                  result.getValue().idSet(),
                   result.getValue().error(),
                   LocalDateTime.now(),
                   dataQualityCheck.getWarningThreshold(),
                   dataQualityCheck.getErrorThreshold(),
-                  dataQualityCheck.getEpsilonBudget() / count));
+                  dataQualityCheck.getEpsilonBudget() / count,
+                  stratum));
         }
       } else {
         Result result = dataQualityCheck.execute(fhirStore);
@@ -65,11 +68,13 @@ class DataQualityChecksRunner {
                 dataQualityCheck.getId(),
                 dataQualityCheck.getName(),
                 result.numberOfEntities(),
+                result.idSet(),
                 result.error(),
                 LocalDateTime.now(),
                 dataQualityCheck.getWarningThreshold(),
                 dataQualityCheck.getErrorThreshold(),
-                dataQualityCheck.getEpsilonBudget()));
+                dataQualityCheck.getEpsilonBudget(),
+                null));
       }
     }
     eventPublisher.publishEvent(new FinishedReportEvent(this, event.getReportId()));

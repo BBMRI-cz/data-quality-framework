@@ -1,9 +1,15 @@
 package eu.bbmri_eric.quality.agent.report;
 
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 class Result {
@@ -21,6 +27,12 @@ class Result {
   private int errorThreshold;
   private float epsilon;
   private String error;
+  private String stratum;
+
+  @ElementCollection
+  @CollectionTable(name = "result_patient_ids", joinColumns = @JoinColumn(name = "result_id"))
+  @Column(name = "patient_id")
+  private Set<String> patients = new HashSet<>();
 
   protected Result() {}
 
@@ -32,7 +44,8 @@ class Result {
       int warningThreshold,
       int errorThreshold,
       float epsilon,
-      String error) {
+      String error,
+      String stratum) {
     this.checkName = checkName;
     this.checkId = checkId;
     this.rawValue = rawValue;
@@ -41,6 +54,7 @@ class Result {
     this.errorThreshold = errorThreshold;
     this.epsilon = epsilon;
     setError(error);
+    this.stratum = stratum;
   }
 
   public void setId(Long id) {
@@ -101,5 +115,17 @@ class Result {
     } else {
       this.error = error;
     }
+  }
+
+  public void setPatients(Set<String> patients) {
+    this.patients = patients;
+  }
+
+  public Set<String> getPatients() {
+    return patients;
+  }
+
+  public String getStratum() {
+    return stratum;
   }
 }

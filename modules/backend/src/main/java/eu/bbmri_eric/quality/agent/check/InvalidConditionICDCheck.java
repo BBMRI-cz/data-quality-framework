@@ -58,8 +58,7 @@ class InvalidConditionICDCheck implements DataQualityCheck {
         }
       }
 
-      int count = invalidIds.size();
-      return new Result(count, "Patient", null);
+      return Result.resultFromIdPaths(invalidIds, "Patient");
     } catch (Exception e) {
       System.err.println("Error processing " + name + ": " + e.getMessage());
       return new Result(e.getMessage());

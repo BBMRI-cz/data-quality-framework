@@ -2,9 +2,12 @@ package eu.bbmri_eric.quality.agent.check;
 
 import eu.bbmri_eric.quality.agent.fhir.FHIRStore;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Resource;
 
@@ -40,7 +43,7 @@ class SurvivalRateCheck implements StratifiedDataQualityCheck {
         totalCount++;
       }
 
-      return new Result(totalAlive, "Patient");
+      return new Result(totalAlive, "Patient", Collections.emptySet());
     } catch (Exception e) {
       System.err.println("Error processing " + name + ": " + e.getMessage());
       return new Result(e.getMessage());
@@ -55,9 +58,10 @@ class SurvivalRateCheck implements StratifiedDataQualityCheck {
           fhirStore.fetchAllResources("Patient", List.of("id", "gender", "deceased"));
       // Stratified by gender
       for (String gender : genders) {
-        int genderAlive = getGenderAlive(gender, patients);
+        Set<String> genderAliveIds = getGenderAlive(gender, patients);
+        int genderAlive = genderAliveIds.size();
 
-        results.put(gender, new Result(genderAlive, "Patient"));
+        results.put(gender, new Result(genderAlive, "Patient", genderAliveIds));
       }
       return results;
     } catch (Exception e) {
@@ -67,8 +71,8 @@ class SurvivalRateCheck implements StratifiedDataQualityCheck {
     }
   }
 
-  private static int getGenderAlive(String gender, List<Resource> patients) {
-    int genderAlive = 0;
+  private static Set<String> getGenderAlive(String gender, List<Resource> patients) {
+    Set<String> genderAliveIds = new HashSet<>();
     int genderCount = 0;
 
     for (Resource resource : patients) {
@@ -77,12 +81,12 @@ class SurvivalRateCheck implements StratifiedDataQualityCheck {
           patient.getGender() != null ? patient.getGender().toCode() : "")) {
         boolean deceased = patient.hasDeceased() || patient.hasDeceasedDateTimeType();
         if (!deceased) {
-          genderAlive++;
+          genderAliveIds.add(patient.getIdElement().getIdPart());
         }
         genderCount++;
       }
     }
-    return genderAlive;
+    return genderAliveIds;
   }
 
   @Override
@@ -112,6 +116,6 @@ class SurvivalRateCheck implements StratifiedDataQualityCheck {
 
   @Override
   public Long getId() {
-    return 3L; // Example ID, adjust as needed
+    return 1002L; // Example ID, adjust as needed
   }
 }

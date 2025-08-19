@@ -25,7 +25,7 @@ class ResultEventHandler {
 
     reports.forEach(
         report -> {
-          report.addResult(
+          Result result =
               new Result(
                   event.getCheckName(),
                   event.getCheckId(),
@@ -35,7 +35,13 @@ class ResultEventHandler {
                   event.getWarningThreshold(),
                   event.getErrorThreshold(),
                   event.getEpsilon(),
-                  event.getError()));
+                  event.getError(),
+                  event.getStratum());
+
+          result.setPatients(event.getPatientSet());
+
+          report.addResult(result);
+          reportRepository.save(report);
         });
   }
 }
