@@ -28,8 +28,8 @@
 
 <script setup>
 import {ref, onMounted, defineProps, defineExpose, watch} from 'vue'
-import axios from 'axios'
 import { Modal } from 'bootstrap'
+import {api} from '../js/api'
 
 const props = defineProps({
   patientId: {
@@ -63,7 +63,7 @@ watch(() => props.patientId, (newId) => {
 
 async function fetchPatientData(patientId) {
   try {
-    const response = await axios.get(`api/entities/Patient/${patientId}`)
+    const response = await api.get(`api/entities/Patient/${patientId}`)
     patientData.value = response.data
   } catch (error) {
     console.error('Failed to fetch patientData', error)

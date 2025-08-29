@@ -8,5 +8,6 @@ import 'bootstrap-icons/font/bootstrap-icons.css'
 // Optional: JavaScript for Bootstrap components (dropdowns, modals, etc.)
 import 'bootstrap'
 import App from './App.vue'
+import router from './js/index.js';
 
-createApp(App).mount('#app')
+createApp(App).use(router).mount('#app')

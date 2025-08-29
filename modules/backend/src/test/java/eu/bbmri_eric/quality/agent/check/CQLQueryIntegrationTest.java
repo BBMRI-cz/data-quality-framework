@@ -13,7 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 class CQLQueryIntegrationTest {
 
   public static final String CQLEndpoint = "/api/cql-queries";

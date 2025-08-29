@@ -27,7 +27,7 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Import(BlazeTestConfig.class)
+@Import({BlazeTestConfig.class, TestSecurityConfig.class})
 public class QualityCheckSystemTest {
 
   @LocalServerPort private int port;

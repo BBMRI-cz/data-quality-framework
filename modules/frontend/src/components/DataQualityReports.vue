@@ -139,7 +139,7 @@
 import { ref, onMounted, computed } from 'vue'
 import PatientModal from "./PatientModal.vue";
 import Pagination from "./Pagination.vue";
-import axios from 'axios'
+import {api} from "../js/api.js";
 
 const reports = ref([])
 const isGenerating = ref(false)
@@ -152,7 +152,7 @@ const modalPatientId = ref('')
 
 const fetchReports = async () => {
   try {
-    const { data } = await axios.get('/api/reports')
+    const { data } = await api.get('/api/reports')
     reports.value = data._embedded?.reports || []
   } catch (error) {
     console.error('Error fetching reports:', error)
@@ -163,12 +163,12 @@ const fetchReports = async () => {
 const generateReport = async () => {
   isGenerating.value = true
   try {
-    const { data } = await axios.post('/api/reports', {})
+    const { data } = await api.post('/api/reports', {})
     const reportUrl = data._links.self.href
     let report = data
     while (report.status === 'GENERATING') {
       await new Promise(resolve => setTimeout(resolve, 2000))
-      const poll = await axios.get(reportUrl)
+      const poll = await api.get(reportUrl)
       report = poll.data
     }
     await fetchReports()

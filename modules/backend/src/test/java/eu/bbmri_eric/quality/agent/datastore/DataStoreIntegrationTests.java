@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 public class DataStoreIntegrationTests {
 
   @Autowired private MockMvc mockMvc;
