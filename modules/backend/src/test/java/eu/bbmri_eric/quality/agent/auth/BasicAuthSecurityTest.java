@@ -2,7 +2,7 @@ package eu.bbmri_eric.quality.agent.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import eu.bbmri_eric.quality.agent.common.BasicAuthSecurity;
+import eu.bbmri_eric.quality.agent.common.SecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,7 +16,7 @@ class BasicAuthSecurityTest {
 
   @Autowired private SecurityFilterChain securityFilterChain;
 
-  @Autowired private BasicAuthSecurity basicAuthSecurity;
+  @Autowired private SecurityConfig basicAuthSecurity;
 
   @Test
   void exposesSecurityFilterChainBean() {
