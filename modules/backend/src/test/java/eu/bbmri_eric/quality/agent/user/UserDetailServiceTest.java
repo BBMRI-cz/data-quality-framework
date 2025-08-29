@@ -1,4 +1,4 @@
-package eu.bbmri_eric.quality.agent.auth;
+package eu.bbmri_eric.quality.agent.user;
 
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
@@ -7,9 +7,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import eu.bbmri_eric.quality.agent.user.User;
-import eu.bbmri_eric.quality.agent.user.UserDetailService;
-import eu.bbmri_eric.quality.agent.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
