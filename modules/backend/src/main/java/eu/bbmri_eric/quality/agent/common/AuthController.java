@@ -1,4 +1,4 @@
-package eu.bbmri_eric.quality.agent.auth;
+package eu.bbmri_eric.quality.agent.common;
 
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-  @GetMapping("/check")
+  @GetMapping("/login")
   public Map<String, Object> check(Authentication auth) {
     return Map.of(
         "username", auth.getName(),

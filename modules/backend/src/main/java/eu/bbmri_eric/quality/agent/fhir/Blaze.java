@@ -31,6 +31,7 @@ public class Blaze implements FHIRStore {
   private final IGenericClient client;
   private final RestTemplate restTemplate;
   private final RestTemplateBuilder restTemplateBuilder;
+  private final HttpHeaders headers;
 
   public Blaze(
       ApplicationProperties applicationProperties, RestTemplateBuilder restTemplateBuilder) {
@@ -51,6 +52,8 @@ public class Blaze implements FHIRStore {
             .basicAuthentication(
                 applicationProperties.getFhirUsername(), applicationProperties.getFhirPassword())
             .build();
+    headers = new HttpHeaders();
+    headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
   }
 
   public JSONObject libraryTemplate() {
@@ -150,10 +153,7 @@ public class Blaze implements FHIRStore {
   }
 
   public JSONObject postResource(String resourceType, JSONObject resource) {
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
     HttpEntity<String> entity = new HttpEntity<>(resource.toString(), headers);
-
     try {
       ResponseEntity<String> response =
           restTemplate.exchange(
@@ -199,8 +199,6 @@ public class Blaze implements FHIRStore {
     parameters.put(param3);
     payload.put("parameter", parameters);
 
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
     HttpEntity<String> entity = new HttpEntity<>(payload.toString(), headers);
 
     try {

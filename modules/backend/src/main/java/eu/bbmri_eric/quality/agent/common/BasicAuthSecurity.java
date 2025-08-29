@@ -1,4 +1,4 @@
-package eu.bbmri_eric.quality.agent.auth;
+package eu.bbmri_eric.quality.agent.common;
 
 import java.util.List;
 import org.springframework.context.annotation.Bean;

@@ -1,13 +1,12 @@
 import axios from 'axios';
 
 const state = {
-    authHeader: sessionStorage.getItem('authHeader') || null,
+    authHeader: null,
 };
 
 export function setAuth(username, password) {
-    const token = btoa(`${username}:${password}`);
+    const token = baseToken(username, password);
     state.authHeader = `Basic ${token}`;
-    sessionStorage.setItem('authHeader', state.authHeader);
     sessionStorage.setItem('username', username);
 }
 
@@ -51,8 +50,8 @@ api.interceptors.response.use(
 );
 
 export async function authenticate(username, password) {
-    const authHeader = `Basic ${btoa(`${username}:${password}`)}`;
-    const res = await api.get('/api/auth/check', {
+    const authHeader = `Basic ${baseToken(username, password)}`;
+    const res = await api.get('/api/auth/login', {
         headers: {
             Authorization: authHeader,
             Accept: 'application/json',
@@ -63,4 +62,8 @@ export async function authenticate(username, password) {
     if (res.status !== 200) {
         throw new Error('Invalid username or password');
     }
+}
+
+function baseToken(username, password) {
+    return btoa(`${username}:${password}`);
 }

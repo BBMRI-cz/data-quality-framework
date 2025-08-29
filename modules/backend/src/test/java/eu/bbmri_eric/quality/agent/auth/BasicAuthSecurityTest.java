@@ -2,6 +2,7 @@ package eu.bbmri_eric.quality.agent.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import eu.bbmri_eric.quality.agent.common.BasicAuthSecurity;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
