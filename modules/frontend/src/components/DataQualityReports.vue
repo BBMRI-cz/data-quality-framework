@@ -4,16 +4,16 @@
       <h2 class="mb-0">Data Quality Reports</h2>
       <button
           class="btn btn-success"
-          @click="generateReport"
-          :disabled="isGenerating"
+          @click="generateReportWithReset"
+          :disabled="reportStore.isGenerating"
       >
-        <span v-if="isGenerating" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-        {{ isGenerating ? 'Generating...' : 'Generate Report' }}
+        <span v-if="reportStore.isGenerating" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+        {{ reportStore.isGenerating ? 'Generating...' : 'Generate Report' }}
       </button>
     </div>
 
     <div class="card-body">
-      <div v-if="reports.length === 0 && !isGenerating" class="text-muted">
+      <div v-if="reportStore.reports.length === 0 && !reportStore.isGenerating" class="text-muted">
         No reports available. Please dataQualityCheck back later.
       </div>
 
@@ -139,10 +139,9 @@
 import { ref, onMounted, computed } from 'vue'
 import PatientModal from "./PatientModal.vue";
 import Pagination from "./Pagination.vue";
-import {api} from "../js/api.js";
+import reportStore from '../stores/reportStore.js'
 
-const reports = ref([])
-const isGenerating = ref(false)
+
 const showValues = ref(true) // Reactive state for toggling visibility
 const openIds = ref({})
 const pageSize = 60
@@ -150,36 +149,6 @@ const idPage = ref({})
 const patientModalRef = ref(null)
 const modalPatientId = ref('')
 
-const fetchReports = async () => {
-  try {
-    const { data } = await api.get('/api/reports')
-    reports.value = data._embedded?.reports || []
-  } catch (error) {
-    console.error('Error fetching reports:', error)
-    reports.value = []
-  }
-}
-
-const generateReport = async () => {
-  isGenerating.value = true
-  try {
-    const { data } = await api.post('/api/reports', {})
-    const reportUrl = data._links.self.href
-    let report = data
-    while (report.status === 'GENERATING') {
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      const poll = await api.get(reportUrl)
-      report = poll.data
-    }
-    await fetchReports()
-  } catch (error) {
-    console.error('Error generating report:', error)
-  } finally {
-    isGenerating.value = false
-    openIds.value = {}
-    idPage.value = {}
-  }
-}
 
 const toggleValues = () => {
   showValues.value = !showValues.value
@@ -219,13 +188,13 @@ function getCheckIdKey(result) {
 }
 
 const latestReport = computed(() => {
-  if (reports.value.length === 0) return null
-  return [...reports.value].sort((a, b) => new Date(b.generatedAt) - new Date(a.generatedAt))[0]
+  if (!reportStore.reports.length) return null
+  return [...reportStore.reports].sort((a, b) => new Date(b.generatedAt) - new Date(a.generatedAt))[0]
 })
 
 const otherReports = computed(() => {
-  if (reports.value.length <= 1) return []
-  return [...reports.value]
+  if (reportStore.reports.length <= 1) return []
+  return [...reportStore.reports]
       .sort((a, b) => new Date(b.generatedAt) - new Date(a.generatedAt))
       .slice(1)
 })
@@ -265,7 +234,17 @@ const getResultClass = (result) => {
   return 'bg-success bg-opacity-25'
 }
 
-onMounted(fetchReports)
+const generateReportWithReset = async () => {
+  await reportStore.generateReport()
+  openIds.value = {}
+  idPage.value = {}
+}
+
+
+onMounted(() => {
+  reportStore.fetchReports()
+})
+
 </script>
 
 <style scoped>

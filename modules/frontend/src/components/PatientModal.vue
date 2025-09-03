@@ -9,9 +9,9 @@
           <button type="button" class="btn-close" @click="_close" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <div v-if="patientData">
+          <div v-if="patientStore.patientData">
             <pre style="text-align: left;">
-              {{ JSON.stringify(patientData, null, 2) }}
+              {{ patientStore.patientData}}
             </pre>
           </div>
           <div v-else>
@@ -29,7 +29,7 @@
 <script setup>
 import {ref, onMounted, defineProps, defineExpose, watch} from 'vue'
 import { Modal } from 'bootstrap'
-import {api} from '../js/api'
+import patientStore from '../stores/patientStore.js'
 
 const props = defineProps({
   patientId: {
@@ -51,24 +51,16 @@ function _open() {
 function _close() {
   if (modalInstance) {
     modalInstance.hide()
-    patientData.value = null
+    patientStore.patientData.value = null
   }
 }
 
 watch(() => props.patientId, (newId) => {
   if (newId) {
-    fetchPatientData(newId)
+    patientStore.patientData.value = null
+    patientStore.fetchPatientData(newId)
   }
 })
-
-async function fetchPatientData(patientId) {
-  try {
-    const response = await api.get(`api/entities/Patient/${patientId}`)
-    patientData.value = response.data
-  } catch (error) {
-    console.error('Failed to fetch patientData', error)
-  }
-}
 
 onMounted(() => {
     modalInstance = new Modal(modalElement.value, {
