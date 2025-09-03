@@ -49,20 +49,17 @@ function logout() {
 </script>
 
 <style scoped>
-/* Full height layout */
 .app-container {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
 
-/* Shared background for title and main content */
 .title-section,
 .main-content {
   background-color: #e9ecef;
 }
 
-/* Centered title */
 .title-section {
   text-align: center;
   padding: 2rem 1rem;
@@ -74,13 +71,11 @@ function logout() {
   margin: 0;
 }
 
-/* Main content grows */
 .main-content {
   flex-grow: 1;
   padding: 2rem 1rem;
 }
 
-/* Footer styles */
 .footer {
   padding: 1rem 0;
 }

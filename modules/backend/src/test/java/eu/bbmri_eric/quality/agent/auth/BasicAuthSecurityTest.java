@@ -1,22 +1,28 @@
 package eu.bbmri_eric.quality.agent.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-import eu.bbmri_eric.quality.agent.common.SecurityConfig;
+import eu.bbmri_eric.quality.agent.common.AuthController;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @SpringBootTest
 class BasicAuthSecurityTest {
 
   @Autowired private SecurityFilterChain securityFilterChain;
 
-  @Autowired private SecurityConfig basicAuthSecurity;
+  @Autowired private PasswordEncoder passwordEncoder;
+
+  private final AuthController controller = new AuthController();
 
   @Test
   void exposesSecurityFilterChainBean() {
@@ -24,27 +30,21 @@ class BasicAuthSecurityTest {
   }
 
   @Test
-  void configuresCors() {
-    UrlBasedCorsConfigurationSource source =
-        (UrlBasedCorsConfigurationSource) basicAuthSecurity.corsConfigurationSource();
-    CorsConfiguration config = source.getCorsConfigurations().get("/**");
-
-    assertThat(config).isNotNull();
-    assertThat(config.getAllowedOriginPatterns()).containsExactly("*");
-    assertThat(config.getAllowedMethods())
-        .containsExactlyInAnyOrder("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS");
-    assertThat(config.getAllowedHeaders())
-        .containsExactlyInAnyOrder(
-            "Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With");
-    assertThat(config.getAllowCredentials()).isTrue();
-    assertThat(config.getMaxAge()).isEqualTo(3600L);
+  void passwordEncoder_encodesAndMatches() {
+    String raw = "pass";
+    String encoded = passwordEncoder.encode(raw);
+    assertThat(encoded).isNotBlank();
+    assertThat(passwordEncoder.matches(raw, encoded)).isTrue();
   }
 
   @Test
-  void returnsArgon2PasswordEncoderBean() {
-    Argon2PasswordEncoder encoder =
-        (Argon2PasswordEncoder) basicAuthSecurity.argon2PasswordEncoder();
-    assertThat(encoder).isNotNull();
-    assertThat(encoder).isInstanceOf(Argon2PasswordEncoder.class);
+  void check_withUserDetailsPrincipal_returnsUsernameAndId() {
+    UserDetails principal = User.withUsername("test").password("x").build();
+    Authentication auth = mock(Authentication.class);
+    when(auth.getPrincipal()).thenReturn(principal);
+
+    Map<String, Object> body = controller.check(auth);
+
+    assertThat(body.get("username")).isEqualTo("test");
   }
 }

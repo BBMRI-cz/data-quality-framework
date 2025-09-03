@@ -1,8 +1,8 @@
 package eu.bbmri_eric.quality.agent.common;
 
 import java.util.Map;
-import java.util.stream.Collectors;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -13,9 +13,17 @@ public class AuthController {
 
   @GetMapping("/login")
   public Map<String, Object> check(Authentication auth) {
-    return Map.of(
-        "username", auth.getName(),
-        "roles",
-            auth.getAuthorities().stream().map(a -> a.getAuthority()).collect(Collectors.toList()));
+    String username = null;
+
+    if (auth != null) {
+      Object principal = auth.getPrincipal();
+      if (principal instanceof UserDetails u) {
+        username = u.getUsername();
+      } else {
+        username = auth.getName();
+      }
+    }
+
+    return Map.of("username", username);
   }
 }

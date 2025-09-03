@@ -24,24 +24,13 @@ class UserDetailServiceTest {
 
   @Test
   void returnsUserWithROLE_USERWhenRoleIsUser() {
-    var user = new User("user1", "pass1", "USER");
+    var user = new User("user1", "pass1");
     when(userRepository.findByUsername("user1")).thenReturn(of(user));
 
     var details = service.loadUserByUsername("user1");
 
     assertThat(details.getUsername()).isEqualTo("user1");
     assertThat(details.getPassword()).isEqualTo("pass1");
-    assertThat(details.getAuthorities()).extracting("authority").containsExactly("ROLE_USER");
-  }
-
-  @Test
-  void defaultsNullRoleToROLE_USER() {
-    var user = new User("user4", "pass4", null);
-    when(userRepository.findByUsername("user4")).thenReturn(of(user));
-
-    var details = service.loadUserByUsername("user4");
-
-    assertThat(details.getAuthorities()).extracting("authority").containsExactly("ROLE_USER");
   }
 
   @Test

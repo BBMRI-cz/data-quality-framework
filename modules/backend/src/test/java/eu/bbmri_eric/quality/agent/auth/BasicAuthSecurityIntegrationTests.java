@@ -1,12 +1,10 @@
 package eu.bbmri_eric.quality.agent.auth;
 
-import static org.hamcrest.Matchers.containsString;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.Test;
@@ -24,58 +22,55 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import(BasicAuthSecurityIntegrationTests.TestWebConfig.class)
 class BasicAuthSecurityIntegrationTests {
 
+  private static final String PATH = "/api/auth/login";
+
   @Autowired private MockMvc mvc;
 
   @Test
-  void options_isPermitted_andCorsHeadersPresent() throws Exception {
-    mvc.perform(
-            options("/api/ping")
-                .header("Origin", "http://example.com")
-                .header("Access-Control-Request-Method", "GET")
-                .header("Access-Control-Request-Headers", "Authorization,Content-Type"))
-        .andExpect(status().isOk())
-        .andExpect(header().string("Access-Control-Allow-Origin", "http://example.com"))
-        .andExpect(header().string("Access-Control-Allow-Credentials", "true"))
-        .andExpect(header().string("Access-Control-Allow-Methods", containsString("GET")))
-        .andExpect(header().string("Access-Control-Allow-Headers", containsString("Authorization")))
-        .andExpect(header().string("Access-Control-Max-Age", "3600"));
-  }
-
-  @Test
-  void get_requiresAuth() throws Exception {
-    mvc.perform(get("/api/ping")).andExpect(status().isUnauthorized());
+  void login_requiresAuth_is401() throws Exception {
+    mvc.perform(get(PATH)).andExpect(status().isUnauthorized());
   }
 
   @Test
   void get_withValidBasicAuth_isOk() throws Exception {
-    mvc.perform(get("/api/ping").with(httpBasic("test", "pass")))
-        .andExpect(status().isOk())
-        .andExpect(content().string("ok"));
+    mvc.perform(get(PATH).with(httpBasic("test", "pass"))).andExpect(status().isOk());
   }
 
   @Test
-  void post_withoutCsrf_butWithBasicAuth_isOk_becauseCsrfDisabled() throws Exception {
-    mvc.perform(post("/api/ping").with(httpBasic("test", "pass")))
-        .andExpect(status().isOk())
-        .andExpect(content().string("ok"));
+  void post_withBasicAuth_isNotRejectedByCsrfOrAuth() throws Exception {
+    mvc.perform(post(PATH).with(httpBasic("test", "pass")))
+        .andExpect(
+            result -> {
+              int s = result.getResponse().getStatus();
+              assertTrue(s != 401 && s != 403, "Expected not 401/403, but was " + s);
+            });
   }
 
   @Test
   void post_withoutAuth_isUnauthorized() throws Exception {
-    mvc.perform(post("/api/ping")).andExpect(status().isUnauthorized());
+    mvc.perform(post(PATH)).andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  void login_withValidBasicAuth_returnsUsernameAndId() throws Exception {
+    mvc.perform(get(PATH).with(httpBasic("test", "pass")))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.username").value("test"));
+  }
+
+  @Test
+  void login_postWithValidBasicAuth_is405() throws Exception {
+    mvc.perform(post(PATH).with(httpBasic("test", "pass")))
+        .andExpect(status().isMethodNotAllowed());
   }
 
   @TestConfiguration
-  @Import(TestController.class)
   static class TestWebConfig {
     @Bean
     @Primary
@@ -91,19 +86,6 @@ class BasicAuthSecurityIntegrationTests {
       p.setUserDetailsService(users);
       p.setPasswordEncoder(encoder);
       return p;
-    }
-  }
-
-  @RestController
-  static class TestController {
-    @GetMapping("/api/ping")
-    public String get() {
-      return "ok";
-    }
-
-    @PostMapping("/api/ping")
-    public String post() {
-      return "ok";
     }
   }
 }

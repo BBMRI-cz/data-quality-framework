@@ -6,6 +6,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.LenientErrorHandler;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.api.ServerValidationModeEnum;
+import eu.bbmri_eric.quality.agent.user.TestUserSeedConfig;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,7 +19,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Import;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.web.client.HttpClientErrorException;
@@ -27,7 +33,7 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Import({BlazeTestConfig.class, TestSecurityConfig.class})
+@Import({BlazeTestConfig.class, TestUserSeedConfig.class})
 public class QualityCheckSystemTest {
 
   @LocalServerPort private int port;
@@ -75,7 +81,7 @@ public class QualityCheckSystemTest {
             "transaction-800.json",
             "transaction-900.json");
 
-    Path baseDir = Paths.get(System.getProperty("user.dir")); // data-quality-agent/
+    Path baseDir = Paths.get(System.getProperty("user.dir"));
     Path testDataDir = baseDir.resolve("../../test_data").normalize();
 
     for (String filename : resourceFiles) {
@@ -88,7 +94,7 @@ public class QualityCheckSystemTest {
 
       String json = Files.readString(filePath);
       HttpHeaders headers = new HttpHeaders();
-      headers.setContentType(MediaType.APPLICATION_JSON); // or application/fhir+json
+      headers.setContentType(MediaType.APPLICATION_JSON);
 
       HttpEntity<String> request = new HttpEntity<>(json, headers);
       String fhirUrl =
@@ -111,6 +117,7 @@ public class QualityCheckSystemTest {
     RestTemplate restTemplate = new RestTemplate();
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
+    headers.setBasicAuth("admin", "pass");
     HttpEntity<String> request = new HttpEntity<>("{}", headers);
 
     ResponseEntity<Map> response =
@@ -120,7 +127,6 @@ public class QualityCheckSystemTest {
     Map body = response.getBody();
     String reportUrl = (String) ((Map) ((Map) body.get("_links")).get("self")).get("href");
 
-    // poll report till generated
     Instant start = Instant.now();
     String status;
     Integer numberOfEntities = null;
@@ -130,7 +136,12 @@ public class QualityCheckSystemTest {
       }
       Thread.sleep(1000);
 
-      ResponseEntity<Map> reportResp = restTemplate.getForEntity(reportUrl, Map.class);
+      HttpHeaders headersGet = new HttpHeaders();
+      headersGet.setBasicAuth("admin", "pass");
+      HttpEntity<Void> requestGet = new HttpEntity<>(headersGet);
+
+      ResponseEntity<Map> reportResp =
+          restTemplate.exchange(reportUrl, HttpMethod.GET, requestGet, Map.class);
       Map report = reportResp.getBody();
       status = (String) report.get("status");
       numberOfEntities = (Integer) report.get("numberOfEntities");

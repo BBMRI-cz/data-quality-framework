@@ -4,15 +4,8 @@ const state = {
     authHeader: null,
 };
 
-export function setAuth(username, password) {
-    const token = baseToken(username, password);
-    state.authHeader = `Basic ${token}`;
-    sessionStorage.setItem('username', username);
-}
-
 export function clearAuth() {
     state.authHeader = null;
-    sessionStorage.removeItem('authHeader');
     sessionStorage.removeItem('username');
 }
 
@@ -59,9 +52,17 @@ export async function authenticate(username, password) {
         validateStatus: () => true,
         __skipAuth: true,
     });
+
     if (res.status !== 200) {
         throw new Error('Invalid username or password');
     }
+
+    state.authHeader = authHeader;
+
+    const serverUsername = res?.data?.username && String(res.data.username).trim()
+        ? res.data.username
+        : username;
+    sessionStorage.setItem('username', serverUsername);
 }
 
 function baseToken(username, password) {

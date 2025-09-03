@@ -42,7 +42,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { setAuth, authenticate } from '../../js/api.js'
+import { authenticate } from '../../js/api.js'
 
 const username = ref('')
 const password = ref('')
@@ -56,11 +56,7 @@ async function login() {
   error.value = ''
   loading.value = true
   try {
-    // Call backend to verify credentials first
     await authenticate(username.value, password.value)
-
-    // Only persist auth and navigate after success
-    setAuth(username.value, password.value)
 
     router.replace((route.query.redirect && String(route.query.redirect)) || '/')
   } catch (e) {

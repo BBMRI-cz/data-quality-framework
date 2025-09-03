@@ -7,7 +7,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "users")
+@Table(name = "user_account")
 class User {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -15,12 +15,10 @@ class User {
 
   private String username;
   private String password;
-  private String role;
 
-  protected User(String username, String password, String role) {
+  protected User(String username, String password) {
     this.username = username;
     this.password = password;
-    this.role = role;
   }
 
   protected User() {}
@@ -33,11 +31,11 @@ class User {
     return password;
   }
 
-  public String getRole() {
-    return role;
-  }
-
   public Long getId() {
     return id;
+  }
+
+  public void setPassword(String pass) {
+    this.password = pass;
   }
 }
