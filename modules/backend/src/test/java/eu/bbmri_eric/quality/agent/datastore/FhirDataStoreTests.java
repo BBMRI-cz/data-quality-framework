@@ -17,7 +17,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 
-class FhirDataStoreTest {
+class FhirDataStoreTests {
 
   @Test
   void returnsEntity_whenPatientFound() throws JSONException {

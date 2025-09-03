@@ -1,6 +1,7 @@
 package eu.bbmri_eric.quality.agent.datastore;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -34,7 +35,7 @@ public class DataStoreIntegrationTests {
   @Test
   void getEntity_returnsEntityJson() throws Exception {
     mockMvc
-        .perform(get("/api/entities/Patient/abc"))
+        .perform(get("/api/entities/Patient/abc").with(httpBasic("admin", "pass")))
         .andExpect(status().isOk())
         .andExpect(content().string(containsString("\"id\":\"abc\"")))
         .andExpect(content().string(containsString("\"type\":\"Patient\"")));
@@ -43,7 +44,7 @@ public class DataStoreIntegrationTests {
   @Test
   void getEntity_returnsErrorOnException() throws Exception {
     mockMvc
-        .perform(get("/api/entities/Patient/fail"))
+        .perform(get("/api/entities/Patient/fail").with(httpBasic("admin", "pass")))
         .andExpect(status().isInternalServerError())
         .andExpect(content().string(containsString("Failed to retrieve entity")));
   }

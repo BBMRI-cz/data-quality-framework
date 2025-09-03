@@ -93,8 +93,8 @@
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue';
-import axios from 'axios';
 import * as bootstrap from 'bootstrap';
+import {api} from "../js/api.js";
 
 const qualityChecks = ref([]);
 const currentCheck = reactive({
@@ -113,7 +113,7 @@ const url = '/api/cql-queries';
 
 const fetchChecks = async () => {
   try {
-    const { data } = await axios.get(url);
+    const { data } = await api.get(url);
     qualityChecks.value = data._embedded?.cqlChecks || [];
   } catch (error) {
     console.error('Error fetching qualityChecks:', error);
@@ -136,9 +136,9 @@ const openEditModal = (dataQualityCheck) => {
 const saveCheck = async () => {
   try {
     if (isEditing.value) {
-      await axios.put(`${url}/${currentCheck.id}`, currentCheck);
+      await api.put(`${url}/${currentCheck.id}`, currentCheck);
     } else {
-      await axios.post(url, currentCheck);
+      await api.post(url, currentCheck);
     }
     await fetchChecks();
     bootstrap.Modal.getInstance(document.getElementById('checkModal')).hide();
@@ -154,7 +154,7 @@ const confirmDelete = (id) => {
 
 const deleteCheck = async () => {
   try {
-    await axios.delete(`${url}/${deleteId.value}`);
+    await api.delete(`${url}/${deleteId.value}`);
     await fetchChecks();
     bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
   } catch (error) {

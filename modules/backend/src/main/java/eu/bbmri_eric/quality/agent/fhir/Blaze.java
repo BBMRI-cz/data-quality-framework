@@ -5,6 +5,7 @@ import ca.uhn.fhir.parser.LenientErrorHandler;
 import ca.uhn.fhir.rest.api.SummaryEnum;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.api.ServerValidationModeEnum;
+import ca.uhn.fhir.rest.client.interceptor.BasicAuthInterceptor;
 import eu.bbmri_eric.quality.agent.common.ApplicationProperties;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +15,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -27,14 +29,31 @@ public class Blaze implements FHIRStore {
   private final ApplicationProperties applicationProperties;
   private static final Logger log = LoggerFactory.getLogger(Blaze.class);
   private final IGenericClient client;
+  private final RestTemplate restTemplate;
+  private final RestTemplateBuilder restTemplateBuilder;
+  private final HttpHeaders headers;
 
-  public Blaze(ApplicationProperties applicationProperties) {
+  public Blaze(
+      ApplicationProperties applicationProperties, RestTemplateBuilder restTemplateBuilder) {
     this.applicationProperties = applicationProperties;
     FhirContext ctx =
         FhirContext.forR4()
             .setParserErrorHandler(new LenientErrorHandler().setErrorOnInvalidValue(false));
     ctx.getRestfulClientFactory().setServerValidationMode(ServerValidationModeEnum.NEVER);
     client = ctx.newRestfulGenericClient(applicationProperties.getBaseFHIRUrl());
+
+    client.registerInterceptor(
+        new BasicAuthInterceptor(
+            applicationProperties.getFhirUsername(), applicationProperties.getFhirPassword()));
+
+    this.restTemplateBuilder = restTemplateBuilder;
+    this.restTemplate =
+        restTemplateBuilder
+            .basicAuthentication(
+                applicationProperties.getFhirUsername(), applicationProperties.getFhirPassword())
+            .build();
+    headers = new HttpHeaders();
+    headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
   }
 
   public JSONObject libraryTemplate() {
@@ -134,11 +153,7 @@ public class Blaze implements FHIRStore {
   }
 
   public JSONObject postResource(String resourceType, JSONObject resource) {
-    RestTemplate restTemplate = new RestTemplate();
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
     HttpEntity<String> entity = new HttpEntity<>(resource.toString(), headers);
-
     try {
       ResponseEntity<String> response =
           restTemplate.exchange(
@@ -153,7 +168,6 @@ public class Blaze implements FHIRStore {
   }
 
   public JSONObject evaluateMeasure(String measureId) {
-    RestTemplate restTemplate = new RestTemplate();
     String url =
         applicationProperties.getBaseFHIRUrl()
             + "/Measure/"
@@ -168,7 +182,6 @@ public class Blaze implements FHIRStore {
   }
 
   public JSONObject evaluateMeasureList(String measureId) {
-    RestTemplate restTemplate = new RestTemplate();
     JSONObject payload = new JSONObject();
     payload.put("resourceType", "Parameters");
     JSONArray parameters = new JSONArray();
@@ -186,8 +199,6 @@ public class Blaze implements FHIRStore {
     parameters.put(param3);
     payload.put("parameter", parameters);
 
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
     HttpEntity<String> entity = new HttpEntity<>(payload.toString(), headers);
 
     try {
@@ -207,7 +218,6 @@ public class Blaze implements FHIRStore {
   }
 
   public JSONObject getPatientList(String listId) {
-    RestTemplate restTemplate = new RestTemplate();
     String url = applicationProperties.getBaseFHIRUrl() + "/List/" + listId;
     try {
       ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
@@ -218,7 +228,6 @@ public class Blaze implements FHIRStore {
   }
 
   public JSONObject getPatientEverything(String patientId) {
-    RestTemplate restTemplate = new RestTemplate();
     String url = applicationProperties.getBaseFHIRUrl() + "/Patient/" + patientId + "/$everything";
     try {
       ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
