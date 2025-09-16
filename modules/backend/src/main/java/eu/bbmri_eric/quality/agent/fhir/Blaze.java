@@ -326,7 +326,6 @@ public class Blaze implements FHIRStore {
     List<Resource> resources = new ArrayList<>();
     try {
 
-      // Build the search query with _elements parameter (not yet used in current code)
       Bundle bundle =
           client
               .search()
@@ -335,7 +334,6 @@ public class Blaze implements FHIRStore {
               .returnBundle(Bundle.class)
               .execute();
 
-      // Process the initial bundle
       while (bundle != null) {
         for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
           Resource resource = entry.getResource();
@@ -344,7 +342,6 @@ public class Blaze implements FHIRStore {
           }
         }
 
-        // Check for next page
         if (bundle.getLink(Bundle.LINK_NEXT) != null) {
           String nextUrl = bundle.getLink(Bundle.LINK_NEXT).getUrl();
           log.info("Fetching next page for {} from URL={}", resourceType, nextUrl);

@@ -259,14 +259,11 @@ const generateReportWithReset = async () => {
 }
 
 const checkServer = async () => {
-  try {
-    await Promise.all([
-      reportStore.fetchReports(),
-      healthStore.checkHealth()
-    ])
-  } catch (error) {
-    console.error('Error checking server:', error)
-  }
+
+  await Promise.all([
+    reportStore.fetchReports(),
+    healthStore.checkHealth()
+  ])
 }
 
 onMounted(() => {
