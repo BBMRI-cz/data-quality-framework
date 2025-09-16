@@ -24,4 +24,9 @@ public class FhirDataStore implements DataStore {
     }
     throw new IllegalArgumentException("Unsupported entity type: " + entityType);
   }
+
+  @Override
+  public JSONObject checkHealth() {
+    return fhirStore.checkHealth();
+  }
 }

@@ -123,6 +123,10 @@
             <artifactId>bcprov-jdk18on</artifactId>
             <version>1.81</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
+        </dependency>
     </dependencies>
     <dependencyManagement>
         <dependencies>

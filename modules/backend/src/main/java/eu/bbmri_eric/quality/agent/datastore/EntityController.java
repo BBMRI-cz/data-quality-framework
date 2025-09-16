@@ -35,4 +35,31 @@ public class EntityController {
           .body("Failed to retrieve entity: " + e.getMessage());
     }
   }
+
+  @GetMapping("health")
+  public ResponseEntity<String> checkHealth() {
+    try {
+      JSONObject healthResult = dataStore.checkHealth();
+
+      if ("UP".equals(healthResult.getString("status"))) {
+        return ResponseEntity.ok()
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(healthResult.toString());
+      } else {
+        return ResponseEntity.status(503)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(healthResult.toString());
+      }
+    } catch (Exception e) {
+      JSONObject errorResponse = new JSONObject();
+      errorResponse.put("status", "DOWN");
+      JSONObject details = new JSONObject();
+      details.put("error", e.getMessage());
+      errorResponse.put("details", details);
+
+      return ResponseEntity.status(503)
+          .contentType(MediaType.APPLICATION_JSON)
+          .body(errorResponse.toString());
+    }
+  }
 }

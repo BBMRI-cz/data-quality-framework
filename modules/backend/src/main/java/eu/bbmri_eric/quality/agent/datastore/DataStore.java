@@ -12,4 +12,6 @@ public interface DataStore {
    * @throws Exception If an error occurs while retrieving the entity.
    */
   JSONObject getEntity(String entityType, String id) throws Exception;
+
+  JSONObject checkHealth() throws Exception;
 }

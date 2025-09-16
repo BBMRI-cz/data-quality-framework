@@ -1,11 +1,28 @@
 <template>
   <div class="card mb-4">
+    <!-- Health Status Banner -->
+    <div v-if="healthStore.healthStatus"
+         :class="['alert', 'mb-0', healthStore.healthStatus.status === 'UP' ? 'alert-success' : 'alert-danger']">
+      <div class="d-flex justify-content-between align-items-center">
+        <span>
+          <i :class="['bi', healthStore.healthStatus.status === 'UP' ? 'bi-check-circle' : 'bi-exclamation-triangle']"></i>
+          FHIR Server: {{ healthStore.healthStatus.status }}
+          <span v-if="healthStore.healthStatus.details?.error"> - {{ healthStore.healthStatus.details.error }}</span>
+        </span>
+        <button class="btn btn-sm btn-outline-secondary"
+                @click="healthStore.checkHealth()"
+                :disabled="healthStore.isChecking">
+          <span v-if="healthStore.isChecking" class="spinner-border spinner-border-sm me-1"></span>
+          Refresh
+        </button>
+      </div>
+    </div>
     <div class="card-header d-flex justify-content-between align-items-center">
       <h2 class="mb-0">Data Quality Reports</h2>
       <button
           class="btn btn-success"
           @click="generateReportWithReset"
-          :disabled="reportStore.isGenerating"
+          :disabled="reportStore.isGenerating || healthStore.healthStatus?.status !== 'UP'"
       >
         <span v-if="reportStore.isGenerating" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
         {{ reportStore.isGenerating ? 'Generating...' : 'Generate Report' }}
@@ -140,6 +157,7 @@ import { ref, onMounted, computed } from 'vue'
 import PatientModal from "./PatientModal.vue";
 import Pagination from "./Pagination.vue";
 import reportStore from '../stores/reportStore.js'
+import healthStore from '../stores/healthStore.js'
 
 
 const showValues = ref(true) // Reactive state for toggling visibility
@@ -240,9 +258,19 @@ const generateReportWithReset = async () => {
   idPage.value = {}
 }
 
+const checkServer = async () => {
+  try {
+    await Promise.all([
+      reportStore.fetchReports(),
+      healthStore.checkHealth()
+    ])
+  } catch (error) {
+    console.error('Error checking server:', error)
+  }
+}
 
 onMounted(() => {
-  reportStore.fetchReports()
+  checkServer()
 })
 
 </script>

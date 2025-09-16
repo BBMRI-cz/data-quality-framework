@@ -25,9 +25,17 @@ public class DataStoreIntegrationTests {
   static class TestConfig {
     @Bean
     public DataStore dataStore() {
-      return (entityType, id) -> {
-        if ("fail".equals(id)) throw new RuntimeException("DB error");
-        return new JSONObject().put("id", id).put("type", entityType);
+      return new DataStore() {
+        @Override
+        public JSONObject getEntity(String entityType, String id) throws Exception {
+          if ("fail".equals(id)) throw new RuntimeException("DB error");
+          return new JSONObject().put("id", id).put("type", entityType);
+        }
+
+        @Override
+        public JSONObject checkHealth() throws Exception {
+          return new JSONObject().put("status", "healthy");
+        }
       };
     }
   }
