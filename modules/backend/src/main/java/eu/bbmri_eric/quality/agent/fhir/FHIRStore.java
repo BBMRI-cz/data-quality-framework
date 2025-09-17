@@ -102,4 +102,11 @@ public interface FHIRStore {
    * @return a list of FHIR resources matching the query
    */
   List<Resource> fetchAllResources(String resourceType, List<String> elements);
+
+  /**
+   * Checks the health status of the FHIR store.
+   *
+   * @return a JSON object containing health status and error details if any
+   */
+  JSONObject checkHealth();
 }

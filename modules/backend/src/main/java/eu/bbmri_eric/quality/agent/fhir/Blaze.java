@@ -7,8 +7,17 @@ import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.api.ServerValidationModeEnum;
 import ca.uhn.fhir.rest.client.interceptor.BasicAuthInterceptor;
 import eu.bbmri_eric.quality.agent.common.ApplicationProperties;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+import javax.net.ssl.SSLContext;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContexts;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Resource;
 import org.json.JSONArray;
@@ -20,6 +29,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -36,24 +46,80 @@ public class Blaze implements FHIRStore {
   public Blaze(
       ApplicationProperties applicationProperties, RestTemplateBuilder restTemplateBuilder) {
     this.applicationProperties = applicationProperties;
+    this.restTemplateBuilder = restTemplateBuilder;
+
+    this.restTemplate = createRestTemplate();
+
     FhirContext ctx =
         FhirContext.forR4()
             .setParserErrorHandler(new LenientErrorHandler().setErrorOnInvalidValue(false));
     ctx.getRestfulClientFactory().setServerValidationMode(ServerValidationModeEnum.NEVER);
+
+    try {
+      SSLContext sslContext =
+          SSLContexts.custom().loadTrustMaterial(null, (chain, authType) -> true).build();
+
+      SSLConnectionSocketFactory socketFactory =
+          new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE);
+
+      CloseableHttpClient httpClient =
+          HttpClients.custom().setSSLSocketFactory(socketFactory).build();
+
+      ctx.getRestfulClientFactory().setHttpClient(httpClient);
+
+    } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
+      log.error("Failed to create SSL context for FHIR client", e);
+      throw new RuntimeException(e);
+    }
+
     client = ctx.newRestfulGenericClient(applicationProperties.getBaseFHIRUrl());
 
     client.registerInterceptor(
         new BasicAuthInterceptor(
             applicationProperties.getFhirUsername(), applicationProperties.getFhirPassword()));
 
-    this.restTemplateBuilder = restTemplateBuilder;
-    this.restTemplate =
-        restTemplateBuilder
-            .basicAuthentication(
-                applicationProperties.getFhirUsername(), applicationProperties.getFhirPassword())
-            .build();
     headers = new HttpHeaders();
     headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+  }
+
+  private RestTemplate createRestTemplate() {
+    try {
+      SSLContext sslContext =
+          org.apache.hc.core5.ssl.SSLContextBuilder.create()
+              .loadTrustMaterial(null, (chain, authType) -> true)
+              .build();
+
+      org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory csf =
+          new org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory(
+              sslContext, org.apache.hc.client5.http.ssl.NoopHostnameVerifier.INSTANCE);
+
+      org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager connectionManager =
+          org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder.create()
+              .setSSLSocketFactory(csf)
+              .build();
+
+      org.apache.hc.client5.http.impl.classic.CloseableHttpClient httpClient =
+          org.apache.hc.client5.http.impl.classic.HttpClients.custom()
+              .setConnectionManager(connectionManager)
+              .build();
+
+      HttpComponentsClientHttpRequestFactory requestFactory =
+          new HttpComponentsClientHttpRequestFactory();
+      requestFactory.setHttpClient(httpClient);
+
+      return restTemplateBuilder
+          .requestFactory(() -> requestFactory)
+          .basicAuthentication(
+              applicationProperties.getFhirUsername(), applicationProperties.getFhirPassword())
+          .build();
+
+    } catch (Exception e) {
+      log.warn("Failed to create SSL-configured RestTemplate, falling back to default", e);
+      return restTemplateBuilder
+          .basicAuthentication(
+              applicationProperties.getFhirUsername(), applicationProperties.getFhirPassword())
+          .build();
+    }
   }
 
   public JSONObject libraryTemplate() {
@@ -259,7 +325,7 @@ public class Blaze implements FHIRStore {
   public List<Resource> fetchAllResources(String resourceType, List<String> elements) {
     List<Resource> resources = new ArrayList<>();
     try {
-      // Build the search query with _elements parameter
+
       Bundle bundle =
           client
               .search()
@@ -268,7 +334,6 @@ public class Blaze implements FHIRStore {
               .returnBundle(Bundle.class)
               .execute();
 
-      // Process the initial bundle
       while (bundle != null) {
         for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
           Resource resource = entry.getResource();
@@ -277,9 +342,18 @@ public class Blaze implements FHIRStore {
           }
         }
 
-        // Check for next page
         if (bundle.getLink(Bundle.LINK_NEXT) != null) {
-          bundle = client.loadPage().next(bundle).execute();
+          String nextUrl = bundle.getLink(Bundle.LINK_NEXT).getUrl();
+          log.info("Fetching next page for {} from URL={}", resourceType, nextUrl);
+          int fhirIndex = nextUrl.indexOf("/fhir");
+          if (fhirIndex != -1) {
+            String suffix = nextUrl.substring(fhirIndex + "/fhir".length());
+            nextUrl = applicationProperties.getBaseFHIRUrl() + suffix;
+          }
+          bundle = client.loadPage().byUrl(nextUrl).andReturnBundle(Bundle.class).execute();
+          log.info(
+              "Next page bundle received: entries={}",
+              bundle.getEntry() != null ? bundle.getEntry().size() : 0);
         } else {
           bundle = null;
         }
@@ -289,6 +363,21 @@ public class Blaze implements FHIRStore {
       throw new RuntimeException(
           "Error fetching resources of type " + resourceType + ": " + e.getMessage(), e);
     }
+  }
+
+  public JSONObject checkHealth() {
+    JSONObject healthStatus = new JSONObject();
+    try {
+      restTemplate.getForEntity(applicationProperties.getBaseFHIRUrl() + "/metadata", String.class);
+      healthStatus.put("status", "UP");
+      healthStatus.put("details", JSONObject.NULL);
+    } catch (Exception e) {
+      healthStatus.put("status", "DOWN");
+      JSONObject details = new JSONObject();
+      details.put("error", e.getMessage());
+      healthStatus.put("details", details);
+    }
+    return healthStatus;
   }
 
   protected IGenericClient getClient() {
