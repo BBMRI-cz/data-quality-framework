@@ -27,6 +27,13 @@ Run the application, specifying the FHIR server URL:
 docker run -d --name quality-agent -p 8081:8081 -e EU_BBMRI_ERIC_QUALITY_AGENT_FHIR_URL=<fhir_server_url> ghcr.io/bbmri-cz/data-quality-agent:latest
 ```
 
+If the FHIR server requires authentication, include the username and password:
+
+```shell
+docker run -d --name quality-agent -p 8081:8081 -e EU_BBMRI_ERIC_QUALITY_AGENT_FHIR_URL=<fhir_server_url> -e EU_BBMRI_ERIC_QUALITY_AGENT_FHIR_USERNAME=<fhir_username> -e EU_BBMRI_ERIC_QUALITY_AGENT_FHIR_PASSWORD=<fhir_password> ghcr.io/bbmri-cz/data-quality-agent:latest
+```
+
+
 Access the dashboard at http://localhost:8081.
 Setup a FHIR store.
 We recommend using the [Blaze store](https://github.com/samply/blaze) along with its suite of support tools such as [Blazectl](https://github.com/samply/blazectl).
@@ -48,8 +55,11 @@ Compatible test data can be found in the _test_data_ directory. This synthetic t
 
 ## Environment Variables:
 
-| EU_BBMRI_ERIC_QUALITY_AGENT_FHIR_URL | URL of the FHIR server (e.g., http://fhir.example.com or http://fhir-store:8080 for a local container). |
-|--------------------------------------|---------------------------------------------------------------------------------------------------------|
+| Variable Name                              | Description                                                                                                   |
+|--------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| EU_BBMRI_ERIC_QUALITY_AGENT_FHIR_URL       | URL of the FHIR server (e.g., http://fhir.example.com or http://fhir-store:8080/fhir/ for a local container). |
+| EU_BBMRI_ERIC_QUALITY_AGENT_FHIR_USERNAME  | Username for the FHIR server.                                                                                 |
+| EU_BBMRI_ERIC_QUALITY_AGENT_FHIR_PASSWORD  | Password for the FHIR server.                                                                                 |
 
 ## Troubleshooting
 
