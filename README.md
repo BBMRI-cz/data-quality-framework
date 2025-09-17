@@ -12,7 +12,8 @@ Key capabilities (design goals):
 - Local dashboard for exploration & validation
 - Secure, configurable remote publishing workflow (opt‑in)
 
-> NOTE: While the architecture is data‑agnostic, the first production connector targets clinical data exposed via HL7
+> [!NOTE]  
+> While the architecture is data‑agnostic, the first production connector targets clinical data exposed via HL7
 > FHIR using the BBMRI.de profiles.
 > Additional connectors (e.g. OMOP, relational SQL schemas, delimited files, other research / biobank formats) will be
 > added based on emerging use cases.
@@ -54,6 +55,7 @@ docker run -d --name quality-agent --network quality -p 8081:8081 \
 
 Open the dashboard: http://localhost:8081
 
+> [!NOTE]  
 > Default dashboard credentials: `admin / adminpass` (change in production).
 
 Optional: Load bundled synthetic test data (requires `blazectl`). See: https://github.com/samply/blazectl
