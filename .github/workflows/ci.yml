@@ -1,11 +1,14 @@
 name: CI/CD Pipeline
 on:
+
   push:
     branches:
       - master
   pull_request:
     branches:
       - master
+    tags:
+      - 'v*.*.*'
 jobs:
   lint:
     name: Lint
