@@ -344,16 +344,12 @@ public class Blaze implements FHIRStore {
 
         if (bundle.getLink(Bundle.LINK_NEXT) != null) {
           String nextUrl = bundle.getLink(Bundle.LINK_NEXT).getUrl();
-          log.info("Fetching next page for {} from URL={}", resourceType, nextUrl);
           int fhirIndex = nextUrl.indexOf("/fhir");
           if (fhirIndex != -1) {
             String suffix = nextUrl.substring(fhirIndex + "/fhir".length());
             nextUrl = applicationProperties.getBaseFHIRUrl() + suffix;
           }
           bundle = client.loadPage().byUrl(nextUrl).andReturnBundle(Bundle.class).execute();
-          log.info(
-              "Next page bundle received: entries={}",
-              bundle.getEntry() != null ? bundle.getEntry().size() : 0);
         } else {
           bundle = null;
         }
