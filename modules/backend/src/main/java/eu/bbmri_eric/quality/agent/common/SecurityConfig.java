@@ -24,7 +24,6 @@ public class SecurityConfig {
             auth ->
                 auth.requestMatchers(HttpMethod.OPTIONS, "/**")
                     .permitAll()
-                    // Allow access to static resources and index.html
                     .requestMatchers("/", "/index.html", "/assets/**", "/favicon2.ico", "/login")
                     .permitAll()
                     .anyRequest()
