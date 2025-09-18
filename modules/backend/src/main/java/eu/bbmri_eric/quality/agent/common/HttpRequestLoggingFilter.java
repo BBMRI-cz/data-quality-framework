@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+/** HTTP requests logger */
 @Component
 class HttpRequestLoggingFilter extends OncePerRequestFilter {
 
