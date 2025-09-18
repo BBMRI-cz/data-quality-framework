@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 /** Start up message printer */
 @Component
 public class ApplicationReadyListener implements ApplicationListener<ApplicationReadyEvent> {
+  public static final String ANSI_GREEN = "\u001B[32m";
   private static final Logger logger = LoggerFactory.getLogger(ApplicationReadyListener.class);
 
   @Override
@@ -25,6 +26,6 @@ public class ApplicationReadyListener implements ApplicationListener<Application
                 "✨ The Force is with us. App startup complete.",
                 "🌠 App ready. Preparing to jump to hyperspace."));
     Collections.shuffle(messages);
-    logger.info(messages.getFirst());
+    System.out.println(ANSI_GREEN + messages.getFirst());
   }
 }
