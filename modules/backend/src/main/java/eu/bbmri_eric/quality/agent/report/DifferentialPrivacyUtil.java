@@ -23,10 +23,14 @@ public class DifferentialPrivacyUtil {
    * @return a noisy version of the count, rounded to the nearest integer and clamped at 0
    */
   public static int addLaplaceNoise(int count, double epsilon, double sensitivity) {
-    double scale = sensitivity / epsilon;
-    double noise = generateLaplaceNoise(scale);
-    double noisyCount = count + noise;
-    return Math.max(0, (int) Math.round(noisyCount));
+    if(count != 0){
+      double scale = sensitivity / epsilon;
+      double noise = generateLaplaceNoise(scale);
+      double noisyCount = count + noise;
+      return Math.max(0, (int) Math.round(noisyCount));
+    }else{
+      return 0;
+    }
   }
 
   /**
