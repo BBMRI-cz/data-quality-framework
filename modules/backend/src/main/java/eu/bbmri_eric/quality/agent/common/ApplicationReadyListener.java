@@ -13,7 +13,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class ApplicationReadyListener implements ApplicationListener<ApplicationReadyEvent> {
   public static final String ANSI_GREEN = "\u001B[32m";
-  private static final Logger logger = LoggerFactory.getLogger(ApplicationReadyListener.class);
 
   @Override
   public void onApplicationEvent(ApplicationReadyEvent event) {
