@@ -15,3 +15,14 @@ CREATE TABLE user_account
 
 INSERT INTO user_account (id, username, password) VALUES
 (102,'admin', '$argon2id$v=19$m=19456,t=2,p=1$SQGK8wXpQw5b+qjuq/Ih1A$WP87YsUIErq6O+7rMk65U0cH4OHBRdrnM3yIG50gwpE');
+
+CREATE TABLE event_publication
+(
+    id               UUID NOT NULL,
+    completion_date  TIMESTAMP,
+    event_type       VARCHAR(512) NOT NULL,
+    listener_id      VARCHAR(512) NOT NULL,
+    publication_date TIMESTAMP NOT NULL,
+    serialized_event VARCHAR(4000) NOT NULL,
+    PRIMARY KEY (id)
+);

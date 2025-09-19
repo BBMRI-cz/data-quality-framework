@@ -84,6 +84,14 @@ docker run -d --name quality-agent -p 8081:8081 \
   ghcr.io/bbmri-cz/data-quality-agent:latest
 ```
 
+### Docker Compose Option
+
+For persistent data storage and easier configuration management, use Docker Compose:
+```shell
+FHIR_PASSWORD=<PASSWORD> \ 
+FHIR_URL=https://host.docker.internal/bbmri-localdatamanagement/fhir \
+docker compose up -d --build
+```
 ### Accessing the dashboard
 
 Remote server access:

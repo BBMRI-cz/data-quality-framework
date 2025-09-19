@@ -1,0 +1,23 @@
+services:
+  quality-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    volumes:
+      - h2-data:/app/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:h2:file:/app/data/agent_db;DB_CLOSE_DELAY=-1;AUTO_SERVER=TRUE
+      - SPRING_DATASOURCE_USERNAME=admin
+      - SPRING_DATASOURCE_PASSWORD=admin
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=validate
+      - SPRING_FLYWAY_ENABLED=true
+      - EU_BBMRI_ERIC_QUALITY_AGENT_FHIR_URL=${FHIR_URL:-http://host.docker.internal/fhir/}
+      - EU_BBMRI_ERIC_QUALITY_AGENT_FHIR_USERNAME=${FHIR_USERNAME:-bbmri}
+      - EU_BBMRI_ERIC_QUALITY_AGENT_FHIR_PASSWORD=${FHIR_PASSWORD:-fhirpass}
+volumes:
+  h2-data:
+    driver: local

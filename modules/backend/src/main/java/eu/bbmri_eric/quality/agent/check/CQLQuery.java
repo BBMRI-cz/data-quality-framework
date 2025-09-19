@@ -7,6 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.util.Base64;
@@ -24,7 +25,9 @@ class CQLQuery implements DataQualityCheck {
 
   @NotNull private String name;
   @NotBlank private String description;
-  @NotNull private String query;
+
+  @NotNull @Lob private String query;
+
   private int warningThreshold = 10;
   private int errorThreshold = 30;
   private float epsilonBudget = 1.0f;
