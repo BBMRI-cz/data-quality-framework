@@ -112,11 +112,11 @@ Then browse to: http://localhost:8081
 
 Available environment variables and defaults:
 
-| Environment Variable                        | Description                                      | Default Value                |
-|---------------------------------------------|--------------------------------------------------|------------------------------|
-| `EU_BBMRI_ERIC_QUALITY_AGENT_FHIR_URL`      | Base URL of the target FHIR server               | `http://localhost:8080/fhir` |
-| `EU_BBMRI_ERIC_QUALITY_AGENT_FHIR_USERNAME` | Username for authenticating with the FHIR server | `bbmri`                      |
-| `EU_BBMRI_ERIC_QUALITY_AGENT_FHIR_PASSWORD` | Password for authenticating with the FHIR server | `fhirpass`                   |
+| Environment Variable | Description                                      | Default Value                |
+|----------------------|--------------------------------------------------|------------------------------|
+| `FHIR_URL`           | Base URL of the target FHIR server               | `http://localhost:8080/fhir` |
+| `FHIR_USERNAME`      | Username for authenticating with the FHIR server | `bbmri`                      |
+| `FHIR_PASSWORD`      | Password for authenticating with the FHIR server | `fhirpass`                   |
 
 ### Security / Hardening Notes
 

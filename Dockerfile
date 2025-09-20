@@ -17,6 +17,7 @@ RUN mvn package --quiet -DskipTests
 
 FROM eclipse-temurin:21-jre-jammy@sha256:daebe9ae03913ec4b2dadd8df60f3ea3df1aa6108fecd5d324d000bdd5c4c816
 WORKDIR /app
+RUN mkdir -p /data/h2
 COPY --from=backend-builder /app/backend/target/*.jar app.jar
 EXPOSE 8081
 ENTRYPOINT ["java", "-jar", "app.jar"]
