@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.agent.user;
 
+import static org.hamcrest.core.Is.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -26,21 +27,22 @@ public class UserControllerTest {
   @Test
   void login_correctAuth_ok() throws Exception {
     mockMvc
-        .perform(get("/login").header(HttpHeaders.AUTHORIZATION, basicAuth("admin", "adminpass")))
+        .perform(
+            get("/api/login").header(HttpHeaders.AUTHORIZATION, basicAuth("admin", "adminpass")))
         .andExpect(status().isOk())
-        .andExpect(content().string("Hello, admin"));
+        .andExpect(jsonPath("$.username", is("admin")));
   }
 
   @Test
   void login_wrongPassword_unauthorized() throws Exception {
     mockMvc
         .perform(
-            get("/login").header(HttpHeaders.AUTHORIZATION, basicAuth("user", "wrongpassword")))
+            get("/api/login").header(HttpHeaders.AUTHORIZATION, basicAuth("user", "wrongpassword")))
         .andExpect(status().isUnauthorized());
   }
 
   @Test
   void login_missingAuth_unauthorized() throws Exception {
-    mockMvc.perform(get("/login")).andExpect(status().isUnauthorized());
+    mockMvc.perform(get("/api/login")).andExpect(status().isUnauthorized());
   }
 }
