@@ -1,7 +1,6 @@
 package eu.bbmri_eric.quality.agent.datastore;
 
 import static org.hamcrest.Matchers.containsString;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -13,11 +12,13 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-public class DataStoreIntegrationTests {
+@WithUserDetails("admin")
+public class DataStoreIntegrationTest {
 
   @Autowired private MockMvc mockMvc;
 
@@ -43,7 +44,7 @@ public class DataStoreIntegrationTests {
   @Test
   void getEntity_returnsEntityJson() throws Exception {
     mockMvc
-        .perform(get("/api/entities/Patient/abc").with(httpBasic("admin", "pass")))
+        .perform(get("/api/entities/Patient/abc"))
         .andExpect(status().isOk())
         .andExpect(content().string(containsString("\"id\":\"abc\"")))
         .andExpect(content().string(containsString("\"type\":\"Patient\"")));
@@ -52,7 +53,7 @@ public class DataStoreIntegrationTests {
   @Test
   void getEntity_returnsErrorOnException() throws Exception {
     mockMvc
-        .perform(get("/api/entities/Patient/fail").with(httpBasic("admin", "pass")))
+        .perform(get("/api/entities/Patient/fail"))
         .andExpect(status().isInternalServerError())
         .andExpect(content().string(containsString("Failed to retrieve entity")));
   }

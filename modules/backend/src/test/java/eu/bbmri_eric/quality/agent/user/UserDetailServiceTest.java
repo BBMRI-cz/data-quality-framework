@@ -1,43 +1,31 @@
 package eu.bbmri_eric.quality.agent.user;
 
-import static java.util.Optional.empty;
-import static java.util.Optional.of;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
+@SpringBootTest
 class UserDetailServiceTest {
 
-  private UserRepository userRepository;
-  private UserDetailService service;
+  @Autowired private UserRepository userRepository;
 
-  @BeforeEach
-  void setUp() {
-    userRepository = mock(UserRepository.class);
-    service = new UserDetailService(userRepository);
-  }
+  @Autowired private UserDetailService service;
 
   @Test
-  void returnsUserWithROLE_USERWhenRoleIsUser() {
-    var user = new User("user1", "pass1");
-    when(userRepository.findByUsername("user1")).thenReturn(of(user));
-
+  void loadsUser_withROLE_USER_whenRoleIsUser() {
+    userRepository.save(new User("user1", "pass1"));
     var details = service.loadUserByUsername("user1");
-
     assertThat(details.getUsername()).isEqualTo("user1");
     assertThat(details.getPassword()).isEqualTo("pass1");
   }
 
   @Test
-  void throwsWhenUserNotFound() {
-    when(userRepository.findByUsername("user5")).thenReturn(empty());
-
-    assertThatThrownBy(() -> service.loadUserByUsername("user5"))
+  void throwsUsernameNotFound_whenUserMissing() {
+    assertThatThrownBy(() -> service.loadUserByUsername("absent"))
         .isInstanceOf(UsernameNotFoundException.class);
   }
 }

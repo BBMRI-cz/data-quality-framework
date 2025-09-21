@@ -58,7 +58,7 @@ async function login() {
   try {
     await authenticate(username.value, password.value)
 
-    router.replace((route.query.redirect && String(route.query.redirect)) || '/')
+    await router.replace((route.query.redirect && String(route.query.redirect)) || '/')
   } catch (e) {
     error.value = e?.message || 'Invalid username or password'
   } finally {

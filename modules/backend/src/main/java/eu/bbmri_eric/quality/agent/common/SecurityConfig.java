@@ -11,12 +11,13 @@ import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
+/** Application wide security configuration */
 @Configuration
 @EnableWebSecurity
-public class SecurityConfig {
+class SecurityConfig {
 
   @Bean
-  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+  SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http.csrf(AbstractHttpConfigurer::disable)
         .cors(Customizer.withDefaults())
         .httpBasic(Customizer.withDefaults())
@@ -33,7 +34,7 @@ public class SecurityConfig {
   }
 
   @Bean
-  public PasswordEncoder argon2PasswordEncoder() {
+  PasswordEncoder argon2PasswordEncoder() {
     return new Argon2PasswordEncoder(16, 32, 1, 19456, 2);
   }
 }

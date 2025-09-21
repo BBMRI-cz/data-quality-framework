@@ -6,7 +6,6 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.LenientErrorHandler;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.api.ServerValidationModeEnum;
-import eu.bbmri_eric.quality.agent.user.TestUserSeedConfig;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -33,7 +32,7 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Import({BlazeTestConfig.class, TestUserSeedConfig.class})
+@Import({BlazeTestConfig.class})
 public class QualityCheckSystemTest {
 
   @LocalServerPort private int port;
@@ -117,7 +116,7 @@ public class QualityCheckSystemTest {
     RestTemplate restTemplate = new RestTemplate();
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
-    headers.setBasicAuth("admin", "pass");
+    headers.setBasicAuth("admin", "adminpass");
     HttpEntity<String> request = new HttpEntity<>("{}", headers);
 
     ResponseEntity<Map> response =
@@ -137,7 +136,7 @@ public class QualityCheckSystemTest {
       Thread.sleep(1000);
 
       HttpHeaders headersGet = new HttpHeaders();
-      headersGet.setBasicAuth("admin", "pass");
+      headersGet.setBasicAuth("admin", "adminpass");
       HttpEntity<Void> requestGet = new HttpEntity<>(headersGet);
 
       ResponseEntity<Map> reportResp =

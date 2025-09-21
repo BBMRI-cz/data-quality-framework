@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.http.ResponseEntity;
 
-class DataStoreTests {
+class DataStoreTest {
 
   @Test
   void getEntity_success() throws Exception {

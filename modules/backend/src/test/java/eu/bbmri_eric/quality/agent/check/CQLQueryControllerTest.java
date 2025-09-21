@@ -1,24 +1,21 @@
 package eu.bbmri_eric.quality.agent.check;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.bbmri_eric.quality.agent.user.TestUserSeedConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest
-@Import(TestUserSeedConfig.class)
-@AutoConfigureMockMvc()
-class CQLQueryIntegrationTest {
+@AutoConfigureMockMvc
+class CQLQueryControllerTest {
 
   public static final String CQLEndpoint = "/api/cql-queries";
 
@@ -27,6 +24,7 @@ class CQLQueryIntegrationTest {
   @Autowired private ObjectMapper objectMapper;
 
   @Test
+  @WithUserDetails("admin")
   void post_validCQLQuery_createdAndRetrievable() throws Exception {
     CQLQuery check = new CQLQuery();
     check.setName("Test CQL");
@@ -37,7 +35,6 @@ class CQLQueryIntegrationTest {
         mockMvc
             .perform(
                 post(CQLEndpoint)
-                    .with(httpBasic("admin", "pass"))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(check)))
             .andExpect(status().isCreated())
@@ -48,7 +45,7 @@ class CQLQueryIntegrationTest {
     assertThat(location).isNotNull();
 
     mockMvc
-        .perform(get(location).with(httpBasic("admin", "pass")))
+        .perform(get(location))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.name").value("Test CQL"))
         .andExpect(jsonPath("$.description").value("Checks patients with diabetes"))
@@ -56,6 +53,7 @@ class CQLQueryIntegrationTest {
   }
 
   @Test
+  @WithUserDetails("admin")
   void put_existingCQLQuery_updatedSuccessfully() throws Exception {
     CQLQuery check = new CQLQuery();
     check.setName("UpdateTest");
@@ -66,7 +64,6 @@ class CQLQueryIntegrationTest {
         mockMvc
             .perform(
                 post(CQLEndpoint)
-                    .with(httpBasic("admin", "pass"))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(check)))
             .andReturn()
@@ -78,17 +75,17 @@ class CQLQueryIntegrationTest {
     mockMvc
         .perform(
             put(location)
-                .with(httpBasic("admin", "pass"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(check)))
         .andExpect(status().isNoContent());
 
     mockMvc
-        .perform(get(location).with(httpBasic("admin", "pass")))
+        .perform(get(location))
         .andExpect(jsonPath("$.description").value("Updated Description"));
   }
 
   @Test
+  @WithUserDetails("admin")
   void delete_existingCQLQuery_deletedSuccessfully() throws Exception {
     CQLQuery check = new CQLQuery();
     check.setName("DeleteTest");
@@ -99,23 +96,19 @@ class CQLQueryIntegrationTest {
         mockMvc
             .perform(
                 post(CQLEndpoint)
-                    .with(httpBasic("admin", "pass"))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(check)))
             .andReturn()
             .getResponse()
             .getHeader("Location");
 
-    mockMvc
-        .perform(delete(location).with(httpBasic("admin", "pass")))
-        .andExpect(status().isNoContent());
+    mockMvc.perform(delete(location)).andExpect(status().isNoContent());
 
-    mockMvc
-        .perform(get(location).with(httpBasic("admin", "pass")))
-        .andExpect(status().isNotFound());
+    mockMvc.perform(get(location)).andExpect(status().isNotFound());
   }
 
   @Test
+  @WithUserDetails("admin")
   void post_invalidCQLQuery_missingFields_returnsBadRequest() throws Exception {
     CQLQuery invalidCheck = new CQLQuery();
     invalidCheck.setName("Invalid Query");
@@ -123,13 +116,13 @@ class CQLQueryIntegrationTest {
     mockMvc
         .perform(
             post(CQLEndpoint)
-                .with(httpBasic("admin", "pass"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(invalidCheck)))
         .andExpect(status().isBadRequest());
   }
 
   @Test
+  @WithUserDetails("admin")
   void put_nonExistingCQLQuery_returnsNotFound() throws Exception {
     CQLQuery check = new CQLQuery();
     check.setId(9999L);
@@ -140,23 +133,20 @@ class CQLQueryIntegrationTest {
     mockMvc
         .perform(
             put(CQLEndpoint + "/99999")
-                .with(httpBasic("admin", "pass"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(check)))
         .andExpect(status().isNotFound());
   }
 
   @Test
+  @WithUserDetails("admin")
   void delete_nonExistingCQLQuery_returnsNotFound() throws Exception {
-    mockMvc
-        .perform(delete(CQLEndpoint + "/9999").with(httpBasic("admin", "pass")))
-        .andExpect(status().isNotFound());
+    mockMvc.perform(delete(CQLEndpoint + "/9999")).andExpect(status().isNotFound());
   }
 
   @Test
+  @WithUserDetails("admin")
   void get_malformedId_returnsBadRequest() throws Exception {
-    mockMvc
-        .perform(get(CQLEndpoint + "/abc").with(httpBasic("admin", "pass")))
-        .andExpect(status().isBadRequest());
+    mockMvc.perform(get(CQLEndpoint + "/abc")).andExpect(status().isBadRequest());
   }
 }
