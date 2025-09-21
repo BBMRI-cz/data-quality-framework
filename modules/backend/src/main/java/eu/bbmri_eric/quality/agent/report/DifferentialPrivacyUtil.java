@@ -9,7 +9,7 @@ import java.util.Random;
  * differential privacy principles. The amount of noise is determined by the specified epsilon and
  * sensitivity parameters.
  */
-public class DifferentialPrivacyUtil {
+class DifferentialPrivacyUtil {
 
   /** Random number generator used for noise generation. */
   private static final Random random = new Random();
@@ -22,7 +22,7 @@ public class DifferentialPrivacyUtil {
    * @param sensitivity the sensitivity of the query (maximum change in output for one record)
    * @return a noisy version of the count, rounded to the nearest integer and clamped at 0
    */
-  public static int addLaplaceNoise(int count, double epsilon, double sensitivity) {
+  static int addLaplaceNoise(int count, double epsilon, double sensitivity) {
     if (count != 0) {
       double scale = sensitivity / epsilon;
       double noise = generateLaplaceNoise(scale);

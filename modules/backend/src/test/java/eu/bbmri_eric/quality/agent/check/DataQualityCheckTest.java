@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
-public class DataQualityCheckTests {
+public class DataQualityCheckTest {
   @Test
   void testConstructorInitializesFields() {
     Long id = 1L;

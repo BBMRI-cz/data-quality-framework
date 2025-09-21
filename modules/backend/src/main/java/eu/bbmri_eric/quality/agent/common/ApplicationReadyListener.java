@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ApplicationReadyListener implements ApplicationListener<ApplicationReadyEvent> {
   public static final String ANSI_GREEN = "\u001B[32m";
+  public static final String ANSI_RESET = "\u001B[0m";
 
   @Override
   public void onApplicationEvent(ApplicationReadyEvent event) {
@@ -23,6 +24,6 @@ public class ApplicationReadyListener implements ApplicationListener<Application
                 "✨ The Force is with us. App startup complete.",
                 "🌠 App ready. Preparing to jump to hyperspace."));
     Collections.shuffle(messages);
-    System.out.println(ANSI_GREEN + messages.getFirst());
+    System.out.println(ANSI_GREEN + messages.getFirst() + ANSI_RESET);
   }
 }

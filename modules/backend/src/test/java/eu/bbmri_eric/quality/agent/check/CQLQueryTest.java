@@ -15,7 +15,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 
-class CQLQueryTests {
+class CQLQueryTest {
 
   private void stubMeasureSetup(FHIRStore store) throws Exception {
     when(store.createLibrary(anyString(), anyString())).thenReturn(new JSONObject());

@@ -18,15 +18,11 @@ class ResultEventHandlerTest {
 
   @Test
   void onNewReport_setsPatientListCorrectly() {
-    // Arrange
     ReportRepository mockRepo = mock(ReportRepository.class);
     Report mockReport = new Report();
     mockReport.setStatus(Status.GENERATING);
-
     when(mockRepo.findAllByStatusIs(Status.GENERATING)).thenReturn(List.of(mockReport));
-
     ResultEventHandler handler = new ResultEventHandler(mockRepo);
-
     Set<String> expectedPatients = Set.of("patientA", "patientB", "patientC");
     DataQualityCheckResult event =
         new DataQualityCheckResult(
@@ -51,11 +47,7 @@ class ResultEventHandlerTest {
             })
         .when(mockRepo)
         .save(any(Report.class));
-
-    // Act
     handler.onNewReport(event);
-
-    // Assert
     verify(mockRepo, times(1)).save(any(Report.class));
   }
 }
