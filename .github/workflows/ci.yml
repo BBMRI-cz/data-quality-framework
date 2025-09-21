@@ -62,8 +62,14 @@ jobs:
       - run: docker compose up -d
         name: Spin up latest stable image
 
-      - run: docker build -t ghcr.io/bbmri-cz/data-quality-agent:latest .
+      - uses: docker/build-push-action@v6
         name: Build new image
+        with:
+          context: .
+          tags: ghcr.io/bbmri-cz/data-quality-agent:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
 
       - run: docker compose down
         name: Down the container
