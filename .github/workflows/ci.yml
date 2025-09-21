@@ -73,7 +73,7 @@ jobs:
 
       - name: Check container health
         run: |
-          for i in {1..10}; do
+          for i in {1..20}; do
           STATUS=$(docker inspect --format='{{.State.Health.Status}}' quality-agent)
           echo "Health status: $STATUS"
           if [ "$STATUS" == "healthy" ]; then
@@ -83,7 +83,7 @@ jobs:
           sleep 3
           done
           echo "Container is not healthy"
-          docker-compose logs
+          docker logs quality-agent
           exit 1
 
   build:
