@@ -26,7 +26,15 @@ class SecurityConfig {
                 auth.requestMatchers(HttpMethod.OPTIONS, "/**")
                     .permitAll()
                     .requestMatchers(
-                        "/", "/index.html", "/assets/**", "/favicon2.ico", "/login", "/api/health")
+                        "/",
+                        "/index.html",
+                        "/assets/**",
+                        "/favicon2.ico",
+                        "/login",
+                        "/api/health",
+                        "/api/swagger-ui.html",
+                        "/api/swagger-ui/**",
+                        "/api/api-docs/**")
                     .permitAll()
                     .anyRequest()
                     .authenticated());
