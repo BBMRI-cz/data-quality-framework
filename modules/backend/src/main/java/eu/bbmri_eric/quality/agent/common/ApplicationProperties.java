@@ -3,6 +3,7 @@ package eu.bbmri_eric.quality.agent.common;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+/** Class for safely fetching application properties */
 @Component
 public class ApplicationProperties {
   @Value("${eu.bbmri_eric.quality.agent.fhir_url}")

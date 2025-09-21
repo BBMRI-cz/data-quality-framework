@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+/** Global handler for translating exceptions into HTTP responses */
 @ControllerAdvice
 public class GlobalRestExceptionHandler {
   @ExceptionHandler(org.hibernate.StaleStateException.class)
