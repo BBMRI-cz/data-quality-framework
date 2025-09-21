@@ -44,7 +44,7 @@ api.interceptors.response.use(
 
 export async function authenticate(username, password) {
     const authHeader = `Basic ${baseToken(username, password)}`;
-    const res = await api.get('/api/auth/login', {
+    const res = await api.get('/api/login', {
         headers: {
             Authorization: authHeader,
             Accept: 'application/json',
