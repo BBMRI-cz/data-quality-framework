@@ -74,7 +74,7 @@ jobs:
       - name: Check container health
         run: |
           for i in {1..10}; do
-          STATUS=$(docker inspect --format='{{.State.Health.Status}}' $(docker-compose ps -q quality-agent))
+          STATUS=$(docker inspect --format='{{.State.Health.Status}}' quality-agent)
           echo "Health status: $STATUS"
           if [ "$STATUS" == "healthy" ]; then
           echo "Container is healthy"
