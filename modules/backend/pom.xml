@@ -6,7 +6,7 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.5.0</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <relativePath/>
     </parent>
     <groupId>eu.bbmri_eric.quality</groupId>
     <artifactId>agent</artifactId>
@@ -29,6 +29,15 @@
     <properties>
         <java.version>21</java.version>
         <spring-modulith.version>1.4.0</spring-modulith.version>
+        <spring-doc.version>2.8.13</spring-doc.version>
+        <json.version>20241224</json.version>
+        <hapi.fhir.version>8.2.0</hapi.fhir.version>
+        <hapi.fhir.structures.version>7.6.1</hapi.fhir.structures.version>
+        <icd.validator.version>0.1.0</icd.validator.version>
+        <commons.compress.version>1.26.1</commons.compress.version>
+        <testcontainers.version>1.21.3</testcontainers.version>
+        <bouncycastle.version>1.81</bouncycastle.version>
+        <fmt.plugin.version>2.25</fmt.plugin.version>
     </properties>
     <dependencies>
         <dependency>
@@ -43,6 +52,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-devtools</artifactId>
             <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${spring-doc.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -82,27 +96,27 @@
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
-            <version>20241224</version>
+            <version>${json.version}</version>
         </dependency>
         <dependency>
             <groupId>ca.uhn.hapi.fhir</groupId>
             <artifactId>hapi-fhir-base</artifactId>
-            <version>8.2.0</version>
+            <version>${hapi.fhir.version}</version>
         </dependency>
         <dependency>
             <groupId>ca.uhn.hapi.fhir</groupId>
             <artifactId>hapi-fhir-client</artifactId>
-            <version>8.2.0</version>
+            <version>${hapi.fhir.version}</version>
         </dependency>
         <dependency>
             <groupId>ca.uhn.hapi.fhir</groupId>
             <artifactId>hapi-fhir-structures-r4</artifactId>
-            <version>7.6.1</version>
+            <version>${hapi.fhir.structures.version}</version>
         </dependency>
         <dependency>
             <groupId>io.github.radovantomik</groupId>
             <artifactId>icd-validator</artifactId>
-            <version>0.1.0</version>
+            <version>${icd.validator.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -111,12 +125,12 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
-            <version>1.26.1</version>
+            <version>${commons.compress.version}</version>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.21.3</version>
+            <version>${testcontainers.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -130,7 +144,7 @@
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk18on</artifactId>
-            <version>1.81</version>
+            <version>${bouncycastle.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents.client5</groupId>
@@ -154,7 +168,7 @@
             <plugin>
                 <artifactId>fmt-maven-plugin</artifactId>
                 <groupId>com.spotify.fmt</groupId>
-                <version>2.25</version>
+                <version>${fmt.plugin.version}</version>
             </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

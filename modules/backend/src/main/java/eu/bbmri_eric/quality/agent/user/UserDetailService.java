@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 
 /** Service for fetching user details */
 @Service
-class UserDetailService implements UserDetailsService {
+public class UserDetailService implements UserDetailsService {
 
   private final UserRepository userRepository;
 
