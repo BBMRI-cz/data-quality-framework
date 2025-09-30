@@ -91,7 +91,6 @@ function _open() {
 function _close() {
   if (modalInstance) {
     modalInstance.hide();
-    resetPasswordForm();
     emit('close');
   }
 }
@@ -130,17 +129,17 @@ onMounted(() => {
     focus: true,
   });
 
-modalElement.value.addEventListener('hidden.bs.modal', () => {
-  resetPasswordForm();
-  emit('close');
-});
+  modalElement.value.addEventListener('hidden.bs.modal', () => {
+    resetPasswordForm();
+    emit('close');
+  });
 
-modalElement.value.addEventListener('shown.bs.modal', () => {
-  const firstInput = modalElement.value.querySelector('#currentPassword');
-  if (firstInput) {
-    firstInput.focus();
-  }
-});
+  modalElement.value.addEventListener('shown.bs.modal', () => {
+    const firstInput = modalElement.value.querySelector('#currentPassword');
+    if (firstInput) {
+      firstInput.focus();
+    }
+  });
 });
 defineExpose({ open: _open, close: _close });
 </script>

@@ -114,7 +114,7 @@ class UserDetailServiceTest {
         new FieldError(
             "passwordChangeRequest",
             "newPassword",
-            "Password must be at least 8 characters long and contain only letters, digits, or basic special characters");
+            "Password must be at least 8 characters long and contain only letters, digits or special characters");
 
     when(bindingResult.hasErrors()).thenReturn(true);
     when(bindingResult.getFieldErrors()).thenReturn(java.util.List.of(fieldError));
@@ -124,7 +124,7 @@ class UserDetailServiceTest {
     assertThat(response.getSuccess()).isFalse();
     assertThat(response.getMessage())
         .isEqualTo(
-            "Password must be at least 8 characters long and contain only letters, digits, or basic special characters");
+            "Password must be at least 8 characters long and contain only letters, digits or special characters");
   }
 
   @Test
