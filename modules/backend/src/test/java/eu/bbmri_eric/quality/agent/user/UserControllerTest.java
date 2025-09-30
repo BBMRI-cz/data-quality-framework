@@ -37,7 +37,42 @@ public class UserControllerTest {
     mockMvc
         .perform(get(LOGIN_ENDPOINT))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.username", is(ADMIN_USER)));
+        .andExpect(jsonPath("$.username", is(ADMIN_USER)))
+        .andExpect(jsonPath("$.defaultPassword", is(true)));
+  }
+
+  @WithUserDetails("admin")
+  @Test
+  void login_returnsDefaultPasswordFalse_whenPasswordChanged() throws Exception {
+    // First change the admin password
+    User adminUser = userRepository.findByUsername(ADMIN_USER).orElseThrow();
+    String originalPassword = adminUser.getPassword();
+    adminUser.setPassword(passwordEncoder.encode("newPassword123"));
+    userRepository.save(adminUser);
+
+    mockMvc
+        .perform(get(LOGIN_ENDPOINT))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.username", is(ADMIN_USER)))
+        .andExpect(jsonPath("$.defaultPassword", is(false)));
+
+    // Reset password for other tests
+    adminUser.setPassword(originalPassword);
+    userRepository.save(adminUser);
+  }
+
+  @Test
+  void login_returnsDefaultPasswordFalse_whenNonAdminUser() throws Exception {
+    User testUser =
+        userRepository.save(new User("testuser", passwordEncoder.encode("password123")));
+
+    mockMvc
+        .perform(get(LOGIN_ENDPOINT).with(httpBasic("testuser", "password123")))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.username", is("testuser")))
+        .andExpect(jsonPath("$.defaultPassword", is(false)));
+
+    userRepository.delete(testUser);
   }
 
   @Test

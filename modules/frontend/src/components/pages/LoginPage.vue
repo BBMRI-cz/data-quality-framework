@@ -43,6 +43,7 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { authenticate } from '../../js/api.js'
+import { useUserStore } from '../../stores/userStore.js'
 
 const username = ref('')
 const password = ref('')
@@ -51,12 +52,14 @@ const error = ref('')
 
 const route = useRoute()
 const router = useRouter()
+const { updateDefaultPasswordStatus } = useUserStore()
 
 async function login() {
   error.value = ''
   loading.value = true
   try {
-    await authenticate(username.value, password.value)
+    const loginResult = await authenticate(username.value, password.value)
+    updateDefaultPasswordStatus(loginResult.defaultPassword)
 
     await router.replace((route.query.redirect && String(route.query.redirect)) || '/')
   } catch (e) {

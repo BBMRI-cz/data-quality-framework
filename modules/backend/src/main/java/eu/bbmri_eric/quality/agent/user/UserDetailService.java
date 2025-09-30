@@ -88,4 +88,27 @@ public class UserDetailService implements UserDetailsService {
     userRepository.save(user);
     return true;
   }
+
+  public boolean isUsingDefaultPassword(String username) {
+    try {
+      var user =
+          userRepository
+              .findByUsername(username)
+              .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+      String defaultPassword = "admin".equals(username) ? "adminpass" : null;
+
+      if (defaultPassword == null) {
+        return false;
+      }
+
+      return passwordEncoder.matches(defaultPassword, user.getPassword());
+    } catch (UsernameNotFoundException e) {
+      log.error("User not found during default password check: {}", username);
+      return false;
+    } catch (Exception e) {
+      log.error("Error checking default password for user {}: {}", username, e.getMessage(), e);
+      return false;
+    }
+  }
 }

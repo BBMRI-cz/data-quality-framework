@@ -143,4 +143,51 @@ class UserDetailServiceTest {
     assertThat(response.getSuccess()).isFalse();
     assertThat(response.getMessage()).isEqualTo("Validation failed");
   }
+
+  @Test
+  void isUsingDefaultPassword_returnsTrue_whenAdminUsesDefaultPassword() {
+    boolean result = service.isUsingDefaultPassword(ADMIN_USER);
+
+    assertThat(result).isTrue();
+  }
+
+  @Test
+  void isUsingDefaultPassword_returnsFalse_whenAdminPasswordChanged() {
+    User adminUser = userRepository.findByUsername(ADMIN_USER).orElseThrow();
+    adminUser.setPassword(passwordEncoder.encode("newPassword123"));
+    userRepository.save(adminUser);
+
+    boolean result = service.isUsingDefaultPassword(ADMIN_USER);
+    assertThat(result).isFalse();
+
+    adminUser.setPassword(passwordEncoder.encode(ADMIN_PASS));
+    userRepository.save(adminUser);
+  }
+
+  @Test
+  void isUsingDefaultPassword_returnsFalse_whenNonAdminUser() {
+    User testUser =
+        userRepository.save(new User("testuser", passwordEncoder.encode("somepassword")));
+    boolean result = service.isUsingDefaultPassword("testuser");
+
+    assertThat(result).isFalse();
+    userRepository.delete(testUser);
+  }
+
+  @Test
+  void passwordChangeRemovesDefaultPasswordFlag() {
+    assertThat(service.isUsingDefaultPassword(ADMIN_USER)).isTrue();
+
+    Principal principal = () -> ADMIN_USER;
+    PasswordChangeRequest request =
+        new PasswordChangeRequest(ADMIN_PASS, "newPassword123", "newPassword123");
+    PasswordChangeResponse response = service.changePassword(principal, request, null);
+
+    assertThat(response.getSuccess()).isTrue();
+    assertThat(service.isUsingDefaultPassword(ADMIN_USER)).isFalse();
+
+    User adminUser = userRepository.findByUsername(ADMIN_USER).orElseThrow();
+    adminUser.setPassword(passwordEncoder.encode(ADMIN_PASS));
+    userRepository.save(adminUser);
+  }
 }

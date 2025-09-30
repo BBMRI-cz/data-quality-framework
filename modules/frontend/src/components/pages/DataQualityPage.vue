@@ -5,6 +5,16 @@
       <div class="container-fluid">
         <div class="ms-auto d-flex align-items-center text-white">
           <i class="bi bi-person-fill fs-4 me-2"></i>
+          <!-- Warning indicator for default password -->
+          <div v-if="defaultPasswordFlag" class="position-relative me-2"
+               @mouseenter="showTooltip = true"
+               @mouseleave="showTooltip = false">
+            <i class="bi bi-exclamation-triangle-fill text-warning fs-5"></i>
+            <div v-if="showTooltip" class="custom-tooltip">
+              You are using the default password. Please change it for security.
+            </div>
+          </div>
+
           <div class="position-relative">
             <span class="username-dropdown cursor-pointer" @click="toggleDropdown">
               {{ username }}
@@ -15,6 +25,7 @@
               <button class="dropdown-item-custom" @click="showChangePasswordModal">
                 <i class="bi bi-key me-2"></i>
                 Change Password
+                <span v-if="defaultPasswordFlag" class="badge bg-warning text-dark ms-2">Required</span>
               </button>
             </div>
           </div>
@@ -26,6 +37,15 @@
     </nav>
 
     <PasswordChangeModal :isVisible="showPasswordModal" @close="closePasswordModal" />
+
+    <!-- Default Password Alert -->
+    <div v-if="defaultPasswordFlag" class="alert alert-warning alert-dismissible fade show mx-4 mt-3" role="alert">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      <strong>Security Warning:</strong> You are using the default password. Please change it immediately for security reasons.
+      <button @click="showChangePasswordModal" class="btn btn-warning btn-sm ms-2">
+        Change Password
+      </button>
+    </div>
 
     <!-- Centered Title -->
     <header class="title-section">
@@ -50,23 +70,38 @@ import CQLCheckTable from "../CQLCheckTable.vue";
 import DataQualityReports from "../DataQualityReports.vue";
 import PasswordChangeModal from "../PasswordChangeModal.vue";
 import {clearAuth, getUsername} from '../../js/api.js';
+import { useUserStore } from '../../stores/userStore.js';
 import { useRouter } from 'vue-router';
-import {ref, onMounted, onUnmounted} from "vue";
+import {ref, onMounted, onUnmounted, watch} from "vue";
+
 
 const router = useRouter();
 const username = ref(getUsername());
 const showDropdown = ref(false);
 const showPasswordModal = ref(false);
+const showTooltip = ref(false);
+
+const { defaultPasswordFlag, initializeDefaultPasswordStatus } = useUserStore();
+
+watch(showPasswordModal, (newValue) => {
+  if (!newValue) {
+    initializeDefaultPasswordStatus();
+  }
+});
+
 function toggleDropdown() {
   showDropdown.value = !showDropdown.value;
 }
+
 function showChangePasswordModal() {
   showDropdown.value = false;
   showPasswordModal.value = true;
 }
-function closePasswordModal() {
+
+async function closePasswordModal() {
   showPasswordModal.value = false;
 }
+
 function handleClickOutside(event) {
   if (showDropdown.value && !event.target.closest('.username-dropdown')) {
     showDropdown.value = false;
@@ -78,8 +113,9 @@ function logout() {
   router.replace('/login');
 }
 
-onMounted(() => {
+onMounted(async () => {
   document.addEventListener('click', handleClickOutside);
+  initializeDefaultPasswordStatus();
 });
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
@@ -152,5 +188,17 @@ onUnmounted(() => {
 }
 .dropdown-item-custom:hover {
   background-color: #f8f9fa;
+}
+.custom-tooltip {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  white-space: nowrap;
+  z-index: 1000;
 }
 </style>

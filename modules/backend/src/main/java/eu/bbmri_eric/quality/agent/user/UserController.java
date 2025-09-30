@@ -25,7 +25,11 @@ public class UserController {
     if (Objects.isNull(principal)) {
       throw new AuthenticationCredentialsNotFoundException("No credentials found");
     }
-    return new UserDTO(principal.getName());
+
+    String username = principal.getName();
+    boolean isUsingDefault = userDetailService.isUsingDefaultPassword(username);
+
+    return new UserDTO(username, isUsingDefault);
   }
 
   @PutMapping("/api/user/password")

@@ -1,11 +1,22 @@
 import { ref } from 'vue';
-import { getUsername } from '../js/api.js';
+import { getUsername, getDefaultPasswordFlag } from '../js/api.js';
 
 export function useUserStore() {
   const isChangingPassword = ref(false);
   const passwordError = ref('');
   const passwordSuccess = ref('');
+  const defaultPasswordFlag = ref(getDefaultPasswordFlag());
 
+  function initializeDefaultPasswordStatus() {
+    defaultPasswordFlag.value = getDefaultPasswordFlag();
+  }
+
+  function updateDefaultPasswordStatus(status) {
+    defaultPasswordFlag.value = status;
+    if (typeof status === 'boolean') {
+      sessionStorage.setItem('defaultPasswordFlag', status.toString());
+    }
+  }
   async function changePassword(currentPassword, newPassword, confirmPassword) {
     passwordError.value = '';
     passwordSuccess.value = '';
@@ -59,6 +70,7 @@ export function useUserStore() {
       const result = await response.json();
       if (result.success) {
         passwordSuccess.value = result.message || 'Password changed successfully!';
+        updateDefaultPasswordStatus(false);
         return true;
       } else {
         passwordError.value = result.message || 'Failed to change password';
@@ -81,6 +93,9 @@ export function useUserStore() {
     isChangingPassword,
     passwordError,
     passwordSuccess,
-    changePassword
+    defaultPasswordFlag,
+    changePassword,
+    initializeDefaultPasswordStatus,
+    updateDefaultPasswordStatus
   };
 }
