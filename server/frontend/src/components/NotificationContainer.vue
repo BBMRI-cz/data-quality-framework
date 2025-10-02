@@ -1,6 +1,6 @@
 <template>
   <Teleport to="body">
-    <div class="notification-container">
+    <div class="notification-container mobile-notification-container">
       <NotificationItem
         v-for="notification in notifications"
         :key="notification.id"
@@ -29,7 +29,7 @@ const addNotification = (notification) => {
   notifications.push({
     id,
     type: 'info',
-    duration: 5000,
+    duration: 2000, // Shortened from 5000ms to 3000ms (3 seconds)
     autoClose: true,
     ...notification
   })
@@ -77,13 +77,28 @@ defineExpose({
 <style scoped>
 .notification-container {
   position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 1000;
-  pointer-events: none;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1050;
+  max-width: 400px;
+  width: 100%;
 }
 
-.notification-container > * {
-  pointer-events: auto;
+/* Mobile responsive notifications */
+@media (max-width: 768px) {
+  .mobile-notification-container {
+    top: 80px; /* Position below navbar on mobile */
+    right: 0.5rem;
+    left: 0.5rem;
+    max-width: none;
+  }
+}
+
+@media (max-width: 576px) {
+  .mobile-notification-container {
+    top: 80px; /* Keep below navbar */
+    right: 0.25rem;
+    left: 0.25rem;
+  }
 }
 </style>

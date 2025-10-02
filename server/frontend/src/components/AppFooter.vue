@@ -1,14 +1,13 @@
 <template>
-  <footer class="app-footer">
-    <div class="footer-content">
-      <div class="footer-info">
-        <p>&copy; {{ currentYear }} Data Quality Server. All rights reserved.</p>
-        <p class="version">Version 1.0.0</p>
-      </div>
-      <div class="footer-links">
-        <a href="#" class="footer-link">Privacy Policy</a>
-        <a href="#" class="footer-link">Terms of Service</a>
-        <a href="#" class="footer-link">Support</a>
+  <footer class="bg-dark text-light py-4 mt-auto">
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col-md-6">
+          <p class="mb-0">&copy; {{ currentYear }} Data Quality Server. All rights reserved.</p>
+        </div>
+        <div class="col-md-6 text-md-end">
+          <small class="text-muted">Version 1.0.0</small>
+        </div>
       </div>
     </div>
   </footer>

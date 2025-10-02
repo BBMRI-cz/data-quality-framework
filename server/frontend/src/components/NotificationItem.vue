@@ -1,34 +1,45 @@
 <template>
-  <Transition name="notification">
-    <div
-      v-if="visible"
-      :class="['notification', `notification--${type}`]"
-      @click="close"
-    >
-      <div class="notification__icon">
-        <span v-if="type === 'success'">✓</span>
-        <span v-else-if="type === 'error'">✕</span>
-        <span v-else>ℹ</span>
+  <div
+    class="toast align-items-center border-0 show mobile-toast"
+    :class="toastClass"
+    role="alert"
+    aria-live="assertive"
+    aria-atomic="true"
+  >
+    <div class="d-flex">
+      <div class="toast-body d-flex align-items-center">
+        <div class="me-2 notification-icon">
+          <svg v-if="type === 'success'" width="16" height="16" fill="currentColor" class="text-success" viewBox="0 0 16 16">
+            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.061L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+          </svg>
+          <svg v-else-if="type === 'error'" width="16" height="16" fill="currentColor" class="text-danger" viewBox="0 0 16 16">
+            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"/>
+          </svg>
+          <svg v-else-if="type === 'warning'" width="16" height="16" fill="currentColor" class="text-warning" viewBox="0 0 16 16">
+            <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+          </svg>
+          <svg v-else width="16" height="16" fill="currentColor" class="text-info" viewBox="0 0 16 16">
+            <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+          </svg>
+        </div>
+        <div class="flex-grow-1">
+          <div class="fw-semibold notification-title">{{ title }}</div>
+          <div v-if="message" class="small opacity-75 notification-message">{{ message }}</div>
+        </div>
       </div>
-      <div class="notification__content">
-        <div class="notification__title">{{ title }}</div>
-        <div v-if="message" class="notification__message">{{ message }}</div>
-      </div>
-      <button class="notification__close" @click="close" aria-label="Close notification">
-        ×
-      </button>
+      <button type="button" class="btn-close me-2 m-auto mobile-close-btn" @click="closeNotification" aria-label="Close"></button>
     </div>
-  </Transition>
+  </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({
   type: {
     type: String,
     default: 'info',
-    validator: (value) => ['success', 'error', 'info', 'warning'].includes(value)
+    validator: (value) => ['success', 'error', 'warning', 'info'].includes(value)
   },
   title: {
     type: String,
@@ -40,7 +51,7 @@ const props = defineProps({
   },
   duration: {
     type: Number,
-    default: 5000 // 5 seconds
+    default: 5000
   },
   autoClose: {
     type: Boolean,
@@ -50,167 +61,101 @@ const props = defineProps({
 
 const emit = defineEmits(['close'])
 
-const visible = ref(true)
+const toastClass = computed(() => {
+  const baseClass = 'text-bg-'
+  switch (props.type) {
+    case 'success':
+      return baseClass + 'success'
+    case 'error':
+      return baseClass + 'danger'
+    case 'warning':
+      return baseClass + 'warning'
+    default:
+      return baseClass + 'info'
+  }
+})
 
-const close = () => {
-  visible.value = false
-  setTimeout(() => {
-    emit('close')
-  }, 300) // Wait for transition to complete
+let timeoutId = null
+
+const closeNotification = () => {
+  emit('close')
 }
 
 onMounted(() => {
   if (props.autoClose && props.duration > 0) {
-    setTimeout(() => {
-      close()
+    timeoutId = setTimeout(() => {
+      closeNotification()
     }, props.duration)
+  }
+})
+
+onUnmounted(() => {
+  if (timeoutId) {
+    clearTimeout(timeoutId)
   }
 })
 </script>
 
 <style scoped>
-.notification {
-  display: flex;
-  align-items: flex-start;
-  padding: 16px;
-  margin-bottom: 12px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  max-width: 400px;
-  background: white;
-  border-left: 4px solid;
+.mobile-toast {
+  margin-bottom: 0.5rem;
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.1);
+  border-radius: 0.5rem;
 }
 
-.notification:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-}
-
-.notification--success {
-  border-left-color: #10b981;
-  background: #f0fdf4;
-}
-
-.notification--error {
-  border-left-color: #ef4444;
-  background: #fef2f2;
-}
-
-.notification--info {
-  border-left-color: #3b82f6;
-  background: #eff6ff;
-}
-
-.notification--warning {
-  border-left-color: #f59e0b;
-  background: #fffbeb;
-}
-
-.notification__icon {
+.notification-icon {
   flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 12px;
-  margin-right: 12px;
-  margin-top: 2px;
 }
 
-.notification--success .notification__icon {
-  background: #10b981;
-  color: white;
+.notification-title {
+  font-size: 0.9rem;
+  line-height: 1.3;
 }
 
-.notification--error .notification__icon {
-  background: #ef4444;
-  color: white;
-}
-
-.notification--info .notification__icon {
-  background: #3b82f6;
-  color: white;
-}
-
-.notification--warning .notification__icon {
-  background: #f59e0b;
-  color: white;
-}
-
-.notification__content {
-  flex: 1;
-}
-
-.notification__title {
-  font-weight: 600;
-  font-size: 14px;
+.notification-message {
+  font-size: 0.8rem;
   line-height: 1.4;
-  margin-bottom: 4px;
 }
 
-.notification--success .notification__title {
-  color: #065f46;
+.mobile-close-btn {
+  min-width: 24px;
+  min-height: 24px;
 }
 
-.notification--error .notification__title {
-  color: #991b1b;
+/* Mobile-specific adjustments */
+@media (max-width: 768px) {
+  .mobile-toast {
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .toast-body {
+    padding: 0.75rem 1rem;
+  }
+
+  .notification-title {
+    font-size: 0.95rem;
+  }
+
+  .notification-message {
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+  }
+
+  .mobile-close-btn {
+    min-width: 32px;
+    min-height: 32px;
+    margin-right: 0.5rem !important;
+  }
 }
 
-.notification--info .notification__title {
-  color: #1e40af;
-}
+@media (max-width: 576px) {
+  .mobile-toast {
+    border-radius: 0.75rem;
+  }
 
-.notification--warning .notification__title {
-  color: #92400e;
-}
-
-.notification__message {
-  font-size: 13px;
-  line-height: 1.4;
-  opacity: 0.8;
-}
-
-.notification__close {
-  flex-shrink: 0;
-  background: none;
-  border: none;
-  font-size: 18px;
-  font-weight: bold;
-  cursor: pointer;
-  opacity: 0.5;
-  padding: 0;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 8px;
-  border-radius: 50%;
-  transition: opacity 0.2s ease;
-}
-
-.notification__close:hover {
-  opacity: 1;
-}
-
-/* Transition animations */
-.notification-enter-active,
-.notification-leave-active {
-  transition: all 0.3s ease;
-}
-
-.notification-enter-from {
-  opacity: 0;
-  transform: translateX(100%);
-}
-
-.notification-leave-to {
-  opacity: 0;
-  transform: translateX(100%);
+  .toast-body {
+    padding: 1rem;
+  }
 }
 </style>

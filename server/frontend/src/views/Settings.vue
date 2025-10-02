@@ -1,328 +1,66 @@
 <template>
-  <div class="settings">
-    <div class="settings-header">
-      <h1>Settings</h1>
-      <p>Configure your data quality monitoring preferences</p>
-    </div>
-
-    <div class="settings-sections">
-      <div class="settings-section">
-        <h2>Data Sources</h2>
-        <div class="setting-item">
-          <div class="setting-info">
-            <h3>Database Connection</h3>
-            <p>Configure your primary database connection</p>
+  <div class="container-fluid py-3 py-md-4">
+    <div class="row justify-content-center">
+      <div class="col-12 col-lg-8">
+        <div class="card border-0 shadow-sm mobile-settings-card">
+          <div class="card-body text-center py-4 py-md-5">
+            <div class="mb-3 mb-md-4">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-primary settings-icon">
+                <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.82,11.69,4.82,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z" fill="currentColor"/>
+              </svg>
+            </div>
+            <h2 class="h4 h-md-3 fw-bold text-dark mb-2 mb-md-3">Settings</h2>
+            <p class="text-muted mb-0 settings-description">This is the settings page - configuration options will be implemented here.</p>
           </div>
-          <button class="setting-action">Configure</button>
-        </div>
-        <div class="setting-item">
-          <div class="setting-info">
-            <h3>File Upload Settings</h3>
-            <p>Set file format preferences and validation rules</p>
-          </div>
-          <button class="setting-action">Configure</button>
         </div>
       </div>
-
-      <div class="settings-section">
-        <h2>Quality Rules</h2>
-        <div class="setting-item">
-          <div class="setting-info">
-            <h3>Validation Thresholds</h3>
-            <p>Set minimum quality scores and alert thresholds</p>
-          </div>
-          <div class="threshold-controls">
-            <label>
-              Quality Score Threshold:
-              <input type="range" v-model="qualityThreshold" min="0" max="100" />
-              <span>{{ qualityThreshold }}%</span>
-            </label>
-          </div>
-        </div>
-        <div class="setting-item">
-          <div class="setting-info">
-            <h3>Custom Rules</h3>
-            <p>Create and manage custom data validation rules</p>
-          </div>
-          <button class="setting-action">Manage Rules</button>
-        </div>
-      </div>
-
-      <div class="settings-section">
-        <h2>Notifications</h2>
-        <div class="setting-item">
-          <div class="setting-info">
-            <h3>Email Alerts</h3>
-            <p>Receive email notifications for quality issues</p>
-          </div>
-          <label class="toggle-switch">
-            <input type="checkbox" v-model="emailAlerts" />
-            <span class="slider"></span>
-          </label>
-        </div>
-        <div class="setting-item">
-          <div class="setting-info">
-            <h3>Report Schedule</h3>
-            <p>Automatically generate and send reports</p>
-          </div>
-          <select v-model="reportFrequency" class="setting-select">
-            <option value="daily">Daily</option>
-            <option value="weekly">Weekly</option>
-            <option value="monthly">Monthly</option>
-            <option value="never">Never</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="settings-section">
-        <h2>Account</h2>
-        <div class="setting-item">
-          <div class="setting-info">
-            <h3>Profile Information</h3>
-            <p>Update your account details</p>
-          </div>
-          <button class="setting-action">Edit Profile</button>
-        </div>
-        <div class="setting-item">
-          <div class="setting-info">
-            <h3>Change Password</h3>
-            <p>Update your account password</p>
-          </div>
-          <button class="setting-action">Change Password</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="settings-actions">
-      <button class="btn-secondary" @click="resetSettings">Reset to Defaults</button>
-      <button class="btn-primary" @click="saveSettings">Save Changes</button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { notificationService } from '../services/notificationService.js'
-
-const qualityThreshold = ref(85)
-const emailAlerts = ref(true)
-const reportFrequency = ref('weekly')
-
-const saveSettings = () => {
-  // Save settings logic would go here
-  notificationService.success('Settings Saved', 'Your preferences have been updated successfully.')
-}
-
-const resetSettings = () => {
-  qualityThreshold.value = 85
-  emailAlerts.value = true
-  reportFrequency.value = 'weekly'
-  notificationService.info('Settings Reset', 'Settings have been reset to default values.')
-}
 </script>
 
 <style scoped>
-.settings {
-  padding: 2rem;
-  max-width: 800px;
+.mobile-settings-card {
+  border-radius: 12px;
+}
+
+.settings-icon {
+  width: 48px;
+  height: 48px;
+}
+
+.settings-description {
+  font-size: 0.95rem;
+  max-width: 400px;
   margin: 0 auto;
 }
 
-.settings-header {
-  margin-bottom: 2rem;
+@media (max-width: 768px) {
+  .settings-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .settings-description {
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .mobile-settings-card {
+    margin: 0 0.5rem;
+  }
 }
 
-.settings-header h1 {
-  color: #1f2937;
-  margin: 0 0 0.5rem 0;
-  font-size: 2rem;
-  font-weight: 700;
-}
+@media (max-width: 576px) {
+  .container-fluid {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
 
-.settings-header p {
-  color: #6b7280;
-  margin: 0;
-  font-size: 1.125rem;
-}
-
-.settings-sections {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  margin-bottom: 2rem;
-}
-
-.settings-section {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-}
-
-.settings-section h2 {
-  margin: 0 0 1.5rem 0;
-  color: #1f2937;
-  font-size: 1.25rem;
-  font-weight: 600;
-  border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 0.75rem;
-}
-
-.setting-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 0;
-  border-bottom: 1px solid #f3f4f6;
-}
-
-.setting-item:last-child {
-  border-bottom: none;
-}
-
-.setting-info h3 {
-  margin: 0 0 0.25rem 0;
-  color: #1f2937;
-  font-size: 1rem;
-  font-weight: 500;
-}
-
-.setting-info p {
-  margin: 0;
-  color: #6b7280;
-  font-size: 0.875rem;
-}
-
-.setting-action {
-  padding: 0.5rem 1rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.setting-action:hover {
-  opacity: 0.9;
-}
-
-.setting-select {
-  padding: 0.5rem 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: white;
-  color: #374151;
-  font-size: 0.875rem;
-}
-
-.threshold-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.threshold-controls label {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  color: #374151;
-  font-size: 0.875rem;
-}
-
-.threshold-controls input[type="range"] {
-  flex: 1;
-  max-width: 200px;
-}
-
-.threshold-controls span {
-  font-weight: 600;
-  min-width: 40px;
-}
-
-.toggle-switch {
-  position: relative;
-  display: inline-block;
-  width: 60px;
-  height: 34px;
-}
-
-.toggle-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  transition: .4s;
-  border-radius: 34px;
-}
-
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 26px;
-  width: 26px;
-  left: 4px;
-  bottom: 4px;
-  background-color: white;
-  transition: .4s;
-  border-radius: 50%;
-}
-
-input:checked + .slider {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-input:checked + .slider:before {
-  transform: translateX(26px);
-}
-
-.settings-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  padding: 1.5rem;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-}
-
-.btn-secondary {
-  padding: 0.75rem 1.5rem;
-  border: 1px solid #d1d5db;
-  background: white;
-  color: #374151;
-  border-radius: 6px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.btn-secondary:hover {
-  background: #f9fafb;
-}
-
-.btn-primary {
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.btn-primary:hover {
-  opacity: 0.9;
+  .card-body {
+    padding: 2rem 1.5rem !important;
+  }
 }
 </style>
