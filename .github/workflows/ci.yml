@@ -160,7 +160,7 @@ jobs:
           context: ./server
           tags: ghcr.io/bbmri-cz/data-quality-server:latest
           load: true
-          outputs: type=docker,dest=/tmp/server-image.tar
+          outputs: type=docker
 
       - run: docker compose down
         name: Down the container
@@ -182,12 +182,6 @@ jobs:
           echo "Container is not healthy"
           docker logs quality-server
           exit 1
-
-      - name: Upload server image artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: server-image
-          path: /tmp/server-image.tar
 
   docs:
     name: Build and Deploy Documentation
