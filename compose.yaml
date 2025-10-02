@@ -8,6 +8,15 @@ services:
       - database:/app/data
     extra_hosts:
       - "host.docker.internal:host-gateway"
+  quality-server:
+    image: ghcr.io/bbmri-cz/data-quality-server:latest
+    container_name: quality-server
+    ports:
+      - "8081:8081"
+    volumes:
+      - database:/app/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 volumes:
   database:
     driver: local

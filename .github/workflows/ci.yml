@@ -100,7 +100,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3
 
-      - run: docker compose up -d
+      - run: docker compose up -d quality-agent
         name: Spin up latest stable image
 
       - uses: docker/build-push-action@v6
@@ -115,7 +115,7 @@ jobs:
       - run: docker compose down
         name: Down the container
 
-      - run: docker compose up -d
+      - run: docker compose up -d quality-agent
         name: Spin up new image
 
       - name: Check container health
@@ -146,13 +146,38 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3
 
+      - run: docker compose up -d quality-server || exit 0
+        name: Spin up latest stable image
+
       - uses: docker/build-push-action@v6
-        name: Build server image
+        name: Build new image
         with:
           context: ./server
           tags: ghcr.io/bbmri-cz/data-quality-server:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+
+      - run: docker compose down
+        name: Down the container
+
+      - run: docker compose up -d quality-server
+        name: Spin up new image
+
+      - name: Check container health
+        run: |
+          for i in {1..20}; do
+          STATUS=$(docker inspect --format='{{.State.Health.Status}}' quality-server)
+          echo "Health status: $STATUS"
+          if [ "$STATUS" == "healthy" ]; then
+          echo "Container is healthy"
+          exit 0
+          fi
+          sleep 3
+          done
+          echo "Container is not healthy"
+          docker logs quality-server
+          exit 1
 
   docs:
     name: Build and Deploy Documentation
@@ -249,6 +274,20 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          tags: ghcr.io/${{ github.repository_owner }}/data-quality-agent:${{ github.sha }}
+          build-args: ARTIFACT_VERSION=${{ github.ref_name }}
+          cache-from: type=gha
+          outputs: type=docker,dest=/tmp/agent-image.tar
+
+      - name: Upload agent image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-image
+          path: /tmp/agent-image.tar
+
   build-server:
     name: Build Server
     runs-on: ubuntu-latest
@@ -303,3 +342,49 @@ jobs:
           build-args: ARTIFACT_VERSION=${{ github.ref_name }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./server
+          tags: ghcr.io/${{ github.repository_owner }}/data-quality-server:${{ github.sha }}
+          build-args: ARTIFACT_VERSION=${{ github.ref_name }}
+          cache-from: type=gha
+          outputs: type=docker,dest=/tmp/server-image.tar
+
+      - name: Upload server image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-image
+          path: /tmp/server-image.tar
+
+  integration-test:
+    name: System test
+    runs-on: ubuntu-latest
+    needs:
+      - build
+      - build-server
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Download agent image artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: agent-image
+          path: /tmp
+
+      - name: Download server image artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: server-image
+          path: /tmp
+
+      - name: Load Docker images
+        run: |
+          docker load -i /tmp/agent-image.tar
+          docker load -i /tmp/server-image.tar
+
+      - name: Create integration docker-compose
+        run: docker compose up -d
