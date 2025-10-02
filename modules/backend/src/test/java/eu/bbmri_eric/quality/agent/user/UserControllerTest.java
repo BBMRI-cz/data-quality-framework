@@ -6,11 +6,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -20,10 +22,22 @@ public class UserControllerTest {
 
   private static final String LOGIN_ENDPOINT = "/api/login";
   private static final String ADMIN_USER = "admin";
+  private static final String ADMIN_PASS = "adminpass";
 
   @Autowired private MockMvc mockMvc;
   @Autowired private ObjectMapper objectMapper;
   @Autowired private UserDetailService userDetailService;
+  @Autowired private UserRepository userRepository;
+  @Autowired private PasswordEncoder passwordEncoder;
+
+  @AfterEach
+  void tearDown() {
+    User adminUser = userRepository.findByUsername(ADMIN_USER).orElse(null);
+    if (adminUser != null) {
+      adminUser.setPassword(passwordEncoder.encode(ADMIN_PASS));
+      userRepository.save(adminUser);
+    }
+  }
 
   @WithUserDetails("admin")
   @Test

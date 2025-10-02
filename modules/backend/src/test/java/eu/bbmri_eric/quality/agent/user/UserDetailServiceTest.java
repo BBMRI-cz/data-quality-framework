@@ -24,14 +24,12 @@ class UserDetailServiceTest {
 
   @AfterEach
   void tearDown() {
-    // Reset admin password to default state after each test
     User adminUser = userRepository.findByUsername(ADMIN_USER).orElse(null);
     if (adminUser != null) {
       adminUser.setPassword(passwordEncoder.encode(ADMIN_PASS));
       userRepository.save(adminUser);
     }
 
-    // Clean up any test users that might have been created
     userRepository.findByUsername("testuser").ifPresent(userRepository::delete);
     userRepository.findByUsername("user1").ifPresent(userRepository::delete);
   }
