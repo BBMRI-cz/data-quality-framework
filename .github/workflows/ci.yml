@@ -8,6 +8,11 @@ on:
   pull_request:
     branches:
       - master
+
+env:
+  JAVA_VERSION: '21'
+  JAVA_DISTRIBUTION: 'temurin'
+
 jobs:
   lint:
     name: Check Code Format (Agent)
@@ -17,14 +22,21 @@ jobs:
 
       - uses: actions/setup-java@v4
         with:
-          java-version: '21'
-          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: 'maven'
 
       - uses: actions/cache@v4
         with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('modules/backend/pom.xml') }}
-          restore-keys: ${{ runner.os }}-maven-
+          path: |
+            ~/.m2/repository
+            ~/.m2/wrapper
+          key: ${{ runner.os }}-maven-agent-${{ hashFiles('modules/backend/pom.xml', '**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-agent-${{ hashFiles('modules/backend/pom.xml') }}
+            ${{ runner.os }}-maven-agent-
+            ${{ runner.os }}-maven-
+
       - working-directory: modules/backend
         run: mvn --quiet clean com.spotify.fmt:fmt-maven-plugin:check
 
@@ -36,14 +48,21 @@ jobs:
 
       - uses: actions/setup-java@v4
         with:
-          java-version: '21'
-          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: 'maven'
 
       - uses: actions/cache@v4
         with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-server-${{ hashFiles('server/backend/pom.xml') }}
-          restore-keys: ${{ runner.os }}-maven-server-
+          path: |
+            ~/.m2/repository
+            ~/.m2/wrapper
+          key: ${{ runner.os }}-maven-server-${{ hashFiles('server/backend/pom.xml', '**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-server-${{ hashFiles('server/backend/pom.xml') }}
+            ${{ runner.os }}-maven-server-
+            ${{ runner.os }}-maven-
+
       - working-directory: server/backend
         run: mvn --quiet clean com.spotify.fmt:fmt-maven-plugin:check
 
@@ -56,14 +75,21 @@ jobs:
 
       - uses: actions/setup-java@v4
         with:
-          java-version: '21'
-          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: 'maven'
 
       - uses: actions/cache@v4
         with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('modules/backend/pom.xml') }}
-          restore-keys: ${{ runner.os }}-maven-
+          path: |
+            ~/.m2/repository
+            ~/.m2/wrapper
+          key: ${{ runner.os }}-maven-agent-${{ hashFiles('modules/backend/pom.xml', '**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-agent-${{ hashFiles('modules/backend/pom.xml') }}
+            ${{ runner.os }}-maven-agent-
+            ${{ runner.os }}-maven-
+
       - working-directory: modules/backend
         run: mvn --quiet test
 
@@ -76,14 +102,21 @@ jobs:
 
       - uses: actions/setup-java@v4
         with:
-          java-version: '21'
-          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: 'maven'
 
       - uses: actions/cache@v4
         with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-server-${{ hashFiles('server/backend/pom.xml') }}
-          restore-keys: ${{ runner.os }}-maven-server-
+          path: |
+            ~/.m2/repository
+            ~/.m2/wrapper
+          key: ${{ runner.os }}-maven-server-${{ hashFiles('server/backend/pom.xml', '**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-server-${{ hashFiles('server/backend/pom.xml') }}
+            ${{ runner.os }}-maven-server-
+            ${{ runner.os }}-maven-
+
       - working-directory: server/backend
         run: mvn --quiet test
 
@@ -110,6 +143,8 @@ jobs:
           tags: ghcr.io/bbmri-cz/data-quality-agent:latest
           load: true
           outputs: type=docker,dest=/tmp/agent-image.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - run: docker compose down
         name: Down the container
@@ -131,12 +166,14 @@ jobs:
           echo "Container is not healthy"
           docker logs quality-agent
           exit 1
+
       - uses: docker/build-push-action@v6
         name: Build new image artifact
         with:
           context: .
           tags: ghcr.io/bbmri-cz/data-quality-agent:latest
-          outputs: dest=/tmp/agent-image.tar
+          outputs: type=docker,dest=/tmp/agent-image.tar
+          cache-from: type=gha
 
       - name: Upload agent image artifact
         uses: actions/upload-artifact@v4
@@ -167,6 +204,8 @@ jobs:
           tags: ghcr.io/bbmri-cz/data-quality-server:latest
           load: true
           outputs: type=docker
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - run: docker compose down
         name: Down the container
@@ -194,13 +233,15 @@ jobs:
         with:
           context: ./server
           tags: ghcr.io/bbmri-cz/data-quality-server:latest
-          outputs: type=docker,dest=/tmp/agent-image.tar
+          outputs: type=docker,dest=/tmp/server-image.tar
+          cache-from: type=gha
 
       - name: Upload server image artifact
         uses: actions/upload-artifact@v4
         with:
           name: server-image
           path: /tmp/server-image.tar
+
   docs:
     name: Build and Deploy Documentation
     runs-on: ubuntu-latest
@@ -242,7 +283,7 @@ jobs:
         uses: actions/deploy-pages@v4
 
   build:
-    name: Build Agent
+    name: Publish Agent Image
     runs-on: ubuntu-latest
     needs:
       - test
@@ -255,14 +296,20 @@ jobs:
 
       - uses: actions/setup-java@v4
         with:
-          java-version: '21'
-          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: 'maven'
 
       - uses: actions/cache@v4
         with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('modules/backend/pom.xml') }}
-          restore-keys: ${{ runner.os }}-maven-
+          path: |
+            ~/.m2/repository
+            ~/.m2/wrapper
+          key: ${{ runner.os }}-maven-agent-${{ hashFiles('modules/backend/pom.xml', '**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-agent-${{ hashFiles('modules/backend/pom.xml') }}
+            ${{ runner.os }}-maven-agent-
+            ${{ runner.os }}-maven-
 
       - working-directory: modules/backend
         run: mvn --quiet clean package -DskipTests
@@ -297,7 +344,7 @@ jobs:
           cache-to: type=gha,mode=max
 
   build-server:
-    name: Build Server
+    name: Publish Server Image
     runs-on: ubuntu-latest
     needs:
       - test-server
@@ -310,14 +357,20 @@ jobs:
 
       - uses: actions/setup-java@v4
         with:
-          java-version: '21'
-          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: 'maven'
 
       - uses: actions/cache@v4
         with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-server-${{ hashFiles('server/backend/pom.xml') }}
-          restore-keys: ${{ runner.os }}-maven-server-
+          path: |
+            ~/.m2/repository
+            ~/.m2/wrapper
+          key: ${{ runner.os }}-maven-server-${{ hashFiles('server/backend/pom.xml', '**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-server-${{ hashFiles('server/backend/pom.xml') }}
+            ${{ runner.os }}-maven-server-
+            ${{ runner.os }}-maven-
 
       - working-directory: server/backend
         run: mvn --quiet clean package -DskipTests
@@ -352,7 +405,7 @@ jobs:
           cache-to: type=gha,mode=max
 
   integration-test:
-    name: System test
+    name: Run System Test
     runs-on: ubuntu-latest
     needs:
       - build
