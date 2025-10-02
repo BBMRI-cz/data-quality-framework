@@ -3,7 +3,6 @@ package eu.bbmri_eric.quality.server.user;
 import static org.springframework.security.core.userdetails.User.withUsername;
 
 import java.util.Objects;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,8 +11,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 /**
- * Service for fetching user details for Spring Security authentication.
- * Implements UserDetailsService interface for integration with Spring Security.
+ * Service for fetching user details for Spring Security authentication. Implements
+ * UserDetailsService interface for integration with Spring Security.
  */
 @Service
 public class UserDetailService implements UserDetailsService {
@@ -32,15 +31,16 @@ public class UserDetailService implements UserDetailsService {
 
     logger.debug("Loading user details for username: {}", username);
 
-    var user = userRepository.findByUsername(username)
-        .orElseThrow(() -> {
-          logger.warn("User not found during authentication: {}", username);
-          return new UsernameNotFoundException("User not found: " + username);
-        });
+    var user =
+        userRepository
+            .findByUsername(username)
+            .orElseThrow(
+                () -> {
+                  logger.warn("User not found during authentication: {}", username);
+                  return new UsernameNotFoundException("User not found: " + username);
+                });
 
     logger.debug("Successfully loaded user details for: {}", username);
-    return withUsername(user.getUsername())
-        .password(user.getPassword())
-        .build();
+    return withUsername(user.getUsername()).password(user.getPassword()).build();
   }
 }

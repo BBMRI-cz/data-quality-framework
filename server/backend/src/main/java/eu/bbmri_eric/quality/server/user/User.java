@@ -1,16 +1,15 @@
 package eu.bbmri_eric.quality.server.user;
 
-import java.util.Objects;
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.util.Objects;
 
 /**
- * User entity representing a user account in the system.
- * Follows domain-driven design principles with proper encapsulation.
+ * User entity representing a user account in the system. Follows domain-driven design principles
+ * with proper encapsulation.
  */
 @Entity
 @Table(name = "user_account")
@@ -35,9 +34,7 @@ class User {
     this.password = Objects.requireNonNull(password, "Password cannot be null");
   }
 
-  /**
-   * Default constructor for JPA.
-   */
+  /** Default constructor for JPA. */
   protected User() {
     this.id = null;
     this.username = null;

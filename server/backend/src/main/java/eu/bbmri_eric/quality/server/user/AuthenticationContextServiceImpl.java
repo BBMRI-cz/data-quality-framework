@@ -1,7 +1,6 @@
 package eu.bbmri_eric.quality.server.user;
 
 import java.util.Objects;
-
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +17,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class AuthenticationContextServiceImpl implements AuthenticationContextService {
 
-  private static final Logger logger = LoggerFactory.getLogger(AuthenticationContextServiceImpl.class);
+  private static final Logger logger =
+      LoggerFactory.getLogger(AuthenticationContextServiceImpl.class);
 
   private final UserRepository userRepository;
   private final ModelMapper modelMapper;
@@ -40,11 +40,14 @@ public class AuthenticationContextServiceImpl implements AuthenticationContextSe
     String username = authentication.getName();
     logger.debug("Retrieving user profile for authenticated user: {}", username);
 
-    var user = userRepository.findByUsername(username)
-        .orElseThrow(() -> {
-          logger.warn("User not found: {}", username);
-          return new UsernameNotFoundException("User not found: " + username);
-        });
+    var user =
+        userRepository
+            .findByUsername(username)
+            .orElseThrow(
+                () -> {
+                  logger.warn("User not found: {}", username);
+                  return new UsernameNotFoundException("User not found: " + username);
+                });
 
     logger.debug("Successfully found user: {}", username);
     return modelMapper.map(user, UserDTO.class);

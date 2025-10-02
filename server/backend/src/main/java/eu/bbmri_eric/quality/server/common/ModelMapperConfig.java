@@ -5,8 +5,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Configuration class for ModelMapper bean.
- * Provides the ModelMapper instance required by the application.
+ * Configuration class for ModelMapper bean. Provides the ModelMapper instance required by the
+ * application.
  */
 @Configuration
 class ModelMapperConfig {
