@@ -3,6 +3,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: 'Data Quality Framework',
   description: 'Comprehensive framework for monitoring and ensuring data quality in biomedical research environments',
+  base: '/data-quality-framework/',
 
   themeConfig: {
     logo: '/logo.svg',
@@ -33,7 +34,7 @@ export default defineConfig({
     },
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/bbmri-eric/data-quality-agent' }
+      { icon: 'github', link: 'https://github.com/bbmri-eric/data-quality-framework' }
     ],
 
     footer: {
