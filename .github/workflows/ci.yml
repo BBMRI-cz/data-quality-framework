@@ -109,8 +109,6 @@ jobs:
           context: .
           tags: ghcr.io/bbmri-cz/data-quality-agent:latest
           load: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
           outputs: type=docker,dest=/tmp/agent-image.tar
 
       - name: Upload agent image artifact
@@ -162,8 +160,6 @@ jobs:
           context: ./server
           tags: ghcr.io/bbmri-cz/data-quality-server:latest
           load: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
           outputs: type=docker,dest=/tmp/server-image.tar
 
       - name: Upload server image artifact
