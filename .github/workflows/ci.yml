@@ -388,7 +388,7 @@ jobs:
           docker load -i /tmp/agent-image.tar
           docker load -i /tmp/server-image.tar
 
-      - name: Create integration docker-compose
+      - name: Docker Compose Up
         run: docker compose up -d
 
       - name: Check agent health
@@ -403,7 +403,7 @@ jobs:
           sleep 3
           done
           echo "Container is not healthy"
-          docker logs quality-server
+          docker logs quality-agent
           exit 1
 
       - name: Check server health

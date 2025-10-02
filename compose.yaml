@@ -5,7 +5,7 @@ services:
     ports:
       - "8081:8081"
     volumes:
-      - agent-database:/app/data
+      - agent-data:/app/data
     extra_hosts:
       - "host.docker.internal:host-gateway"
   quality-server:
@@ -14,11 +14,11 @@ services:
     ports:
       - "8082:8082"
     volumes:
-      - server-database:/app/data
+      - server-data:/app/data
     extra_hosts:
       - "host.docker.internal:host-gateway"
 volumes:
-  agent-database:
+  agent-data:
     driver: local
-  server-database:
+  server-data:
     driver: local
