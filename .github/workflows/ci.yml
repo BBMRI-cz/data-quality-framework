@@ -277,7 +277,7 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           context: .
-          tags: ghcr.io/${{ github.repository_owner }}/data-quality-agent:${{ github.sha }}
+          tags: ghcr.io/${{ github.repository_owner }}/data-quality-agent:latest
           build-args: ARTIFACT_VERSION=${{ github.ref_name }}
           cache-from: type=gha
           outputs: type=docker,dest=/tmp/agent-image.tar
@@ -346,7 +346,7 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           context: ./server
-          tags: ghcr.io/${{ github.repository_owner }}/data-quality-server:${{ github.sha }}
+          tags: ghcr.io/${{ github.repository_owner }}/data-quality-server:latest
           build-args: ARTIFACT_VERSION=${{ github.ref_name }}
           cache-from: type=gha
           outputs: type=docker,dest=/tmp/server-image.tar
