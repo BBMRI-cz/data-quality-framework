@@ -5,6 +5,7 @@ export const authStore = reactive({
   isAuthenticated: false,
   isLoading: false,
   error: null,
+  redirectPath: null,
 
   init() {
     const savedUser = localStorage.getItem('user')
@@ -31,6 +32,7 @@ export const authStore = reactive({
     this.user = null
     this.isAuthenticated = false
     this.error = null
+    this.redirectPath = null
 
     localStorage.removeItem('user')
     localStorage.removeItem('authToken')
@@ -47,6 +49,16 @@ export const authStore = reactive({
 
   clearError() {
     this.error = null
+  },
+
+  setRedirectPath(path) {
+    this.redirectPath = path
+  },
+
+  getRedirectPath() {
+    const path = this.redirectPath
+    this.redirectPath = null // Clear after getting
+    return path || '/dashboard'
   }
 })
 

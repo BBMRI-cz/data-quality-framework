@@ -23,6 +23,8 @@ const notifications = reactive([])
 let nextId = 1
 
 const addNotification = (notification) => {
+  notifications.splice(0)
+
   const id = nextId++
   notifications.push({
     id,
@@ -45,7 +47,6 @@ const clearAll = () => {
   notifications.splice(0)
 }
 
-// Global notification methods
 const showSuccess = (title, message = '', options = {}) => {
   return addNotification({ type: 'success', title, message, ...options })
 }
@@ -62,7 +63,6 @@ const showWarning = (title, message = '', options = {}) => {
   return addNotification({ type: 'warning', title, message, ...options })
 }
 
-// Export methods for global use
 defineExpose({
   addNotification,
   removeNotification,

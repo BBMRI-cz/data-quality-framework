@@ -121,9 +121,12 @@
 
 <script setup>
 import { reactive, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { authStore } from '../stores/authStore.js'
 import { apiService } from '../services/apiService.js'
 import { notificationService } from '../services/notificationService.js'
+
+const router = useRouter()
 
 const form = reactive({
   username: '',
@@ -184,6 +187,10 @@ const handleLogin = async () => {
     if (!form.rememberMe) {
       form.username = ''
     }
+
+    // Redirect to the intended route or dashboard
+    const redirectPath = authStore.getRedirectPath()
+    await router.push(redirectPath)
 
   } catch (error) {
     console.error('Login failed:', error)
