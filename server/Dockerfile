@@ -20,5 +20,5 @@ WORKDIR /app
 ENV SPRING_PROFILES_ACTIVE=prod
 HEALTHCHECK --interval=10s --timeout=10s CMD curl -f http://localhost:8081/api/health || exit 1
 COPY --from=backend-builder /app/backend/target/*.jar app.jar
-EXPOSE 8081
+EXPOSE 8082
 ENTRYPOINT ["java", "-jar", "app.jar"]

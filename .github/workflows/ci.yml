@@ -108,6 +108,7 @@ jobs:
         with:
           context: .
           tags: ghcr.io/bbmri-cz/data-quality-agent:latest
+          load: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -154,6 +155,7 @@ jobs:
         with:
           context: ./server
           tags: ghcr.io/bbmri-cz/data-quality-server:latest
+          load: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -388,3 +390,33 @@ jobs:
 
       - name: Create integration docker-compose
         run: docker compose up -d
+
+      - name: Check agent health
+        run: |
+          for i in {1..20}; do
+          STATUS=$(docker inspect --format='{{.State.Health.Status}}' quality-agent)
+          echo "Health status: $STATUS"
+          if [ "$STATUS" == "healthy" ]; then
+          echo "Container is healthy"
+          exit 0
+          fi
+          sleep 3
+          done
+          echo "Container is not healthy"
+          docker logs quality-server
+          exit 1
+
+      - name: Check server health
+        run: |
+          for i in {1..20}; do
+          STATUS=$(docker inspect --format='{{.State.Health.Status}}' quality-server)
+          echo "Health status: $STATUS"
+          if [ "$STATUS" == "healthy" ]; then
+          echo "Container is healthy"
+          exit 0
+          fi
+          sleep 3
+          done
+          echo "Container is not healthy"
+          docker logs quality-server
+          exit 1
