@@ -1,3 +1,4 @@
+name: Data Quality Framework
 services:
   quality-agent:
     image: ghcr.io/bbmri-cz/data-quality-agent:latest
