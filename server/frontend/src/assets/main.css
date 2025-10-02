@@ -1,0 +1,27 @@
+@import './base.css';
+
+#app {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0;
+  font-weight: normal;
+}
+
+a {
+  text-decoration: none;
+  color: #3b82f6;
+  transition: 0.3s;
+  padding: 3px;
+}
+
+@media (hover: hover) {
+  a:hover {
+    color: #1d4ed8;
+    text-decoration: underline;
+  }
+}
+
+@media (min-width: 1024px) {
+  #app {
+  }
+}

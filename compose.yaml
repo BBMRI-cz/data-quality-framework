@@ -1,3 +1,4 @@
+name: Data Quality Framework
 services:
   quality-agent:
     image: ghcr.io/bbmri-cz/data-quality-agent:latest
@@ -5,9 +6,20 @@ services:
     ports:
       - "8081:8081"
     volumes:
-      - database:/app/data
+      - agent-data:/app/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+  quality-server:
+    image: ghcr.io/bbmri-cz/data-quality-server:latest
+    container_name: quality-server
+    ports:
+      - "8082:8082"
+    volumes:
+      - server-data:/app/data
     extra_hosts:
       - "host.docker.internal:host-gateway"
 volumes:
-  database:
+  agent-data:
+    driver: local
+  server-data:
     driver: local
