@@ -131,6 +131,12 @@ jobs:
           echo "Container is not healthy"
           docker logs quality-agent
           exit 1
+      - uses: docker/build-push-action@v6
+        name: Build new image artifact
+        with:
+          context: .
+          tags: ghcr.io/bbmri-cz/data-quality-agent:latest
+          outputs: dest=/tmp/agent-image.tar
 
       - name: Upload agent image artifact
         uses: actions/upload-artifact@v4
@@ -183,6 +189,18 @@ jobs:
           docker logs quality-server
           exit 1
 
+      - uses: docker/build-push-action@v6
+        name: Build new image artifact
+        with:
+          context: ./server
+          tags: ghcr.io/bbmri-cz/data-quality-server:latest
+          outputs: type=docker,dest=/tmp/agent-image.tar
+
+      - name: Upload server image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-image
+          path: /tmp/server-image.tar
   docs:
     name: Build and Deploy Documentation
     runs-on: ubuntu-latest
