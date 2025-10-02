@@ -111,12 +111,6 @@ jobs:
           load: true
           outputs: type=docker,dest=/tmp/agent-image.tar
 
-      - name: Upload agent image artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: agent-image
-          path: /tmp/agent-image.tar
-
       - run: docker compose down
         name: Down the container
 
@@ -137,6 +131,12 @@ jobs:
           echo "Container is not healthy"
           docker logs quality-agent
           exit 1
+
+      - name: Upload agent image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-image
+          path: /tmp/agent-image.tar
 
   migration-server:
     name: Test DB Migration (Server)
@@ -162,12 +162,6 @@ jobs:
           load: true
           outputs: type=docker,dest=/tmp/server-image.tar
 
-      - name: Upload server image artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: server-image
-          path: /tmp/server-image.tar
-
       - run: docker compose down
         name: Down the container
 
@@ -188,6 +182,12 @@ jobs:
           echo "Container is not healthy"
           docker logs quality-server
           exit 1
+
+      - name: Upload server image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-image
+          path: /tmp/server-image.tar
 
   docs:
     name: Build and Deploy Documentation
