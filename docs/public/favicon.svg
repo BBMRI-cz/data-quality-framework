@@ -1,0 +1,50 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e40af;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="centerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="16" cy="16" r="14" fill="url(#bgGrad)"/>
+
+  <!-- Simplified hexagonal federation nodes -->
+  <g opacity="0.9" fill="white" stroke="#1e40af" stroke-width="0.8">
+    <!-- Top nodes -->
+    <polygon points="9,6 12,7 12,10 9,11 6,10 6,7"/>
+    <polygon points="23,6 26,7 26,10 23,11 20,10 20,7"/>
+
+    <!-- Bottom nodes -->
+    <polygon points="9,22 12,23 12,26 9,27 6,26 6,23"/>
+    <polygon points="23,22 26,23 26,26 23,27 20,26 20,23"/>
+  </g>
+
+  <!-- Connection lines -->
+  <g opacity="0.6" stroke="white" stroke-width="1">
+    <line x1="9" y1="8.5" x2="16" y2="16"/>
+    <line x1="23" y1="8.5" x2="16" y2="16"/>
+    <line x1="9" y1="24.5" x2="16" y2="16"/>
+    <line x1="23" y1="24.5" x2="16" y2="16"/>
+  </g>
+
+  <!-- Central hub -->
+  <circle cx="16" cy="16" r="5.5" fill="url(#centerGrad)" stroke="white" stroke-width="1"/>
+
+  <!-- Quality shield and checkmark -->
+  <g transform="translate(16,16)">
+    <path d="M0,-3.5 L2,-2.5 L2,1.5 C2,2.8 0,3.5 0,3.5 C0,3.5 -2,2.8 -2,1.5 L-2,-2.5 Z" fill="white"/>
+    <path d="M-1,0 L-0.3,0.7 L1.2,-1" stroke="#10b981" stroke-width="1" fill="none" stroke-linecap="round"/>
+  </g>
+
+  <!-- Medical cross accent -->
+  <g transform="translate(24, 8)">
+    <circle cx="0" cy="0" r="2.5" fill="#ef4444"/>
+    <rect x="-0.4" y="-1.2" width="0.8" height="2.4" fill="white"/>
+    <rect x="-1.2" y="-0.4" width="2.4" height="0.8" fill="white"/>
+  </g>
+</svg>

@@ -1,0 +1,87 @@
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e40af;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="centerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="60" cy="60" r="55" fill="url(#bgGradient)" stroke="#1e40af" stroke-width="2"/>
+
+  <!-- Federation representation: Connected hexagonal network -->
+  <!-- Outer nodes representing federated sites -->
+  <g opacity="0.9">
+    <!-- Top nodes -->
+    <polygon points="30,20 40,25 40,35 30,40 20,35 20,25" fill="white" stroke="#1e40af" stroke-width="1.5"/>
+    <polygon points="90,20 100,25 100,35 90,40 80,35 80,25" fill="white" stroke="#1e40af" stroke-width="1.5"/>
+
+    <!-- Side nodes -->
+    <polygon points="10,55 20,60 20,70 10,75 5,70 5,60" fill="white" stroke="#1e40af" stroke-width="1.5"/>
+    <polygon points="110,55 115,60 115,70 110,75 100,70 100,60" fill="white" stroke="#1e40af" stroke-width="1.5"/>
+
+    <!-- Bottom nodes -->
+    <polygon points="30,80 40,85 40,95 30,100 20,95 20,85" fill="white" stroke="#1e40af" stroke-width="1.5"/>
+    <polygon points="90,80 100,85 100,95 90,100 80,95 80,85" fill="white" stroke="#1e40af" stroke-width="1.5"/>
+  </g>
+
+  <!-- Connection network -->
+  <g opacity="0.7">
+    <line x1="30" y1="30" x2="60" y2="60" stroke="white" stroke-width="2"/>
+    <line x1="90" y1="30" x2="60" y2="60" stroke="white" stroke-width="2"/>
+    <line x1="12" y1="62" x2="60" y2="60" stroke="white" stroke-width="2"/>
+    <line x1="105" y1="62" x2="60" y2="60" stroke="white" stroke-width="2"/>
+    <line x1="30" y1="90" x2="60" y2="60" stroke="white" stroke-width="2"/>
+    <line x1="90" y1="90" x2="60" y2="60" stroke="white" stroke-width="2"/>
+  </g>
+
+  <!-- Central coordination hub -->
+  <circle cx="60" cy="60" r="15" fill="url(#centerGradient)" stroke="white" stroke-width="3"/>
+
+  <!-- Quality check symbol in center -->
+  <g transform="translate(60,60)">
+    <!-- Shield shape for security/quality -->
+    <path d="M0,-10 L6,-8 L6,4 C6,8 0,10 0,10 C0,10 -6,8 -6,4 L-6,-8 Z" fill="white" stroke="none"/>
+    <!-- Checkmark -->
+    <path d="M-3,0 L-1,2 L4,-3" stroke="#10b981" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Data flow indicators in outer nodes -->
+  <g fill="#3b82f6" opacity="0.8">
+    <!-- Mini bar charts in each node -->
+    <rect x="27" y="27" width="2" height="6" rx="1"/>
+    <rect x="30" y="25" width="2" height="8" rx="1"/>
+    <rect x="33" y="28" width="2" height="5" rx="1"/>
+
+    <rect x="87" y="27" width="2" height="6" rx="1"/>
+    <rect x="90" y="25" width="2" height="8" rx="1"/>
+    <rect x="93" y="28" width="2" height="5" rx="1"/>
+
+    <rect x="9" y="62" width="2" height="6" rx="1"/>
+    <rect x="12" y="60" width="2" height="8" rx="1"/>
+    <rect x="15" y="63" width="2" height="5" rx="1"/>
+
+    <rect x="102" y="62" width="2" height="6" rx="1"/>
+    <rect x="105" y="60" width="2" height="8" rx="1"/>
+    <rect x="108" y="63" width="2" height="5" rx="1"/>
+
+    <rect x="27" y="87" width="2" height="6" rx="1"/>
+    <rect x="30" y="85" width="2" height="8" rx="1"/>
+    <rect x="33" y="88" width="2" height="5" rx="1"/>
+
+    <rect x="87" y="87" width="2" height="6" rx="1"/>
+    <rect x="90" y="85" width="2" height="8" rx="1"/>
+    <rect x="93" y="88" width="2" height="5" rx="1"/>
+  </g>
+
+  <!-- Medical/biobank indicator -->
+  <g transform="translate(90, 20)" opacity="0.9">
+    <circle cx="0" cy="0" r="6" fill="#ef4444"/>
+    <rect x="-0.8" y="-3" width="1.6" height="6" fill="white"/>
+    <rect x="-3" y="-0.8" width="6" height="1.6" fill="white"/>
+  </g>
+</svg>

@@ -1,0 +1,14 @@
+{
+  "name": "data-quality-framework-docs",
+  "version": "1.0.0",
+  "description": "Documentation for Data Quality Framework",
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview"
+  },
+  "devDependencies": {
+    "vitepress": "^1.6.4"
+  },
+  "type": "module"
+}

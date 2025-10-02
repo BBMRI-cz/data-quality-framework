@@ -9,6 +9,7 @@
 /target
 /modules/backend/target
 /modules/frontend/node_modules
+/docs/node_modules
 /modules/frontend/frontend.iml
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/

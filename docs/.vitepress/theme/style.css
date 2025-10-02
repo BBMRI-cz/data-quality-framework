@@ -1,0 +1,85 @@
+/**
+ * Customize default theme styling by overriding CSS variables:
+ * https://github.com/vuejs/vitepress/blob/main/src/client/theme-default/styles/vars.css
+ */
+
+:root {
+  --vp-c-brand-1: #3b82f6;
+  --vp-c-brand-2: #2563eb;
+  --vp-c-brand-3: #1d4ed8;
+  --vp-c-brand-soft: rgba(59, 130, 246, 0.14);
+
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 50%, #10b981 100%);
+
+  --vp-home-hero-image-background-image: linear-gradient(135deg, #3b82f620 0%, #1d4ed820 50%, #10b98120 100%);
+  --vp-home-hero-image-filter: blur(44px);
+}
+
+/* Custom styles for better visual appeal */
+.VPHero .VPImage {
+  max-width: 200px;
+  max-height: 200px;
+}
+
+.VPFeature .VPLink {
+  transition: transform 0.2s ease-in-out;
+}
+
+.VPFeature .VPLink:hover {
+  transform: translateY(-2px);
+}
+
+/* Custom info boxes styling */
+.custom-block.info {
+  background-color: var(--vp-c-brand-soft);
+  border-color: var(--vp-c-brand-1);
+}
+
+/* Make the hero section more engaging */
+.VPHero .name {
+  font-size: 3.5rem;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.VPHero .tagline {
+  font-size: 1.3rem;
+  color: var(--vp-c-text-2);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Enhance feature cards */
+.VPFeatures {
+  padding-top: 2rem;
+}
+
+.VPFeature {
+  background: var(--vp-c-bg-soft);
+  border-radius: 12px;
+  padding: 2rem;
+  height: 100%;
+}
+
+.VPFeature .icon {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+/* Add subtle animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.VPContent {
+  animation: fadeInUp 0.6s ease-out;
+}
