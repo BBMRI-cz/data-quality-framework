@@ -111,6 +111,7 @@ jobs:
           load: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          outputs: type=docker,dest=/tmp/agent-image.tar
 
       - name: Upload agent image artifact
         uses: actions/upload-artifact@v4
