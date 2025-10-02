@@ -2,7 +2,7 @@
   <nav class="navbar">
     <div class="navbar-container">
       <!-- Brand -->
-      <div class="navbar-brand">
+      <router-link to="/" class="navbar-brand">
         <div class="brand-icon">
           <i class="bi bi-bar-chart-fill"></i>
         </div>
@@ -10,7 +10,7 @@
           <h4>Data Quality</h4>
           <small>Dashboard</small>
         </div>
-      </div>
+      </router-link>
 
       <!-- Desktop Navigation -->
       <div class="navbar-nav desktop-nav">
@@ -30,21 +30,14 @@
 
       <!-- User Menu -->
       <div class="user-menu desktop-nav">
-        <div class="user-info">
-          <span>{{ authStore.user?.username || 'User' }}</span>
-        </div>
         <div class="dropdown">
-          <button @click="toggleUserDropdown" class="logout-btn" ref="dropdownToggle">
-            {{ getUserInitials() }}
+          <button @click="toggleUserDropdown" class="user-avatar-btn" ref="dropdownToggle">
+            <span class="user-initials">{{ getUserInitials() }}</span>
           </button>
           <div class="dropdown-menu" :class="{ show: showUserDropdown }">
-            <div class="dropdown-header">
-              {{ authStore.user?.username || 'User' }}
-            </div>
-            <div class="dropdown-divider"></div>
-            <button @click="handleLogout" class="dropdown-item">
+            <button @click="handleLogout" class="dropdown-item logout-item">
               <i class="bi bi-box-arrow-right"></i>
-              Sign Out
+              <span>Sign Out</span>
             </button>
           </div>
         </div>
@@ -142,6 +135,20 @@ const getUserInitials = () => {
   display: flex;
   align-items: center;
   color: white;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.navbar-brand:hover {
+  color: white;
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+
+.navbar-brand:hover .brand-icon {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
 }
 
 .brand-icon {
@@ -193,28 +200,81 @@ const getUserInitials = () => {
 .user-menu {
   display: flex;
   align-items: center;
-  gap: 1rem;
 }
 
-.user-info {
-  color: white;
-  font-weight: 500;
-}
-
-.logout-btn {
-  width: 44px;
-  height: 44px;
+.user-avatar-btn {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
   color: white;
-  font-weight: bold;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.logout-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+.user-avatar-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: scale(1.05);
+}
+
+.user-initials {
+  font-weight: bold;
+}
+
+.dropdown {
+  position: relative;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 0.5rem 0;
+  min-width: 140px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.2s ease;
+  z-index: 1000;
+}
+
+.dropdown-menu.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: none;
+  color: #374151;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  text-align: left;
+}
+
+.dropdown-item:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.dropdown-item i {
+  color: #6b7280;
 }
 
 /* Mobile styles */
@@ -269,70 +329,6 @@ const getUserInitials = () => {
 .mobile-nav-link:hover,
 .mobile-logout-btn:hover {
   background: rgba(255, 255, 255, 0.1);
-}
-
-/* Dropdown styles */
-.dropdown {
-  position: relative;
-}
-
-.dropdown-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  padding: 0.5rem 0;
-  min-width: 200px;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-10px);
-  transition: all 0.2s ease;
-  z-index: 1000;
-}
-
-.dropdown-menu.show {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
-}
-
-.dropdown-header {
-  padding: 0.75rem 1rem;
-  font-weight: 600;
-  color: #374151;
-  font-size: 0.875rem;
-}
-
-.dropdown-divider {
-  height: 1px;
-  background: #e5e7eb;
-  margin: 0.5rem 0;
-}
-
-.dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  width: 100%;
-  padding: 0.75rem 1rem;
-  background: none;
-  border: none;
-  color: #374151;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  text-align: left;
-}
-
-.dropdown-item:hover {
-  background: #f3f4f6;
-  color: #111827;
-}
-
-.dropdown-item i {
-  color: #6b7280;
 }
 
 /* Responsive breakpoints */

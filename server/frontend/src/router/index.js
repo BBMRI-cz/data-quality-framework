@@ -5,6 +5,7 @@ import Dashboard from '../views/Dashboard.vue'
 import Reports from '../views/Reports.vue'
 import Settings from '../views/Settings.vue'
 import LoginView from '../views/LoginView.vue'
+import NotFound from '../views/NotFound.vue'
 
 const routes = [
   {
@@ -41,6 +42,12 @@ const routes = [
     name: 'Settings',
     component: Settings,
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: NotFound,
+    meta: { requiresAuth: false }
   }
 ]
 
