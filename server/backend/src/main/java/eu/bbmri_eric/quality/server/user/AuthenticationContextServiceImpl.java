@@ -31,15 +31,11 @@ public class AuthenticationContextServiceImpl implements AuthenticationContextSe
   @Override
   public UserDTO getCurrentUser() {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
     if (Objects.isNull(authentication) || !authentication.isAuthenticated()) {
       logger.warn("Attempt to access authentication context without valid credentials");
       throw new AuthenticationCredentialsNotFoundException("No valid authentication found");
     }
-
     String username = authentication.getName();
-    logger.debug("Retrieving user profile for authenticated user: {}", username);
-
     var user =
         userRepository
             .findByUsername(username)
@@ -51,11 +47,5 @@ public class AuthenticationContextServiceImpl implements AuthenticationContextSe
 
     logger.debug("Successfully found user: {}", username);
     return modelMapper.map(user, UserDTO.class);
-  }
-
-  @Override
-  public boolean isAuthenticated() {
-    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    return Objects.nonNull(authentication) && authentication.isAuthenticated();
   }
 }

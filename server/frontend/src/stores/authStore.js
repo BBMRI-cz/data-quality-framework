@@ -8,21 +8,23 @@ export const authStore = reactive({
 
   init() {
     const savedUser = localStorage.getItem('user')
-    const savedCredentials = localStorage.getItem('authCredentials')
+    const savedToken = localStorage.getItem('authToken')
 
-    if (savedUser && savedCredentials) {
+    if (savedUser && savedToken) {
       this.user = JSON.parse(savedUser)
       this.isAuthenticated = true
     }
   },
 
-  setUser(user, credentials) {
+  setUser(user, token) {
     this.user = user
     this.isAuthenticated = true
     this.error = null
 
     localStorage.setItem('user', JSON.stringify(user))
-    localStorage.setItem('authCredentials', credentials)
+    if (token) {
+      localStorage.setItem('authToken', token)
+    }
   },
 
   logout() {
@@ -31,7 +33,7 @@ export const authStore = reactive({
     this.error = null
 
     localStorage.removeItem('user')
-    localStorage.removeItem('authCredentials')
+    localStorage.removeItem('authToken')
     localStorage.removeItem('rememberedUsername')
   },
 

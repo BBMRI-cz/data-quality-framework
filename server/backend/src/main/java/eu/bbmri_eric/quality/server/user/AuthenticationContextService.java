@@ -14,11 +14,4 @@ public interface AuthenticationContextService {
    *     if no valid authentication is found
    */
   UserDTO getCurrentUser();
-
-  /**
-   * Checks if there is a valid authenticated user in the current context.
-   *
-   * @return true if a user is authenticated, false otherwise
-   */
-  boolean isAuthenticated();
 }

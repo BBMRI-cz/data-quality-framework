@@ -172,14 +172,12 @@ const handleLogin = async () => {
   authStore.clearError()
 
   try {
-    const credentials = btoa(`${form.username}:${form.password}`)
-    const user = await apiService.login(form.username, form.password)
-
-    authStore.setUser(user, credentials)
+    const response = await apiService.login(form.username, form.password)
+    authStore.setUser(response.user || { username: form.username }, response.token)
 
     notificationService.success(
       'Login Successful',
-      `Welcome back, ${user.username || form.username}!`
+      `Welcome back, ${response.user?.username || form.username}!`
     )
 
     form.password = ''

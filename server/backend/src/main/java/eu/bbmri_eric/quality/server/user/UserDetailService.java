@@ -21,7 +21,7 @@ public class UserDetailService implements UserDetailsService {
 
   private final UserRepository userRepository;
 
-  public UserDetailService(UserRepository userRepository) {
+  UserDetailService(UserRepository userRepository) {
     this.userRepository = userRepository;
   }
 

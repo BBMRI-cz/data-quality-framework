@@ -17,7 +17,7 @@ class ModelMapperConfig {
    * @return configured ModelMapper instance
    */
   @Bean
-  public ModelMapper modelMapper() {
+  ModelMapper modelMapper() {
     return new ModelMapper();
   }
 }

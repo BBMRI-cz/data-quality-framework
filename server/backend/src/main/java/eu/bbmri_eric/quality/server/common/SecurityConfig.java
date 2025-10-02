@@ -2,6 +2,7 @@ package eu.bbmri_eric.quality.server.common;
 
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
+import eu.bbmri_eric.quality.server.auth.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;

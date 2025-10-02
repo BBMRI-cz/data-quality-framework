@@ -1,6 +1,5 @@
-package eu.bbmri_eric.quality.server.common;
+package eu.bbmri_eric.quality.server.auth;
 
-import eu.bbmri_eric.quality.server.user.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,10 +20,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-  private final JwtService jwtService;
+  private final JwtUtil jwtService;
   private final UserDetailsService userDetailsService;
 
-  public JwtAuthenticationFilter(JwtService jwtService, UserDetailsService userDetailsService) {
+  JwtAuthenticationFilter(JwtUtil jwtService, UserDetailsService userDetailsService) {
     this.jwtService = jwtService;
     this.userDetailsService = userDetailsService;
   }
