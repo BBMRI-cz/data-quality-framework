@@ -7,6 +7,8 @@ const state = {
 export function clearAuth() {
     state.authHeader = null;
     sessionStorage.removeItem('username');
+    sessionStorage.removeItem('defaultPasswordFlag');
+    sessionStorage.removeItem('userId');
 }
 
 export function isAuthenticated() {
@@ -15,6 +17,15 @@ export function isAuthenticated() {
 
 export function getUsername() {
     return sessionStorage.getItem('username');
+}
+
+export function getUserId() {
+    return sessionStorage.getItem('userId');
+}
+
+export function getDefaultPasswordFlag() {
+    const stored = sessionStorage.getItem('defaultPasswordFlag');
+    return stored === 'true';
 }
 
 export const api = axios.create({
@@ -62,7 +73,22 @@ export async function authenticate(username, password) {
     const serverUsername = res?.data?.username && String(res.data.username).trim()
         ? res.data.username
         : username;
+
     sessionStorage.setItem('username', serverUsername);
+
+    if (res.data && typeof res.data.defaultPassword === 'boolean') {
+        sessionStorage.setItem('defaultPasswordFlag', res.data.defaultPassword.toString());
+    }
+
+    if (res.data && res.data.userId) {
+        sessionStorage.setItem('userId', res.data.userId.toString());
+    }
+
+    return {
+        username: serverUsername,
+        defaultPassword: res.data?.defaultPassword || false,
+        userId: res.data?.userId || null
+    };
 }
 
 function baseToken(username, password) {
