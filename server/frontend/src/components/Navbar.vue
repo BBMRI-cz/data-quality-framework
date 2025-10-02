@@ -128,7 +128,8 @@ const getUserInitials = () => {
   padding: 0 2rem;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  position: relative;
 }
 
 .navbar-brand {
@@ -138,6 +139,8 @@ const getUserInitials = () => {
   text-decoration: none;
   cursor: pointer;
   transition: all 0.2s ease;
+  position: absolute;
+  left: 2rem;
 }
 
 .navbar-brand:hover {
@@ -177,6 +180,7 @@ const getUserInitials = () => {
 .navbar-nav {
   display: flex;
   gap: 0.5rem;
+  justify-content: center;
 }
 
 .nav-link {
@@ -200,6 +204,8 @@ const getUserInitials = () => {
 .user-menu {
   display: flex;
   align-items: center;
+  position: absolute;
+  right: 2rem;
 }
 
 .user-avatar-btn {

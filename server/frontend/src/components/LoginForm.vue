@@ -6,7 +6,7 @@
           <div class="row g-0 min-vh-75">
             <!-- Left side - Info panel (hidden on small screens) -->
             <div class="col-lg-7 d-none d-lg-flex">
-              <div class="bg-dark text-white p-4 p-xl-5 d-flex flex-column justify-content-center w-100">
+              <div class="info-panel p-4 p-xl-5 d-flex flex-column justify-content-center w-100">
                 <div>
                   <h1 class="display-5 fw-bold mb-3">Data Quality Metrics Server</h1>
                   <p class="lead mb-4">Central Server for Data Quality Monitoring and Reporting</p>
@@ -85,7 +85,7 @@
                       </div>
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-4">
                       <label for="password" class="form-label fw-semibold">Password</label>
                       <input
                         id="password"
@@ -100,21 +100,6 @@
                       />
                       <div v-if="errors.password" class="invalid-feedback">
                         {{ errors.password }}
-                      </div>
-                    </div>
-
-                    <div class="mb-4">
-                      <div class="form-check">
-                        <input
-                          v-model="form.rememberMe"
-                          type="checkbox"
-                          class="form-check-input"
-                          id="rememberMe"
-                          :disabled="authStore.isLoading"
-                        />
-                        <label class="form-check-label small" for="rememberMe">
-                          Remember me
-                        </label>
                       </div>
                     </div>
 
@@ -142,7 +127,7 @@
 </template>
 
 <script setup>
-import { reactive, computed, onMounted, watch } from 'vue'
+import { reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { authStore } from '../stores/authStore.js'
 import { apiService } from '../services/apiService.js'
@@ -152,8 +137,7 @@ const router = useRouter()
 
 const form = reactive({
   username: '',
-  password: '',
-  rememberMe: false
+  password: ''
 })
 
 const errors = reactive({
@@ -206,9 +190,7 @@ const handleLogin = async () => {
     )
 
     form.password = ''
-    if (!form.rememberMe) {
-      form.username = ''
-    }
+    form.username = ''
 
     // Redirect to the intended route or dashboard
     const redirectPath = authStore.getRedirectPath()
@@ -226,32 +208,6 @@ const handleLogin = async () => {
     authStore.setLoading(false)
   }
 }
-
-// Load remembered username on component mount
-onMounted(() => {
-  const rememberedUsername = localStorage.getItem('rememberedUsername')
-  if (rememberedUsername) {
-    form.username = rememberedUsername
-    form.rememberMe = true
-  }
-})
-
-// Save/remove remembered username when checkbox changes
-const saveRememberedUsername = () => {
-  if (form.rememberMe && form.username.trim()) {
-    localStorage.setItem('rememberedUsername', form.username)
-  } else {
-    localStorage.removeItem('rememberedUsername')
-  }
-}
-
-// Watch for remember me changes
-watch(() => form.rememberMe, saveRememberedUsername)
-watch(() => form.username, () => {
-  if (form.rememberMe) {
-    saveRememberedUsername()
-  }
-})
 </script>
 
 <style scoped>
@@ -287,6 +243,30 @@ watch(() => form.username, () => {
 .form-control:focus {
   border-color: #667eea;
   box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.info-panel {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.info-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  pointer-events: none;
+}
+
+.info-panel > div {
+  position: relative;
+  z-index: 1;
 }
 
 /* Mobile-specific styles */
@@ -326,15 +306,6 @@ watch(() => form.username, () => {
     min-height: 48px;
     font-size: 1rem;
   }
-
-  .form-check-input {
-    width: 1.2em;
-    height: 1.2em;
-  }
-
-  .form-check-label {
-    padding-left: 0.5rem;
-  }
 }
 
 @media (max-width: 576px) {
@@ -359,11 +330,6 @@ watch(() => form.username, () => {
 
   .form-control {
     min-height: 44px;
-  }
-
-  .form-check-input {
-    width: 1.25em;
-    height: 1.25em;
   }
 }
 </style>

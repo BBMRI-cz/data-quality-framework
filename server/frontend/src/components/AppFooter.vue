@@ -1,12 +1,20 @@
 <template>
-  <footer class="bg-dark text-light py-4 mt-auto">
-    <div class="container">
-      <div class="row align-items-center">
-        <div class="col-md-6">
-          <p class="mb-0">&copy; {{ currentYear }} Data Quality Server. All rights reserved.</p>
+  <footer class="app-footer">
+    <div class="footer-content">
+      <div class="footer-main">
+        <div class="footer-brand">
+          <h5 class="brand-title">Data Quality Server</h5>
+          <p class="brand-subtitle">Ensuring data integrity and quality</p>
         </div>
-        <div class="col-md-6 text-md-end">
-          <small class="text-muted">Version 1.0.0</small>
+
+        <div class="footer-info">
+          <div class="developed-by">
+            <span class="developed-text">Developed by</span>
+            <span class="bbmri-brand">BBMRI-ERIC</span>
+          </div>
+          <div class="footer-details">
+            <span class="copyright">&copy; {{ currentYear }} Licensed under GNU General Public License</span>
+          </div>
         </div>
       </div>
     </div>
@@ -21,64 +29,139 @@ const currentYear = computed(() => new Date().getFullYear())
 
 <style scoped>
 .app-footer {
-  position: fixed;
-  bottom: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 2rem 0;
+  margin-top: auto;
+  position: relative;
+  overflow: hidden;
+}
+
+.app-footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
   left: 0;
   right: 0;
-  background: rgba(255, 255, 255, 0.95);
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(10px);
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
-  padding: 1rem;
-  z-index: 100;
+  pointer-events: none;
 }
 
 .footer-content {
   max-width: 1200px;
   margin: 0 auto;
+  padding: 0 2rem;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 2rem;
+  position: relative;
+  z-index: 1;
 }
 
-.footer-info p {
-  margin: 0;
-  color: #6c757d;
-  font-size: 0.875rem;
-}
-
-.version {
-  font-size: 0.75rem !important;
-  opacity: 0.8;
-}
-
-.footer-links {
+.footer-main {
   display: flex;
-  gap: 1.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 3rem;
+  flex: 1;
+  text-align: center;
 }
 
-.footer-link {
-  color: #667eea;
-  text-decoration: none;
+.footer-brand {
+  min-width: 200px;
+}
+
+.brand-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.brand-subtitle {
+  margin: 0;
   font-size: 0.875rem;
-  transition: color 0.2s ease;
+  color: rgba(255, 255, 255, 0.8);
+  font-style: italic;
 }
 
-.footer-link:hover {
-  color: #764ba2;
-  text-decoration: underline;
+.footer-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
+.developed-by {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+}
+
+.developed-text {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 400;
+}
+
+.bbmri-brand {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 400;
+  font-size: 1rem;
+}
+
+.footer-details {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Mobile responsive design */
 @media (max-width: 768px) {
+  .app-footer {
+    padding: 1.5rem 0;
+  }
+
   .footer-content {
     flex-direction: column;
     text-align: center;
-    gap: 0.5rem;
+    gap: 1.5rem;
+    padding: 0 1rem;
   }
 
-  .footer-links {
-    gap: 1rem;
+  .footer-main {
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+  }
+
+  .footer-brand {
+    min-width: unset;
+  }
+
+  .brand-title {
+    font-size: 1.1rem;
+  }
+
+  .footer-info {
+    align-items: center;
+  }
+
+  .footer-details {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .footer-content {
+    padding: 0 1rem;
   }
 }
 </style>
