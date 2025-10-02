@@ -1,5 +1,5 @@
 import { ref } from 'vue';
-import { getUsername, getDefaultPasswordFlag } from '../js/api.js';
+import {getUsername, getDefaultPasswordFlag, getUserId} from '../js/api.js';
 
 export function useUserStore() {
   const isChangingPassword = ref(false);
@@ -26,16 +26,11 @@ export function useUserStore() {
       return false;
     }
 
-    const passwordPattern = /^[a-zA-Z0-9!@#$%^&*(),.?":{}|<>_-]{8,}$/;
-    if (!passwordPattern.test(newPassword)) {
-      passwordError.value = 'Password must be at least 8 characters long and contain only letters, digits, or special characters';
-      return false;
-    }
-
     isChangingPassword.value = true;
     try {
       const username = getUsername();
-      const response = await fetch('/api/user/password', {
+      const userId = getUserId();
+      const response = await fetch(`/api/users/${userId}/password`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -48,41 +43,25 @@ export function useUserStore() {
         })
       });
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          passwordError.value = 'Invalid current password or authentication failed';
-          return false;
-        } else if (response.status === 400) {
-
-          try {
-            const errorResult = await response.json();
-            passwordError.value = errorResult.message || errorResult.error || 'Validation failed';
-          } catch (jsonError) {
-            passwordError.value = 'Bad request - please check your input';
-          }
-          return false;
-        } else {
-          passwordError.value = `Server error: ${response.status}`;
-          return false;
-        }
-      }
-
-      const result = await response.json();
-      if (result.success) {
-        passwordSuccess.value = result.message || 'Password changed successfully!';
+      if (response.ok) {
+        passwordSuccess.value = 'Password changed successfully!';
         updateDefaultPasswordStatus(false);
         return true;
       } else {
-        passwordError.value = result.message || 'Failed to change password';
+        if (response.status === 401) {
+          passwordError.value = 'Invalid current password';
+        } else if (response.status === 400) {
+          passwordError.value = 'Invalid password format or passwords do not match';
+        } else if (response.status === 404) {
+          passwordError.value = 'User not found';
+        } else {
+          passwordError.value = `Server error: ${response.status}`;
+        }
         return false;
       }
     } catch (error) {
-      if (error instanceof SyntaxError && error.message.includes('JSON')) {
-        passwordError.value = 'Server returned invalid response - please try again';
-      } else {
-        passwordError.value = 'An error occurred while changing password';
-      }
       console.error('Password change error:', error);
+      passwordError.value = 'Network error - please try again';
       return false;
     } finally {
       isChangingPassword.value = false;

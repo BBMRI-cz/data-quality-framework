@@ -2,16 +2,13 @@ package eu.bbmri_eric.quality.agent.user;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
 
-import java.security.Principal;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 
 @SpringBootTest
 class UserDetailServiceTest {
@@ -24,6 +21,20 @@ class UserDetailServiceTest {
   @Autowired private UserDetailService service;
 
   @Autowired private PasswordEncoder passwordEncoder;
+
+  @AfterEach
+  void tearDown() {
+    // Reset admin password to default state after each test
+    User adminUser = userRepository.findByUsername(ADMIN_USER).orElse(null);
+    if (adminUser != null) {
+      adminUser.setPassword(passwordEncoder.encode(ADMIN_PASS));
+      userRepository.save(adminUser);
+    }
+
+    // Clean up any test users that might have been created
+    userRepository.findByUsername("testuser").ifPresent(userRepository::delete);
+    userRepository.findByUsername("user1").ifPresent(userRepository::delete);
+  }
 
   @Test
   void loadsUser_withROLE_USER_whenRoleIsUser() {
@@ -41,107 +52,66 @@ class UserDetailServiceTest {
 
   @Test
   void changePassword_success() {
-    Principal principal = () -> ADMIN_USER;
     PasswordChangeRequest request =
-        new PasswordChangeRequest(ADMIN_PASS, "newAdminPass123", "newAdminPass123");
+        new PasswordChangeRequest(ADMIN_PASS, "newAdminPass123!", "newAdminPass123!");
 
-    PasswordChangeResponse response = service.changePassword(principal, request, null);
+    boolean result = service.changePassword(ADMIN_USER, request);
 
-    assertThat(response.getSuccess()).isTrue();
-    assertThat(response.getMessage()).isEqualTo("Password changed successfully");
+    assertThat(result).isTrue();
 
     User updatedUser = userRepository.findByUsername(ADMIN_USER).orElseThrow();
-    assertThat(passwordEncoder.matches("newAdminPass123", updatedUser.getPassword())).isTrue();
-
-    updatedUser.setPassword(passwordEncoder.encode(ADMIN_PASS));
-    userRepository.save(updatedUser);
+    assertThat(passwordEncoder.matches("newAdminPass123!", updatedUser.getPassword())).isTrue();
   }
 
   @Test
   void changePassword_failure_whenCurrentPasswordIncorrect() {
-    Principal principal = () -> ADMIN_USER;
     PasswordChangeRequest request =
-        new PasswordChangeRequest("wrongCurrentPass", "newPass123_", "newPass123_");
+        new PasswordChangeRequest("wrongCurrentPass", "newPass123!", "newPass123!");
 
-    PasswordChangeResponse response = service.changePassword(principal, request, null);
-
-    assertThat(response.getSuccess()).isFalse();
-    assertThat(response.getMessage()).isEqualTo("Current password is incorrect");
+    assertThatThrownBy(() -> service.changePassword(ADMIN_USER, request))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Current password is incorrect");
   }
 
   @Test
   void changePassword_failure_whenPasswordsDoNotMatch() {
-    Principal principal = () -> ADMIN_USER;
     PasswordChangeRequest request =
-        new PasswordChangeRequest(ADMIN_PASS, "newPass123_", "differentPass");
+        new PasswordChangeRequest(ADMIN_PASS, "newPass123!", "differentPass");
 
-    PasswordChangeResponse response = service.changePassword(principal, request, null);
-
-    assertThat(response.getSuccess()).isFalse();
-    assertThat(response.getMessage()).isEqualTo("New password and confirmation do not match");
-  }
-
-  @Test
-  void changePassword_failure_whenPrincipalIsNull() {
-    PasswordChangeRequest request =
-        new PasswordChangeRequest("currentPass", "newPass123_", "newPass123_");
-
-    PasswordChangeResponse response = service.changePassword(null, request, null);
-
-    assertThat(response.getSuccess()).isFalse();
-    assertThat(response.getMessage()).isEqualTo("Authentication required");
+    assertThatThrownBy(() -> service.changePassword(ADMIN_USER, request))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("New password and confirmation do not match");
   }
 
   @Test
   void changePassword_failure_whenUserNotFound() {
-    Principal principal = () -> "nonExistentUser";
     PasswordChangeRequest request =
-        new PasswordChangeRequest("currentPass", "newPass123_", "newPass123_");
+        new PasswordChangeRequest("currentPass", "newPass123!", "newPass123!");
 
-    PasswordChangeResponse response = service.changePassword(principal, request, null);
-
-    assertThat(response.getSuccess()).isFalse();
-    assertThat(response.getMessage()).isEqualTo("User not found");
+    assertThatThrownBy(() -> service.changePassword("nonExistentUser", request))
+        .isInstanceOf(UsernameNotFoundException.class)
+        .hasMessage("User not found");
   }
 
   @Test
-  void changePassword_failure_whenValidationErrors() {
-    Principal principal = () -> ADMIN_USER;
-    PasswordChangeRequest request = new PasswordChangeRequest(ADMIN_PASS, "pass", "pass");
+  void changePassword_failure_whenPasswordTooShort() {
+    PasswordChangeRequest request = new PasswordChangeRequest(ADMIN_PASS, "short", "short");
 
-    BindingResult bindingResult = mock(BindingResult.class);
-    FieldError fieldError =
-        new FieldError(
-            "passwordChangeRequest",
-            "newPassword",
-            "Password must be at least 8 characters long and contain only letters, digits or special characters");
-
-    when(bindingResult.hasErrors()).thenReturn(true);
-    when(bindingResult.getFieldErrors()).thenReturn(java.util.List.of(fieldError));
-
-    PasswordChangeResponse response = service.changePassword(principal, request, bindingResult);
-
-    assertThat(response.getSuccess()).isFalse();
-    assertThat(response.getMessage())
-        .isEqualTo(
+    assertThatThrownBy(() -> service.changePassword(ADMIN_USER, request))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
             "Password must be at least 8 characters long and contain only letters, digits or special characters");
   }
 
   @Test
-  void changePassword_failure_whenValidationErrorsWithNoMessage() {
-    Principal principal = () -> ADMIN_USER;
-    PasswordChangeRequest request = new PasswordChangeRequest(ADMIN_PASS, "invalid", "invalid");
+  void changePassword_failure_whenPasswordInvalidCharacters() {
+    PasswordChangeRequest request =
+        new PasswordChangeRequest(ADMIN_PASS, "invalidчар123!", "invalidчар123!");
 
-    BindingResult bindingResult = mock(BindingResult.class);
-    FieldError fieldError = new FieldError("passwordChangeRequest", "newPassword", null);
-
-    when(bindingResult.hasErrors()).thenReturn(true);
-    when(bindingResult.getFieldErrors()).thenReturn(java.util.List.of(fieldError));
-
-    PasswordChangeResponse response = service.changePassword(principal, request, bindingResult);
-
-    assertThat(response.getSuccess()).isFalse();
-    assertThat(response.getMessage()).isEqualTo("Validation failed");
+    assertThatThrownBy(() -> service.changePassword(ADMIN_USER, request))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Password must be at least 8 characters long and contain only letters, digits or special characters");
   }
 
   @Test
@@ -153,41 +123,49 @@ class UserDetailServiceTest {
 
   @Test
   void isUsingDefaultPassword_returnsFalse_whenAdminPasswordChanged() {
+    // Change password within test
     User adminUser = userRepository.findByUsername(ADMIN_USER).orElseThrow();
-    adminUser.setPassword(passwordEncoder.encode("newPassword123"));
+    adminUser.setPassword(passwordEncoder.encode("newPassword123!"));
     userRepository.save(adminUser);
 
     boolean result = service.isUsingDefaultPassword(ADMIN_USER);
     assertThat(result).isFalse();
-
-    adminUser.setPassword(passwordEncoder.encode(ADMIN_PASS));
-    userRepository.save(adminUser);
   }
 
   @Test
   void isUsingDefaultPassword_returnsFalse_whenNonAdminUser() {
-    User testUser =
-        userRepository.save(new User("testuser", passwordEncoder.encode("somepassword")));
+    userRepository.save(new User("testuser", passwordEncoder.encode("somepassword123!")));
     boolean result = service.isUsingDefaultPassword("testuser");
 
     assertThat(result).isFalse();
-    userRepository.delete(testUser);
   }
 
   @Test
   void passwordChangeRemovesDefaultPasswordFlag() {
     assertThat(service.isUsingDefaultPassword(ADMIN_USER)).isTrue();
 
-    Principal principal = () -> ADMIN_USER;
     PasswordChangeRequest request =
-        new PasswordChangeRequest(ADMIN_PASS, "newPassword123", "newPassword123");
-    PasswordChangeResponse response = service.changePassword(principal, request, null);
+        new PasswordChangeRequest(ADMIN_PASS, "newPassword123!", "newPassword123!");
+    boolean result = service.changePassword(ADMIN_USER, request);
 
-    assertThat(response.getSuccess()).isTrue();
+    assertThat(result).isTrue();
     assertThat(service.isUsingDefaultPassword(ADMIN_USER)).isFalse();
+  }
 
+  @Test
+  void getUserId_returnsCorrectId_whenUserExists() {
     User adminUser = userRepository.findByUsername(ADMIN_USER).orElseThrow();
-    adminUser.setPassword(passwordEncoder.encode(ADMIN_PASS));
-    userRepository.save(adminUser);
+    Long expectedId = adminUser.getId();
+
+    Long actualId = service.getUserId(ADMIN_USER);
+
+    assertThat(actualId).isEqualTo(expectedId);
+  }
+
+  @Test
+  void getUserId_throwsException_whenUserNotFound() {
+    assertThatThrownBy(() -> service.getUserId("nonExistentUser"))
+        .isInstanceOf(UsernameNotFoundException.class)
+        .hasMessage("User not found");
   }
 }

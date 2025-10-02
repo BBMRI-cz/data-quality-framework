@@ -11,7 +11,8 @@
                @mouseleave="showTooltip = false">
             <i class="bi bi-exclamation-triangle-fill text-warning fs-5"></i>
             <div v-if="showTooltip" class="custom-tooltip">
-              You are using the default password. Please change it for security.
+              For your account's security, please change your password.<br>
+              Your current password is a system-generated default.
             </div>
           </div>
 
@@ -37,15 +38,6 @@
     </nav>
 
     <PasswordChangeModal :isVisible="showPasswordModal" @close="closePasswordModal" />
-
-    <!-- Default Password Alert -->
-    <div v-if="defaultPasswordFlag" class="alert alert-warning alert-dismissible fade show mx-4 mt-3" role="alert">
-      <i class="bi bi-exclamation-triangle-fill me-2"></i>
-      <strong>Security Warning:</strong> You are using the default password. Please change it immediately for security reasons.
-      <button @click="showChangePasswordModal" class="btn btn-warning btn-sm ms-2">
-        Change Password
-      </button>
-    </div>
 
     <!-- Centered Title -->
     <header class="title-section">

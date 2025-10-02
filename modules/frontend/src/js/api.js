@@ -8,6 +8,7 @@ export function clearAuth() {
     state.authHeader = null;
     sessionStorage.removeItem('username');
     sessionStorage.removeItem('defaultPasswordFlag');
+    sessionStorage.removeItem('userId');
 }
 
 export function isAuthenticated() {
@@ -16,6 +17,10 @@ export function isAuthenticated() {
 
 export function getUsername() {
     return sessionStorage.getItem('username');
+}
+
+export function getUserId() {
+    return sessionStorage.getItem('userId');
 }
 
 export function getDefaultPasswordFlag() {
@@ -75,9 +80,14 @@ export async function authenticate(username, password) {
         sessionStorage.setItem('defaultPasswordFlag', res.data.defaultPassword.toString());
     }
 
+    if (res.data && res.data.userId) {
+        sessionStorage.setItem('userId', res.data.userId.toString());
+    }
+
     return {
         username: serverUsername,
-        defaultPassword: res.data?.defaultPassword || false
+        defaultPassword: res.data?.defaultPassword || false,
+        userId: res.data?.userId || null
     };
 }
 

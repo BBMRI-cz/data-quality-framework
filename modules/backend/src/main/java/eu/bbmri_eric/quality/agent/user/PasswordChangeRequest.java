@@ -1,20 +1,20 @@
 package eu.bbmri_eric.quality.agent.user;
 
-import jakarta.validation.constraints.Pattern;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-class PasswordChangeRequest {
+@Schema(description = "Request object for changing user password")
+public class PasswordChangeRequest {
+
+  @Schema(description = "Current password of the user", example = "oldPassword123", required = true)
   private String currentPassword;
 
-  @Pattern(
-      regexp = "^[a-zA-Z0-9!@#$%^&*(),.?\":{}|<>_-]{8,}$",
-      message =
-          "Password must be at least 8 characters long and contain only letters, digits or special characters")
+  @Schema(description = "New password for the user", example = "newPassword123!", required = true)
   private String newPassword;
 
-  @Pattern(
-      regexp = "^[a-zA-Z0-9!@#$%^&*(),.?\":{}|<>_-]{8,}$",
-      message =
-          "Password must be at least 8 characters long and contain only letters, digits or special characters")
+  @Schema(
+      description = "Confirmation of the new password",
+      example = "newPassword123!",
+      required = true)
   private String confirmPassword;
 
   public PasswordChangeRequest(String currentPassword, String newPassword, String confirmPassword) {
