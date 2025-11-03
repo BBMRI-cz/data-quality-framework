@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.0</version>
+        <version>3.5.7</version>
         <relativePath/>
     </parent>
     <groupId>eu.bbmri_eric.quality</groupId>
@@ -28,7 +28,7 @@
     </scm>
     <properties>
         <java.version>21</java.version>
-        <spring-modulith.version>1.4.0</spring-modulith.version>
+        <spring-modulith.version>1.4.4</spring-modulith.version>
         <spring-doc.version>2.8.13</spring-doc.version>
         <json.version>20241224</json.version>
         <hapi.fhir.version>8.2.0</hapi.fhir.version>
