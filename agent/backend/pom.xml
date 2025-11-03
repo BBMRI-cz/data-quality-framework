@@ -31,7 +31,7 @@
         <spring-modulith.version>1.4.0</spring-modulith.version>
         <spring-doc.version>2.8.13</spring-doc.version>
         <json.version>20241224</json.version>
-        <hapi.fhir.version>8.2.0</hapi.fhir.version>
+        <hapi.fhir.version>8.4.0</hapi.fhir.version>
         <hapi.fhir.structures.version>7.6.1</hapi.fhir.structures.version>
         <icd.validator.version>0.1.0</icd.validator.version>
         <commons.compress.version>1.26.1</commons.compress.version>
