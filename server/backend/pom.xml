@@ -22,7 +22,7 @@
         <json.version>20241224</json.version>
         <commons.compress.version>1.26.1</commons.compress.version>
         <testcontainers.version>1.21.3</testcontainers.version>
-        <bouncycastle.version>1.81</bouncycastle.version>
+        <bouncycastle.version>1.82</bouncycastle.version>
         <fmt.plugin.version>2.25</fmt.plugin.version>
     </properties>
     <dependencies>
