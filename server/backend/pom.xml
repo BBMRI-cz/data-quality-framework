@@ -23,7 +23,7 @@
         <commons.compress.version>1.26.1</commons.compress.version>
         <testcontainers.version>1.21.3</testcontainers.version>
         <bouncycastle.version>1.81</bouncycastle.version>
-        <fmt.plugin.version>2.25</fmt.plugin.version>
+        <fmt.plugin.version>2.29</fmt.plugin.version>
     </properties>
     <dependencies>
         <dependency>
