@@ -15,7 +15,7 @@ COPY --from=frontend-builder /app/frontend/dist ./src/main/resources/static
 RUN mvn --quiet -B versions:set -DnewVersion=$ARTIFACT_VERSION
 RUN mvn package --quiet -DskipTests
 
-FROM eclipse-temurin:21-jre-jammy@sha256:daebe9ae03913ec4b2dadd8df60f3ea3df1aa6108fecd5d324d000bdd5c4c816
+FROM eclipse-temurin:25-jre-jammy@sha256:c9d8ba43947480b2c870ae5602242d0844122b7072a90f46013a70082df5a1d0
 RUN groupadd -r appuser && useradd -r -g appuser -u 1001 appuser
 WORKDIR /app
 RUN mkdir -p /app/data && \
