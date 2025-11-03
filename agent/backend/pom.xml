@@ -35,7 +35,7 @@
         <hapi.fhir.structures.version>7.6.1</hapi.fhir.structures.version>
         <icd.validator.version>0.1.0</icd.validator.version>
         <commons.compress.version>1.26.1</commons.compress.version>
-        <testcontainers.version>1.21.3</testcontainers.version>
+        <testcontainers.version>2.0.1</testcontainers.version>
         <bouncycastle.version>1.81</bouncycastle.version>
         <fmt.plugin.version>2.25</fmt.plugin.version>
     </properties>
