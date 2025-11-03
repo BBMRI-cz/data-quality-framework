@@ -19,7 +19,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring-modulith.version>1.4.0</spring-modulith.version>
         <spring-doc.version>2.8.13</spring-doc.version>
-        <json.version>20241224</json.version>
+        <json.version>20250517</json.version>
         <commons.compress.version>1.26.1</commons.compress.version>
         <testcontainers.version>1.21.3</testcontainers.version>
         <bouncycastle.version>1.81</bouncycastle.version>
