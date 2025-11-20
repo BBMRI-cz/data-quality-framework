@@ -19,8 +19,9 @@ CREATE INDEX idx_agent_status ON agent(status);
 CREATE TABLE user_account (
                               id INTEGER PRIMARY KEY AUTOINCREMENT,
                               username TEXT NOT NULL UNIQUE,
-                              password TEXT NOT NULL,
+                              password TEXT,
                               agent_id TEXT,
+                              subject_id TEXT,
                               FOREIGN KEY (agent_id) REFERENCES agent(id)
 );
 

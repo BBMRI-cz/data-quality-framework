@@ -50,4 +50,11 @@ public class AuthController {
     UserDTO user = userDetailService.loadUserByUsername(loginRequest.username()).getUser();
     return ResponseEntity.ok(new LoginResponse(jwtService.generateToken(authentication), user));
   }
+
+  @Operation(
+      summary = "OIDC User Ping",
+      description =
+          "Triggers OIDC authentication. User is created automatically by the JWT converter during authentication if this is their first login.")
+  @PostMapping("/api/auth/oidc")
+  public void oidcUserPing() {}
 }

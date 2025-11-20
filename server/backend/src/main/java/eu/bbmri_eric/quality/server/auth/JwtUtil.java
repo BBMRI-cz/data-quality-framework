@@ -1,9 +1,12 @@
 package eu.bbmri_eric.quality.server.auth;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.SignatureException;
+import java.util.Base64;
 import java.util.Date;
 import java.util.stream.Collectors;
 import javax.crypto.SecretKey;
@@ -50,6 +53,7 @@ public class JwtUtil {
         .subject(authentication.getName())
         .claim("authorities", authorities)
         .issuedAt(new Date())
+        .issuer("quality-server")
         .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
         .signWith(key)
         .compact();
@@ -89,6 +93,35 @@ public class JwtUtil {
     } catch (Exception e) {
       logger.error("Unexpected error during token validation: {}", e.getMessage());
       return false;
+    }
+  }
+
+  /**
+   * Extracts the issuer from a JWT token without verifying signature. Used to determine token type
+   * and route to the appropriate authentication provider.
+   *
+   * @param token JWT token
+   * @return issuer claim value, or null if not present or invalid token
+   */
+  public String extractIssuer(String token) {
+    try {
+      String[] parts = token.split("\\.");
+      if (parts.length != 3) {
+        logger.debug("Invalid JWT structure: expected 3 parts, got {}", parts.length);
+        return null;
+      }
+
+      String payloadJson = new String(Base64.getUrlDecoder().decode(parts[1]));
+
+      ObjectMapper mapper = new ObjectMapper();
+      JsonNode payloadNode = mapper.readTree(payloadJson);
+
+      String issuer = payloadNode.has("iss") ? payloadNode.get("iss").asText() : null;
+      logger.debug("Extracted issuer from token: '{}'", issuer);
+      return issuer;
+    } catch (Exception e) {
+      logger.debug("Failed to extract issuer from token: {}", e.getMessage());
+      return null;
     }
   }
 
