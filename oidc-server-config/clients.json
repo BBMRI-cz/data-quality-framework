@@ -1,0 +1,50 @@
+[
+  {
+    "ClientId": "auth-code-client",
+    "Description": "Client for authorization code flow",
+    "AllowedGrantTypes": [
+      "authorization_code",
+      "password"
+    ],
+    "AllowAccessTokensViaBrowser": true,
+    "RedirectUris": [
+      "http://localhost:5173/logged-in",
+      "http://localhost:5173"
+    ],
+    "AllowedScopes": [
+      "openid",
+      "profile",
+      "email",
+      "permissions",
+      "some-app-scope-1"
+    ],
+    "PostLogoutRedirectUris": [
+      "http://localhost:8080",
+      "http://localhost:5173"
+    ],
+    "IdentityTokenLifetime": 36000,
+    "AccessTokenLifetime": 3600,
+    "ClientClaimsPrefix": "",
+    "RequireClientSecret": false
+  },
+  {
+    "ClientId": "123",
+    "ClientSecrets": [
+      "123"
+    ],
+    "Description": "Client for client credentials flow",
+    "AllowedGrantTypes": [
+      "client_credentials"
+    ],
+    "AllowedScopes": [
+      "negotiator_api",
+      "negotiator_authz_management",
+      "negotiator_resource_management",
+      "negotiator_monitoring"
+    ],
+    "ClientClaimsPrefix": "",
+    "Claims": [],
+    "IdentityTokenLifetime": 1,
+    "AccessTokenLifetime": 1
+  }
+]

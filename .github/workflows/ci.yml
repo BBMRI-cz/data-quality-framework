@@ -149,47 +149,15 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3
 
-#      - run: docker compose up -d quality-agent
-#        name: Spin up latest stable image
 
       - uses: docker/build-push-action@48aba3b46d1b1fec4febb7c5d0c644b249a11355 # v6.10.0
-        name: Build new image
+        name: Build and export agent image
         with:
           context: ./agent
           tags: ghcr.io/bbmri-cz/data-quality-agent:latest
-          load: true
           outputs: type=docker,dest=/tmp/agent-image.tar
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-#      - run: docker compose down
-#        name: Down the container
-#
-#      - run: docker compose up -d quality-agent
-#        name: Spin up new image
-#
-#      - name: Check container health
-#        run: |
-#          for i in {1..20}; do
-#          STATUS=$(docker inspect --format='{{.State.Health.Status}}' quality-agent)
-#          echo "Health status: $STATUS"
-#          if [ "$STATUS" == "healthy" ]; then
-#          echo "Container is healthy"
-#          exit 0
-#          fi
-#          sleep 3
-#          done
-#          echo "Container is not healthy"
-#          docker logs quality-agent
-#          exit 1
-
-      - uses: docker/build-push-action@48aba3b46d1b1fec4febb7c5d0c644b249a11355 # v6.10.0
-        name: Build new image artifact
-        with:
-          context: ./agent
-          tags: ghcr.io/bbmri-cz/data-quality-agent:latest
-          outputs: type=docker,dest=/tmp/agent-image.tar
-          cache-from: type=gha
 
       - name: Upload agent image artifact
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
@@ -210,47 +178,15 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3
 
-      - run: docker compose up -d quality-server || exit 0
-        name: Spin up latest stable image
 
       - uses: docker/build-push-action@48aba3b46d1b1fec4febb7c5d0c644b249a11355 # v6.10.0
-        name: Build new image
-        with:
-          context: ./server
-          tags: ghcr.io/bbmri-cz/data-quality-server:latest
-          load: true
-          outputs: type=docker
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-#      - run: docker compose down
-#        name: Down the container
-#
-#      - run: docker compose up -d quality-server
-#        name: Spin up new image
-#
-#      - name: Check container health
-#        run: |
-#          for i in {1..20}; do
-#          STATUS=$(docker inspect --format='{{.State.Health.Status}}' quality-server)
-#          echo "Health status: $STATUS"
-#          if [ "$STATUS" == "healthy" ]; then
-#          echo "Container is healthy"
-#          exit 0
-#          fi
-#          sleep 3
-#          done
-#          echo "Container is not healthy"
-#          docker logs quality-server
-#          exit 1
-#
-      - uses: docker/build-push-action@48aba3b46d1b1fec4febb7c5d0c644b249a11355 # v6.10.0
-        name: Build new image artifact
+        name: Build and export server image
         with:
           context: ./server
           tags: ghcr.io/bbmri-cz/data-quality-server:latest
           outputs: type=docker,dest=/tmp/server-image.tar
           cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Upload server image artifact
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
@@ -310,7 +246,7 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-
+        if: ${{ !env.ACT }}
       - name: Install Cosign
         uses: sigstore/cosign-installer@dc72c7d5c4d10cd6bcb8cf6e3fd625a9e5e537da # v3.7.0
 
@@ -344,6 +280,7 @@ jobs:
       - name: Tag and push images
         env:
           TAGS: ${{ steps.meta.outputs.tags }}
+        if: ${{ !env.ACT }}
         run: |
           # The loaded image has the tag from migration job
           LOADED_IMAGE="ghcr.io/bbmri-cz/data-quality-agent:latest"
@@ -381,7 +318,7 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-
+        if: ${{ !env.ACT }}
       - name: Install Cosign
         uses: sigstore/cosign-installer@dc72c7d5c4d10cd6bcb8cf6e3fd625a9e5e537da # v3.7.0
 
@@ -415,6 +352,7 @@ jobs:
       - name: Tag and push images
         env:
           TAGS: ${{ steps.meta.outputs.tags }}
+        if: ${{ !env.ACT }}
         run: |
           # The loaded image has the tag from migration job
           LOADED_IMAGE="ghcr.io/bbmri-cz/data-quality-server:latest"
@@ -514,6 +452,21 @@ jobs:
           done
           echo "Container is not healthy"
           docker logs quality-server
+          exit 1
+
+      - name: Check OIDC server health
+        run: |
+          echo "Waiting for OIDC server to be ready..."
+          for i in {1..30}; do
+            if curl -s -f http://localhost:4011/.well-known/openid-configuration > /dev/null; then
+              echo "OIDC server is ready"
+              exit 0
+            fi
+            echo "Waiting for OIDC server... attempt $i/30"
+            sleep 2
+          done
+          echo "OIDC server failed to become ready"
+          docker logs oidc-server-mock
           exit 1
 
       - name: Test Agent and Server Interaction

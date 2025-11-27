@@ -16,8 +16,44 @@ services:
       - "8082:8082"
     volumes:
       - server-data:/app/data
+    environment:
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: "http://localhost:4011"
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    depends_on:
+      oidc-server-mock:
+        condition: service_healthy
+  oidc-server-mock:
+    container_name: oidc-server-mock
+    image: ghcr.io/soluto/oidc-server-mock:0.9.2
+    ports:
+      - '4011:8080'
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      LOGIN_OPTIONS_INLINE: |
+        {
+          "AllowRememberLogin": false
+        }
+      LOGOUT_OPTIONS_INLINE: |
+        {
+          "AutomaticRedirectAfterSignOut": true
+        }
+      API_SCOPES_PATH: /config/api-scopes.yaml
+      API_RESOURCES_PATH: /config/api-resources.yaml
+      SERVER_OPTIONS_PATH: /config/server-options.json
+      IDENTITY_RESOURCES_PATH: /config/identity-resources.json
+      USERS_CONFIGURATION_PATH: /config/users.yaml
+      CLIENTS_CONFIGURATION_PATH: /config/clients.json
+    volumes:
+      - ./oidc-server-config:/config:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/.well-known/openid-configuration"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
 volumes:
   agent-data:
     driver: local
