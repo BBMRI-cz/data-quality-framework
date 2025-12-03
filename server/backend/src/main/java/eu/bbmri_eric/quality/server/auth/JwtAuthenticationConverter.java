@@ -20,8 +20,8 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.stereotype.Component;
 
 /**
- * Converts a Jwt token into a JwtAuthenticationToken by validating claims,
- * retrieving or creating the associated user, and extracting authorities.
+ * Converts a Jwt token into a JwtAuthenticationToken by validating claims, retrieving or creating
+ * the associated user, and extracting authorities.
  */
 @Component
 public class JwtAuthenticationConverter implements Converter<Jwt, AbstractAuthenticationToken> {

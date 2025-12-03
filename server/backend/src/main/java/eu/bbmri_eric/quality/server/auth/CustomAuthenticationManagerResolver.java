@@ -69,8 +69,7 @@ public class CustomAuthenticationManagerResolver
     final String authHeader = request.getHeader("Authorization");
 
     if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-      logger.warn("Invalid or missing Authorization header from IP: {}",
-          request.getRemoteAddr());
+      logger.warn("Invalid or missing Authorization header from IP: {}", request.getRemoteAddr());
       throw new IllegalStateException(
           "Missing or invalid Authorization header. Expected format: 'Bearer <token>'");
     }
