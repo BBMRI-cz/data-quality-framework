@@ -99,7 +99,7 @@ class SecurityConfig {
                         "/api/api-docs/**")
                     .permitAll()
                     .anyRequest()
-                    .denyAll())
+                    .denyAll()
                     .requestMatchers("/api/**")
                     .denyAll() // default deny for all API paths
                     .requestMatchers("/**")
