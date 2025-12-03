@@ -115,18 +115,14 @@ done
 echo -e "\n${YELLOW}Step 6: Running system test...${NC}"
 "$SCRIPT_DIR/system-test-interaction.sh"
 
-# Step 7: Cleanup (commented out to keep containers running for debugging)
-# Uncomment the lines below if you want automatic cleanup
-# echo -e "\n${YELLOW}Step 7: Cleaning up...${NC}"
-# cd "$REPO_ROOT"
-# docker compose down
-# docker stop blaze || true
-# docker rm blaze || true
+# Step 7: Cleanup
+echo -e "\n${YELLOW}Step 7: Cleaning up...${NC}"
+cd "$REPO_ROOT"
+docker compose down
+docker stop blaze || true
+docker rm blaze || true
 
 echo -e "\n${GREEN}========================================${NC}"
 echo -e "${GREEN}Local system test completed successfully!${NC}"
 echo -e "${GREEN}========================================${NC}"
-echo -e "\n${YELLOW}Note: Containers are still running. To clean up manually, run:${NC}"
-echo -e "${YELLOW}  docker compose down${NC}"
-echo -e "${YELLOW}  docker stop blaze && docker rm blaze${NC}"
 
