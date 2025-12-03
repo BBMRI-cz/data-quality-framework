@@ -342,7 +342,6 @@ jobs:
       - name: Tag and push images
         env:
           TAGS: ${{ steps.meta.outputs.tags }}
-        if: ${{ !env.ACT }}
         run: |
           # The loaded image has the tag from migration job
           LOADED_IMAGE="ghcr.io/bbmri-cz/data-quality-agent:latest"
@@ -414,7 +413,6 @@ jobs:
       - name: Tag and push images
         env:
           TAGS: ${{ steps.meta.outputs.tags }}
-        if: ${{ !env.ACT }}
         run: |
           # The loaded image has the tag from migration job
           LOADED_IMAGE="ghcr.io/bbmri-cz/data-quality-server:latest"
