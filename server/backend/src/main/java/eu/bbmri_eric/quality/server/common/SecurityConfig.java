@@ -97,6 +97,7 @@ class SecurityConfig {
                         "/favicon.ico",
                         "/logo.svg",
                         "/login",
+                        "/logged-in",
                         "/api/health",
                         "/api/info",
                         "/api/counts",

@@ -8,8 +8,8 @@
     ],
     "AllowAccessTokensViaBrowser": true,
     "RedirectUris": [
-      "http://localhost:5173/logged-in",
-      "http://localhost:5173"
+      "http://localhost:8082/logged-in",
+      "http://localhost:8082"
     ],
     "AllowedScopes": [
       "openid",

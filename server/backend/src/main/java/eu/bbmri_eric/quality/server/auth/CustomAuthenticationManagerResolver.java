@@ -68,7 +68,19 @@ public class CustomAuthenticationManagerResolver
   public AuthenticationManager resolve(HttpServletRequest request) {
     final String authHeader = request.getHeader("Authorization");
 
+    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+      logger.warn("Invalid or missing Authorization header from IP: {}",
+          request.getRemoteAddr());
+      throw new IllegalStateException(
+          "Missing or invalid Authorization header. Expected format: 'Bearer <token>'");
+    }
+
     final String token = authHeader.substring(7);
+
+    if (token.isBlank()) {
+      logger.warn("Empty bearer token from IP: {}", request.getRemoteAddr());
+      throw new IllegalStateException("Bearer token cannot be empty");
+    }
 
     try {
       String issuer = jwtUtil.extractIssuer(token);

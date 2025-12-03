@@ -18,7 +18,7 @@ source "${SCRIPT_DIR}/oidc-helper.sh"
 AGENT_URL="http://localhost:8081"
 SERVER_URL="http://localhost:8082"
 REGISTRATION_URL="http://host.docker.internal:8082"
-OIDC_SERVER_URL="http://localhost:4011"
+export OIDC_SERVER_URL="http://localhost:4011"
 AGENT_ADMIN_USERNAME="admin"
 AGENT_ADMIN_PASSWORD="adminpass"
 SERVER_ADMIN_USERNAME="admin"
@@ -33,7 +33,6 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 echo -e "${YELLOW}Starting system test: Agent and Server interaction${NC}"
-echo -e "${YELLOW}Note: OIDC server availability already verified by CI workflow${NC}"
 
 # Step 1: Get authentication token from agent
 echo -e "\n${YELLOW}Step 1: Authenticating with agent to get JWT token...${NC}"
@@ -256,8 +255,19 @@ echo -e "\n${YELLOW}========================================${NC}"
 echo -e "${YELLOW}Testing OIDC Authentication Flow${NC}"
 echo -e "${YELLOW}========================================${NC}"
 
-# Step 8: Test OIDC authentication with the server
-echo -e "\n${YELLOW}Step 8: Testing OIDC authentication with server...${NC}"
+# Step 8: Check OIDC server health
+echo -e "\n${YELLOW}Step 8: Checking OIDC server health...${NC}"
+
+if ! check_oidc_server 30; then
+  echo -e "${RED}✗ OIDC server is not healthy${NC}"
+  echo -e "${YELLOW}Tip: Make sure OIDC server is running with: docker compose up -d oidc-server-mock${NC}"
+  exit 1
+fi
+
+echo -e "${GREEN}✓ OIDC server is healthy${NC}"
+
+# Step 9: Test OIDC authentication with the server
+echo -e "\n${YELLOW}Step 9: Testing OIDC authentication with server...${NC}"
 
 # Get OIDC access token
 OIDC_ACCESS_TOKEN=$(get_oidc_token "$OIDC_TEST_USERNAME" "$OIDC_TEST_PASSWORD")
@@ -268,28 +278,6 @@ if [ -z "$OIDC_ACCESS_TOKEN" ]; then
 fi
 
 echo -e "${GREEN}✓ Successfully obtained OIDC access token${NC}"
-
-# Step 9: Test accessing server API with OIDC token
-echo -e "\n${YELLOW}Step 9: Accessing server API with OIDC token...${NC}"
-
-# Try to access the user profile endpoint with OIDC token
-OIDC_USER_RESPONSE=$(curl -s -w "\n%{http_code}" -X GET \
-  "${SERVER_URL}/api/v1/users/me" \
-  -H "Authorization: Bearer ${OIDC_ACCESS_TOKEN}")
-
-# Extract HTTP status code (last line)
-OIDC_HTTP_STATUS=$(echo "$OIDC_USER_RESPONSE" | tail -n 1)
-OIDC_USER_BODY=$(echo "$OIDC_USER_RESPONSE" | head -n -1)
-
-echo "HTTP Status: $OIDC_HTTP_STATUS"
-echo "Response: $OIDC_USER_BODY"
-
-if [ "$OIDC_HTTP_STATUS" == "200" ] || [ "$OIDC_HTTP_STATUS" == "201" ]; then
-  echo -e "${GREEN}✓ Successfully accessed server API with OIDC token${NC}"
-else
-  echo -e "${YELLOW}⚠ Server API access returned HTTP ${OIDC_HTTP_STATUS}${NC}"
-  echo -e "${YELLOW}This might be expected if the user needs to be created first${NC}"
-fi
 
 # Step 10: Verify OIDC user can access protected endpoints
 echo -e "\n${YELLOW}Step 10: Verifying OIDC user can list reports...${NC}"
@@ -313,7 +301,9 @@ if [ "$OIDC_REPORTS_HTTP_STATUS" == "200" ]; then
     echo -e "${GREEN}✓ OIDC user can see ${REPORT_COUNT} report(s)${NC}"
   fi
 else
-  echo -e "${YELLOW}⚠ OIDC user reports access returned HTTP ${OIDC_REPORTS_HTTP_STATUS}${NC}"
+  echo -e "${RED}✗ OIDC user reports access returned HTTP ${OIDC_REPORTS_HTTP_STATUS}${NC}"
+  echo -e "${YELLOW}This might indicate an issue with OIDC token validation${NC}"
+  exit 1
 fi
 
 echo -e "\n${GREEN}✓ OIDC authentication flow completed!${NC}"
