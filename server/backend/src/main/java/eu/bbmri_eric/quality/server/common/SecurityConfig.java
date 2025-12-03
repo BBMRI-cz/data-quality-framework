@@ -98,8 +98,6 @@ class SecurityConfig {
                         "/api/swagger-ui/**",
                         "/api/api-docs/**")
                     .permitAll()
-                    .anyRequest()
-                    .denyAll()
                     .requestMatchers("/api/**")
                     .denyAll() // default deny for all API paths
                     .requestMatchers("/**")
