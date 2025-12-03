@@ -16,7 +16,10 @@ updates:
       - "dependencies"
       - "github-actions"
     open-pull-requests-limit: 5
-
+    groups:
+      github-actions-updates:
+        patterns:
+          - "*"
   # Maven dependencies for Agent backend
   - package-ecosystem: "maven"
     directory: "/agent/backend"

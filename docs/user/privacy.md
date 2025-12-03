@@ -76,7 +76,7 @@ For a comprehensive understanding of differential privacy, see the foundational 
 Our differential privacy implementation uses the **Laplace mechanism** with additional safeguards:
 
 **Implementation Location:**
-- **Class**: `eu.bbmri_eric.quality.agent.report.DifferentialPrivacyUtil`
+- **Class**: `eu.bbmri_eric.quality.agent.dataquality.DifferentialPrivacyUtil`
 - **Source**: `agent/backend/src/main/java/eu/bbmri_eric/quality/agent/report/DifferentialPrivacyUtil.java`
 - **Tests**: `agent/backend/src/test/java/eu/bbmri_eric/quality/agent/report/DifferentialPrivacyUtilTest.java`
 

@@ -91,13 +91,6 @@ class SecurityConfig {
                     .requestMatchers(HttpMethod.POST, "/api/auth/oidc")
                     .hasRole("HUMAN_USER")
                     .requestMatchers(
-                        "/",
-                        "/index.html",
-                        "/assets/**",
-                        "/favicon.ico",
-                        "/logo.svg",
-                        "/login",
-                        "/logged-in",
                         "/api/health",
                         "/api/info",
                         "/api/counts",
@@ -107,6 +100,10 @@ class SecurityConfig {
                     .permitAll()
                     .anyRequest()
                     .denyAll())
+                    .requestMatchers("/api/**")
+                    .denyAll() // default deny for all API paths
+                    .requestMatchers("/**")
+                    .permitAll())
         .oauth2ResourceServer(
             oauth2 ->
                 oauth2.authenticationManagerResolver(

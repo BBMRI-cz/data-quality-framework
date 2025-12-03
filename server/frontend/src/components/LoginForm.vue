@@ -47,7 +47,7 @@
 
       <!-- Right side - Login form -->
       <div class="col-lg-6 col-12">
-        <div class="px-3 py-3 d-flex flex-column justify-content-center login-form-wrapper">
+        <div class="px-3 py-5 d-flex flex-column justify-content-center login-form-wrapper">
           <div class="w-100 login-form-container">
             <!-- Mobile header (visible only on small screens) -->
             <div class="d-lg-none text-center mb-4 mobile-header">
@@ -58,8 +58,8 @@
               <p class="text-muted small">Central monitoring and reporting</p>
             </div>
 
-            <div class="text-center mb-4">
-              <div class="logo-container mb-3">
+            <div class="text-center mb-5">
+              <div class="logo-container mb-4">
                 <img src="/logo.svg" alt="Logo" class="login-logo" />
               </div>
               <h1 class="h5 fw-bold text-dark mb-2">Welcome</h1>
@@ -310,8 +310,8 @@ const handleLogin = async () => {
 }
 
 .login-logo {
-  width: 140px;
-  height: 140px;
+  width: 200px;
+  height: 200px;
   object-fit: contain;
 }
 
@@ -332,13 +332,6 @@ const handleLogin = async () => {
   min-height: auto;
 }
 
-/* Remove forced equal-height on large screens to prevent stretching */
-/* On larger screens with left panel, match the height */
-@media (min-width: 992px) {
-  .login-form-wrapper {
-    /* height: 100%; */
-  }
-}
 
 /* Mobile-specific styles */
 @media (max-width: 768px) {

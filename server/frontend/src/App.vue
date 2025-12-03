@@ -5,6 +5,7 @@ import Sidebar from './components/Sidebar.vue'
 import TopNavbar from './components/TopNavbar.vue'
 import AppFooter from './components/AppFooter.vue'
 import NotificationContainer from './components/NotificationContainer.vue'
+import CookieConsent from './components/CookieConsent.vue'
 import { authStore } from './stores/authStore.js'
 import { notificationService } from './services/notificationService.js'
 
@@ -26,6 +27,7 @@ onMounted(() => {
       <router-view />
     </main>
     <NotificationContainer ref="notificationContainer" />
+    <CookieConsent />
   </div>
 </template>
 

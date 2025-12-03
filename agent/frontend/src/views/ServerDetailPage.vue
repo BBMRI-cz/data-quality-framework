@@ -237,7 +237,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, inject, watch } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { api } from '@/js/api.js';
 import PageHeader from '@/components/PageHeader.vue';
@@ -251,10 +251,10 @@ import {
 import {
   getInteractionTypeBadge
 } from '@/utils/interactionTypes.js';
+import { notificationService } from '@/services/notificationService.js';
 
 const route = useRoute();
 const router = useRouter();
-const notify = inject('notify');
 
 const server = ref(null);
 const loading = ref(true);
@@ -423,11 +423,11 @@ async function confirmDelete() {
   isDeleting.value = true;
   try {
     await api.delete(`/api/servers/${server.value.id}`);
-    notify.success('Server Deleted', `${server.value.name} has been deleted successfully`);
+    notificationService.success('Server Deleted', `${server.value.name} has been deleted successfully`);
     router.push('/servers');
   } catch (err) {
     console.error('Error deleting server:', err);
-    notify.error('Delete Failed', err.response?.data?.message || 'Unable to delete server. Please try again.');
+    notificationService.error('Delete Failed', err.response?.data?.message || 'Unable to delete server. Please try again.');
   } finally {
     isDeleting.value = false;
     showDeleteModal.value = false;

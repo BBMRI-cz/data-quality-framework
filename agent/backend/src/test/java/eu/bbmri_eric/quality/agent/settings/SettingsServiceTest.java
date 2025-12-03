@@ -2,6 +2,9 @@ package eu.bbmri_eric.quality.agent.settings;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import eu.bbmri_eric.quality.agent.settings.domain.Settings;
+import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
+import eu.bbmri_eric.quality.agent.settings.impl.SettingsRepository;
 import java.util.Base64;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

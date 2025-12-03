@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Test;

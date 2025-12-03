@@ -134,6 +134,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { authenticate, getAppInfo } from '../js/api.js'
 import { useUserStore } from '../stores/userStore.js'
 import Copyright from '../components/Copyright.vue'
+import { notificationService } from '../services/notificationService.js'
 
 const username = ref('')
 const password = ref('')
@@ -149,6 +150,11 @@ const { updateDefaultPasswordStatus } = useUserStore()
 onMounted(async () => {
   const info = await getAppInfo()
   appVersion.value = info.version
+
+  // Check if user was redirected due to session expiration
+  if (route.query.sessionExpired === 'true') {
+    notificationService.warning('Session Expired', 'Your session has expired. Please log in again.')
+  }
 })
 
 async function login() {

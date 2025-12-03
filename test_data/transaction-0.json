@@ -56964,12 +56964,6 @@
       "https://fhir.bbmri.de/StructureDefinition/Patient"
     ]
   },
-  "identifier": [
-    {
-        "system": "https://fhir.bbmri.de/id/patient",
-        "value": "bbmri-0"
-    }
-  ],
   "birthDate": "1889-11-18"
             }
             
@@ -57289,8 +57283,6 @@
                     ]
                 
                 },
-                
-                "onsetDateTime":  "2003-11-10",
                 
                 "resourceType":  "Condition",
                 
@@ -59403,8 +59395,7 @@
             },
             
             "resource":  {
-                
-                "birthDate":  "1998-02-22",
+
                 
                 "gender":  "male",
                 
@@ -60091,8 +60082,7 @@
                         ]
                     
                     },
-                    
-                    "collectedDateTime":  "2008-09-09",
+
                     
                     "fastingStatusCodeableConcept":  {
                         
@@ -60111,66 +60101,6 @@
                     }
                 
                 },
-                
-                "extension":  [
-                    
-                    {
-                        
-                        "url":  "https://fhir.bbmri.de/StructureDefinition/StorageTemperature",
-                        
-                        "valueCodeableConcept":  {
-                            
-                            "coding":  [
-                                
-                                {
-                                    
-                                    "code":  "temperature2to10",
-                                    
-                                    "system":  "https://fhir.bbmri.de/CodeSystem/StorageTemperature"
-                                
-                                }
-                            
-                            ]
-                        
-                        }
-                    
-                    },
-                    
-                    {
-                        
-                        "url":  "https://fhir.bbmri.de/StructureDefinition/SampleDiagnosis",
-                        
-                        "valueCodeableConcept":  {
-                            
-                            "coding":  [
-                                
-                                {
-                                    
-                                    "code":  "Z56.5",
-                                    
-                                    "system":  "http://hl7.org/fhir/sid/icd-10"
-                                
-                                }
-                            
-                            ]
-                        
-                        }
-                    
-                    },
-                    
-                    {
-                        
-                        "url":  "https://fhir.bbmri.de/StructureDefinition/Custodian",
-                        
-                        "valueReference":  {
-                            
-                            "reference":  "Organization/collection-9"
-                        
-                        }
-                    
-                    }
-                
-                ],
                 
                 "id":  "bbmri-27-specimen-0",
                 

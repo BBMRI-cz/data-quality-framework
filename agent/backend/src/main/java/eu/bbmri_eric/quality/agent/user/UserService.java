@@ -1,5 +1,7 @@
 package eu.bbmri_eric.quality.agent.user;
 
+import eu.bbmri_eric.quality.agent.user.dto.PasswordChangeRequest;
+
 public interface UserService {
   /**
    * Change the password of a user. Users can only change their own password.

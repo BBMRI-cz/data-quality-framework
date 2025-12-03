@@ -46,16 +46,3 @@
   width: 400px !important;
   height: auto !important;
 }
-
-/* Light gray background for diagrams */
-.vp-doc img[src$=".svg"],
-.vp-doc svg {
-  background: #f8f9fa !important;
-  border-radius: 8px !important;
-  padding: 1.5rem !important;
-  margin: 1.5rem 0 !important;
-  display: block !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-  max-width: 100% !important;
-}

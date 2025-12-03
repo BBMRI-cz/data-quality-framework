@@ -230,3 +230,143 @@ define InInitialPopulation:
   Patient.meta.lastUpdated before @2026-01-01T00:00:00Z',
            10, 30
        );
+
+INSERT INTO cql_check (name, description, query, warning_threshold, error_threshold)
+VALUES (
+           'Patients with condition without onset',
+           'How many patients have conditions without onset information',
+           'library ConditionMissingOnset version ''1.0.0''
+using FHIR version ''4.0.0''
+include FHIRHelpers version ''4.0.0''
+
+context Patient
+
+define ConditionsWithoutOnset:
+  [Condition] C
+    where C.subject.reference = ''Patient/'' + Patient.id
+      and C.onset is null
+
+define InInitialPopulation:
+  exists ConditionsWithoutOnset',
+           10, 30
+       );
+
+INSERT INTO cql_check (name, description, query, warning_threshold, error_threshold)
+VALUES (
+           'Patients without identifier',
+           'How many patients do not have at least one identifier',
+           'library PatientMissingIdentifier version ''1.0.0''
+using FHIR version ''4.0.0''
+include FHIRHelpers version ''4.0.0''
+
+context Patient
+
+define InInitialPopulation:
+  not exists Patient.identifier',
+           10, 30
+       );
+
+INSERT INTO cql_check (name, description, query, warning_threshold, error_threshold)
+VALUES (
+           'Patients without birth date',
+           'How many patients do not have a birth date',
+           'library PatientMissingBirthDate version ''1.0.0''
+using FHIR version ''4.0.0''
+include FHIRHelpers version ''4.0.0''
+
+context Patient
+
+define InInitialPopulation:
+  Patient.birthDate is null',
+           10, 30
+       );
+
+INSERT INTO cql_check (name, description, query, warning_threshold, error_threshold)
+VALUES (
+           'Patients with specimen without collection date',
+           'How many patients have specimens without collection date information',
+           'library SpecimenMissingCollectionDate version ''1.0.0''
+using FHIR version ''4.0.0''
+include FHIRHelpers version ''4.0.0''
+
+context Patient
+
+define SpecimensWithoutCollectionDate:
+  [Specimen] S
+    where S.subject.reference = ''Patient/'' + Patient.id
+      and S.collection.collected is null
+
+define InInitialPopulation:
+  exists SpecimensWithoutCollectionDate',
+           10, 30
+       );
+
+INSERT INTO cql_check (name, description, query, warning_threshold, error_threshold)
+VALUES (
+           'Patients with specimen without storage temperature',
+           'How many patients have specimens without storageTemperature extension',
+           'library SpecimenMissingStorageTemperature version ''1.0.0''
+using FHIR version ''4.0.0''
+include FHIRHelpers version ''4.0.0''
+
+context Patient
+
+define SpecimensWithoutStorageTemperature:
+  [Specimen] S
+    where S.subject.reference = ''Patient/'' + Patient.id
+      and not exists (
+        S.extension E
+          where E.url = ''https://fhir.bbmri.de/StructureDefinition/StorageTemperature''
+      )
+
+define InInitialPopulation:
+  exists SpecimensWithoutStorageTemperature',
+           10, 30
+       );
+
+INSERT INTO cql_check (name, description, query, warning_threshold, error_threshold)
+VALUES (
+           'Patients with specimen without sample diagnosis',
+           'How many patients have specimens without SampleDiagnosis extension',
+           'library SpecimenMissingSampleDiagnosis version ''1.0.0''
+using FHIR version ''4.0.0''
+include FHIRHelpers version ''4.0.0''
+
+context Patient
+
+define SpecimensWithoutSampleDiagnosis:
+  [Specimen] S
+    where S.subject.reference = ''Patient/'' + Patient.id
+      and not exists (
+        S.extension E
+          where E.url = ''https://fhir.bbmri.de/StructureDefinition/SampleDiagnosis''
+      )
+
+define InInitialPopulation:
+  exists SpecimensWithoutSampleDiagnosis',
+           10, 30
+       );
+
+INSERT INTO cql_check (name, description, query, warning_threshold, error_threshold)
+VALUES (
+           'Patients with specimen without custodian',
+           'How many patients have specimens without Custodian extension',
+           'library SpecimenMissingCustodian version ''1.0.0''
+using FHIR version ''4.0.0''
+include FHIRHelpers version ''4.0.0''
+
+context Patient
+
+define SpecimensWithoutCustodian:
+  [Specimen] S
+    where S.subject.reference = ''Patient/'' + Patient.id
+      and not exists (
+        S.extension E
+          where E.url = ''https://fhir.bbmri.de/StructureDefinition/Custodian''
+      )
+
+define InInitialPopulation:
+  exists SpecimensWithoutCustodian',
+           10, 30
+       );
+

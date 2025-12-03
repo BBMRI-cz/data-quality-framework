@@ -8,7 +8,7 @@ applyTo: '**/*.java, **/*.kt'
 ## General Instructions
 
 - Make only high confidence suggestions when reviewing code changes.
-- Write code with good maintainability practices, including comments on why certain design decisions were made.
+- Write code with good maintainability practices, including comments on why certain design decisions were made but do not comment every method
 - Handle edge cases and write clear exception handling.
 - For libraries or external dependencies, mention their usage and purpose in comments.
 
@@ -31,6 +31,12 @@ applyTo: '**/*.java, **/*.kt'
 - Package Structure: Organize by feature/domain rather than by layer
 - Separation of Concerns: Keep controllers thin, services focused, and repositories simple
 - Utility Classes: Make utility classes final with private constructors
+- 
+
+### Controller Layer
+- Add swagger annotations to all controllers and DTOs
+- Keep controllers as minimal as possible
+- All exceptions should be handled in ExceptionHandler
 
 ### Service Layer
 
@@ -38,6 +44,9 @@ applyTo: '**/*.java, **/*.kt'
 - Services should be stateless and testable.
 - Inject repositories via the constructor.
 - Service method signatures should use domain IDs or DTOs, not expose repository entities directly unless necessary.
+- Use Model Mapper for mappings between entities and DTOs and vice versa
+- Throw custom exceptions that are then handled
+- Always Create an interface with javadoc and a separate package private implementation
 
 ### Logging
 

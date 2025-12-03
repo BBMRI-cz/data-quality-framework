@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Profile("dev")
-public class DevDatabaseCleaner {
+class DevDatabaseCleaner {
 
   private static final Logger logger = LoggerFactory.getLogger(DevDatabaseCleaner.class);
 
@@ -32,7 +32,7 @@ public class DevDatabaseCleaner {
    * during application shutdown before the JVM terminates.
    */
   @PreDestroy
-  public void cleanDevDatabase() {
+  void cleanDevDatabase() {
     try {
       String dbPath = datasourceUrl.replace("jdbc:sqlite:", "");
       // Remove URL parameters if present (e.g., ?busy_timeout=10000)

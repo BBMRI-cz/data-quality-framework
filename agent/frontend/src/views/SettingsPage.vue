@@ -95,15 +95,15 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, inject } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import settingsStore from '../stores/settingsStore.js';
 import PageHeader from '../components/PageHeader.vue';
 import HealthStatusBanner from '../components/HealthStatusBanner.vue';
 import SaveButton from '../components/SaveButton.vue';
 import healthStore from '../stores/healthStore.js';
+import { notificationService } from '../services/notificationService.js';
 
 const isSaving = ref(false);
-const notify = inject('notify');
 
 const fhirSettings = reactive({
   url: '',
@@ -140,11 +140,11 @@ async function saveFhirSettings() {
     };
 
     await settingsStore.updateSettings(payload);
-    notify.success('Settings Saved', 'Your FHIR® server settings have been updated successfully');
+    notificationService.success('Settings Saved', 'Your FHIR® server settings have been updated successfully');
     await healthStore.checkHealth();
   } catch (error) {
     console.error('Error saving FHIR® settings:', error);
-    notify.error('Save Failed', 'Unable to save settings. Please try again.');
+    notificationService.error('Save Failed', 'Unable to save settings. Please try again.');
   } finally {
     isSaving.value = false;
   }

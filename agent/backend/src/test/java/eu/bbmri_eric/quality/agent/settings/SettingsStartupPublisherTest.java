@@ -3,20 +3,23 @@ package eu.bbmri_eric.quality.agent.settings;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import eu.bbmri_eric.quality.agent.common.EventPublisher;
+import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
+import eu.bbmri_eric.quality.agent.settings.event.SettingsUpdatedEvent;
+import eu.bbmri_eric.quality.agent.settings.impl.SettingsStartupPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class SettingsStartupPublisherTest {
 
   @Mock private SettingsService settingsService;
 
-  @Mock private ApplicationEventPublisher eventPublisher;
+  @Mock private EventPublisher eventPublisher;
 
   private SettingsStartupPublisher settingsStartupPublisher;
 
@@ -64,8 +67,5 @@ class SettingsStartupPublisherTest {
     ArgumentCaptor<SettingsUpdatedEvent> eventCaptor =
         ArgumentCaptor.forClass(SettingsUpdatedEvent.class);
     verify(eventPublisher).publishEvent(eventCaptor.capture());
-
-    SettingsUpdatedEvent capturedEvent = eventCaptor.getValue();
-    assertEquals(settingsStartupPublisher, capturedEvent.getSource());
   }
 }

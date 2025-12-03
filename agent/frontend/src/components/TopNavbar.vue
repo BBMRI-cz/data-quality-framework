@@ -49,6 +49,7 @@ import { useRouter } from 'vue-router'
 import { clearAuth, getUsername } from '../js/api.js'
 import { useUserStore } from '../stores/userStore.js'
 import PasswordChangeModal from './PasswordChangeModal.vue'
+import { notificationService } from '../services/notificationService.js'
 
 const router = useRouter()
 const username = ref(getUsername())
@@ -60,6 +61,7 @@ const { defaultPasswordFlag, initializeDefaultPasswordStatus } = useUserStore()
 
 const handleLogout = () => {
   clearAuth()
+  notificationService.info('Signed Out', 'You have been successfully signed out.')
   router.push('/login')
 }
 

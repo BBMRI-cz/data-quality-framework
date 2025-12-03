@@ -106,6 +106,13 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
+  // Redirect authenticated users away from login page
+  if (to.name === 'Login' && authStore.isAuthenticated) {
+    next('/dashboard')
+    return
+  }
+
+  // Redirect unauthenticated users to login for protected routes
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     if (to.path !== '/dashboard') {
       authStore.setRedirectPath(to.path)

@@ -1,4 +1,30 @@
 import {defineConfig} from 'vitepress'
+import {getLatestVersionSync} from './version.js'
+
+const version = getLatestVersionSync();
+
+// Build navigation array, conditionally including version if available
+const navItems = [
+    {text: 'Home', link: '/'},
+    {text: 'User Guide', link: '/user/'},
+    {text: 'Developer Guide', link: '/developer/'}
+];
+
+if (version) {
+    navItems.push({
+        text: version,
+        items: [
+            {
+                text: 'Changelog',
+                link: 'https://github.com/bbmri-cz/data-quality-framework/releases'
+            },
+            {
+                text: 'Releases',
+                link: `https://github.com/bbmri-cz/data-quality-framework/releases/tag/${version}`
+            }
+        ]
+    });
+}
 
 export default defineConfig({
     title: 'Data Quality Framework',
@@ -12,11 +38,7 @@ export default defineConfig({
     themeConfig: {
         logo: '/logo.svg',
 
-        nav: [
-            {text: 'Home', link: '/'},
-            {text: 'User Guide', link: '/user/'},
-            {text: 'Developer Guide', link: '/developer/'}
-        ],
+        nav: navItems,
 
         sidebar: {
             '/user/': [
@@ -42,7 +64,7 @@ export default defineConfig({
         },
 
         socialLinks: [
-            {icon: 'github', link: 'https://github.com/bbmri-eric/data-quality-framework'}
+            {icon: 'github', link: 'https://github.com/bbmri-cz/data-quality-framework'}
         ],
 
         editLink: {

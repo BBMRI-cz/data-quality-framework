@@ -63,15 +63,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, inject } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import serverStore from '../stores/serverStore.js';
 import PageHeader from '../components/PageHeader.vue';
 import ServerRegistrationForm from '../components/ServerRegistrationForm.vue';
 import ServerDetailsCard from '../components/ServerDetailsCard.vue';
 import DeleteConfirmModal from '../components/DeleteConfirmModal.vue';
+import { notificationService } from '../services/notificationService.js';
 
-const notify = inject('notify');
 const router = useRouter();
 
 const isRegistering = ref(false);
@@ -86,17 +86,17 @@ const firstServer = computed(() => servers.value[0] || null);
 
 async function registerServer(data) {
   if (!data.name || !data.url) {
-    notify.error('Validation Error', 'Please fill in all required fields');
+    notificationService.error('Validation Error', 'Please fill in all required fields');
     return;
   }
 
   isRegistering.value = true;
   try {
     await serverStore.createServer(data);
-    notify.success('Server Registered', `${data.name} has been registered successfully`);
+    notificationService.success('Server Registered', `${data.name} has been registered successfully`);
     registrationForm.value?.clearForm();
   } catch (error) {
-    notify.error('Registration Failed', serverStore.error || 'Unable to register server. Please try again.');
+    notificationService.error('Registration Failed', serverStore.error || 'Unable to register server. Please try again.');
   } finally {
     isRegistering.value = false;
   }
@@ -112,10 +112,10 @@ async function deleteServer() {
   isDeleting.value = true;
   try {
     await serverStore.deleteServer(deletingServer.value.id);
-    notify.success('Server Deleted', `${deletingServer.value.name} has been deleted successfully`);
+    notificationService.success('Server Deleted', `${deletingServer.value.name} has been deleted successfully`);
     closeDeleteModal();
   } catch (error) {
-    notify.error('Delete Failed', serverStore.error || 'Unable to delete server. Please try again.');
+    notificationService.error('Delete Failed', serverStore.error || 'Unable to delete server. Please try again.');
   } finally {
     isDeleting.value = false;
   }
@@ -135,7 +135,7 @@ async function refreshServers() {
   try {
     await serverStore.fetchServers();
   } catch (error) {
-    notify.error('Refresh Failed', 'Unable to refresh servers list. Please try again.');
+    notificationService.error('Refresh Failed', 'Unable to refresh servers list. Please try again.');
   }
 }
 

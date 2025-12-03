@@ -1,10 +1,8 @@
 <template>
   <div class="container-fluid vh-100 d-flex align-items-center justify-content-center bg-light">
-    <div class="row w-100 justify-content-center">
-      <div class="col-12 col-xl-10">
-        <LoginForm />
-        <Copyright />
-      </div>
+    <div class="login-container">
+      <LoginForm />
+      <Copyright />
     </div>
   </div>
 </template>
@@ -15,5 +13,28 @@ import Copyright from '../components/Copyright.vue'
 </script>
 
 <style scoped>
-/* Rely on Bootstrap layout to control spacing and height like agent does */
+.login-container {
+  width: 100%;
+  max-width: 900px;
+  padding: 0 1rem;
+}
+
+@media (min-width: 1400px) {
+  .login-container {
+    max-width: 1000px;
+  }
+}
+
+@media (max-width: 992px) {
+  .login-container {
+    max-width: 700px;
+  }
+}
+
+@media (max-width: 768px) {
+  .login-container {
+    max-width: 100%;
+    padding: 0 0.5rem;
+  }
+}
 </style>

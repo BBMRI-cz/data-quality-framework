@@ -1,0 +1,56 @@
+package eu.bbmri_eric.quality.agent.dataquality.impl;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
+import eu.bbmri_eric.quality.agent.dataquality.domain.ReportStatus;
+import eu.bbmri_eric.quality.agent.dataquality.domain.Result;
+import eu.bbmri_eric.quality.agent.dataquality.event.DataQualityCheckResultEvent;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
+import org.junit.jupiter.api.Test;
+
+class ResultEventHandlerTest {
+
+  @Test
+  void onNewResult_setsPatientListCorrectly() {
+    ReportRepository mockRepo = mock(ReportRepository.class);
+    Report mockReport = new Report();
+    mockReport.setId(123L);
+    mockReport.setStatus(ReportStatus.GENERATING);
+    when(mockRepo.findAllByStatusIs(ReportStatus.GENERATING)).thenReturn(List.of(mockReport));
+    ResultEventHandler handler = new ResultEventHandler(mockRepo);
+    Set<String> expectedPatients = Set.of("patientA", "patientB", "patientC");
+    DataQualityCheckResultEvent event =
+        new DataQualityCheckResultEvent(
+            123L,
+            "Patient List Check",
+            3,
+            expectedPatients,
+            null,
+            LocalDateTime.now(),
+            5,
+            10,
+            0.2f,
+            null);
+
+    doAnswer(
+            invocation -> {
+              Report saved = invocation.getArgument(0);
+              Result result = saved.getResults().iterator().next();
+              assertEquals(expectedPatients, result.getPatients());
+              return null;
+            })
+        .when(mockRepo)
+        .save(any(Report.class));
+    handler.onNewResult(event);
+    verify(mockRepo, times(1)).save(any(Report.class));
+  }
+}

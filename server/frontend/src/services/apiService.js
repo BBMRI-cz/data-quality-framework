@@ -1,220 +1,98 @@
-const API_BASE = '/api'
+import api from './api';
 
 class ApiService {
     async login(username, password) {
-        const response = await fetch(`${API_BASE}/auth/login`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                username,
-                password
-            })
-        })
-        if (!response.ok) {
-            if (response.status === 401) {
-                throw new Error('Invalid credentials')
-            }
-            throw new Error(`Login failed: ${response.status}`)
-        }
-        const data = await response.json()
+        const response = await api.post('/auth/login', {
+            username,
+            password
+        });
+        const data = response.data;
         if (data.token) {
-            localStorage.setItem('authToken', data.token)
+            localStorage.setItem('authToken', data.token);
         }
-        return data
+        return data;
     }
 
     async getAgents() {
-        const token = localStorage.getItem('authToken')
-        const response = await fetch(`${API_BASE}/v1/agents`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token && { 'Authorization': `Bearer ${token}` })
-            }
-        })
-        if (!response.ok) {
-            throw new Error(`Failed to fetch agents: ${response.status}`)
-        }
-        return await response.json()
+        const response = await api.get('/v1/agents');
+        return response.data;
     }
 
     async getAgent(agentId, expandInteractions = false) {
-        const token = localStorage.getItem('authToken')
         const url = expandInteractions
-            ? `${API_BASE}/v1/agents/${agentId}?expand=interactions`
-            : `${API_BASE}/v1/agents/${agentId}`
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token && { 'Authorization': `Bearer ${token}` })
-            }
-        })
-        if (!response.ok) {
-            throw new Error(`Failed to fetch agent: ${response.status}`)
-        }
-        return await response.json()
+            ? `/v1/agents/${agentId}?expand=interactions`
+            : `/v1/agents/${agentId}`;
+        const response = await api.get(url);
+        return response.data;
     }
 
     async updateAgent(agentId, data) {
-        const token = localStorage.getItem('authToken')
-        const response = await fetch(`${API_BASE}/v1/agents/${agentId}`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token && { 'Authorization': `Bearer ${token}` })
-            },
-            body: JSON.stringify(data)
-        })
-        if (!response.ok) {
-            throw new Error(`Failed to update agent: ${response.status}`)
-        }
-        return await response.json()
+        const response = await api.patch(`/v1/agents/${agentId}`, data);
+        return response.data;
     }
 
     // Convenience methods using the consolidated updateAgent method
     async approveAgent(agentId) {
-        return this.updateAgent(agentId, { status: 'ACTIVE' })
+        return this.updateAgent(agentId, { status: 'ACTIVE' });
     }
 
     async declineAgent(agentId) {
-        return this.updateAgent(agentId, { status: 'INACTIVE' })
+        return this.updateAgent(agentId, { status: 'INACTIVE' });
     }
 
     async updateAgentStatus(agentId, status) {
-        return this.updateAgent(agentId, { status })
+        return this.updateAgent(agentId, { status });
     }
 
     async updateAgentName(agentId, name) {
-        return this.updateAgent(agentId, { name })
+        return this.updateAgent(agentId, { name });
     }
 
     async getAgentReports(agentId) {
-        const token = localStorage.getItem('authToken')
-        const response = await fetch(`${API_BASE}/v1/agents/${agentId}/reports`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token && { 'Authorization': `Bearer ${token}` })
-            }
-        })
-        if (!response.ok) {
-            throw new Error(`Failed to fetch agent reports: ${response.status}`)
-        }
-        return await response.json()
+        const response = await api.get(`/v1/agents/${agentId}/reports`);
+        return response.data;
     }
 
     async getQualityChecks() {
-        const token = localStorage.getItem('authToken')
-        const response = await fetch(`${API_BASE}/v1/quality-checks`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token && { 'Authorization': `Bearer ${token}` })
-            }
-        })
-        if (!response.ok) {
-            throw new Error(`Failed to fetch quality checks: ${response.status}`)
-        }
-        return await response.json()
+        const response = await api.get('/v1/quality-checks');
+        return response.data;
     }
 
     async getReports() {
-        const token = localStorage.getItem('authToken')
-        const response = await fetch(`${API_BASE}/v1/reports`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token && { 'Authorization': `Bearer ${token}` })
-            }
-        })
-        if (!response.ok) {
-            throw new Error(`Failed to fetch reports: ${response.status}`)
-        }
-        return await response.json()
+        const response = await api.get('/v1/reports');
+        return response.data;
     }
 
     async getReport(reportId) {
-        const token = localStorage.getItem('authToken')
-        const response = await fetch(`${API_BASE}/v1/reports/${reportId}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token && { 'Authorization': `Bearer ${token}` })
-            }
-        })
-        if (!response.ok) {
-            throw new Error(`Failed to fetch report: ${response.status}`)
-        }
-        return await response.json()
+        const response = await api.get(`/v1/reports/${reportId}`);
+        return response.data;
     }
 
     async updateQualityCheck(hash, data) {
-        const token = localStorage.getItem('authToken')
-        const response = await fetch(`${API_BASE}/v1/quality-checks/${hash}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token && { 'Authorization': `Bearer ${token}` })
-            },
-            body: JSON.stringify(data)
-        })
-        if (!response.ok) {
-            throw new Error(`Failed to update quality check: ${response.status}`)
-        }
-        return await response.json()
+        const response = await api.put(`/v1/quality-checks/${hash}`, data);
+        return response.data;
     }
 
     async changePassword(userId, currentPassword, newPassword, confirmPassword) {
-        const token = localStorage.getItem('authToken')
-        const response = await fetch(`${API_BASE}/users/${userId}/password`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token && { 'Authorization': `Bearer ${token}` })
-            },
-            body: JSON.stringify({
-                currentPassword,
-                newPassword,
-                confirmPassword
-            })
-        })
-        if (!response.ok) {
-            const errorText = await response.text()
-            throw new Error(errorText || `Failed to change password: ${response.status}`)
-        }
+        await api.put(`/users/${userId}/password`, {
+            currentPassword,
+            newPassword,
+            confirmPassword
+        });
     }
 
     async getInfo() {
-        const response = await fetch(`${API_BASE}/info`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-        if (!response.ok) {
-            throw new Error(`Failed to fetch app info: ${response.status}`)
-        }
-        const data = await response.json()
+        const response = await api.get('/info');
+        const data = response.data;
         return {
             version: data?.build?.version || 'unknown'
-        }
+        };
     }
 
     async getCounts() {
-        const response = await fetch(`${API_BASE}/counts`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-        if (!response.ok) {
-            throw new Error(`Failed to fetch counts: ${response.status}`)
-        }
-        return await response.json()
+        const response = await api.get('/counts');
+        return response.data;
     }
 }
 
-export const apiService = new ApiService()
+export const apiService = new ApiService();
