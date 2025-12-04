@@ -105,7 +105,7 @@ public class JwtAuthenticationConverter implements Converter<Jwt, AbstractAuthen
     }
 
     Instant issuedAt = jwt.getIssuedAt();
-    if (issuedAt != null && issuedAt.isAfter(Instant.now().plusSeconds(60))) {
+    if (issuedAt != null && issuedAt.isAfter(Instant.now().plusSeconds(10))) {
       throw new IllegalArgumentException("JWT issued in the future");
     }
 
