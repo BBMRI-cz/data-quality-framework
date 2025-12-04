@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import jakarta.servlet.http.HttpServletRequest;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,15 +26,9 @@ class CustomAuthenticationManagerResolverTest {
   @Mock private HttpServletRequest request;
 
   private CustomAuthenticationManagerResolver resolver;
-
   private static final String INTERNAL_ISSUER = "quality-server";
   private static final String BEARER_TOKEN = "Bearer valid.jwt.token";
   private static final String JWT_TOKEN = "valid.jwt.token";
-
-  @BeforeEach
-  void setUp() {
-    when(request.getRemoteAddr()).thenReturn("127.0.0.1");
-  }
 
   @Test
   @DisplayName("Should resolve internal authentication manager for internal issuer")

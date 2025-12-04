@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 public class JwtUtil {
 
   private static final Logger logger = LoggerFactory.getLogger(JwtUtil.class);
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   private final SecretKey key;
   private final long jwtExpiration;
@@ -112,9 +113,7 @@ public class JwtUtil {
       }
 
       String payloadJson = new String(Base64.getUrlDecoder().decode(parts[1]));
-
-      ObjectMapper mapper = new ObjectMapper();
-      JsonNode payloadNode = mapper.readTree(payloadJson);
+      JsonNode payloadNode = OBJECT_MAPPER.readTree(payloadJson);
 
       String issuer = payloadNode.has("iss") ? payloadNode.get("iss").asText() : null;
       logger.debug("Extracted issuer from token: '{}'", issuer);
