@@ -49,8 +49,7 @@ public class UserServiceImpl implements UserService {
 
     return userRepository
         .findBySubjectId(subjectId)
-        .map(
-            user -> modelMapper.map(user, UserDTO.class))
+        .map(user -> modelMapper.map(user, UserDTO.class))
         .orElseGet(
             () -> {
               User user = new User(username, subjectId);
