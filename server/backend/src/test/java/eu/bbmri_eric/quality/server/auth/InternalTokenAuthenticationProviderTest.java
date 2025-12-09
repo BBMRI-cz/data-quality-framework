@@ -1,8 +1,15 @@
 package eu.bbmri_eric.quality.server.auth;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import io.jsonwebtoken.JwtException;
 import java.util.Collections;
@@ -59,7 +66,7 @@ class InternalTokenAuthenticationProviderTest {
     Authentication result = provider.authenticate(authRequest);
 
     assertNotNull(result);
-    assertTrue(result instanceof UsernamePasswordAuthenticationToken);
+    assertInstanceOf(UsernamePasswordAuthenticationToken.class, result);
     assertEquals(userDetails, result.getPrincipal());
     assertEquals(token, result.getCredentials());
     assertEquals(1, result.getAuthorities().size());
