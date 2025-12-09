@@ -16,8 +16,6 @@ services:
       - "8082:8082"
     volumes:
       - server-data:/app/data
-    environment:
-      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: "http://localhost:4011"
     network_mode: host
   oidc-server-mock:
     container_name: oidc-server-mock

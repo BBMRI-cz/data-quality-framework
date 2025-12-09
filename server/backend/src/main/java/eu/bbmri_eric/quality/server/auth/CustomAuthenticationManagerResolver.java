@@ -12,12 +12,12 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtDecoders;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
+import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
 
 /**
- * Resolves an AuthenticationManager per request based on the JWT token's issuer claim. Supports
- * multiple authentication methods: Internal tokens: issuer="quality-server" - uses custom JWT
- * validation with UserDetailsService OIDC tokens: issuer=configured OIDC provider - uses standard
- * OAuth2 JWT validation
+ * Selects the appropriate AuthenticationManager based on the JWT token's issuer claim in the
+ * incoming JWT bearer token. Supports Internal application tokens and OIDC provider tokens.
  */
 public class CustomAuthenticationManagerResolver
     implements AuthenticationManagerResolver<HttpServletRequest> {
@@ -29,6 +29,7 @@ public class CustomAuthenticationManagerResolver
   private final JwtUtil jwtUtil;
   private final Map<String, AuthenticationManager> authManagers;
   private final AuthenticationManager defaultAuthManager;
+  private final BearerTokenResolver bearerTokenResolver;
 
   public CustomAuthenticationManagerResolver(
       JwtUtil jwtUtil,
@@ -37,6 +38,7 @@ public class CustomAuthenticationManagerResolver
       String oidcIssuerUri) {
     this.jwtUtil = jwtUtil;
     this.authManagers = new HashMap<>();
+    this.bearerTokenResolver = new DefaultBearerTokenResolver();
 
     InternalTokenAuthenticationProvider internalProvider =
         new InternalTokenAuthenticationProvider(jwtUtil, userDetailsService);
@@ -52,7 +54,7 @@ public class CustomAuthenticationManagerResolver
         oidcProvider.setJwtAuthenticationConverter(jwtAuthenticationConverter);
         AuthenticationManager oidcAuthManager = new ProviderManager(oidcProvider);
         authManagers.put(oidcIssuerUri, oidcAuthManager);
-        logger.info("Registered OIDC authentication for issuer: {}", oidcIssuerUri);
+        logger.debug("Registered OIDC authentication for issuer: {}", oidcIssuerUri);
       } catch (Exception e) {
         logger.warn(
             "Failed to initialize OIDC authentication for issuer '{}': {}. OIDC authentication will not be available.",
@@ -60,25 +62,17 @@ public class CustomAuthenticationManagerResolver
             e.getMessage());
       }
     } else {
-      logger.info("OIDC authentication disabled (no issuer URI configured)");
+      logger.warn("OIDC authentication disabled (no issuer URI configured)");
     }
   }
 
   @Override
   public AuthenticationManager resolve(HttpServletRequest request) {
-    final String authHeader = request.getHeader("Authorization");
+    String token = bearerTokenResolver.resolve(request);
 
-    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-      logger.warn("Invalid or missing Authorization header from IP: {}", request.getRemoteAddr());
-      throw new IllegalStateException(
-          "Missing or invalid Authorization header. Expected format: 'Bearer <token>'");
-    }
-
-    final String token = authHeader.substring(7);
-
-    if (token.isBlank()) {
-      logger.warn("Empty bearer token from IP: {}", request.getRemoteAddr());
-      throw new IllegalStateException("Bearer token cannot be empty");
+    if (token == null) {
+      logger.warn("No bearer token found in request from IP: {}", request.getRemoteAddr());
+      throw new IllegalStateException("No bearer token found in request");
     }
 
     try {
@@ -87,7 +81,8 @@ public class CustomAuthenticationManagerResolver
 
       AuthenticationManager authManager = authManagers.get(issuer);
       return authManager != null ? authManager : defaultAuthManager;
-
+    } catch (IllegalArgumentException e) {
+      return defaultAuthManager;
     } catch (Exception e) {
       throw new IllegalStateException(
           "Failed to resolve AuthenticationManager: " + e.getMessage(), e);

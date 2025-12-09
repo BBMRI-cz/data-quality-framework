@@ -15,7 +15,7 @@ import org.springframework.security.oauth2.server.resource.authentication.Bearer
  * AuthenticationProvider for validating internal JWT tokens and creating
  * UsernamePasswordAuthenticationToken.
  */
-public class InternalTokenAuthenticationProvider implements AuthenticationProvider {
+class InternalTokenAuthenticationProvider implements AuthenticationProvider {
 
   private static final Logger logger =
       LoggerFactory.getLogger(InternalTokenAuthenticationProvider.class);
@@ -33,7 +33,7 @@ public class InternalTokenAuthenticationProvider implements AuthenticationProvid
   public Authentication authenticate(Authentication authentication) throws AuthenticationException {
     if (!(authentication instanceof BearerTokenAuthenticationToken)) {
       logger.warn("Unsupported authentication type: {}", authentication.getClass().getName());
-      return null;
+      throw new AuthenticationException("Unsupported authentication type") {};
     }
 
     String token = ((BearerTokenAuthenticationToken) authentication).getToken();

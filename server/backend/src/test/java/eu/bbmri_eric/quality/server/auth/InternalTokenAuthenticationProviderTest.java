@@ -3,7 +3,6 @@ package eu.bbmri_eric.quality.server.auth;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -22,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -135,14 +135,15 @@ class InternalTokenAuthenticationProviderTest {
   }
 
   @Test
-  @DisplayName("Should return null for unsupported authentication type")
-  void authenticate_withUnsupportedAuthenticationType_returnsNull() {
+  @DisplayName("Should throw AuthenticationException for unsupported authentication type")
+  void authenticate_withUnsupportedAuthenticationType_throwsException() {
     UsernamePasswordAuthenticationToken authRequest =
         new UsernamePasswordAuthenticationToken("user", "pass");
 
-    Authentication result = provider.authenticate(authRequest);
+    AuthenticationException exception =
+        assertThrows(AuthenticationException.class, () -> provider.authenticate(authRequest));
 
-    assertNull(result);
+    assertEquals("Unsupported authentication type", exception.getMessage());
     verify(jwtUtil, never()).extractUsername(any());
     verify(jwtUtil, never()).validateToken(any(), any());
     verify(userDetailsService, never()).loadUserByUsername(any());
