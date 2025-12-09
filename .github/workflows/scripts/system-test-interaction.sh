@@ -11,14 +11,11 @@ set -e
 # Get the directory of this script
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Source OIDC helper functions
-source "${SCRIPT_DIR}/oidc-helper.sh"
-
 # Configuration
 AGENT_URL="http://localhost:8081"
 SERVER_URL="http://localhost:8082"
 REGISTRATION_URL="http://host.docker.internal:8082"
-export OIDC_SERVER_URL="http://localhost:4011"
+OIDC_SERVER_URL="http://localhost:4011"
 AGENT_ADMIN_USERNAME="admin"
 AGENT_ADMIN_PASSWORD="adminpass"
 SERVER_ADMIN_USERNAME="admin"
@@ -258,8 +255,8 @@ echo -e "${YELLOW}========================================${NC}"
 # Step 8: Check OIDC server health
 echo -e "\n${YELLOW}Step 8: Checking OIDC server health...${NC}"
 
-if ! check_oidc_server 30; then
-  echo -e "${RED}✗ OIDC server is not healthy${NC}"
+if ! "${SCRIPT_DIR}/wait-for-url.sh" "${OIDC_SERVER_URL}/.well-known/openid-configuration"; then
+  echo -e "${RED}✗ OIDC server is not responding${NC}"
   echo -e "${YELLOW}Tip: Make sure OIDC server is running with: docker compose up -d oidc-server-mock${NC}"
   exit 1
 fi
@@ -270,10 +267,20 @@ echo -e "${GREEN}✓ OIDC server is healthy${NC}"
 echo -e "\n${YELLOW}Step 9: Testing OIDC authentication with server...${NC}"
 
 # Get OIDC access token
-OIDC_ACCESS_TOKEN=$(get_oidc_token "$OIDC_TEST_USERNAME" "$OIDC_TEST_PASSWORD")
+OIDC_TOKEN_RESPONSE=$(curl -s -X POST \
+  "${OIDC_SERVER_URL}/connect/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=password" \
+  -d "client_id=auth-code-client" \
+  -d "scope=openid profile email" \
+  -d "username=${OIDC_TEST_USERNAME}" \
+  -d "password=${OIDC_TEST_PASSWORD}")
+
+OIDC_ACCESS_TOKEN=$(echo "$OIDC_TOKEN_RESPONSE" | jq -r '.access_token // empty')
 
 if [ -z "$OIDC_ACCESS_TOKEN" ]; then
   echo -e "${RED}✗ Failed to obtain OIDC access token${NC}"
+  echo "Token response: $OIDC_TOKEN_RESPONSE"
   exit 1
 fi
 
