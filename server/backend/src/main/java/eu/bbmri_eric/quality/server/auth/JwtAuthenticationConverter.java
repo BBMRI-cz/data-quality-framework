@@ -89,7 +89,10 @@ public class JwtAuthenticationConverter implements Converter<Jwt, AbstractAuthen
 
     logger.debug("Processing OIDC token for subject: {}", subjectId);
 
-    UserDTO user = userService.findOrCreateUserBySubjectId(subjectId, principalName);
+    UserDTO user =
+        userService
+            .findBySubjectId(subjectId, principalName)
+            .orElseGet(() -> userService.createBySubjectId(subjectId, principalName));
 
     Set<GrantedAuthority> authorities = extractAuthorities(user);
 
