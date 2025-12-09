@@ -37,10 +37,10 @@
       "client_credentials"
     ],
     "AllowedScopes": [
-      "negotiator_api",
-      "negotiator_authz_management",
-      "negotiator_resource_management",
-      "negotiator_monitoring"
+      "quality_server_api",
+      "quality_server_authz_management",
+      "quality_server_resource_management",
+      "quality_server_monitoring"
     ],
     "ClientClaimsPrefix": "",
     "Claims": [],

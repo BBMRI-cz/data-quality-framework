@@ -32,70 +32,6 @@
     ]
   },
   {
-    "SubjectId": "1001@bbmri.eu",
-    "Username": "Biobanker",
-    "Password": "biobanker",
-    "Claims": [
-      {
-        "Type": "name",
-        "Value": "Taylor Biobanker",
-        "ValueType": "string"
-      },
-      {
-        "Type": "given_name",
-        "Value": "Taylor",
-        "ValueType": "string"
-      },
-      {
-        "Type": "family_name",
-        "Value": "Biobanker",
-        "ValueType": "string"
-      },
-      {
-        "Type": "preferred_username",
-        "Value": "TheBiobanker",
-        "ValueType": "string"
-      },
-      {
-        "Type": "email",
-        "Value": "taylor.biobanker@gmail.com",
-        "ValueType": "string"
-      }
-    ]
-  },
-  {
-    "SubjectId": "1003@bbmri.eu",
-    "Username": "Repr",
-    "Password": "repr",
-    "Claims": [
-      {
-        "Type": "name",
-        "Value": "Sarah Representative",
-        "ValueType": "string"
-      },
-      {
-        "Type": "given_name",
-        "Value": "Sarah",
-        "ValueType": "string"
-      },
-      {
-        "Type": "family_name",
-        "Value": "Representative",
-        "ValueType": "string"
-      },
-      {
-        "Type": "preferred_username",
-        "Value": "SarahRepr",
-        "ValueType": "string"
-      },
-      {
-        "Type": "email",
-        "Value": "sarah.repr@biobank.eu",
-        "ValueType": "string"
-      }
-    ]
-  },
-  {
     "SubjectId": "1002@bbmri.eu",
     "Username": "admin",
     "Password": "admin",
@@ -127,7 +63,7 @@
       },
       {
         "Type": "eduperson_entitlement",
-        "Value": "[\"urn:geant:bbmri-eric.eu:group:bbmri:negotiator_v3:admins#perun.bbmri-eric.eu\"]",
+        "Value": "[\"urn:geant:bbmri-eric.eu:group:bbmri:quality_server_v3:admins#perun.bbmri-eric.eu\"]",
         "ValueType": "json"
       }
     ]
