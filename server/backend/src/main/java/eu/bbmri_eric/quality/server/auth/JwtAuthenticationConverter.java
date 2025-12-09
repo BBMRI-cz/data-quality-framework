@@ -91,7 +91,7 @@ public class JwtAuthenticationConverter implements Converter<Jwt, AbstractAuthen
 
     UserDTO user =
         userService
-            .findBySubjectId(subjectId, principalName)
+            .findBySubjectId(subjectId)
             .orElseGet(() -> userService.createBySubjectId(subjectId, principalName));
 
     Set<GrantedAuthority> authorities = extractAuthorities(user);

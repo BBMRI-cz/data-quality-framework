@@ -45,7 +45,6 @@ public class CustomAuthenticationManagerResolver
     AuthenticationManager internalAuthManager = new ProviderManager(internalProvider);
     authManagers.put(INTERNAL_ISSUER, internalAuthManager);
     this.defaultAuthManager = internalAuthManager;
-    logger.info("Registered internal token authentication for issuer: {}", INTERNAL_ISSUER);
 
     if (oidcIssuerUri != null && !oidcIssuerUri.isBlank()) {
       try {

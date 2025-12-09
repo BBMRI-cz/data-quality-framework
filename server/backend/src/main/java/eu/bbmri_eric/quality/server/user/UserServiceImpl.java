@@ -45,7 +45,7 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
-  public Optional<UserDTO> findBySubjectId(String subjectId, String username) {
+  public Optional<UserDTO> findBySubjectId(String subjectId) {
     return userRepository
         .findBySubjectId(subjectId)
         .map(user -> modelMapper.map(user, UserDTO.class));

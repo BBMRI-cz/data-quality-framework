@@ -11,7 +11,7 @@ public interface UserService {
    * @param subjectId the OIDC subject ID
    * @return the found or created user
    */
-  Optional<UserDTO> findBySubjectId(String subjectId, String username);
+  Optional<UserDTO> findBySubjectId(String subjectId);
 
   UserDTO createBySubjectId(String subjectId, String username);
 
