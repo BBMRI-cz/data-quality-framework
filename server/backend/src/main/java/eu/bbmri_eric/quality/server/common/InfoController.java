@@ -1,7 +1,7 @@
 package eu.bbmri_eric.quality.server.common;
 
-import eu.bbmri_eric.quality.server.agent.AgentService;
-import eu.bbmri_eric.quality.server.report.ReportService;
+import eu.bbmri_eric.quality.server.dataquality.AgentService;
+import eu.bbmri_eric.quality.server.dataquality.ReportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.boot.info.BuildProperties;

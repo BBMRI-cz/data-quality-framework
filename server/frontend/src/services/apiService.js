@@ -48,6 +48,11 @@ class ApiService {
         return this.updateAgent(agentId, { name });
     }
 
+    async deleteAgent(agentId) {
+        const response = await api.delete(`/v1/agents/${agentId}`);
+        return response.data;
+    }
+
     async getAgentReports(agentId) {
         const response = await api.get(`/v1/agents/${agentId}/reports`);
         return response.data;

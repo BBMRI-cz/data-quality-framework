@@ -92,7 +92,7 @@ class ReportServiceImplTest {
       ReportDTO reportDTO = reportService.getById(testReport.getId());
 
       double[] returnedValues =
-          reportDTO.getResults().stream().mapToDouble(QualityCheckResultDTO::result).toArray();
+          reportDTO.getResults().stream().mapToDouble(QualityCheckResultDTO::getResult).toArray();
 
       double[] expectedRawProportions = {0.15, 0.075, 0.005, 0.20, 0.008};
 
@@ -112,10 +112,10 @@ class ReportServiceImplTest {
       ReportDTO reportDTO = reportService.getById(testReport.getId());
 
       QualityCheckResultDTO check1 = reportDTO.getResults().get(0);
-      assertThat(check1.result()).isEqualTo(0.16);
+      assertThat(check1.getResult()).isEqualTo(0.16);
 
       QualityCheckResultDTO check2 = reportDTO.getResults().get(1);
-      assertThat(check2.result()).isEqualTo(0.07);
+      assertThat(check2.getResult()).isEqualTo(0.07);
     }
 
     @Test
@@ -124,10 +124,10 @@ class ReportServiceImplTest {
       ReportDTO reportDTO = reportService.getById(testReport.getId());
 
       QualityCheckResultDTO check3 = reportDTO.getResults().get(2);
-      assertThat(check3.result()).isEqualTo(0.0);
+      assertThat(check3.getResult()).isEqualTo(0.0);
 
       QualityCheckResultDTO check5 = reportDTO.getResults().get(4);
-      assertThat(check5.result()).isEqualTo(0.0);
+      assertThat(check5.getResult()).isEqualTo(0.0);
     }
 
     @Test
@@ -142,7 +142,7 @@ class ReportServiceImplTest {
 
       ReportDTO reportDTO = reportService.getById(savedReport.getId());
 
-      assertThat(reportDTO.getResults().get(0).result()).isEqualTo(0.6);
+      assertThat(reportDTO.getResults().get(0).getResult()).isEqualTo(0.6);
     }
 
     @Test
@@ -157,7 +157,7 @@ class ReportServiceImplTest {
       ReportDTO reportDTO = reportService.getById(savedReport.getId());
 
       assertThat(reportDTO.getResults()).hasSize(1);
-      assertThat(reportDTO.getResults().get(0).result()).isEqualTo(0.0);
+      assertThat(reportDTO.getResults().get(0).getResult()).isEqualTo(0.0);
     }
 
     @Test
@@ -167,7 +167,7 @@ class ReportServiceImplTest {
       ReportDTO reportDTO = reportService.getById(testReport.getId());
 
       QualityCheckResultDTO check1 = reportDTO.getResults().get(0);
-      double noisyProportion = check1.result();
+      double noisyProportion = check1.getResult();
       double noisyCount = noisyProportion * 1000;
 
       assertThat(noisyCount).isNotEqualTo(150.0);
@@ -185,7 +185,7 @@ class ReportServiceImplTest {
       ReportDTO reportDTO = reportService.getById(testReport.getId());
 
       for (QualityCheckResultDTO result : reportDTO.getResults()) {
-        assertThat(result.hash())
+        assertThat(result.getHash())
             .as("Check ID hash should not be null or empty")
             .isNotNull()
             .isNotEmpty();
@@ -197,7 +197,7 @@ class ReportServiceImplTest {
     void shouldHashQueryContent() {
       ReportDTO reportDTO = reportService.getById(testReport.getId());
 
-      String hash = reportDTO.getResults().get(0).hash();
+      String hash = reportDTO.getResults().get(0).getHash();
       assertThat(hash).matches("[a-f0-9]{64}");
     }
 
@@ -207,12 +207,12 @@ class ReportServiceImplTest {
       ReportDTO reportDTO = reportService.getById(testReport.getId());
 
       QualityCheckResultDTO check4 = reportDTO.getResults().get(3);
-      assertThat(check4.hash()).contains("stratum_A");
-      assertThat(check4.hash()).matches(".+ \\(stratum_A\\)");
+      assertThat(check4.getHash()).contains("stratum_A");
+      assertThat(check4.getHash()).matches(".+ \\(stratum_A\\)");
 
       QualityCheckResultDTO check5 = reportDTO.getResults().get(4);
-      assertThat(check5.hash()).contains("stratum_B");
-      assertThat(check5.hash()).matches(".+ \\(stratum_B\\)");
+      assertThat(check5.getHash()).contains("stratum_B");
+      assertThat(check5.getHash()).matches(".+ \\(stratum_B\\)");
     }
 
     @Test
@@ -221,8 +221,8 @@ class ReportServiceImplTest {
       ReportDTO reportDTO = reportService.getById(testReport.getId());
 
       QualityCheckResultDTO check1 = reportDTO.getResults().get(0);
-      assertThat(check1.hash()).doesNotContain("(");
-      assertThat(check1.hash()).doesNotContain(")");
+      assertThat(check1.getHash()).doesNotContain("(");
+      assertThat(check1.getHash()).doesNotContain(")");
     }
 
     @Test
@@ -230,9 +230,9 @@ class ReportServiceImplTest {
     void shouldUseSameHashForSameCheckId() {
       ReportDTO reportDTO = reportService.getById(testReport.getId());
 
-      String hash1 = reportDTO.getResults().get(0).hash();
-      String hash2 = reportDTO.getResults().get(1).hash();
-      String hash3 = reportDTO.getResults().get(2).hash();
+      String hash1 = reportDTO.getResults().get(0).getHash();
+      String hash2 = reportDTO.getResults().get(1).getHash();
+      String hash3 = reportDTO.getResults().get(2).getHash();
 
       assertThat(hash1).isEqualTo(hash2);
       assertThat(hash2).isEqualTo(hash3);
@@ -243,8 +243,8 @@ class ReportServiceImplTest {
     void shouldUseDifferentHashForDifferentCheckIds() {
       ReportDTO reportDTO = reportService.getById(testReport.getId());
 
-      String hash1Base = reportDTO.getResults().get(0).hash();
-      String hash4WithStratum = reportDTO.getResults().get(3).hash();
+      String hash1Base = reportDTO.getResults().get(0).getHash();
+      String hash4WithStratum = reportDTO.getResults().get(3).getHash();
 
       String hash4Base = hash4WithStratum.replaceAll(" \\(.*\\)", "");
 
@@ -262,7 +262,7 @@ class ReportServiceImplTest {
       ReportDTO reportDTO = reportService.getById(testReport.getId());
 
       assertThat(reportDTO.getResults()).hasSize(5);
-      assertThat(reportDTO.getResults().get(0).result()).isGreaterThan(0.0);
+      assertThat(reportDTO.getResults().get(0).getResult()).isGreaterThan(0.0);
     }
   }
 }

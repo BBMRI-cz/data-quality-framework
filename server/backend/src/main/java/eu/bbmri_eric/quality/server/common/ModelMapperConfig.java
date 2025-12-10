@@ -1,7 +1,7 @@
 package eu.bbmri_eric.quality.server.common;
 
-import eu.bbmri_eric.quality.server.agent.Agent;
-import eu.bbmri_eric.quality.server.agent.AgentDTO;
+import eu.bbmri_eric.quality.server.dataquality.domain.Agent;
+import eu.bbmri_eric.quality.server.dataquality.dto.AgentDTO;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.PropertyMap;
 import org.springframework.context.annotation.Bean;
@@ -32,7 +32,6 @@ class ModelMapperConfig {
             skip(destination.getInteractions());
           }
         });
-
     return modelMapper;
   }
 }

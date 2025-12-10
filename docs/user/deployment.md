@@ -96,7 +96,7 @@ version: '3.8'
 
 services:
   quality-agent:
-    image: ghcr.io/bbmri-cz/data-quality-agent:latest
+    image: ghcr.io/bbmri-cz/data-quality-agent:0.1
     container_name: quality-agent
     restart: unless-stopped
     ports:

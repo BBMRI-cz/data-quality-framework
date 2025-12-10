@@ -31,6 +31,14 @@
             <i class="bi bi-clock-history me-2"></i>
             View Logs
           </button>
+          <button
+            class="btn btn-outline-danger btn-sm d-flex align-items-center"
+            @click="confirmDeleteAgent"
+            :disabled="processing"
+          >
+            <i class="bi bi-trash me-2"></i>
+            Delete Agent
+          </button>
         </div>
       </div>
     </div>
@@ -148,6 +156,34 @@
       :quality-check-map="qualityCheckMap"
       @close="closeReportModal"
     />
+
+    <!-- Delete Confirmation Modal -->
+    <BaseModal
+      :show="showDeleteModal"
+      @close="closeDeleteModal"
+      @save="deleteAgent"
+      title="Delete Agent"
+      subtitle="This action cannot be undone"
+      icon="bi bi-trash"
+      variant="danger"
+      size="sm"
+      :loading="processing"
+      :save-button-props="{ text: 'Delete', variant: 'danger' }"
+      :cancel-button-props="{ text: 'Cancel' }"
+    >
+      <p class="mb-3">
+        Are you sure you want to delete <strong>{{ agentName }}</strong>?
+      </p>
+      <p class="mb-0 text-muted small">
+        This will permanently remove:
+      </p>
+      <ul class="text-muted small mb-0">
+        <li>The agent and all its configuration</li>
+        <li>All associated reports ({{ reportStats.total }} report{{ reportStats.total !== 1 ? 's' : '' }})</li>
+        <li>All quality check results</li>
+        <li>All interaction history</li>
+      </ul>
+    </BaseModal>
   </div>
 </template>
 
@@ -158,7 +194,9 @@ import StatsCard from '../components/StatsCard.vue'
 import ReportsTable from '../components/ReportsTable.vue'
 import ReportDetailsModal from '../components/ReportDetailsModal.vue'
 import PageHeader from '../components/PageHeader.vue'
+import BaseModal from '../components/BaseModal.vue'
 import { apiService } from '../services/apiService.js'
+import { notificationService } from '../services/notificationService.js'
 import { countChecksByStatus } from '../utils/qualityCheckUtils.js'
 
 const route = useRoute()
@@ -172,6 +210,7 @@ const reports = ref([])
 const qualityChecks = ref([])
 const selectedReport = ref(null)
 const processing = ref(false)
+const showDeleteModal = ref(false)
 
 const agentName = computed(() => {
   return agent.value?.name || 'Unknown Agent'
@@ -324,6 +363,40 @@ const handleUpdateAgentName = async (newName) => {
   } catch (err) {
     error.value = 'Failed to update agent name'
     console.error('Error updating agent name:', err)
+  }
+}
+
+const confirmDeleteAgent = () => {
+  showDeleteModal.value = true
+}
+
+const closeDeleteModal = () => {
+  showDeleteModal.value = false
+}
+
+const deleteAgent = async () => {
+  try {
+    processing.value = true
+    const agentNameToDelete = agent.value?.name || agent.value?.id || 'Agent'
+    await apiService.deleteAgent(agentId.value)
+
+    // Show success notification
+    notificationService.success(
+      'Agent Deleted',
+      `${agentNameToDelete} has been successfully deleted.`
+    )
+
+    // Close modal and navigate back to agents list after successful deletion
+    showDeleteModal.value = false
+    router.push({ name: 'Agents' })
+  } catch (err) {
+    error.value = 'Failed to delete agent'
+    console.error('Error deleting agent:', err)
+    notificationService.error(
+      'Delete Failed',
+      'Could not delete the agent. Please try again.'
+    )
+    processing.value = false
   }
 }
 

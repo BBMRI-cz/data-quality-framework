@@ -1,6 +1,7 @@
 package eu.bbmri_eric.quality.server.user;
 
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -142,7 +143,7 @@ class AuthControllerTest {
       Base64.getUrlDecoder().decode(tokenParts[0]); // header
       Base64.getUrlDecoder().decode(tokenParts[1]); // payload
     } catch (IllegalArgumentException e) {
-      assert false : "Token parts should be valid Base64 URL encoded: " + e.getMessage();
+      fail("Token parts should be valid Base64 URL encoded: " + e.getMessage());
     }
   }
 

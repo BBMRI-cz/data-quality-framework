@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.validation.constraints.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.Getter;
@@ -24,13 +25,13 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Result {
+  private static final int MAX_ERROR_LENGTH = 255;
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  private static final int MAX_ERROR_LENGTH = 255;
-
-  private String checkName;
+  @NotNull private String checkName = "";
   private Long checkId;
   private int rawValue;
   private Double obfuscatedValue;
