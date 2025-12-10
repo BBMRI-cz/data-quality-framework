@@ -3,21 +3,18 @@ package eu.bbmri_eric.quality.server.common;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.bbmri_eric.quality.server.auth.CustomAuthenticationManagerResolver;
-import eu.bbmri_eric.quality.server.auth.JwtAuthenticationConverter;
-import eu.bbmri_eric.quality.server.auth.JwtUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationManagerResolver;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -31,24 +28,15 @@ class SecurityConfig {
 
   private final AuthenticationEntryPoint authenticationEntryPoint;
   private final HttpRequestLoggingFilter httpRequestLoggingFilter;
-  private final JwtAuthenticationConverter jwtAuthenticationConverter;
-  private final JwtUtil jwtUtil;
-  private final UserDetailsService userDetailsService;
-
-  @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri:#{null}}")
-  private String issuerUri;
+  private final AuthenticationManagerResolver<HttpServletRequest> authenticationManagerResolver;
 
   public SecurityConfig(
       AuthenticationEntryPoint authenticationEntryPoint,
       HttpRequestLoggingFilter httpRequestLoggingFilter,
-      JwtAuthenticationConverter jwtAuthenticationConverter,
-      JwtUtil jwtUtil,
-      UserDetailsService userDetailsService) {
+      AuthenticationManagerResolver<HttpServletRequest> authenticationManagerResolver) {
     this.authenticationEntryPoint = authenticationEntryPoint;
     this.httpRequestLoggingFilter = httpRequestLoggingFilter;
-    this.jwtAuthenticationConverter = jwtAuthenticationConverter;
-    this.jwtUtil = jwtUtil;
-    this.userDetailsService = userDetailsService;
+    this.authenticationManagerResolver = authenticationManagerResolver;
   }
 
   @Bean
@@ -103,10 +91,7 @@ class SecurityConfig {
                     .requestMatchers("/**")
                     .permitAll())
         .oauth2ResourceServer(
-            oauth2 ->
-                oauth2.authenticationManagerResolver(
-                    new CustomAuthenticationManagerResolver(
-                        jwtUtil, jwtAuthenticationConverter, userDetailsService, issuerUri)))
+            oauth2 -> oauth2.authenticationManagerResolver(authenticationManagerResolver))
         .exceptionHandling(
             ex ->
                 ex.accessDeniedHandler(

@@ -1,10 +1,11 @@
-package eu.bbmri_eric.quality.server.auth;
+package eu.bbmri_eric.quality.server.common.auth;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationManagerResolver;
 import org.springframework.security.authentication.ProviderManager;
@@ -14,12 +15,14 @@ import org.springframework.security.oauth2.jwt.JwtDecoders;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
 import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
+import org.springframework.stereotype.Component;
 
 /**
  * Selects the appropriate AuthenticationManager based on the JWT token's issuer claim in the
  * incoming JWT bearer token. Supports Internal application tokens and OIDC provider tokens.
  */
-public class CustomAuthenticationManagerResolver
+@Component
+class CustomAuthenticationManagerResolver
     implements AuthenticationManagerResolver<HttpServletRequest> {
 
   private static final Logger logger =
@@ -31,11 +34,12 @@ public class CustomAuthenticationManagerResolver
   private final AuthenticationManager defaultAuthManager;
   private final BearerTokenResolver bearerTokenResolver;
 
-  public CustomAuthenticationManagerResolver(
+  CustomAuthenticationManagerResolver(
       JwtUtil jwtUtil,
       JwtAuthenticationConverter jwtAuthenticationConverter,
       UserDetailsService userDetailsService,
-      String oidcIssuerUri) {
+      @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri:#{null}}")
+          String oidcIssuerUri) {
     this.jwtUtil = jwtUtil;
     this.authManagers = new HashMap<>();
     this.bearerTokenResolver = new DefaultBearerTokenResolver();

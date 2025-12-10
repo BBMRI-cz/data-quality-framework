@@ -1,4 +1,4 @@
-package eu.bbmri_eric.quality.server.auth;
+package eu.bbmri_eric.quality.server.common.auth;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;

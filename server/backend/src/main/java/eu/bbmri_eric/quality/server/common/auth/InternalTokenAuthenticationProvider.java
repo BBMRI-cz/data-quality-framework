@@ -1,4 +1,4 @@
-package eu.bbmri_eric.quality.server.auth;
+package eu.bbmri_eric.quality.server.common.auth;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

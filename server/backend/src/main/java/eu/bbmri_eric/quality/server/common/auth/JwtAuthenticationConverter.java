@@ -1,4 +1,4 @@
-package eu.bbmri_eric.quality.server.auth;
+package eu.bbmri_eric.quality.server.common.auth;
 
 import eu.bbmri_eric.quality.server.user.UserDTO;
 import eu.bbmri_eric.quality.server.user.UserService;
@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component;
  * the associated user, and extracting authorities.
  */
 @Component
-public class JwtAuthenticationConverter implements Converter<Jwt, AbstractAuthenticationToken> {
+class JwtAuthenticationConverter implements Converter<Jwt, AbstractAuthenticationToken> {
 
   private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationConverter.class);
 
@@ -43,7 +43,8 @@ public class JwtAuthenticationConverter implements Converter<Jwt, AbstractAuthen
   }
 
   /**
-   * Creates an OAuth2TokenValidator that checks JWT timestamps and required claims.
+   * Creates an OAuth2TokenValidator that checks JWT timestamps and required claims. Supports both
+   * authorization code flow (with 'sub') and client-credentials flow (with 'client_id').
    *
    * @return configured OAuth2TokenValidator
    */
@@ -51,24 +52,26 @@ public class JwtAuthenticationConverter implements Converter<Jwt, AbstractAuthen
     OAuth2TokenValidator<Jwt> timestampValidator =
         new JwtTimestampValidator(Duration.ofSeconds(10));
 
-    OAuth2TokenValidator<Jwt> subjectValidator =
-        new JwtClaimValidator<String>("sub", subject -> subject != null && !subject.isBlank());
+    OAuth2TokenValidator<Jwt> identityValidator =
+        new JwtClaimValidator<>("identity", (ignored) -> true);
 
     return token -> {
       OAuth2TokenValidatorResult result = timestampValidator.validate(token);
       if (result.hasErrors()) {
         return result;
       }
-      return subjectValidator.validate(token);
+      return identityValidator.validate(token);
     };
   }
 
   /**
    * Converts the given Jwt into a JwtAuthenticationToken after validation and user retrieval.
+   * Supports both authorization code flow (user authentication) and client-credentials flow
+   * (service/client authentication).
    *
    * @param jwt the JWT token to convert
-   * @return JwtAuthenticationToken representing the authenticated user
-   * @throws IllegalArgumentException if JWT validation fails
+   * @return JwtAuthenticationToken representing the authenticated user or client
+   * @throws IllegalArgumentException if JWT validation fails or required claims are missing
    */
   @Override
   public JwtAuthenticationToken convert(@NonNull Jwt jwt) {
@@ -84,35 +87,50 @@ public class JwtAuthenticationConverter implements Converter<Jwt, AbstractAuthen
       throw new IllegalArgumentException("JWT validation failed: " + errors);
     }
 
-    String subjectId = jwt.getSubject();
-    String principalName = extractPrincipalName(jwt);
+    String identityId;
+    String username;
 
-    logger.debug("Processing OIDC token for subject: {}", subjectId);
+    if (isClientCredentials(jwt)) {
+      identityId = jwt.getClaimAsString("client_id");
+      username = identityId;
+      logger.debug("Processing client-credentials token for client: {}", identityId);
+    } else {
+      identityId = jwt.getSubject();
+
+      if (identityId == null || identityId.isBlank()) {
+        throw new IllegalArgumentException(
+            "JWT from authorization code flow must contain 'sub' claim");
+      }
+
+      username = extractUsername(jwt);
+      logger.debug(
+          "Processing authorization code token for user: {} (sub: {})", username, identityId);
+    }
 
     UserDTO user =
         userService
-            .findBySubjectId(subjectId)
-            .orElseGet(() -> userService.createBySubjectId(subjectId, principalName));
+            .findBySubjectId(identityId)
+            .orElseGet(() -> userService.createBySubjectId(identityId, username));
 
     Set<GrantedAuthority> authorities = extractAuthorities(user);
 
-    logger.debug(
-        "OIDC authentication successful for user: {} with {} authorities",
-        user.getUsername(),
-        authorities.size());
-
-    return new JwtAuthenticationToken(jwt, authorities, principalName);
+    return new JwtAuthenticationToken(jwt, authorities, username);
   }
 
   /**
-   * Extracts principal name from JWT, preferring 'preferred_username' claim.
+   * Extracts username from JWT, preferring 'email', then 'preferred_username', then 'sub' as
+   * fallback.
    *
    * @param jwt the JWT token
-   * @return principal name (never null or blank)
+   * @return username (never null or blank)
    */
-  private String extractPrincipalName(Jwt jwt) {
-    return Optional.ofNullable(jwt.getClaimAsString("preferred_username"))
+  private String extractUsername(Jwt jwt) {
+    return Optional.ofNullable(jwt.getClaimAsString("email"))
         .filter(name -> !name.isBlank())
+        .or(
+            () ->
+                Optional.ofNullable(jwt.getClaimAsString("preferred_username"))
+                    .filter(name -> !name.isBlank()))
         .orElseGet(jwt::getSubject);
   }
 
@@ -131,5 +149,11 @@ public class JwtAuthenticationConverter implements Converter<Jwt, AbstractAuthen
     return user.getRoles().stream()
         .map(role -> new SimpleGrantedAuthority(role.getAuthority()))
         .collect(Collectors.toUnmodifiableSet());
+  }
+
+  private boolean isClientCredentials(Jwt jwt) {
+    String clientId = jwt.getClaimAsString("client_id");
+    String scope = jwt.getClaimAsString("scope");
+    return clientId != null && scope != null && !scope.contains("openid");
   }
 }
