@@ -8,165 +8,60 @@
       :hide-subtitle-on-mobile="false"
     />
 
-    <!-- Stats Cards Row -->
-    <div class="stats-row mb-4">
-      <StatsCard
-        label="Sites Monitored"
-        :value="`${agents.length}`"
-        icon="bi bi-geo-alt-fill"
-        iconColor="#0d6efd"
-        iconBgColor="#cfe2ff"
-      />
-      <StatsCard
-        label="Total Reports"
-        :value="`${reports.length}`"
-        icon="bi bi-file-earmark-text-fill"
-        iconColor="#6f42c1"
-        iconBgColor="#e2d9f3"
-      />
-      <StatsCard
-        label="Errors This Week"
-        :value="`${errorsThisWeek}`"
-        icon="bi bi-exclamation-triangle-fill"
-        iconColor="#dc3545"
-        iconBgColor="#f8d7da"
-        :trendText="errorsChange"
-        :trendType="errorsTrendType"
-      />
-      <StatsCard
-        label="Warnings This Week"
-        :value="`${warningsThisWeek}`"
-        icon="bi bi-exclamation-circle-fill"
-        iconColor="#ffc107"
-        iconBgColor="#fff3cd"
-        :trendText="warningsChange"
-        :trendType="warningsTrendType"
-      />
-    </div>
-
-    <!-- Main Content Grid -->
-    <div class="content-grid">
-
-      <!-- Quality Checks Grid -->
-      <div class="quality-checks-grid">
-        <QualityCheckCard
-          v-for="check in qualityChecks"
-          :key="check.hash"
-          :quality-check="check"
-          :reports="reports"
-          :agents="agents"
-        />
+    <!-- View Toggle -->
+    <div class="view-toggle-container mb-4">
+      <div class="view-toggle">
+        <button
+          :class="['toggle-option', { active: viewMode === 'site' }]"
+          @click="viewMode = 'site'"
+          title="Site-centric view"
+        >
+          <i class="bi bi-hospital"></i>
+          <span class="toggle-label">Sites</span>
+        </button>
+        <button
+          :class="['toggle-option', { active: viewMode === 'patient' }]"
+          @click="viewMode = 'patient'"
+          title="Patient-centric view"
+        >
+          <i class="bi bi-person"></i>
+          <span class="toggle-label">Patients</span>
+        </button>
       </div>
     </div>
+
+    <!-- View Components with Transition -->
+    <Transition name="view-fade" mode="out-in">
+      <SiteView
+        v-if="viewMode === 'site'"
+        key="site-view"
+        :reports="reports"
+        :quality-check-map="qualityCheckMap"
+        :agents="agents"
+      />
+      <PatientView
+        v-else-if="viewMode === 'patient'"
+        key="patient-view"
+        :reports="reports"
+        :quality-check-map="qualityCheckMap"
+        :agents="agents"
+      />
+    </Transition>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import StatsCard from '../components/StatsCard.vue'
+import { ref, onMounted } from 'vue'
 import PageHeader from '../components/PageHeader.vue'
-import QualityCheckCard from '../components/QualityCheckCard.vue'
+import SiteView from '../components/SiteView.vue'
+import PatientView from '../components/PatientView.vue'
 import { apiService } from '../services/apiService.js'
-import { getReportStatus, CheckStatus } from '../utils/qualityCheckUtils.js'
 
 const reports = ref([])
 const qualityCheckMap = ref(new Map())
 const agents = ref([])
+const viewMode = ref('site') // 'site' or 'patient'
 
-// Get reports from this week (last 7 days)
-const reportsThisWeek = computed(() => {
-  const oneWeekAgo = new Date()
-  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
-
-  return reports.value.filter(report => {
-    const reportDate = new Date(report.timestamp)
-    return reportDate >= oneWeekAgo
-  })
-})
-
-// Get reports from the previous week (8-14 days ago)
-const reportsLastWeek = computed(() => {
-  const twoWeeksAgo = new Date()
-  twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14)
-  const oneWeekAgo = new Date()
-  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
-
-  return reports.value.filter(report => {
-    const reportDate = new Date(report.timestamp)
-    return reportDate >= twoWeeksAgo && reportDate < oneWeekAgo
-  })
-})
-
-// Count errors from this week
-const errorsThisWeek = computed(() => {
-  return reportsThisWeek.value.filter(report => {
-    const status = getReportStatus(report, qualityCheckMap.value)
-    return status === CheckStatus.FAILED
-  }).length
-})
-
-// Count errors from last week
-const errorsLastWeek = computed(() => {
-  return reportsLastWeek.value.filter(report => {
-    const status = getReportStatus(report, qualityCheckMap.value)
-    return status === CheckStatus.FAILED
-  }).length
-})
-
-// Count warnings from this week
-const warningsThisWeek = computed(() => {
-  return reportsThisWeek.value.filter(report => {
-    const status = getReportStatus(report, qualityCheckMap.value)
-    return status === CheckStatus.WARNING
-  }).length
-})
-
-// Count warnings from last week
-const warningsLastWeek = computed(() => {
-  return reportsLastWeek.value.filter(report => {
-    const status = getReportStatus(report, qualityCheckMap.value)
-    return status === CheckStatus.WARNING
-  }).length
-})
-
-
-// Calculate change in errors from last week
-const errorsChange = computed(() => {
-  const change = errorsThisWeek.value - errorsLastWeek.value
-  if (change === 0) return 'No change from last week'
-  const direction = change > 0 ? '+' : ''
-  return `${direction}${change} from last week`
-})
-
-// Calculate change in warnings from last week
-const warningsChange = computed(() => {
-  const change = warningsThisWeek.value - warningsLastWeek.value
-  if (change === 0) return 'No change from last week'
-  const direction = change > 0 ? '+' : ''
-  return `${direction}${change} from last week`
-})
-
-
-// Determine trend type for errors (fewer is better)
-const errorsTrendType = computed(() => {
-  const change = errorsThisWeek.value - errorsLastWeek.value
-  if (change < 0) return 'positive'  // fewer errors is positive
-  if (change > 0) return 'negative'  // more errors is negative
-  return 'neutral'
-})
-
-// Determine trend type for warnings (fewer is better)
-const warningsTrendType = computed(() => {
-  const change = warningsThisWeek.value - warningsLastWeek.value
-  if (change < 0) return 'positive'  // fewer warnings is positive
-  if (change > 0) return 'negative'  // more warnings is negative
-  return 'neutral'
-})
-
-// Get array of quality checks for iteration
-const qualityChecks = computed(() => {
-  return Array.from(qualityCheckMap.value.values())
-})
 
 
 const loadReportsData = async () => {
@@ -205,48 +100,77 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Stats Row */
-.stats-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
+/* View Toggle */
+.view-toggle-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-/* Main Content Grid */
-.content-grid {
-  display: grid;
-  gap: 1rem;
-  grid-template-columns: 1fr;
+.view-toggle {
+  display: inline-flex;
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 4px;
+  gap: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-.quality-checks-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1rem;
-  align-items: start;
+.toggle-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  border: none;
+  background: transparent;
+  color: #6c757d;
+  font-weight: 500;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
-.quality-checks-grid > * {
-  min-height: 150px;
+.toggle-option i {
+  font-size: 1.1rem;
 }
 
-/* Desktop Layout */
-@media (min-width: 992px) {
-  .quality-checks-grid {
-    grid-template-columns: repeat(3, 1fr);
-    max-width: 100%;
-  }
-
-  .quality-checks-grid > * {
-    height: 500px;
-  }
+.toggle-option:hover {
+  color: #495057;
+  background: rgba(13, 110, 253, 0.05);
 }
 
-/* Tablet Layout */
-@media (min-width: 768px) and (max-width: 991px) {
-  .stats-row {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.toggle-option.active {
+  background: #fff;
+  color: #0d6efd;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.toggle-label {
+  font-size: 0.9rem;
+}
+
+/* View Transition Animations */
+.view-fade-enter-active,
+.view-fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.view-fade-enter-from {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.view-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+.view-fade-enter-to,
+.view-fade-leave-from {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* Mobile Layout */
@@ -256,22 +180,19 @@ onMounted(() => {
     padding-right: 0.75rem;
   }
 
-  .stats-row {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
+  .view-toggle {
+    width: 100%;
+    max-width: 350px;
   }
 
-  .content-grid {
-    gap: 0.75rem;
+  .toggle-option {
+    flex: 1;
+    justify-content: center;
+    padding: 0.5rem 0.75rem;
   }
 
-  .quality-checks-grid {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-  }
-
-  .quality-checks-grid > * {
-    min-height: auto;
+  .toggle-label {
+    font-size: 0.85rem;
   }
 }
 </style>
