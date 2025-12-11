@@ -12,12 +12,10 @@
     <div class="stats-row mb-4">
       <StatsCard
         label="Sites Monitored"
-        :value="`${activeAgentsCount}`"
+        :value="`${agents.length}`"
         icon="bi bi-geo-alt-fill"
         iconColor="#0d6efd"
         iconBgColor="#cfe2ff"
-        :trendText="`${activeAgentsCount} agents added this month`"
-        trendType="positive"
       />
       <StatsCard
         label="Total Reports"
@@ -25,8 +23,6 @@
         icon="bi bi-file-earmark-text-fill"
         iconColor="#6f42c1"
         iconBgColor="#e2d9f3"
-        :trendText="reportsChange"
-        :trendType="reportsTrendType"
       />
       <StatsCard
         label="Errors This Week"
@@ -48,25 +44,8 @@
       />
     </div>
 
-    <!-- Privacy Note -->
-    <AppCallout type="info" icon="bi-shield-lock" class="mb-3">
-      <small>
-        Results on this dashboard are obfuscated using differential privacy to protect sensitive information.
-        <a
-          href="https://bbmri-cz.github.io/data-quality-framework/user/privacy.html"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="fw-semibold"
-        >Learn more</a>.
-      </small>
-    </AppCallout>
-
     <!-- Main Content Grid -->
     <div class="content-grid">
-      <!-- Agents Section -->
-      <div class="agents-wrapper">
-        <AgentsList @agentsLoaded="handleAgentsLoaded" />
-      </div>
 
       <!-- Quality Checks Grid -->
       <div class="quality-checks-grid">
@@ -84,15 +63,12 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import AgentsList from '../components/AgentsList.vue'
 import StatsCard from '../components/StatsCard.vue'
 import PageHeader from '../components/PageHeader.vue'
 import QualityCheckCard from '../components/QualityCheckCard.vue'
-import AppCallout from '../components/AppCallout.vue'
 import { apiService } from '../services/apiService.js'
 import { getReportStatus, CheckStatus } from '../utils/qualityCheckUtils.js'
 
-const activeAgentsCount = ref(0)
 const reports = ref([])
 const qualityCheckMap = ref(new Map())
 const agents = ref([])
@@ -153,13 +129,6 @@ const warningsLastWeek = computed(() => {
   }).length
 })
 
-// Calculate change in reports from last week
-const reportsChange = computed(() => {
-  const change = reportsThisWeek.value.length - reportsLastWeek.value.length
-  if (change === 0) return 'No change from last week'
-  const direction = change > 0 ? '+' : ''
-  return `${direction}${change} from last week`
-})
 
 // Calculate change in errors from last week
 const errorsChange = computed(() => {
@@ -177,13 +146,6 @@ const warningsChange = computed(() => {
   return `${direction}${change} from last week`
 })
 
-// Determine trend type for reports
-const reportsTrendType = computed(() => {
-  const change = reportsThisWeek.value.length - reportsLastWeek.value.length
-  if (change > 0) return 'positive'
-  if (change < 0) return 'negative'
-  return 'neutral'
-})
 
 // Determine trend type for errors (fewer is better)
 const errorsTrendType = computed(() => {
@@ -206,9 +168,6 @@ const qualityChecks = computed(() => {
   return Array.from(qualityCheckMap.value.values())
 })
 
-const handleAgentsLoaded = (count) => {
-  activeAgentsCount.value = count
-}
 
 const loadReportsData = async () => {
   try {
@@ -260,13 +219,9 @@ onMounted(() => {
   grid-template-columns: 1fr;
 }
 
-.agents-wrapper {
-  width: 100%;
-}
-
 .quality-checks-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1rem;
   align-items: start;
 }
@@ -277,20 +232,13 @@ onMounted(() => {
 
 /* Desktop Layout */
 @media (min-width: 992px) {
-  .content-grid {
-    grid-template-columns: 280px 1fr;
-  }
-
-  .agents-wrapper {
-    width: 280px;
-  }
-
   .quality-checks-grid {
-    grid-template-columns: repeat(auto-fill, 480px);
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 100%;
   }
 
   .quality-checks-grid > * {
-    height: 480px;
+    height: 500px;
   }
 }
 

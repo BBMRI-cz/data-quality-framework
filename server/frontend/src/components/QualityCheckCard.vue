@@ -1,106 +1,155 @@
 <template>
   <div class="card border-0 shadow-sm h-100 compact-card">
     <div class="card-body p-3 position-relative">
-      <!-- Icon in top right corner -->
-      <div class="position-absolute top-0 end-0 p-3" style="pointer-events: none;">
-        <i class="bi bi-clipboard-check-fill text-primary opacity-75" style="font-size: 1.5rem;"></i>
-      </div>
-
-      <div class="mb-3 pe-5">
+      <div class="mb-3">
         <div class="d-flex align-items-center gap-2">
           <p
-            class="text-muted mb-0 fw-bold text-truncate flex-grow-1"
+            class="text-muted mb-0 fw-bold flex-grow-1"
             style="font-size: 1rem; line-height: 1.3;"
             :title="qualityCheck.name || qualityCheck.cql || qualityCheck.hash"
           >
             {{ qualityCheck.name || qualityCheck.cql || qualityCheck.hash }}
           </p>
-          <i
-            v-if="qualityCheck.description"
-            class="bi bi-question-circle text-muted flex-shrink-0"
-            style="font-size: 0.9rem; cursor: help;"
-            :title="qualityCheck.description"
-            data-bs-toggle="tooltip"
-            data-bs-placement="top"
-          ></i>
+          <router-link
+            :to="{ name: 'QualityCheckDetail', params: { hash: qualityCheck.hash } }"
+            class="edit-icon-link"
+            title="Edit quality check"
+          >
+            <i class="bi bi-pencil-square"></i>
+          </router-link>
         </div>
-        <small
-          class="text-muted font-monospace d-block text-truncate"
-          style="font-size: 0.7rem; opacity: 0.6;"
-          :title="qualityCheck.hash"
+        <p
+          v-if="qualityCheck.description"
+          class="text-muted mb-0 mt-1"
+          style="font-size: 0.85rem; line-height: 1.4; opacity: 0.75;"
         >
-          {{ qualityCheck.hash }}
-        </small>
+          {{ qualityCheck.description }}
+        </p>
       </div>
 
       <!-- No data state -->
-      <div v-if="worstAgents.length === 0" class="text-center py-3 text-muted flex-grow-1 d-flex flex-column justify-content-center">
+      <div v-if="totalAgents === 0" class="text-center py-3 text-muted flex-grow-1 d-flex flex-column justify-content-center">
         <i class="bi bi-check-circle d-block mb-2 opacity-50" style="font-size: 2.5rem;"></i>
         <p class="mb-0" style="font-size: 1rem;">No results</p>
       </div>
 
-      <!-- Top 3 worst performing agents -->
-      <div v-else class="agents-results flex-grow-1">
-        <div
-          v-for="agentResult in worstAgents"
-          :key="agentResult.agentId"
-          class="agent-result-item mb-2"
-        >
-          <div class="d-flex justify-content-between align-items-center">
-            <div class="flex-grow-1 me-2" style="min-width: 0;">
-              <div
-                class="text-dark text-truncate"
-                style="font-size: 1.1rem; line-height: 1.3;"
-                :title="agentResult.agentName"
+      <!-- Coverage pie chart -->
+      <div v-else class="coverage-chart flex-grow-1 d-flex flex-column align-items-center justify-content-center">
+        <div class="pie-chart-shell">
+          <svg
+            class="pie-chart"
+            viewBox="0 0 200 200"
+            role="img"
+            :aria-label="pieAriaLabel"
+          >
+            <defs>
+              <linearGradient id="gradient-passed" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#4ade80;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#22c55e;stop-opacity:1" />
+              </linearGradient>
+              <linearGradient id="gradient-warning" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#fcd34d;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#fbbf24;stop-opacity:1" />
+              </linearGradient>
+              <linearGradient id="gradient-failed" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#ff4757;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#ee5a6f;stop-opacity:1" />
+              </linearGradient>
+            </defs>
+            <g v-for="segment in pieSegments" :key="segment.key">
+              <path
+                v-if="segment.path && segment.percentage > 0"
+                class="pie-segment"
+                :d="segment.path"
+                :fill="segment.gradient"
+                :aria-label="getSegmentAria(segment)"
+                @mouseenter="showTooltip(segment, $event)"
+                @mousemove="moveTooltip($event)"
+                @mouseleave="hideTooltip"
+              />
+            </g>
+            <!-- Draw separator lines between segments -->
+            <g v-for="segment in pieSegments" :key="'line-' + segment.key">
+              <line
+                v-if="segment.percentage > 0 && pieSegments.filter(s => s.percentage > 0).length > 1"
+                :x1="100"
+                :y1="100"
+                :x2="segment.endX"
+                :y2="segment.endY"
+                stroke="white"
+                stroke-width="2"
+                style="pointer-events: none;"
+              />
+            </g>
+            <!-- Draw labels on top -->
+            <g v-for="segment in pieSegments" :key="'label-' + segment.key">
+              <text
+                v-if="segment.percentage > 5"
+                :x="segment.labelX"
+                :y="segment.labelY"
+                text-anchor="middle"
+                dominant-baseline="middle"
+                class="segment-label"
+                fill="white"
+                font-size="14"
+                font-weight="600"
+                style="pointer-events: none;"
               >
-                {{ agentResult.agentName }}
-              </div>
-              <small
-                class="text-muted d-block text-truncate"
-                style="font-size: 0.85rem; line-height: 1.3;"
-                :title="agentResult.agentId"
-              >
-                {{ agentResult.agentId }}
-              </small>
+                {{ segment.percentage.toFixed(0) }}%
+              </text>
+            </g>
+          </svg>
+
+          <!-- Custom instant tooltip -->
+          <div
+            v-if="tooltipVisible"
+            class="custom-tooltip"
+            :style="{ left: tooltipX + 'px', top: tooltipY + 'px' }"
+          >
+            {{ tooltipContent }}
+          </div>
+        </div>
+
+        <!-- Threshold Ranges -->
+        <div class="threshold-ranges mt-3">
+          <div class="threshold-item">
+            <div class="threshold-text">
+              <span class="threshold-dot bg-success"></span>
+              <span>0-{{ qualityCheck.warningThreshold }} error rate in %</span>
             </div>
-            <div class="text-end flex-shrink-0">
-              <div
-                class="fw-bold mb-0"
-                :class="getResultColorClass(agentResult.result)"
-                style="font-size: 1.75rem; line-height: 1;"
-              >
-                {{ formatResultAsPercentage(agentResult.result) }}%
-              </div>
+            <span class="threshold-count">{{ coveragePercentages.passed.toFixed(1) }}%</span>
+          </div>
+          <div class="threshold-item">
+            <div class="threshold-text">
+              <span class="threshold-dot bg-warning"></span>
+              <span>{{ qualityCheck.warningThreshold }}-{{ qualityCheck.errorThreshold }} error rate in %</span>
             </div>
+            <span class="threshold-count">{{ coveragePercentages.warning.toFixed(1) }}%</span>
+          </div>
+          <div class="threshold-item">
+            <div class="threshold-text">
+              <span class="threshold-dot bg-danger"></span>
+              <span>{{ qualityCheck.errorThreshold }}-100 error rate in %</span>
+            </div>
+            <span class="threshold-count">{{ coveragePercentages.failed.toFixed(1) }}%</span>
           </div>
         </div>
       </div>
 
-      <!-- Threshold info -->
-      <div v-if="worstAgents.length > 0" class="mt-auto pt-2 border-top">
-        <div class="d-flex align-items-center">
-          <div
-            style="font-size: 1rem; cursor: help;"
-            :title="getThresholdTooltip()"
-            data-bs-toggle="tooltip"
-            data-bs-placement="top"
-            data-bs-html="true"
-          >
-            <span class="text-muted">Average across all agents:</span>
-            <span :class="getResultColorClass(averageResult)" class="fw-bold ms-1">
-              {{ formatResultAsPercentage(averageResult) }}%
-            </span>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, onUpdated } from 'vue'
+import { computed, onMounted, onUpdated, ref } from 'vue'
 import { CheckStatus } from '../utils/qualityCheckUtils.js'
 import { Tooltip } from 'bootstrap'
+
+// Custom tooltip state
+const tooltipVisible = ref(false)
+const tooltipContent = ref('')
+const tooltipX = ref(0)
+const tooltipY = ref(0)
 
 const props = defineProps({
   qualityCheck: {
@@ -158,21 +207,85 @@ const agentResults = computed(() => {
   return Array.from(resultsMap.values())
 })
 
-// Get the 3 worst performing agents (highest result values)
-const worstAgents = computed(() => {
-  return agentResults.value
-    .sort((a, b) => b.result - a.result)
-    .slice(0, 3)
+const totalAgents = computed(() => agentResults.value.length)
+
+const coverageBuckets = computed(() => {
+  return agentResults.value.reduce(
+    (acc, agent) => {
+      const status = getStatus(agent.result)
+      if (status === CheckStatus.FAILED) {
+        acc.failed += 1
+      } else if (status === CheckStatus.WARNING) {
+        acc.warning += 1
+      } else {
+        acc.passed += 1
+      }
+      return acc
+    },
+    { passed: 0, warning: 0, failed: 0 }
+  )
 })
 
-// Calculate the average result of the worst agents
-const averageResult = computed(() => {
-  if (worstAgents.value.length === 0) {
-    return 0
+const coveragePercentages = computed(() => {
+  if (totalAgents.value === 0) {
+    return { passed: 0, warning: 0, failed: 0 }
   }
-  const total = worstAgents.value.reduce((sum, agent) => sum + agent.result, 0)
-  return total / worstAgents.value.length
+  return {
+    passed: (coverageBuckets.value.passed / totalAgents.value) * 100,
+    warning: (coverageBuckets.value.warning / totalAgents.value) * 100,
+    failed: (coverageBuckets.value.failed / totalAgents.value) * 100
+  }
 })
+
+// Pie chart segments data
+const pieSegments = computed(() => {
+  if (totalAgents.value === 0) {
+    return []
+  }
+  const segments = [
+    { key: 'passed', gradient: 'url(#gradient-passed)', value: coverageBuckets.value.passed, percentage: coveragePercentages.value.passed },
+    { key: 'warning', gradient: 'url(#gradient-warning)', value: coverageBuckets.value.warning, percentage: coveragePercentages.value.warning },
+    { key: 'failed', gradient: 'url(#gradient-failed)', value: coverageBuckets.value.failed, percentage: coveragePercentages.value.failed }
+  ]
+
+  const radius = 90
+  const toRadians = (percentage) => (percentage / 100) * Math.PI * 2 - Math.PI / 2
+
+  // Generate path for each segment
+  let cumulativePercentage = 0
+  return segments.map(segment => {
+    cumulativePercentage += segment.percentage
+    const startAngle = toRadians(cumulativePercentage - segment.percentage)
+    const endAngle = toRadians(cumulativePercentage)
+    const largeArcFlag = segment.percentage > 50 ? 1 : 0
+
+    // Calculate x, y coordinates for the arc path
+    const x1 = 100 + radius * Math.cos(startAngle)
+    const y1 = 100 + radius * Math.sin(startAngle)
+    const x2 = 100 + radius * Math.cos(endAngle)
+    const y2 = 100 + radius * Math.sin(endAngle)
+
+    // Path data for the segment
+    const path = `M 100,100 L ${x1},${y1} A ${radius},${radius} 0 ${largeArcFlag} 1 ${x2},${y2} Z`
+
+    // Calculate label position (midpoint of the segment arc at 60% radius)
+    const midAngle = (startAngle + endAngle) / 2
+    const labelRadius = radius * 0.6
+    const labelX = 100 + labelRadius * Math.cos(midAngle)
+    const labelY = 100 + labelRadius * Math.sin(midAngle)
+
+    return {
+      ...segment,
+      path,
+      labelX,
+      labelY,
+      endX: x2,
+      endY: y2
+    }
+  })
+})
+
+const getSegmentAria = (segment) => `${segment.key} ${segment.value} agents (${segment.percentage.toFixed(1)}%)`
 
 // Get status based on thresholds (higher is worse)
 // Accept result as fraction (0-1) or percentage (0-100)
@@ -186,43 +299,33 @@ const getStatus = (result) => {
   return CheckStatus.PASSED
 }
 
-// Generate formatted tooltip for thresholds
-const getThresholdTooltip = () => {
-  return `
-    <div style="text-align: left; padding: 4px;">
-      <strong style="display: block; margin-bottom: 6px; font-size: 0.9rem;">Quality Check Thresholds</strong>
-      <div style="margin-bottom: 4px; font-size: 0.85rem; opacity: 0.9;">
-        Higher values indicate worse quality
-      </div>
-      <div style="margin-bottom: 4px;">
-        <span style="color: #ffc107; font-weight: bold;">⚠</span>
-        <strong>Warning:</strong> ≥ ${props.qualityCheck.warningThreshold}%
-      </div>
-      <div>
-        <span style="color: #dc3545; font-weight: bold;">✖</span>
-        <strong>Error:</strong> ≥ ${props.qualityCheck.errorThreshold}%
-      </div>
-    </div>
-  `
+// Custom tooltip handlers
+const showTooltip = (segment, event) => {
+  // Get all agents in this segment
+  const agentsInSegment = agentResults.value.filter(agent => {
+    const status = getStatus(agent.result)
+    return (
+      (segment.key === 'passed' && status === CheckStatus.PASSED) ||
+      (segment.key === 'warning' && status === CheckStatus.WARNING) ||
+      (segment.key === 'failed' && status === CheckStatus.FAILED)
+    )
+  })
+
+  // Display agent names
+  const names = agentsInSegment.map(agent => agent.agentName).join(', ')
+  tooltipContent.value = names || 'No sites'
+  tooltipVisible.value = true
+  moveTooltip(event)
 }
 
-const getResultColorClass = (result) => {
-  const status = getStatus(result)
-  switch (status) {
-    case CheckStatus.FAILED:
-      return 'text-danger'
-    case CheckStatus.WARNING:
-      return 'text-warning'
-    case CheckStatus.PASSED:
-      return 'text-success'
-    default:
-      return 'text-muted'
-  }
+const moveTooltip = (event) => {
+  const rect = event.currentTarget.closest('.pie-chart-shell').getBoundingClientRect()
+  tooltipX.value = event.clientX - rect.left + 10
+  tooltipY.value = event.clientY - rect.top - 30
 }
 
-// Format result as percentage from fraction
-const formatResultAsPercentage = (fraction) => {
-  return (fraction * 100).toFixed(1)
+const hideTooltip = () => {
+  tooltipVisible.value = false
 }
 
 // Initialize Bootstrap tooltips
@@ -260,19 +363,131 @@ const initTooltips = () => {
   box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.15) !important;
 }
 
+.edit-icon-link {
+  color: #6c757d;
+  font-size: 1rem;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.edit-icon-link:hover {
+  color: #0d6efd;
+  background-color: rgba(13, 110, 253, 0.1);
+}
+
 .compact-card .card-body {
   display: flex;
   flex-direction: column;
   height: 100%;
 }
 
-.font-monospace {
-  font-size: 0.6rem;
+.coverage-chart {
+  width: 100%;
+  padding: 1rem 0;
+  gap: 1rem;
 }
 
-.text-truncate {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.pie-chart-shell {
+  position: relative;
+  width: 260px;
+  height: 260px;
+  filter: drop-shadow(0 10px 25px rgba(15, 23, 42, 0.15));
+}
+
+.pie-chart {
+  width: 100%;
+  height: 100%;
+}
+
+.custom-tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.85);
+  color: white;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  pointer-events: none;
+  z-index: 1000;
+  white-space: normal;
+  max-width: 300px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  line-height: 1.4;
+}
+
+.pie-segment {
+  cursor: default;
+  transition: opacity 0.2s ease;
+}
+
+.pie-segment:hover {
+  opacity: 0.85;
+}
+
+.segment-label {
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+  user-select: none;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.threshold-ranges {
+  width: 100%;
+  max-width: 280px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.threshold-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  justify-content: space-between;
+}
+
+.threshold-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.threshold-text {
+  color: var(--bs-body-color);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.threshold-count {
+  color: var(--bs-body-color);
+  font-size: 0.95rem;
+  font-weight: 600;
+  min-width: 2rem;
+  text-align: right;
+}
+
+.bg-success {
+  background: linear-gradient(135deg, #4ade80, #22c55e);
+}
+
+.bg-warning {
+  background: linear-gradient(135deg, #fcd34d, #fbbf24);
+}
+
+.bg-danger {
+  background: linear-gradient(135deg, #ff4757, #ee5a6f);
 }
 </style>

@@ -5,19 +5,25 @@ INSERT INTO agent (id, name, status) VALUES
     ('agent-004', 'Biobank Delta Repository', 'ACTIVE'),
     ('agent-005', 'Clinical Data Hub Epsilon', 'ACTIVE');
 
+-- Insert categories for organizing quality checks
+INSERT INTO category (name, color_hex) VALUES
+    ('Data Completeness', '#2196F3'),
+    ('Data Validity', '#FF9800'),
+    ('Data Consistency', '#4CAF50');
+
 -- Insert dummy quality checks
 -- NOTE: Result values represent the FRACTION of INVALID records (0.0 = perfect, 1.0 = all invalid)
 -- warning_threshold: if result% > warning_threshold, trigger warning
 -- error_threshold: if result% > error_threshold, trigger error
-INSERT INTO quality_check (hash, name, description, registered_at, warning_threshold, error_threshold) VALUES
-    ('unsupported-gender-check', 'Unsupported Gender Values', 'Percentage of patients with non-supported gender attribute values (not Male/Female/Other/Unknown)', '2024-01-15 10:00:00', 5.0, 15.0),
-    ('missing-birthdate-check', 'Missing Birth Date', 'Percentage of patients with missing or null birth date values', '2024-01-15 10:15:00', 3.0, 10.0),
-    ('invalid-date-check', 'Invalid Date Values', 'Percentage of records with logically invalid dates (e.g., future birth dates, death before birth)', '2024-01-15 10:30:00', 2.0, 8.0),
-    ('duplicate-patient-check', 'Duplicate Patient Records', 'Percentage of patients that appear to be duplicates based on matching identifiers', '2024-01-15 10:45:00', 1.0, 5.0),
-    ('invalid-format-check', 'Invalid Data Formats', 'Percentage of records with data that does not follow expected formats (e.g., malformed IDs, invalid postal codes)', '2024-01-15 11:00:00', 4.0, 12.0),
-    ('broken-reference-check', 'Broken Reference Integrity', 'Percentage of records with references to non-existent related entities', '2024-01-15 11:15:00', 2.0, 8.0),
-    ('outlier-value-check', 'Statistical Outlier Values', 'Percentage of numerical values that are statistical outliers (e.g., age > 150, negative measurements)', '2024-01-15 11:30:00', 10.0, 25.0),
-    ('invalid-coding-check', 'Invalid Medical Codes', 'Percentage of records with invalid or non-standard medical codes (ICD-10, SNOMED CT)', '2024-01-15 11:45:00', 3.0, 10.0);
+INSERT INTO quality_check (hash, name, description, registered_at, warning_threshold, error_threshold, category_id) VALUES
+    ('unsupported-gender-check', 'Unsupported Gender Values', 'Percentage of patients with non-supported gender attribute values (not Male/Female/Other/Unknown)', '2024-01-15 10:00:00', 5.0, 15.0, 2),
+    ('missing-birthdate-check', 'Missing Birth Date', 'Percentage of patients with missing or null birth date values', '2024-01-15 10:15:00', 3.0, 10.0, 1),
+    ('invalid-date-check', 'Invalid Date Values', 'Percentage of records with logically invalid dates (e.g., future birth dates, death before birth)', '2024-01-15 10:30:00', 2.0, 8.0, 2),
+    ('duplicate-patient-check', 'Duplicate Patient Records', 'Percentage of patients that appear to be duplicates based on matching identifiers', '2024-01-15 10:45:00', 1.0, 5.0, 3),
+    ('invalid-format-check', 'Invalid Data Formats', 'Percentage of records with data that does not follow expected formats (e.g., malformed IDs, invalid postal codes)', '2024-01-15 11:00:00', 4.0, 12.0, NULL),
+    ('broken-reference-check', 'Broken Reference Integrity', 'Percentage of records with references to non-existent related entities', '2024-01-15 11:15:00', 2.0, 8.0, 1),
+    ('outlier-value-check', 'Statistical Outlier Values', 'Percentage of numerical values that are statistical outliers (e.g., age > 150, negative measurements)', '2024-01-15 11:30:00', 10.0, 25.0, NULL),
+    ('invalid-coding-check', 'Invalid Medical Codes', 'Percentage of records with invalid or non-standard medical codes (ICD-10, SNOMED CT)', '2024-01-15 11:45:00', 3.0, 10.0, 2);
 
 -- Insert dummy reports for the past 30 days
 INSERT INTO report (id, timestamp, agent_id) VALUES

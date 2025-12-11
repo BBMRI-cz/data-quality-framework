@@ -65,6 +65,21 @@ public class QualityCheck {
     this.errorThreshold = errorThreshold;
   }
 
+  public QualityCheck(
+      String hash,
+      String name,
+      String description,
+      double warningThreshold,
+      double errorThreshold,
+      Category category) {
+    this.hash = hash;
+    this.name = name;
+    this.description = description;
+    this.warningThreshold = warningThreshold;
+    this.errorThreshold = errorThreshold;
+    this.category = category;
+  }
+
   /**
    * Gets the unique hash of this quality check.
    *
