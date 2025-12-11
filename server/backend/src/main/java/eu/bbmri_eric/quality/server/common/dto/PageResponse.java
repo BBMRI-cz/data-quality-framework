@@ -12,7 +12,9 @@ import java.util.Objects;
 @Schema(description = "Paginated response with metadata")
 public class PageResponse<T> {
 
-  @Schema(description = "The list of items in this page", requiredMode = Schema.RequiredMode.REQUIRED)
+  @Schema(
+      description = "The list of items in this page",
+      requiredMode = Schema.RequiredMode.REQUIRED)
   private List<T> content;
 
   @Schema(description = "Current page number (zero-based)", example = "0")
@@ -180,4 +182,3 @@ public class PageResponse<T> {
         + '}';
   }
 }
-

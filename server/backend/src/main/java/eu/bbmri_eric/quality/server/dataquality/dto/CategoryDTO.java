@@ -20,9 +20,7 @@ public class CategoryDTO {
       requiredMode = Schema.RequiredMode.REQUIRED)
   private String name;
 
-  @Schema(
-      description = "Hex color code for visual representation",
-      example = "#FF5733")
+  @Schema(description = "Hex color code for visual representation", example = "#FF5733")
   private String colorHex;
 
   /** Default constructor for serialization frameworks. */
@@ -65,5 +63,3 @@ public class CategoryDTO {
     this.colorHex = colorHex;
   }
 }
-
-

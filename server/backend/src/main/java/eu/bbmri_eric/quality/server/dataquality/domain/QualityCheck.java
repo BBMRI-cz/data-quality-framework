@@ -173,15 +173,6 @@ public class QualityCheck {
     this.category = category;
   }
 
-  /**
-   * Gets the category ID of this quality check.
-   *
-   * @return the category ID, or null if not assigned to any category
-   */
-  public Long getCategoryId() {
-    return category != null ? category.getId() : null;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;

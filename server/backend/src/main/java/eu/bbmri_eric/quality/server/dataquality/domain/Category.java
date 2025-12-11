@@ -12,8 +12,8 @@ import java.util.Objects;
 /**
  * Entity representing a category for grouping quality checks.
  *
- * <p>Each category is uniquely identified by an auto-generated ID and has a unique name.
- * Categories can be visually distinguished by their color.
+ * <p>Each category is uniquely identified by an auto-generated ID and has a unique name. Categories
+ * can be visually distinguished by their color.
  */
 @Entity
 public class Category {
@@ -25,7 +25,9 @@ public class Category {
   @Column(unique = true)
   private String name;
 
-  @Pattern(regexp = "^#[0-9A-Fa-f]{6}$", message = "Color must be a valid hex color code (e.g., #FF5733)")
+  @Pattern(
+      regexp = "^#[0-9A-Fa-f]{6}$",
+      message = "Color must be a valid hex color code (e.g., #FF5733)")
   private String colorHex;
 
   /** Default constructor for JPA. */
@@ -101,11 +103,15 @@ public class Category {
 
   @Override
   public String toString() {
-    return "Category{" +
-        "id=" + id +
-        ", name='" + name + '\'' +
-        ", colorHex='" + colorHex + '\'' +
-        '}';
+    return "Category{"
+        + "id="
+        + id
+        + ", name='"
+        + name
+        + '\''
+        + ", colorHex='"
+        + colorHex
+        + '\''
+        + '}';
   }
 }
-

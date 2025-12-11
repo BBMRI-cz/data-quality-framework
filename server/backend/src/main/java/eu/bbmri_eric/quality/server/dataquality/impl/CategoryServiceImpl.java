@@ -74,8 +74,7 @@ class CategoryServiceImpl implements CategoryService {
     Category category =
         categoryRepository
             .findById(id)
-            .orElseThrow(
-                () -> new EntityNotFoundException("Category not found with ID: " + id));
+            .orElseThrow(() -> new EntityNotFoundException("Category not found with ID: " + id));
 
     // Check if name is being changed and if new name already exists
     if (!category.getName().equals(categoryUpdateDTO.getName())
