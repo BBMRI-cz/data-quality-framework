@@ -15,8 +15,8 @@ import java.util.Objects;
  */
 @Entity
 public class QualityCheck {
-  private final LocalDateTime registeredAt = LocalDateTime.now();
   @Id private String hash;
+  private final LocalDateTime registeredAt = LocalDateTime.now();
   @NotNull private String name;
   private String description;
   private double warningThreshold = 0.0;
