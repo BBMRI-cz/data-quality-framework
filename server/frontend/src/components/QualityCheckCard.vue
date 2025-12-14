@@ -2,6 +2,14 @@
   <div class="card border-0 shadow-sm h-100 compact-card">
     <div class="card-body p-3 position-relative">
       <div class="mb-3">
+        <div class="mb-2">
+          <span
+            class="badge border"
+            :style="categoryStyle"
+          >
+            {{ categoryName }}
+          </span>
+        </div>
         <div class="d-flex align-items-center gap-2">
           <p
             class="text-muted mb-0 fw-bold flex-grow-1"
@@ -165,6 +173,19 @@ const props = defineProps({
     type: Array,
     required: true,
     default: () => []
+  }
+})
+
+const categoryName = computed(() => {
+  return props.qualityCheck.category?.name || 'No Category'
+})
+
+const categoryStyle = computed(() => {
+  const color = props.qualityCheck.category?.colorHex || '#6c757d' // Default gray
+  return {
+    backgroundColor: `${color}20`, // 20 is hex for ~12% opacity
+    color: color,
+    borderColor: `${color}40` // 40 is hex for ~25% opacity
   }
 })
 
