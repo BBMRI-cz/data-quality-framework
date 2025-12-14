@@ -71,6 +71,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/categories/new',
+    name: 'CategoryCreate',
+    component: CategoryDetailView,
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/categories/:id',
     name: 'CategoryDetail',
     component: CategoryDetailView,

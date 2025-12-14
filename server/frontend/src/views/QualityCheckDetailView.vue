@@ -2,6 +2,13 @@
   <div class="container-fluid px-2 px-md-3 py-3 py-md-4">
     <div class="row">
       <div class="col-12">
+        <!-- Page Header -->
+        <PageHeader
+          :title="qualityCheck?.name || 'Quality Check Details'"
+          subtitle="Quality Check Details"
+          icon="bi bi-clipboard-check-fill"
+        />
+
         <!-- Back Button -->
         <div class="mb-3">
           <button class="btn btn-outline-secondary btn-sm" @click="goBack">
@@ -24,13 +31,6 @@
 
         <!-- Detail View -->
         <div v-else-if="qualityCheck">
-          <!-- Page Header -->
-          <PageHeader
-            :title="qualityCheck.name || 'Unnamed Check'"
-            subtitle="Quality Check Details"
-            icon="bi bi-clipboard-check-fill"
-          />
-
           <!-- Metadata Stat Card -->
           <div class="mb-4">
             <StatsCard
