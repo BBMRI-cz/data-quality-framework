@@ -55,6 +55,7 @@
           :quality-check="check"
           :reports="reports"
           :agents="agents"
+          :show-numbers="showNumbers"
         />
       </div>
     </div>
@@ -80,6 +81,10 @@ const props = defineProps({
   agents: {
     type: Array,
     required: true
+  },
+  showNumbers: {
+    type: Boolean,
+    default: false
   }
 })
 

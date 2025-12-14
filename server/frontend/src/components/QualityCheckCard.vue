@@ -43,6 +43,10 @@
 
       <!-- Coverage pie chart -->
       <div v-else class="coverage-chart flex-grow-1 d-flex flex-column align-items-center justify-content-center">
+        <div class="text-muted small mb-2 fw-medium">
+          <i class="bi bi-hospital-fill me-1"></i>
+          {{ totalAgents }} sites reporting
+        </div>
         <div class="pie-chart-shell">
           <svg
             class="pie-chart"
@@ -103,7 +107,7 @@
                 font-weight="600"
                 style="pointer-events: none;"
               >
-                {{ segment.percentage.toFixed(0) }}%
+                {{ showNumbers ? segment.value : segment.percentage.toFixed(0) + '%' }}
               </text>
             </g>
           </svg>
@@ -125,21 +129,27 @@
               <span class="threshold-dot bg-success"></span>
               <span>0-{{ qualityCheck.warningThreshold }} error rate in %</span>
             </div>
-            <span class="threshold-count">{{ coveragePercentages.passed.toFixed(1) }}%</span>
+            <span class="threshold-count">
+              {{ showNumbers ? coverageBuckets.passed : coveragePercentages.passed.toFixed(1) + '%' }}
+            </span>
           </div>
           <div class="threshold-item">
             <div class="threshold-text">
               <span class="threshold-dot bg-warning"></span>
               <span>{{ qualityCheck.warningThreshold }}-{{ qualityCheck.errorThreshold }} error rate in %</span>
             </div>
-            <span class="threshold-count">{{ coveragePercentages.warning.toFixed(1) }}%</span>
+            <span class="threshold-count">
+              {{ showNumbers ? coverageBuckets.warning : coveragePercentages.warning.toFixed(1) + '%' }}
+            </span>
           </div>
           <div class="threshold-item">
             <div class="threshold-text">
               <span class="threshold-dot bg-danger"></span>
               <span>{{ qualityCheck.errorThreshold }}-100 error rate in %</span>
             </div>
-            <span class="threshold-count">{{ coveragePercentages.failed.toFixed(1) }}%</span>
+            <span class="threshold-count">
+              {{ showNumbers ? coverageBuckets.failed : coveragePercentages.failed.toFixed(1) + '%' }}
+            </span>
           </div>
         </div>
       </div>
@@ -173,6 +183,10 @@ const props = defineProps({
     type: Array,
     required: true,
     default: () => []
+  },
+  showNumbers: {
+    type: Boolean,
+    default: false
   }
 })
 
