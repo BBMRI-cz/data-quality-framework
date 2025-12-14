@@ -4,7 +4,7 @@
       <div class="d-flex justify-content-between align-items-start">
         <div>
           <p class="text-muted mb-1">{{ label }}</p>
-          <p class="display-6 fw-bold text-dark mb-0">{{ displayValue }}</p>
+          <p class="display-6 fw-bold text-dark mb-0" :title="tooltipText">{{ displayValue }}</p>
         </div>
         <div class="icon-container p-3 rounded" :style="{ backgroundColor: iconBgColor }">
           <i :class="iconClass" :style="{ color: iconColor }" style="font-size: 1.25rem;"></i>
@@ -31,6 +31,10 @@ const props = defineProps({
   value: {
     type: [String, Number],
     required: true
+  },
+  tooltipText: {
+    type: String,
+    default: ''
   },
   icon: {
     type: String,

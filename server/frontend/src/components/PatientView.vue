@@ -12,16 +12,16 @@
       <StatsCard
         label="From Sites"
         :value="`0`"
-        icon="bi bi-exclamation-triangle-fill"
-        iconColor="#dc3545"
-        iconBgColor="#f8d7da"
+        icon="bi bi-hospital-fill"
+        iconColor="#198754"
+        iconBgColor="#d1e7dd"
       />
       <StatsCard
         label="Total Samples"
         :value="`0`"
-        icon="bi bi-exclamation-circle-fill"
-        iconColor="#ffc107"
-        iconBgColor="#fff3cd"
+        icon="bi bi-eyedropper"
+        iconColor="#6610f2"
+        iconBgColor="#e0cffc"
       />
     </div>
 
@@ -124,4 +124,3 @@ const props = defineProps({
   }
 }
 </style>
-

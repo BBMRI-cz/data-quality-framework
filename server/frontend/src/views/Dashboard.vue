@@ -2,33 +2,33 @@
   <div class="container-fluid py-3 py-md-4">
     <!-- Dashboard Header -->
     <PageHeader
-      title="Site Performance Overview"
-      subtitle="Review Data Quality metrics from all connected locations"
-      icon="bi bi-grid-3x3-gap-fill"
+      :title="headerTitle"
+      :subtitle="headerSubtitle"
+      :icon="headerIcon"
       :hide-subtitle-on-mobile="false"
-    />
-
-    <!-- View Toggle -->
-    <div class="view-toggle-container mb-4">
-      <div class="view-toggle">
-        <button
-          :class="['toggle-option', { active: viewMode === 'site' }]"
-          @click="viewMode = 'site'"
-          title="Site-centric view"
-        >
-          <i class="bi bi-hospital"></i>
-          <span class="toggle-label">Sites</span>
-        </button>
-        <button
-          :class="['toggle-option', { active: viewMode === 'patient' }]"
-          @click="viewMode = 'patient'"
-          title="Patient-centric view"
-        >
-          <i class="bi bi-person"></i>
-          <span class="toggle-label">Patients</span>
-        </button>
-      </div>
-    </div>
+    >
+      <template #toggle>
+        <!-- View Toggle -->
+        <div class="view-toggle">
+          <button
+            :class="['toggle-option', { active: viewMode === 'site' }]"
+            @click="viewMode = 'site'"
+            title="Site-centric view"
+          >
+            <i class="bi bi-hospital"></i>
+            <span class="toggle-label">Sites</span>
+          </button>
+          <button
+            :class="['toggle-option', { active: viewMode === 'patient' }]"
+            @click="viewMode = 'patient'"
+            title="Patient-centric view"
+          >
+            <i class="bi bi-person"></i>
+            <span class="toggle-label">Patients</span>
+          </button>
+        </div>
+      </template>
+    </PageHeader>
 
     <!-- View Components with Transition -->
     <Transition name="view-fade" mode="out-in">
@@ -51,7 +51,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import PageHeader from '../components/PageHeader.vue'
 import SiteView from '../components/SiteView.vue'
 import PatientView from '../components/PatientView.vue'
@@ -62,7 +62,19 @@ const qualityCheckMap = ref(new Map())
 const agents = ref([])
 const viewMode = ref('site') // 'site' or 'patient'
 
+const headerTitle = computed(() =>
+  viewMode.value === 'site' ? 'Site Performance Overview' : 'Patient Data Overview'
+)
 
+const headerSubtitle = computed(() =>
+  viewMode.value === 'site'
+    ? 'Review Data Quality metrics from all connected locations'
+    : 'Review Data Quality metrics across patient records'
+)
+
+const headerIcon = computed(() =>
+  viewMode.value === 'site' ? 'bi bi-hospital' : 'bi bi-person'
+)
 
 const loadReportsData = async () => {
   try {
@@ -101,11 +113,6 @@ onMounted(() => {
 
 <style scoped>
 /* View Toggle */
-.view-toggle-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
 
 .view-toggle {
   display: inline-flex;
@@ -138,12 +145,12 @@ onMounted(() => {
 
 .toggle-option:hover {
   color: #495057;
-  background: rgba(13, 110, 253, 0.05);
+  background: rgba(0, 123, 255, 0.1);
 }
 
 .toggle-option.active {
-  background: #fff;
-  color: #0d6efd;
+  background: #007bff;
+  color: #fff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 

@@ -8,6 +8,7 @@
         icon="bi bi-geo-alt-fill"
         iconColor="#0d6efd"
         iconBgColor="#cfe2ff"
+        :tooltipText="agents.map(a => a.name).join(', ')"
       />
       <StatsCard
         label="Total Reports"
@@ -36,12 +37,32 @@
       />
     </div>
 
+    <!-- Category Filter -->
+    <div class="mb-4 d-flex gap-2 flex-wrap">
+      <button
+        class="btn btn-sm rounded-pill"
+        :class="selectedCategory === null ? 'btn-primary' : 'btn-outline-primary'"
+        @click="selectedCategory = null"
+      >
+        All
+      </button>
+      <button
+        v-for="category in categories"
+        :key="category"
+        class="btn btn-sm rounded-pill"
+        :class="selectedCategory === category ? 'btn-primary' : 'btn-outline-primary'"
+        @click="selectedCategory = category"
+      >
+        {{ category }}
+      </button>
+    </div>
+
     <!-- Main Content Grid -->
     <div class="content-grid">
       <!-- Quality Checks Grid -->
       <div class="quality-checks-grid">
         <QualityCheckCard
-          v-for="check in qualityChecks"
+          v-for="check in filteredQualityChecks"
           :key="check.hash"
           :quality-check="check"
           :reports="reports"
@@ -53,7 +74,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import StatsCard from './StatsCard.vue'
 import QualityCheckCard from './QualityCheckCard.vue'
 import { getReportStatus, CheckStatus } from '../utils/qualityCheckUtils.js'
@@ -71,6 +92,21 @@ const props = defineProps({
     type: Array,
     required: true
   }
+})
+
+const selectedCategory = ref(null)
+
+// Get unique categories from quality checks
+const categories = computed(() => {
+  const cats = new Set()
+  props.qualityCheckMap.forEach(check => {
+    if (check.category && check.category.name) {
+      cats.add(check.category.name)
+    } else {
+      cats.add('No Category')
+    }
+  })
+  return Array.from(cats).sort()
 })
 
 // Get reports from this week (last 7 days)
@@ -165,6 +201,16 @@ const warningsTrendType = computed(() => {
 const qualityChecks = computed(() => {
   return Array.from(props.qualityCheckMap.values())
 })
+
+const filteredQualityChecks = computed(() => {
+  if (!selectedCategory.value) {
+    return qualityChecks.value
+  }
+  return qualityChecks.value.filter(check => {
+    const categoryName = check.category?.name || 'No Category'
+    return categoryName === selectedCategory.value
+  })
+})
 </script>
 
 <style scoped>
@@ -233,4 +279,3 @@ const qualityChecks = computed(() => {
   }
 }
 </style>
-
