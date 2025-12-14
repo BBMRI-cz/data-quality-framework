@@ -98,6 +98,11 @@ class ApiService {
         const response = await api.get('/counts');
         return response.data;
     }
+
+    async getCategories() {
+        const response = await api.get('/v1/categories');
+        return response.data;
+    }
 }
 
 export const apiService = new ApiService();

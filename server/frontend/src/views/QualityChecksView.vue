@@ -40,6 +40,12 @@
                 placeholder="Search quality checks..."
               >
             </div>
+            <div class="category-filter-container">
+              <CategoryFilter
+                :categories="categories"
+                v-model="selectedCategory"
+              />
+            </div>
             <div class="results-count">
               <span class="text-muted small">{{ filteredChecks.length }} checks</span>
             </div>
@@ -85,9 +91,8 @@
                   <tr>
                     <th class="ps-4 d-none d-lg-table-cell">Hash</th>
                     <th>Name</th>
+                    <th>Category</th>
                     <th class="d-none d-md-table-cell">Description</th>
-                    <th class="text-center d-none d-lg-table-cell">Warning Threshold</th>
-                    <th class="text-center d-none d-lg-table-cell">Error Threshold</th>
                     <th class="d-none d-xl-table-cell">Registered At</th>
                   </tr>
                 </thead>
@@ -105,18 +110,11 @@
                       <div class="fw-medium">{{ check.name }}</div>
                       <div class="d-md-none small text-muted mt-1">{{ check.description }}</div>
                     </td>
+                    <td>
+                      <CategoryBadge :category="check.category" />
+                    </td>
                     <td class="d-none d-md-table-cell">
                       <div class="text-muted small">{{ check.description || 'No description' }}</div>
-                    </td>
-                    <td class="text-center d-none d-lg-table-cell">
-                      <span class="badge bg-warning-subtle text-warning-emphasis">
-                        {{ formatThreshold(check.warningThreshold) }}
-                      </span>
-                    </td>
-                    <td class="text-center d-none d-lg-table-cell">
-                      <span class="badge bg-danger-subtle text-danger-emphasis">
-                        {{ formatThreshold(check.errorThreshold) }}
-                      </span>
                     </td>
                     <td class="d-none d-xl-table-cell">
                       <span class="text-muted small">{{ formatDate(check.registeredAt) }}</span>
@@ -136,6 +134,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { apiService } from '../services/apiService.js'
 import PageHeader from '../components/PageHeader.vue'
+import CategoryFilter from '../components/CategoryFilter.vue'
+import CategoryBadge from '../components/CategoryBadge.vue'
 import {useRouter} from "vue-router";
 
 const router = useRouter()
@@ -144,23 +144,42 @@ const qualityChecks = ref([])
 const loading = ref(false)
 const error = ref(null)
 const searchQuery = ref('')
+const selectedCategory = ref(null)
+
+const categories = computed(() => {
+  const cats = new Set()
+  qualityChecks.value.forEach(check => {
+    if (check.category && check.category.name) {
+      cats.add(check.category.name)
+    } else {
+      cats.add('No Category')
+    }
+  })
+  return Array.from(cats).sort()
+})
 
 const filteredChecks = computed(() => {
+  let checks = qualityChecks.value
+
+  if (selectedCategory.value) {
+    checks = checks.filter(check => {
+      const categoryName = check.category?.name || 'No Category'
+      return categoryName === selectedCategory.value
+    })
+  }
+
   if (!searchQuery.value) {
-    return qualityChecks.value
+    return checks
   }
 
   const query = searchQuery.value.toLowerCase()
-  return qualityChecks.value.filter(check =>
+  return checks.filter(check =>
     check.name?.toLowerCase().includes(query) ||
     check.description?.toLowerCase().includes(query) ||
-    check.hash?.toLowerCase().includes(query)
+    check.hash?.toLowerCase().includes(query) ||
+    check.category?.name?.toLowerCase().includes(query)
   )
 })
-
-const formatThreshold = (value) => {
-  return value !== undefined && value !== null ? value : 'N/A'
-}
 
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A'
@@ -204,25 +223,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Page Header */
-.page-header {
-  padding-bottom: 1rem;
-  border-bottom: 2px solid #f0f0f0;
-}
-
-.page-title {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #2c3e50;
-  margin: 0;
-}
-
-.page-subtitle {
-  color: #6c757d;
-  font-size: 0.95rem;
-  margin: 0;
-}
-
 /* Stats Grid */
 .stats-grid {
   display: grid;
@@ -389,9 +389,6 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
-  .page-title {
-    font-size: 1.5rem;
-  }
 
   .stats-grid {
     grid-template-columns: repeat(3, 1fr);

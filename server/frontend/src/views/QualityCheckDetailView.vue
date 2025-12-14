@@ -80,6 +80,24 @@
                   ></textarea>
                 </div>
 
+                <!-- Category Field -->
+                <div class="col-12">
+                  <label class="form-label fw-semibold">Category</label>
+                  <select
+                    v-model="editForm.categoryId"
+                    class="form-select"
+                  >
+                    <option :value="null">No Category</option>
+                    <option
+                      v-for="category in categories"
+                      :key="category.id"
+                      :value="category.id"
+                    >
+                      {{ category.name }}
+                    </option>
+                  </select>
+                </div>
+
                 <!-- Warning Threshold -->
                 <div class="col-md-6">
                   <label class="form-label fw-semibold">
@@ -198,6 +216,7 @@ const router = useRouter()
 
 const hash = ref(route.params.hash)
 const qualityCheck = ref(null)
+const categories = ref([])
 const loading = ref(true)
 const saving = ref(false)
 const error = ref(null)
@@ -205,6 +224,7 @@ const error = ref(null)
 const editForm = reactive({
   name: '',
   description: '',
+  categoryId: null,
   warningThreshold: 0,
   errorThreshold: 0
 })
@@ -220,6 +240,7 @@ const hasChanges = computed(() => {
   return (
     editForm.name !== qualityCheck.value.name ||
     editForm.description !== (qualityCheck.value.description || '') ||
+    editForm.categoryId !== (qualityCheck.value.category?.id || null) ||
     editForm.warningThreshold !== qualityCheck.value.warningThreshold ||
     editForm.errorThreshold !== qualityCheck.value.errorThreshold
   )
@@ -236,8 +257,13 @@ const loadQualityCheck = async () => {
   error.value = null
 
   try {
-    const data = await apiService.getQualityChecks()
-    const checks = data._embedded?.qualityChecks || (Array.isArray(data) ? data : [])
+    const [checksData, categoriesData] = await Promise.all([
+      apiService.getQualityChecks(),
+      apiService.getCategories()
+    ])
+
+    const checks = checksData._embedded?.qualityChecks || (Array.isArray(checksData) ? checksData : [])
+    categories.value = categoriesData._embedded?.categories || (Array.isArray(categoriesData) ? categoriesData : [])
 
     qualityCheck.value = checks.find(check => check.hash === hash.value)
 
@@ -249,6 +275,7 @@ const loadQualityCheck = async () => {
     // Initialize form
     editForm.name = qualityCheck.value.name || ''
     editForm.description = qualityCheck.value.description || ''
+    editForm.categoryId = qualityCheck.value.category?.id || null
     editForm.warningThreshold = qualityCheck.value.warningThreshold ?? 0
     editForm.errorThreshold = qualityCheck.value.errorThreshold ?? 0
   } catch (err) {
@@ -314,6 +341,7 @@ const saveCheck = async () => {
 const resetForm = () => {
   editForm.name = qualityCheck.value.name || ''
   editForm.description = qualityCheck.value.description || ''
+  editForm.categoryId = qualityCheck.value.category?.id || null
   editForm.warningThreshold = qualityCheck.value.warningThreshold ?? 0
   editForm.errorThreshold = qualityCheck.value.errorThreshold ?? 0
 
@@ -456,4 +484,3 @@ onMounted(() => {
   }
 }
 </style>
-

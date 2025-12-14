@@ -38,23 +38,11 @@
     </div>
 
     <!-- Category Filter -->
-    <div class="mb-4 d-flex gap-2 flex-wrap">
-      <button
-        class="btn btn-sm rounded-pill"
-        :class="selectedCategory === null ? 'btn-custom-primary' : 'btn-outline-custom-primary'"
-        @click="selectedCategory = null"
-      >
-        All
-      </button>
-      <button
-        v-for="category in categories"
-        :key="category"
-        class="btn btn-sm rounded-pill"
-        :class="selectedCategory === category ? 'btn-custom-primary' : 'btn-outline-custom-primary'"
-        @click="selectedCategory = category"
-      >
-        {{ category }}
-      </button>
+    <div class="mb-4">
+      <CategoryFilter
+        :categories="categories"
+        v-model="selectedCategory"
+      />
     </div>
 
     <!-- Main Content Grid -->
@@ -77,6 +65,7 @@
 import { computed, ref } from 'vue'
 import StatsCard from './StatsCard.vue'
 import QualityCheckCard from './QualityCheckCard.vue'
+import CategoryFilter from './CategoryFilter.vue'
 import { getReportStatus, CheckStatus } from '../utils/qualityCheckUtils.js'
 
 const props = defineProps({
@@ -214,30 +203,6 @@ const filteredQualityChecks = computed(() => {
 </script>
 
 <style scoped>
-/* Custom Primary Button */
-.btn-custom-primary {
-  background-color: var(--color-primary);
-  border-color: var(--color-primary);
-  color: #fff;
-}
-
-.btn-custom-primary:hover {
-  background-color: var(--color-primary-dark);
-  border-color: var(--color-primary-dark);
-  color: #fff;
-}
-
-.btn-outline-custom-primary {
-  color: var(--color-primary);
-  border-color: var(--color-primary);
-  background-color: transparent;
-}
-
-.btn-outline-custom-primary:hover {
-  background-color: var(--color-primary);
-  color: #fff;
-}
-
 /* Stats Row */
 .stats-row {
   display: grid;
