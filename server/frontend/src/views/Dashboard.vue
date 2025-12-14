@@ -145,11 +145,11 @@ onMounted(() => {
 
 .toggle-option:hover {
   color: #495057;
-  background: rgba(0, 123, 255, 0.1);
+  background: rgba(102, 126, 234, 0.1);
 }
 
 .toggle-option.active {
-  background: #007bff;
+  background: var(--gradient-primary);
   color: #fff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }

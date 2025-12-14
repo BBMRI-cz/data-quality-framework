@@ -41,7 +41,7 @@
     <div class="mb-4 d-flex gap-2 flex-wrap">
       <button
         class="btn btn-sm rounded-pill"
-        :class="selectedCategory === null ? 'btn-primary' : 'btn-outline-primary'"
+        :class="selectedCategory === null ? 'btn-custom-primary' : 'btn-outline-custom-primary'"
         @click="selectedCategory = null"
       >
         All
@@ -50,7 +50,7 @@
         v-for="category in categories"
         :key="category"
         class="btn btn-sm rounded-pill"
-        :class="selectedCategory === category ? 'btn-primary' : 'btn-outline-primary'"
+        :class="selectedCategory === category ? 'btn-custom-primary' : 'btn-outline-custom-primary'"
         @click="selectedCategory = category"
       >
         {{ category }}
@@ -214,6 +214,30 @@ const filteredQualityChecks = computed(() => {
 </script>
 
 <style scoped>
+/* Custom Primary Button */
+.btn-custom-primary {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.btn-custom-primary:hover {
+  background-color: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+  color: #fff;
+}
+
+.btn-outline-custom-primary {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  background-color: transparent;
+}
+
+.btn-outline-custom-primary:hover {
+  background-color: var(--color-primary);
+  color: #fff;
+}
+
 /* Stats Row */
 .stats-row {
   display: grid;
