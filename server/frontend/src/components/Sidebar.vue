@@ -30,6 +30,10 @@
           <i class="bi bi-clipboard-check-fill"></i>
           <span>Quality Checks</span>
         </router-link>
+        <router-link to="/categories" class="nav-link" :class="{ active: $route.name === 'Categories' }" @click="closeMobileMenu">
+          <i class="bi bi-tags-fill"></i>
+          <span>Categories</span>
+        </router-link>
         <div class="nav-section">
           <div class="nav-section-header">
             <i class="bi bi-gear-fill"></i>
