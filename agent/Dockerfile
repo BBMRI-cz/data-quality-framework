@@ -5,7 +5,7 @@ RUN npm install --silent
 COPY frontend/ .
 RUN npm run build --silent
 
-FROM maven:3.9.9-eclipse-temurin-21@sha256:3a4ab3276a087bf276f79cae96b1af04f53731bec53fb2e651aca79e4b10211e AS backend-builder
+FROM maven:3.9.11-eclipse-temurin-25@sha256:407c4423cec0cf2981055bc2c6c0dc211d9605b6669279b95997f2d1c7e91e2c AS backend-builder
 ARG ARTIFACT_VERSION=unknown
 WORKDIR /app/backend
 COPY backend/pom.xml .
