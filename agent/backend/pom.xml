@@ -35,7 +35,7 @@
         <hapi.fhir.structures.version>8.6.0</hapi.fhir.structures.version>
         <icd.validator.version>0.1.0</icd.validator.version>
         <commons.compress.version>1.26.1</commons.compress.version>
-        <testcontainers.version>2.0.2</testcontainers.version>
+        <testcontainers.version>2.0.3</testcontainers.version>
         <bouncycastle.version>1.83</bouncycastle.version>
         <sqlite.jdbc.version>3.51.1.0</sqlite.jdbc.version>
         <modelmapper.version>3.2.6</modelmapper.version>
