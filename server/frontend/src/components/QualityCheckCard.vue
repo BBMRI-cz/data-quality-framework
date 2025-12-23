@@ -75,7 +75,8 @@
               @click="navigateToReport(agent)"
               role="button"
               tabindex="0"
-              @keypress.enter="navigateToReport(agent)"
+              @keydown.enter="navigateToReport(agent)"
+              @keydown.space.prevent="navigateToReport(agent)"
               :title="`View latest report from ${agent.agentName}`"
             >
               <div class="agent-info">
@@ -172,7 +173,8 @@ const agentResults = computed(() => {
     const resultValue = normalizeResultValue(result.result)
 
     // Keep the worst (highest) result for each agent
-    if (!resultsMap.has(agentId) || resultsMap.get(agentId).result < resultValue) {
+    const existing = resultsMap.get(agentId)
+    if (!existing || existing.result < resultValue) {
       resultsMap.set(agentId, {
         agentId,
         agentName: agentMap.value.get(agentId) || agentId,
@@ -260,11 +262,22 @@ const expandIconClass = computed(() =>
 )
 
 // Helper Functions
+/**
+ * Normalize result value to a fraction between 0 and 1
+ * @param {number|null|undefined} raw - The raw result value
+ * @returns {number} Normalized value between 0 and 1
+ */
 function normalizeResultValue(raw) {
-  if (typeof raw !== 'number') return 0
-  return raw > 1 ? raw / 100 : raw
+  if (typeof raw !== 'number' || isNaN(raw)) return 0
+  // If value is greater than 1, assume it's a percentage and convert to fraction
+  return raw > 1 ? Math.min(raw / 100, 1) : Math.max(raw, 0)
 }
 
+/**
+ * Get the status of a result based on quality check thresholds
+ * @param {number} result - Result value (fraction 0-1 or percentage 0-100)
+ * @returns {string} CheckStatus enum value
+ */
 function getResultStatus(result) {
   const percentage = result <= 1 ? result * 100 : result
 
@@ -276,6 +289,11 @@ function getResultStatus(result) {
   return CheckStatus.PASSED
 }
 
+/**
+ * Get CSS class object for agent item based on result status
+ * @param {number} result - Result value
+ * @returns {Object} CSS class object
+ */
 function getAgentStatusClass(result) {
   const status = getResultStatus(result)
   return {
@@ -285,27 +303,52 @@ function getAgentStatusClass(result) {
   }
 }
 
+/**
+ * Get Bootstrap icon class for agent status
+ * @param {number} result - Result value
+ * @returns {string} Icon class name
+ */
 function getAgentStatusIcon(result) {
   const status = getResultStatus(result)
-  if (status === CheckStatus.FAILED) return 'bi bi-x-circle-fill'
-  if (status === CheckStatus.WARNING) return 'bi bi-exclamation-triangle-fill'
-  return 'bi bi-check-circle-fill'
+  switch (status) {
+    case CheckStatus.FAILED:
+      return 'bi bi-x-circle-fill'
+    case CheckStatus.WARNING:
+      return 'bi bi-exclamation-triangle-fill'
+    case CheckStatus.PASSED:
+    default:
+      return 'bi bi-check-circle-fill'
+  }
 }
 
+/**
+ * Format agent result for display
+ * @param {number} result - Result value
+ * @returns {string} Formatted result string
+ */
 function formatAgentResult(result) {
   const percentage = result <= 1 ? result * 100 : result
   return `${percentage.toFixed(1)}% of records`
 }
 
 // Event Handlers
+/**
+ * Toggle the expanded state of the card
+ */
 function handleCardClick() {
   isExpanded.value = !isExpanded.value
 }
 
+/**
+ * Navigate to the latest report for a specific agent
+ * @param {Object} agent - Agent object with agentId and other properties
+ */
 function navigateToReport(agent) {
   const latestReport = agentLatestReports.value.get(agent.agentId)
   if (latestReport?.id) {
     router.push({ name: 'ReportDetail', params: { id: latestReport.id } })
+  } else {
+    console.warn(`No report found for agent: ${agent.agentName}`)
   }
 }
 </script>
@@ -378,6 +421,7 @@ function navigateToReport(agent) {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+  line-clamp: 2;
 }
 
 /* Card Controls */
