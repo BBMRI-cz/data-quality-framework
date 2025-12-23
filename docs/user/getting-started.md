@@ -59,7 +59,7 @@ cd data-quality-framework
 Load the provided test data into the FHIR store:
 
 ```shell
-blazectl --server http://localhost:8080/fhir upload test_data
+blazectl --server http://localhost:8080/fhir upload agent/backend/src/test/resources/test_data
 ```
 
 ### Step 4: Configure the Data Quality Agent

@@ -507,7 +507,7 @@ jobs:
         run: .github/workflows/scripts/install-blazectl.sh
 
       - name: Load Data
-        run: blazectl --no-progress --server http://localhost:8080/fhir upload test_data
+        run: blazectl --no-progress --server http://localhost:8080/fhir upload agent/backend/src/test/resources/test_data
 
       - name: Load Docker images
         run: |
