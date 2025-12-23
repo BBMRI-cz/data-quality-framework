@@ -2,6 +2,7 @@ package eu.bbmri_eric.quality.server.dataquality.impl;
 
 import eu.bbmri_eric.quality.server.common.EntityNotFoundException;
 import eu.bbmri_eric.quality.server.dataquality.QualityCheckService;
+import eu.bbmri_eric.quality.server.dataquality.domain.Category;
 import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckUpdateDTO;
@@ -16,11 +17,15 @@ import org.springframework.transaction.annotation.Transactional;
 class QualityCheckServiceImpl implements QualityCheckService {
 
   private final QualityCheckRepository qualityCheckRepository;
+  private final CategoryRepository categoryRepository;
   private final ModelMapper modelMapper;
 
   public QualityCheckServiceImpl(
-      QualityCheckRepository qualityCheckRepository, ModelMapper modelMapper) {
+      QualityCheckRepository qualityCheckRepository,
+      CategoryRepository categoryRepository,
+      ModelMapper modelMapper) {
     this.qualityCheckRepository = qualityCheckRepository;
+    this.categoryRepository = categoryRepository;
     this.modelMapper = modelMapper;
   }
 
@@ -54,7 +59,22 @@ class QualityCheckServiceImpl implements QualityCheckService {
     qualityCheck.setDescription(updateDTO.getDescription());
     qualityCheck.setWarningThreshold(updateDTO.getWarningThreshold());
     qualityCheck.setErrorThreshold(updateDTO.getErrorThreshold());
-    QualityCheck updatedQualityCheck = qualityCheckRepository.save(qualityCheck);
-    return modelMapper.map(updatedQualityCheck, QualityCheckDTO.class);
+    setCategory(updateDTO, qualityCheck);
+    return modelMapper.map(qualityCheckRepository.save(qualityCheck), QualityCheckDTO.class);
+  }
+
+  private void setCategory(QualityCheckUpdateDTO updateDTO, QualityCheck qualityCheck) {
+    if (updateDTO.getCategoryId() != null) {
+      Category category =
+          categoryRepository
+              .findById(updateDTO.getCategoryId())
+              .orElseThrow(
+                  () ->
+                      new EntityNotFoundException(
+                          "Category not found with ID: " + updateDTO.getCategoryId()));
+      qualityCheck.setCategory(category);
+    } else {
+      qualityCheck.setCategory(null);
+    }
   }
 }

@@ -35,6 +35,9 @@ public class QualityCheckDTO {
   @Schema(description = "Threshold value for errors", example = "0.5")
   private double errorThreshold;
 
+  @Schema(description = "Category for grouping quality checks")
+  private CategoryDTO category;
+
   /** Default constructor for serialization frameworks. */
   public QualityCheckDTO() {}
 
@@ -109,5 +112,13 @@ public class QualityCheckDTO {
 
   public void setErrorThreshold(double errorThreshold) {
     this.errorThreshold = errorThreshold;
+  }
+
+  public CategoryDTO getCategory() {
+    return category;
+  }
+
+  public void setCategory(CategoryDTO category) {
+    this.category = category;
   }
 }

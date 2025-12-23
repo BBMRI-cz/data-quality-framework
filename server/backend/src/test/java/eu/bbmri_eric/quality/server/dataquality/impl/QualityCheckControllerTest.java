@@ -1,11 +1,14 @@
 package eu.bbmri_eric.quality.server.dataquality.impl;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.bbmri_eric.quality.server.dataquality.domain.Category;
 import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckUpdateDTO;
+import jakarta.persistence.EntityManager;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,13 +31,16 @@ class QualityCheckControllerTest {
   @Autowired private MockMvc mockMvc;
   @Autowired private ObjectMapper objectMapper;
   @Autowired private QualityCheckRepository qualityCheckRepository;
+  @Autowired private CategoryRepository categoryRepository;
+  @Autowired private EntityManager entityManager;
 
   private String testQualityCheckHash;
   private QualityCheck testQualityCheck;
+  private Category testCategory;
 
   @BeforeEach
   void setUp() {
-    qualityCheckRepository.deleteAll();
+
     testQualityCheckHash = "test-hash-" + UUID.randomUUID().toString().substring(0, 8);
     testQualityCheck =
         new QualityCheck(
@@ -44,6 +50,9 @@ class QualityCheckControllerTest {
             0.8,
             0.5);
     qualityCheckRepository.save(testQualityCheck);
+
+    testCategory = new Category("Data Completeness", "#FF5733");
+    categoryRepository.save(testCategory);
   }
 
   @Test
@@ -134,7 +143,7 @@ class QualityCheckControllerTest {
   void update_shouldUpdateQualityCheckAndReturnHateoasResponse() throws Exception {
     QualityCheckUpdateDTO updateDTO =
         new QualityCheckUpdateDTO(
-            "Updated Quality Check", "Updated description for the quality check", 0.75, 0.45);
+            "Updated Quality Check", "Updated description for the quality check", 0.75, 0.45, null);
 
     mockMvc
         .perform(
@@ -159,7 +168,7 @@ class QualityCheckControllerTest {
   @WithMockUser(roles = "HUMAN_USER")
   void update_shouldReturnForbiddenForNonAdminUser() throws Exception {
     QualityCheckUpdateDTO updateDTO =
-        new QualityCheckUpdateDTO("Updated Quality Check", "Updated description", 0.75, 0.45);
+        new QualityCheckUpdateDTO("Updated Quality Check", "Updated description", 0.75, 0.45, null);
 
     mockMvc
         .perform(
@@ -174,7 +183,7 @@ class QualityCheckControllerTest {
   void update_shouldReturnNotFoundWhenQualityCheckDoesNotExist() throws Exception {
     String nonExistentHash = "non-existent-hash";
     QualityCheckUpdateDTO updateDTO =
-        new QualityCheckUpdateDTO("Updated Quality Check", "Updated description", 0.75, 0.45);
+        new QualityCheckUpdateDTO("Updated Quality Check", "Updated description", 0.75, 0.45, null);
 
     mockMvc
         .perform(
@@ -192,7 +201,8 @@ class QualityCheckControllerTest {
             "", // empty name should trigger validation error
             "Updated description",
             0.75,
-            0.45);
+            0.45,
+            null);
 
     mockMvc
         .perform(
@@ -217,7 +227,7 @@ class QualityCheckControllerTest {
   @Test
   void update_shouldReturnUnauthorizedWhenNotAuthenticated() throws Exception {
     QualityCheckUpdateDTO updateDTO =
-        new QualityCheckUpdateDTO("Updated Quality Check", "Updated description", 0.75, 0.45);
+        new QualityCheckUpdateDTO("Updated Quality Check", "Updated description", 0.75, 0.45, null);
 
     mockMvc
         .perform(
@@ -225,5 +235,111 @@ class QualityCheckControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateDTO)))
         .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void update_shouldAssignCategoryToQualityCheck() throws Exception {
+    QualityCheckUpdateDTO updateDTO =
+        new QualityCheckUpdateDTO(
+            "Updated Quality Check", "Updated description", 0.75, 0.45, testCategory.getId());
+
+    mockMvc
+        .perform(
+            put(API_V1_QUALITY_CHECKS_ID, testQualityCheckHash)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateDTO)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.hash").value(testQualityCheckHash))
+        .andExpect(jsonPath("$.category.id").value(testCategory.getId()))
+        .andExpect(jsonPath("$.category.name").value("Data Completeness"))
+        .andExpect(jsonPath("$.category.colorHex").value("#FF5733"));
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void update_shouldRemoveCategoryFromQualityCheckWhenCategoryIdIsNull() throws Exception {
+    testQualityCheck.setCategory(testCategory);
+    qualityCheckRepository.save(testQualityCheck);
+
+    QualityCheckUpdateDTO updateDTO =
+        new QualityCheckUpdateDTO("Updated Quality Check", "Updated description", 0.75, 0.45, null);
+
+    mockMvc
+        .perform(
+            put(API_V1_QUALITY_CHECKS_ID, testQualityCheckHash)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateDTO)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.hash").value(testQualityCheckHash))
+        .andExpect(jsonPath("$.category").doesNotExist());
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void update_shouldReturnNotFoundWhenCategoryDoesNotExist() throws Exception {
+    Long nonExistentCategoryId = 99999L;
+    QualityCheckUpdateDTO updateDTO =
+        new QualityCheckUpdateDTO(
+            "Updated Quality Check", "Updated description", 0.75, 0.45, nonExistentCategoryId);
+
+    mockMvc
+        .perform(
+            put(API_V1_QUALITY_CHECKS_ID, testQualityCheckHash)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateDTO)))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void update_shouldChangeCategoryAssignment() throws Exception {
+    testQualityCheck.setCategory(testCategory);
+    qualityCheckRepository.save(testQualityCheck);
+
+    Category newCategory = new Category("Data Accuracy", "#00FF00");
+    newCategory = categoryRepository.save(newCategory);
+
+    QualityCheckUpdateDTO updateDTO =
+        new QualityCheckUpdateDTO(
+            "Updated Quality Check", "Updated description", 0.75, 0.45, newCategory.getId());
+
+    mockMvc
+        .perform(
+            put(API_V1_QUALITY_CHECKS_ID, testQualityCheckHash)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateDTO)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.hash").value(testQualityCheckHash))
+        .andExpect(jsonPath("$.category.id").value(newCategory.getId()))
+        .andExpect(jsonPath("$.category.name").value("Data Accuracy"))
+        .andExpect(jsonPath("$.category.colorHex").value("#00FF00"));
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void delete_category_shouldSetCategoryToNullForAssociatedQualityChecks() throws Exception {
+    testQualityCheck.setCategory(testCategory);
+    qualityCheckRepository.save(testQualityCheck);
+    entityManager.flush();
+
+    mockMvc
+        .perform(get(API_V1_QUALITY_CHECKS_ID, testQualityCheckHash))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.category.id").value(testCategory.getId()));
+
+    Long categoryId = testCategory.getId();
+    entityManager.clear();
+    categoryRepository.deleteById(categoryId);
+    entityManager.flush();
+    entityManager.clear();
+
+    assertFalse(categoryRepository.existsById(categoryId));
+
+    mockMvc
+        .perform(get(API_V1_QUALITY_CHECKS_ID, testQualityCheckHash))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.hash").value(testQualityCheckHash))
+        .andExpect(jsonPath("$.category").doesNotExist());
   }
 }

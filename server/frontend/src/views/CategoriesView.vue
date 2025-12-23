@@ -4,19 +4,27 @@
       <div class="col-12">
         <!-- Page Header -->
         <PageHeader
-          title="Quality Checks"
-          mobile-title="Checks"
-          subtitle="View and manage data quality check definitions"
-          icon="bi bi-clipboard-check-fill"
+          title="Categories"
+          mobile-title="Categories"
+          subtitle="Manage quality check categories"
+          icon="bi bi-tags-fill"
         >
           <template #actions>
             <button
-              @click="refreshChecks"
+              @click="refreshCategories"
               class="btn btn-outline-primary btn-sm"
               :disabled="loading"
             >
               <i class="bi bi-arrow-clockwise"></i>
               <span class="d-none d-md-inline ms-1">Refresh</span>
+            </button>
+            <button
+              @click="createCategory"
+              class="btn btn-primary btn-sm ms-2"
+              :disabled="loading"
+            >
+              <i class="bi bi-plus-lg"></i>
+              <span class="d-none d-md-inline ms-1">New Category</span>
             </button>
           </template>
         </PageHeader>
@@ -24,8 +32,8 @@
         <!-- Stats Cards -->
         <div class="stats-grid mb-3 mb-md-4">
           <div class="stat-card">
-            <div class="stat-number text-dark">{{ qualityChecks.length }}</div>
-            <div class="stat-label">Total Checks</div>
+            <div class="stat-number text-dark">{{ categories.length }}</div>
+            <div class="stat-label">Total Categories</div>
           </div>
         </div>
 
@@ -37,17 +45,11 @@
                 v-model="searchQuery"
                 type="text"
                 class="form-control"
-                placeholder="Search quality checks..."
+                placeholder="Search categories..."
               >
             </div>
-            <div class="category-filter-container">
-              <CategoryFilter
-                :categories="categories"
-                v-model="selectedCategory"
-              />
-            </div>
             <div class="results-count">
-              <span class="text-muted small">{{ filteredChecks.length }} checks</span>
+              <span class="text-muted small">{{ filteredCategories.length }} categories</span>
             </div>
           </div>
         </div>
@@ -55,33 +57,33 @@
         <!-- Loading state -->
         <div v-if="loading" class="loading-state">
           <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading quality checks...</span>
+            <span class="visually-hidden">Loading categories...</span>
           </div>
         </div>
 
         <!-- Error state -->
         <div v-else-if="error" class="alert alert-danger" role="alert">
-          <h6 class="alert-heading">Error Loading Quality Checks</h6>
+          <h6 class="alert-heading">Error Loading Categories</h6>
           <p class="mb-0">{{ error }}</p>
         </div>
 
         <!-- Empty state -->
-        <div v-else-if="filteredChecks.length === 0" class="empty-state">
+        <div v-else-if="filteredCategories.length === 0" class="empty-state">
           <div class="empty-state-icon">
-            <i class="bi bi-clipboard-check"></i>
+            <i class="bi bi-tags"></i>
           </div>
-          <h5 class="empty-state-title">No Quality Checks Found</h5>
+          <h5 class="empty-state-title">No Categories Found</h5>
           <p class="empty-state-text">
-            {{ searchQuery ? 'Try adjusting your search criteria' : 'No quality checks are configured yet' }}
+            {{ searchQuery ? 'Try adjusting your search criteria' : 'No categories are configured yet' }}
           </p>
         </div>
 
-        <!-- Quality Checks Table -->
+        <!-- Categories Table -->
         <div v-else class="card border-0 shadow-sm">
           <div class="card-header bg-white border-bottom py-3">
             <div class="d-flex justify-content-between align-items-center">
-              <h5 class="mb-0 fw-semibold">Quality Check Definitions</h5>
-              <span class="badge bg-secondary">{{ filteredChecks.length }} checks</span>
+              <h5 class="mb-0 fw-semibold">Category Definitions</h5>
+              <span class="badge bg-secondary">{{ filteredCategories.length }} categories</span>
             </div>
           </div>
           <div class="card-body p-0">
@@ -89,35 +91,22 @@
               <table class="table table-hover mb-0 align-middle">
                 <thead class="table-light">
                   <tr>
-                    <th class="ps-4 d-none d-lg-table-cell">Hash</th>
-                    <th>Name</th>
-                    <th>Category</th>
-                    <th class="d-none d-md-table-cell">Description</th>
-                    <th class="d-none d-xl-table-cell">Registered At</th>
+                    <th class="ps-4">Name</th>
+                    <th>Color</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr
-                    v-for="check in filteredChecks"
-                    :key="check.hash || check.name"
+                    v-for="category in filteredCategories"
+                    :key="category.id"
                     class="table-row-hover cursor-pointer"
-                    @click="viewCheckDetail(check)"
+                    @click="viewCategoryDetail(category)"
                   >
-                    <td class="ps-4 d-none d-lg-table-cell">
-                      <code class="font-monospace small text-muted hash-code">{{ check.hash }}</code>
+                    <td class="ps-4">
+                      <div class="fw-medium">{{ category.name }}</div>
                     </td>
                     <td>
-                      <div class="fw-medium">{{ check.name }}</div>
-                      <div class="d-md-none small text-muted mt-1">{{ check.description }}</div>
-                    </td>
-                    <td>
-                      <CategoryBadge :category="check.category" />
-                    </td>
-                    <td class="d-none d-md-table-cell">
-                      <div class="text-muted small">{{ check.description || 'No description' }}</div>
-                    </td>
-                    <td class="d-none d-xl-table-cell">
-                      <span class="text-muted small">{{ formatDate(check.registeredAt) }}</span>
+                      <CategoryBadge :category="category" />
                     </td>
                   </tr>
                 </tbody>
@@ -132,93 +121,64 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { apiService } from '../services/apiService.js'
 import PageHeader from '../components/PageHeader.vue'
-import CategoryFilter from '../components/CategoryFilter.vue'
 import CategoryBadge from '../components/CategoryBadge.vue'
-import {useRouter} from "vue-router";
 
 const router = useRouter()
-
-const qualityChecks = ref([])
+const categories = ref([])
 const loading = ref(false)
 const error = ref(null)
 const searchQuery = ref('')
-const selectedCategory = ref(null)
 
-const categories = computed(() => {
-  const cats = new Set()
-  qualityChecks.value.forEach(check => {
-    if (check.category && check.category.name) {
-      cats.add(check.category.name)
-    } else {
-      cats.add('No Category')
-    }
-  })
-  return Array.from(cats).sort()
-})
-
-const filteredChecks = computed(() => {
-  let checks = qualityChecks.value
-
-  if (selectedCategory.value) {
-    checks = checks.filter(check => {
-      const categoryName = check.category?.name || 'No Category'
-      return categoryName === selectedCategory.value
-    })
-  }
-
+const filteredCategories = computed(() => {
   if (!searchQuery.value) {
-    return checks
+    return categories.value
   }
 
   const query = searchQuery.value.toLowerCase()
-  return checks.filter(check =>
-    check.name?.toLowerCase().includes(query) ||
-    check.description?.toLowerCase().includes(query) ||
-    check.hash?.toLowerCase().includes(query) ||
-    check.category?.name?.toLowerCase().includes(query)
+  return categories.value.filter(category =>
+    category.name?.toLowerCase().includes(query)
   )
 })
 
-const formatDate = (dateString) => {
-  if (!dateString) return 'N/A'
-  const options = { year: 'numeric', month: '2-digit', day: '2-digit' }
-  return new Date(dateString).toLocaleDateString(undefined, options)
-}
-
-const loadQualityChecks = async () => {
+const loadCategories = async () => {
   loading.value = true
   error.value = null
 
   try {
-    const data = await apiService.getQualityChecks()
+    const data = await apiService.getCategories()
     // Handle HAL format response
-    if (data._embedded && data._embedded.qualityChecks) {
-      qualityChecks.value = data._embedded.qualityChecks
+    if (data._embedded && data._embedded.categories) {
+      categories.value = data._embedded.categories
     } else if (Array.isArray(data)) {
-      qualityChecks.value = data
+      categories.value = data
     } else {
-      qualityChecks.value = []
+      categories.value = []
     }
   } catch (err) {
-    error.value = err.message || 'Failed to load quality checks'
-    console.error('Error loading quality checks:', err)
+    error.value = err.message || 'Failed to load categories'
+    console.error('Error loading categories:', err)
   } finally {
     loading.value = false
   }
 }
 
-const refreshChecks = () => {
-  loadQualityChecks()
+const refreshCategories = () => {
+  loadCategories()
 }
 
-const viewCheckDetail = (check) => {
-  router.push(`/quality-checks/${check.hash}`)
+const createCategory = () => {
+  router.push('/categories/new')
+}
+
+const viewCategoryDetail = (category) => {
+  router.push(`/categories/${category.id}`)
 }
 
 onMounted(() => {
-  loadQualityChecks()
+  loadCategories()
 })
 </script>
 
@@ -340,14 +300,6 @@ onMounted(() => {
   overflow-x: visible;
 }
 
-.hash-code {
-  max-width: 150px;
-  display: inline-block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .table-row-hover {
   transition: all 0.2s ease-in-out;
   cursor: pointer;
@@ -359,15 +311,6 @@ onMounted(() => {
   box-shadow: inset 3px 0 0 #0d6efd;
 }
 
-.cursor-pointer {
-  cursor: pointer;
-}
-
-.font-monospace {
-  font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
-  font-size: 0.875rem;
-}
-
 .badge {
   font-weight: 500;
   padding: 0.35rem 0.65rem;
@@ -375,21 +318,15 @@ onMounted(() => {
   white-space: nowrap;
 }
 
-
 /* Responsive */
 @media (max-width: 992px) {
   .table th,
   .table td {
     padding: 0.75rem 0.5rem;
   }
-
-  .hash-code {
-    max-width: 120px;
-  }
 }
 
 @media (max-width: 768px) {
-
   .stats-grid {
     grid-template-columns: repeat(3, 1fr);
   }
@@ -419,10 +356,6 @@ onMounted(() => {
   .table th,
   .table td {
     padding: 0.5rem 0.35rem;
-  }
-
-  .hash-code {
-    max-width: 100px;
   }
 
   .badge {

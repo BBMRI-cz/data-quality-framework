@@ -11,6 +11,8 @@ import AgentReportView from '../views/AgentReportView.vue'
 import AgentInteractionsView from '../views/AgentInteractionsView.vue'
 import QualityChecksView from '../views/QualityChecksView.vue'
 import QualityCheckDetailView from '../views/QualityCheckDetailView.vue'
+import CategoriesView from '../views/CategoriesView.vue'
+import CategoryDetailView from '../views/CategoryDetailView.vue'
 import LoginView from '../views/LoginView.vue'
 import NotFound from '../views/NotFound.vue'
 
@@ -60,6 +62,24 @@ const routes = [
     path: '/quality-checks/:hash',
     name: 'QualityCheckDetail',
     component: QualityCheckDetailView,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/categories',
+    name: 'Categories',
+    component: CategoriesView,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/categories/new',
+    name: 'CategoryCreate',
+    component: CategoryDetailView,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/categories/:id',
+    name: 'CategoryDetail',
+    component: CategoryDetailView,
     meta: { requiresAuth: true }
   },
   {

@@ -55,7 +55,8 @@
           {{ subtitle }}
         </p>
       </div>
-      <div v-if="$slots.actions" class="header-actions">
+      <div class="header-actions d-flex align-items-center gap-3">
+        <slot name="toggle"></slot>
         <slot name="actions"></slot>
       </div>
     </div>

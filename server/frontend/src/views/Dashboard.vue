@@ -2,213 +2,79 @@
   <div class="container-fluid py-3 py-md-4">
     <!-- Dashboard Header -->
     <PageHeader
-      title="Site Performance Overview"
-      subtitle="Review Data Quality metrics from all connected locations"
-      icon="bi bi-grid-3x3-gap-fill"
+      :title="headerTitle"
+      :subtitle="headerSubtitle"
+      :icon="headerIcon"
       :hide-subtitle-on-mobile="false"
-    />
+    >
+      <template #toggle>
+        <!-- View Toggle -->
+        <div class="view-toggle">
+          <button
+            :class="['toggle-option', { active: viewMode === 'site' }]"
+            @click="viewMode = 'site'"
+            title="Site-centric view"
+          >
+            <i class="bi bi-database-fill-gear"></i>
+            <span class="toggle-label">Sites</span>
+          </button>
+          <button
+            :class="['toggle-option', { active: viewMode === 'patient' }]"
+            @click="viewMode = 'patient'"
+            title="Patient-centric view"
+          >
+            <i class="bi bi-person"></i>
+            <span class="toggle-label">Patients</span>
+          </button>
+        </div>
+      </template>
+    </PageHeader>
 
-    <!-- Stats Cards Row -->
-    <div class="stats-row mb-4">
-      <StatsCard
-        label="Sites Monitored"
-        :value="`${activeAgentsCount}`"
-        icon="bi bi-geo-alt-fill"
-        iconColor="#0d6efd"
-        iconBgColor="#cfe2ff"
-        :trendText="`${activeAgentsCount} agents added this month`"
-        trendType="positive"
+    <!-- View Components with Transition -->
+    <Transition name="view-fade" mode="out-in">
+      <SiteView
+        v-if="viewMode === 'site'"
+        key="site-view"
+        :reports="reports"
+        :quality-check-map="qualityCheckMap"
+        :agents="agents"
       />
-      <StatsCard
-        label="Total Reports"
-        :value="`${reports.length}`"
-        icon="bi bi-file-earmark-text-fill"
-        iconColor="#6f42c1"
-        iconBgColor="#e2d9f3"
-        :trendText="reportsChange"
-        :trendType="reportsTrendType"
+      <PatientView
+        v-else-if="viewMode === 'patient'"
+        key="patient-view"
+        :reports="reports"
+        :quality-check-map="qualityCheckMap"
+        :agents="agents"
       />
-      <StatsCard
-        label="Errors This Week"
-        :value="`${errorsThisWeek}`"
-        icon="bi bi-exclamation-triangle-fill"
-        iconColor="#dc3545"
-        iconBgColor="#f8d7da"
-        :trendText="errorsChange"
-        :trendType="errorsTrendType"
-      />
-      <StatsCard
-        label="Warnings This Week"
-        :value="`${warningsThisWeek}`"
-        icon="bi bi-exclamation-circle-fill"
-        iconColor="#ffc107"
-        iconBgColor="#fff3cd"
-        :trendText="warningsChange"
-        :trendType="warningsTrendType"
-      />
-    </div>
-
-    <!-- Privacy Note -->
-    <AppCallout type="info" icon="bi-shield-lock" class="mb-3">
-      <small>
-        Results on this dashboard are obfuscated using differential privacy to protect sensitive information.
-        <a
-          href="https://bbmri-cz.github.io/data-quality-framework/user/privacy.html"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="fw-semibold"
-        >Learn more</a>.
-      </small>
-    </AppCallout>
-
-    <!-- Main Content Grid -->
-    <div class="content-grid">
-      <!-- Agents Section -->
-      <div class="agents-wrapper">
-        <AgentsList @agentsLoaded="handleAgentsLoaded" />
-      </div>
-
-      <!-- Quality Checks Grid -->
-      <div class="quality-checks-grid">
-        <QualityCheckCard
-          v-for="check in qualityChecks"
-          :key="check.hash"
-          :quality-check="check"
-          :reports="reports"
-          :agents="agents"
-        />
-      </div>
-    </div>
+    </Transition>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import AgentsList from '../components/AgentsList.vue'
-import StatsCard from '../components/StatsCard.vue'
+import { ref, onMounted, computed } from 'vue'
 import PageHeader from '../components/PageHeader.vue'
-import QualityCheckCard from '../components/QualityCheckCard.vue'
-import AppCallout from '../components/AppCallout.vue'
+import SiteView from '../components/SiteView.vue'
+import PatientView from '../components/PatientView.vue'
 import { apiService } from '../services/apiService.js'
-import { getReportStatus, CheckStatus } from '../utils/qualityCheckUtils.js'
 
-const activeAgentsCount = ref(0)
 const reports = ref([])
 const qualityCheckMap = ref(new Map())
 const agents = ref([])
+const viewMode = ref('site') // 'site' or 'patient'
 
-// Get reports from this week (last 7 days)
-const reportsThisWeek = computed(() => {
-  const oneWeekAgo = new Date()
-  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
+const headerTitle = computed(() =>
+  viewMode.value === 'site' ? 'Site Performance Overview' : 'Patient Data Overview'
+)
 
-  return reports.value.filter(report => {
-    const reportDate = new Date(report.timestamp)
-    return reportDate >= oneWeekAgo
-  })
-})
+const headerSubtitle = computed(() =>
+  viewMode.value === 'site'
+    ? 'Review Data Quality metrics from all connected locations'
+    : 'Review Data Quality metrics across patient records'
+)
 
-// Get reports from the previous week (8-14 days ago)
-const reportsLastWeek = computed(() => {
-  const twoWeeksAgo = new Date()
-  twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14)
-  const oneWeekAgo = new Date()
-  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
-
-  return reports.value.filter(report => {
-    const reportDate = new Date(report.timestamp)
-    return reportDate >= twoWeeksAgo && reportDate < oneWeekAgo
-  })
-})
-
-// Count errors from this week
-const errorsThisWeek = computed(() => {
-  return reportsThisWeek.value.filter(report => {
-    const status = getReportStatus(report, qualityCheckMap.value)
-    return status === CheckStatus.FAILED
-  }).length
-})
-
-// Count errors from last week
-const errorsLastWeek = computed(() => {
-  return reportsLastWeek.value.filter(report => {
-    const status = getReportStatus(report, qualityCheckMap.value)
-    return status === CheckStatus.FAILED
-  }).length
-})
-
-// Count warnings from this week
-const warningsThisWeek = computed(() => {
-  return reportsThisWeek.value.filter(report => {
-    const status = getReportStatus(report, qualityCheckMap.value)
-    return status === CheckStatus.WARNING
-  }).length
-})
-
-// Count warnings from last week
-const warningsLastWeek = computed(() => {
-  return reportsLastWeek.value.filter(report => {
-    const status = getReportStatus(report, qualityCheckMap.value)
-    return status === CheckStatus.WARNING
-  }).length
-})
-
-// Calculate change in reports from last week
-const reportsChange = computed(() => {
-  const change = reportsThisWeek.value.length - reportsLastWeek.value.length
-  if (change === 0) return 'No change from last week'
-  const direction = change > 0 ? '+' : ''
-  return `${direction}${change} from last week`
-})
-
-// Calculate change in errors from last week
-const errorsChange = computed(() => {
-  const change = errorsThisWeek.value - errorsLastWeek.value
-  if (change === 0) return 'No change from last week'
-  const direction = change > 0 ? '+' : ''
-  return `${direction}${change} from last week`
-})
-
-// Calculate change in warnings from last week
-const warningsChange = computed(() => {
-  const change = warningsThisWeek.value - warningsLastWeek.value
-  if (change === 0) return 'No change from last week'
-  const direction = change > 0 ? '+' : ''
-  return `${direction}${change} from last week`
-})
-
-// Determine trend type for reports
-const reportsTrendType = computed(() => {
-  const change = reportsThisWeek.value.length - reportsLastWeek.value.length
-  if (change > 0) return 'positive'
-  if (change < 0) return 'negative'
-  return 'neutral'
-})
-
-// Determine trend type for errors (fewer is better)
-const errorsTrendType = computed(() => {
-  const change = errorsThisWeek.value - errorsLastWeek.value
-  if (change < 0) return 'positive'  // fewer errors is positive
-  if (change > 0) return 'negative'  // more errors is negative
-  return 'neutral'
-})
-
-// Determine trend type for warnings (fewer is better)
-const warningsTrendType = computed(() => {
-  const change = warningsThisWeek.value - warningsLastWeek.value
-  if (change < 0) return 'positive'  // fewer warnings is positive
-  if (change > 0) return 'negative'  // more warnings is negative
-  return 'neutral'
-})
-
-// Get array of quality checks for iteration
-const qualityChecks = computed(() => {
-  return Array.from(qualityCheckMap.value.values())
-})
-
-const handleAgentsLoaded = (count) => {
-  activeAgentsCount.value = count
-}
+const headerIcon = computed(() =>
+  viewMode.value === 'site' ? 'bi bi-database-fill-gear' : 'bi bi-person-fill'
+)
 
 const loadReportsData = async () => {
   try {
@@ -246,59 +112,74 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Stats Row */
-.stats-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
+/* View Toggle */
+
+.view-toggle {
+  display: inline-flex;
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 4px;
+  gap: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-/* Main Content Grid */
-.content-grid {
-  display: grid;
-  gap: 1rem;
-  grid-template-columns: 1fr;
+
+.toggle-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  border: none;
+  background: transparent;
+  color: #6c757d;
+  font-weight: 500;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
-.agents-wrapper {
-  width: 100%;
+
+.toggle-option i {
+  font-size: 1.1rem;
 }
 
-.quality-checks-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
-  align-items: start;
+.toggle-option:hover {
+  color: #495057;
+  background: rgba(102, 126, 234, 0.1);
 }
 
-.quality-checks-grid > * {
-  min-height: 150px;
+.toggle-option.active {
+  background: var(--gradient-primary);
+  color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Desktop Layout */
-@media (min-width: 992px) {
-  .content-grid {
-    grid-template-columns: 280px 1fr;
-  }
-
-  .agents-wrapper {
-    width: 280px;
-  }
-
-  .quality-checks-grid {
-    grid-template-columns: repeat(auto-fill, 480px);
-  }
-
-  .quality-checks-grid > * {
-    height: 480px;
-  }
+.toggle-label {
+  font-size: 0.9rem;
 }
 
-/* Tablet Layout */
-@media (min-width: 768px) and (max-width: 991px) {
-  .stats-row {
-    grid-template-columns: repeat(2, 1fr);
-  }
+/* View Transition Animations */
+.view-fade-enter-active,
+.view-fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.view-fade-enter-from {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.view-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+.view-fade-enter-to,
+.view-fade-leave-from {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* Mobile Layout */
@@ -308,22 +189,19 @@ onMounted(() => {
     padding-right: 0.75rem;
   }
 
-  .stats-row {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
+  .view-toggle {
+    width: 100%;
+    max-width: 350px;
   }
 
-  .content-grid {
-    gap: 0.75rem;
+  .toggle-option {
+    flex: 1;
+    justify-content: center;
+    padding: 0.5rem 0.75rem;
   }
 
-  .quality-checks-grid {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-  }
-
-  .quality-checks-grid > * {
-    min-height: auto;
+  .toggle-label {
+    font-size: 0.85rem;
   }
 }
 </style>

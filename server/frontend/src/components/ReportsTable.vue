@@ -12,6 +12,7 @@
           <thead class="table-light">
             <tr>
               <th class="ps-4">Report ID</th>
+              <th>Agent Name</th>
               <th>Timestamp</th>
               <th class="text-center">Status</th>
               <th class="text-center">Total Checks</th>
@@ -30,6 +31,12 @@
                 <div class="d-flex align-items-center">
                   <i class="bi bi-file-earmark-text text-primary me-2"></i>
                   <span class="font-monospace small text-truncate report-id">{{ report.id }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="d-flex align-items-center">
+                  <i class="bi bi-database-fill-gear text-info me-2"></i>
+                  <span class="fw-medium">{{ getAgentName(report.agentId) }}</span>
                 </div>
               </td>
               <td>
@@ -58,7 +65,7 @@
               </td>
             </tr>
             <tr v-if="reports.length === 0">
-              <td colspan="6" class="text-center text-muted py-5">
+              <td colspan="7" class="text-center text-muted py-5">
                 <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
                 <p class="mb-0">No reports available</p>
               </td>
@@ -71,6 +78,7 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { countChecksByStatus, getReportStatus, CheckStatus } from '../utils/qualityCheckUtils.js'
 
@@ -85,8 +93,23 @@ const props = defineProps({
   qualityCheckMap: {
     type: Map,
     required: true
+  },
+  agents: {
+    type: Array,
+    required: true,
+    default: () => []
   }
 })
+
+// Create a map for quick agent lookup by ID
+const agentMap = computed(() => {
+  return new Map(props.agents.map(agent => [agent.id, agent]))
+})
+
+const getAgentName = (agentId) => {
+  const agent = agentMap.value.get(agentId)
+  return agent?.name || 'Unknown Agent'
+}
 
 const navigateToReport = (reportId) => {
   router.push(`/reports/${reportId}`)

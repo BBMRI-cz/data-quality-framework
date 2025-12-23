@@ -2,6 +2,8 @@ package eu.bbmri_eric.quality.server.dataquality.domain;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -14,15 +16,16 @@ import java.util.Objects;
 @Entity
 public class QualityCheck {
   @Id private String hash;
-  @NotNull private String name;
-
-  private String description;
-
   private final LocalDateTime registeredAt = LocalDateTime.now();
-
+  @NotNull private String name;
+  private String description;
   private double warningThreshold = 0.0;
 
   private double errorThreshold = 0.0;
+
+  @ManyToOne
+  @JoinColumn(name = "category_id")
+  private Category category;
 
   /** Default constructor for JPA. */
   protected QualityCheck() {}
@@ -60,6 +63,21 @@ public class QualityCheck {
     this.description = description;
     this.warningThreshold = warningThreshold;
     this.errorThreshold = errorThreshold;
+  }
+
+  public QualityCheck(
+      String hash,
+      String name,
+      String description,
+      double warningThreshold,
+      double errorThreshold,
+      Category category) {
+    this.hash = hash;
+    this.name = name;
+    this.description = description;
+    this.warningThreshold = warningThreshold;
+    this.errorThreshold = errorThreshold;
+    this.category = category;
   }
 
   /**
@@ -150,6 +168,24 @@ public class QualityCheck {
    */
   public void setErrorThreshold(double errorThreshold) {
     this.errorThreshold = errorThreshold;
+  }
+
+  /**
+   * Gets the category this quality check belongs to.
+   *
+   * @return the category, or null if not assigned to any category
+   */
+  public Category getCategory() {
+    return category;
+  }
+
+  /**
+   * Sets the category this quality check belongs to.
+   *
+   * @param category the category to set, or null to remove category assignment
+   */
+  public void setCategory(Category category) {
+    this.category = category;
   }
 
   @Override

@@ -28,6 +28,9 @@ public class QualityCheckUpdateDTO {
   @Schema(description = "Threshold value for errors", example = "0.5")
   private double errorThreshold;
 
+  @Schema(description = "Category ID for grouping quality checks", example = "1")
+  private Long categoryId;
+
   /** Default constructor for serialization frameworks. */
   public QualityCheckUpdateDTO() {}
 
@@ -38,13 +41,19 @@ public class QualityCheckUpdateDTO {
    * @param description the description of what the check validates
    * @param warningThreshold threshold value for warnings
    * @param errorThreshold threshold value for errors
+   * @param categoryId the category ID for grouping quality checks
    */
   public QualityCheckUpdateDTO(
-      String name, String description, double warningThreshold, double errorThreshold) {
+      String name,
+      String description,
+      double warningThreshold,
+      double errorThreshold,
+      Long categoryId) {
     this.name = name;
     this.description = description;
     this.warningThreshold = warningThreshold;
     this.errorThreshold = errorThreshold;
+    this.categoryId = categoryId;
   }
 
   public String getName() {
@@ -77,5 +86,13 @@ public class QualityCheckUpdateDTO {
 
   public void setErrorThreshold(double errorThreshold) {
     this.errorThreshold = errorThreshold;
+  }
+
+  public Long getCategoryId() {
+    return categoryId;
+  }
+
+  public void setCategoryId(Long categoryId) {
+    this.categoryId = categoryId;
   }
 }

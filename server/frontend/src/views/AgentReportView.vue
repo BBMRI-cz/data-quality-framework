@@ -144,6 +144,7 @@
           <ReportsTable
             :reports="reports"
             :quality-check-map="qualityCheckMap"
+            :agents="agentArray"
             @report-selected="openReportModal"
           />
         </div>
@@ -214,6 +215,10 @@ const showDeleteModal = ref(false)
 
 const agentName = computed(() => {
   return agent.value?.name || 'Unknown Agent'
+})
+
+const agentArray = computed(() => {
+  return agent.value ? [agent.value] : []
 })
 
 // Create a map of hash -> quality check for quick lookup
