@@ -15,7 +15,7 @@
             @click="viewMode = 'site'"
             title="Site-centric view"
           >
-            <i class="bi bi-hospital"></i>
+            <i class="bi bi-database-fill-gear"></i>
             <span class="toggle-label">Sites</span>
           </button>
           <button
@@ -73,7 +73,7 @@ const headerSubtitle = computed(() =>
 )
 
 const headerIcon = computed(() =>
-  viewMode.value === 'site' ? 'bi bi-hospital-fill' : 'bi bi-person-fill'
+  viewMode.value === 'site' ? 'bi bi-database-fill-gear' : 'bi bi-person-fill'
 )
 
 const loadReportsData = async () => {

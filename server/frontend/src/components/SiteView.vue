@@ -3,9 +3,9 @@
     <!-- Stats Cards Row -->
     <div class="stats-row mb-4">
       <StatsCard
-        label="Sites Monitored"
+        label="Agents Connected"
         :value="`${agents.length}`"
-        icon="bi bi-geo-alt-fill"
+        icon="bi bi-database-fill-gear"
         iconColor="#0d6efd"
         iconBgColor="#cfe2ff"
         :tooltipText="agents.map(a => a.name).join(', ')"
@@ -18,14 +18,14 @@
         iconBgColor="#e2d9f3"
       />
       <StatsCard
-        label="Sites with Errors"
+        label="Agents with Errors"
         :value="`${sitesWithErrors}`"
         icon="bi bi-exclamation-triangle-fill"
         iconColor="#dc3545"
         iconBgColor="#f8d7da"
       />
       <StatsCard
-        label="Sites with Warnings"
+        label="Agents with Warnings"
         :value="`${sitesWithWarnings}`"
         icon="bi bi-exclamation-circle-fill"
         iconColor="#ffc107"

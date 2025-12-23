@@ -35,7 +35,7 @@
               </td>
               <td>
                 <div class="d-flex align-items-center">
-                  <i class="bi bi-building text-info me-2"></i>
+                  <i class="bi bi-database-fill-gear text-info me-2"></i>
                   <span class="fw-medium">{{ getAgentName(report.agentId) }}</span>
                 </div>
               </td>
