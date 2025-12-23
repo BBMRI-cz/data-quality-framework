@@ -11,29 +11,25 @@
         :tooltipText="agents.map(a => a.name).join(', ')"
       />
       <StatsCard
-        label="Total Reports"
-        :value="`${reports.length}`"
-        icon="bi bi-file-earmark-text-fill"
+        label="Total Quality Checks"
+        :value="`${totalChecks}`"
+        icon="bi bi-clipboard-check-fill"
         iconColor="#6f42c1"
         iconBgColor="#e2d9f3"
       />
       <StatsCard
-        label="Errors This Week"
-        :value="`${errorsThisWeek}`"
+        label="Sites with Errors"
+        :value="`${sitesWithErrors}`"
         icon="bi bi-exclamation-triangle-fill"
         iconColor="#dc3545"
         iconBgColor="#f8d7da"
-        :trendText="errorsChange"
-        :trendType="errorsTrendType"
       />
       <StatsCard
-        label="Warnings This Week"
-        :value="`${warningsThisWeek}`"
+        label="Sites with Warnings"
+        :value="`${sitesWithWarnings}`"
         icon="bi bi-exclamation-circle-fill"
         iconColor="#ffc107"
         iconBgColor="#fff3cd"
-        :trendText="warningsChange"
-        :trendType="warningsTrendType"
       />
     </div>
 
@@ -47,15 +43,14 @@
 
     <!-- Main Content Grid -->
     <div class="content-grid">
-      <!-- Quality Checks Grid -->
-      <div class="quality-checks-grid">
+      <!-- Quality Checks List (one per row) -->
+      <div class="quality-checks-list">
         <QualityCheckCard
           v-for="check in filteredQualityChecks"
           :key="check.hash"
           :quality-check="check"
           :reports="reports"
           :agents="agents"
-          :show-numbers="showNumbers"
         />
       </div>
     </div>
@@ -67,7 +62,6 @@ import { computed, ref } from 'vue'
 import StatsCard from './StatsCard.vue'
 import QualityCheckCard from './QualityCheckCard.vue'
 import CategoryFilter from './CategoryFilter.vue'
-import { getReportStatus, CheckStatus } from '../utils/qualityCheckUtils.js'
 
 const props = defineProps({
   reports: {
@@ -81,10 +75,6 @@ const props = defineProps({
   agents: {
     type: Array,
     required: true
-  },
-  showNumbers: {
-    type: Boolean,
-    default: false
   }
 })
 
@@ -103,92 +93,60 @@ const categories = computed(() => {
   return Array.from(cats).sort()
 })
 
-// Get reports from this week (last 7 days)
-const reportsThisWeek = computed(() => {
-  const oneWeekAgo = new Date()
-  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
+// Total number of quality checks
+const totalChecks = computed(() => {
+  return props.qualityCheckMap.size
+})
 
-  return props.reports.filter(report => {
-    const reportDate = new Date(report.timestamp)
-    return reportDate >= oneWeekAgo
+// Calculate sites with at least one error
+const sitesWithErrors = computed(() => {
+  const sitesWithErrorsSet = new Set()
+
+  props.reports.forEach(report => {
+    report.results?.forEach(result => {
+      const qualityCheck = props.qualityCheckMap.get(result.hash)
+      if (qualityCheck) {
+        const raw = result.result
+        const fraction = typeof raw === 'number' ? (raw > 1 ? raw / 100 : raw) : 0
+        const percentage = fraction * 100
+
+        if (percentage > qualityCheck.errorThreshold) {
+          const agentId = report.agentId || report.agent?.id
+          if (agentId) {
+            sitesWithErrorsSet.add(agentId)
+          }
+        }
+      }
+    })
   })
+
+  return sitesWithErrorsSet.size
 })
 
-// Get reports from the previous week (8-14 days ago)
-const reportsLastWeek = computed(() => {
-  const twoWeeksAgo = new Date()
-  twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14)
-  const oneWeekAgo = new Date()
-  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
+// Calculate sites with at least one warning
+const sitesWithWarnings = computed(() => {
+  const sitesWithWarningsSet = new Set()
 
-  return props.reports.filter(report => {
-    const reportDate = new Date(report.timestamp)
-    return reportDate >= twoWeeksAgo && reportDate < oneWeekAgo
+  props.reports.forEach(report => {
+    report.results?.forEach(result => {
+      const qualityCheck = props.qualityCheckMap.get(result.hash)
+      if (qualityCheck) {
+        const raw = result.result
+        const fraction = typeof raw === 'number' ? (raw > 1 ? raw / 100 : raw) : 0
+        const percentage = fraction * 100
+
+        // Check if it's in warning range (above warning threshold but not error)
+        if (percentage > qualityCheck.warningThreshold && percentage <= qualityCheck.errorThreshold) {
+          const agentId = report.agentId || report.agent?.id
+          if (agentId) {
+            sitesWithWarningsSet.add(agentId)
+          }
+        }
+      }
+    })
   })
-})
 
-// Count errors from this week
-const errorsThisWeek = computed(() => {
-  return reportsThisWeek.value.filter(report => {
-    const status = getReportStatus(report, props.qualityCheckMap)
-    return status === CheckStatus.FAILED
-  }).length
-})
-
-// Count errors from last week
-const errorsLastWeek = computed(() => {
-  return reportsLastWeek.value.filter(report => {
-    const status = getReportStatus(report, props.qualityCheckMap)
-    return status === CheckStatus.FAILED
-  }).length
-})
-
-// Count warnings from this week
-const warningsThisWeek = computed(() => {
-  return reportsThisWeek.value.filter(report => {
-    const status = getReportStatus(report, props.qualityCheckMap)
-    return status === CheckStatus.WARNING
-  }).length
-})
-
-// Count warnings from last week
-const warningsLastWeek = computed(() => {
-  return reportsLastWeek.value.filter(report => {
-    const status = getReportStatus(report, props.qualityCheckMap)
-    return status === CheckStatus.WARNING
-  }).length
-})
-
-// Calculate change in errors from last week
-const errorsChange = computed(() => {
-  const change = errorsThisWeek.value - errorsLastWeek.value
-  if (change === 0) return 'No change from last week'
-  const direction = change > 0 ? '+' : ''
-  return `${direction}${change} from last week`
-})
-
-// Calculate change in warnings from last week
-const warningsChange = computed(() => {
-  const change = warningsThisWeek.value - warningsLastWeek.value
-  if (change === 0) return 'No change from last week'
-  const direction = change > 0 ? '+' : ''
-  return `${direction}${change} from last week`
-})
-
-// Determine trend type for errors (fewer is better)
-const errorsTrendType = computed(() => {
-  const change = errorsThisWeek.value - errorsLastWeek.value
-  if (change < 0) return 'positive'  // fewer errors is positive
-  if (change > 0) return 'negative'  // more errors is negative
-  return 'neutral'
-})
-
-// Determine trend type for warnings (fewer is better)
-const warningsTrendType = computed(() => {
-  const change = warningsThisWeek.value - warningsLastWeek.value
-  if (change < 0) return 'positive'  // fewer warnings is positive
-  if (change > 0) return 'negative'  // more warnings is negative
-  return 'neutral'
+  return sitesWithWarningsSet.size
 })
 
 // Get array of quality checks for iteration
@@ -222,27 +180,10 @@ const filteredQualityChecks = computed(() => {
   grid-template-columns: 1fr;
 }
 
-.quality-checks-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1rem;
-  align-items: start;
-}
-
-.quality-checks-grid > * {
-  min-height: 150px;
-}
-
-/* Desktop Layout */
-@media (min-width: 992px) {
-  .quality-checks-grid {
-    grid-template-columns: repeat(3, 1fr);
-    max-width: 100%;
-  }
-
-  .quality-checks-grid > * {
-    height: 500px;
-  }
+.quality-checks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 /* Tablet Layout */
@@ -263,13 +204,8 @@ const filteredQualityChecks = computed(() => {
     gap: 0.75rem;
   }
 
-  .quality-checks-grid {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-  }
-
-  .quality-checks-grid > * {
-    min-height: auto;
+  .quality-checks-list {
+    gap: 0;
   }
 }
 </style>

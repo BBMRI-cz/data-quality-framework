@@ -8,44 +8,24 @@
       :hide-subtitle-on-mobile="false"
     >
       <template #toggle>
-        <div class="d-flex flex-column align-items-end gap-2">
-          <!-- View Toggle -->
-          <div class="view-toggle">
-            <button
-              :class="['toggle-option', { active: viewMode === 'site' }]"
-              @click="viewMode = 'site'"
-              title="Site-centric view"
-            >
-              <i class="bi bi-hospital"></i>
-              <span class="toggle-label">Sites</span>
-            </button>
-            <button
-              :class="['toggle-option', { active: viewMode === 'patient' }]"
-              @click="viewMode = 'patient'"
-              title="Patient-centric view"
-            >
-              <i class="bi bi-person"></i>
-              <span class="toggle-label">Patients</span>
-            </button>
-          </div>
-
-          <!-- Show Numbers Toggle -->
-          <div class="view-toggle view-toggle-sm">
-            <button
-              :class="['toggle-option', { active: !showNumbers }]"
-              @click="showNumbers = false"
-              title="Show percentages"
-            >
-              <span class="toggle-label">%</span>
-            </button>
-            <button
-              :class="['toggle-option', { active: showNumbers }]"
-              @click="showNumbers = true"
-              title="Show counts"
-            >
-              <span class="toggle-label">#</span>
-            </button>
-          </div>
+        <!-- View Toggle -->
+        <div class="view-toggle">
+          <button
+            :class="['toggle-option', { active: viewMode === 'site' }]"
+            @click="viewMode = 'site'"
+            title="Site-centric view"
+          >
+            <i class="bi bi-hospital"></i>
+            <span class="toggle-label">Sites</span>
+          </button>
+          <button
+            :class="['toggle-option', { active: viewMode === 'patient' }]"
+            @click="viewMode = 'patient'"
+            title="Patient-centric view"
+          >
+            <i class="bi bi-person"></i>
+            <span class="toggle-label">Patients</span>
+          </button>
         </div>
       </template>
     </PageHeader>
@@ -58,7 +38,6 @@
         :reports="reports"
         :quality-check-map="qualityCheckMap"
         :agents="agents"
-        :show-numbers="showNumbers"
       />
       <PatientView
         v-else-if="viewMode === 'patient'"
@@ -82,7 +61,6 @@ const reports = ref([])
 const qualityCheckMap = ref(new Map())
 const agents = ref([])
 const viewMode = ref('site') // 'site' or 'patient'
-const showNumbers = ref(false)
 
 const headerTitle = computed(() =>
   viewMode.value === 'site' ? 'Site Performance Overview' : 'Patient Data Overview'
@@ -145,11 +123,6 @@ onMounted(() => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-.view-toggle-sm {
-  border-radius: 8px;
-  padding: 3px;
-  gap: 2px;
-}
 
 .toggle-option {
   display: flex;
@@ -167,13 +140,6 @@ onMounted(() => {
   white-space: nowrap;
 }
 
-.view-toggle-sm .toggle-option {
-  padding: 0.25rem 0.75rem;
-  font-size: 0.85rem;
-  border-radius: 6px;
-  min-width: 40px;
-  justify-content: center;
-}
 
 .toggle-option i {
   font-size: 1.1rem;
