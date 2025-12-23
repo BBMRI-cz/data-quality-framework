@@ -59,6 +59,7 @@
           v-else
           :reports="reports"
           :quality-check-map="qualityCheckMap"
+          :agents="agents"
         />
       </div>
     </div>
@@ -74,6 +75,7 @@ import { getReportStatus, CheckStatus } from '../utils/qualityCheckUtils.js'
 
 const reports = ref([])
 const qualityCheckMap = ref(new Map())
+const agents = ref([])
 const loading = ref(true)
 const error = ref(null)
 
@@ -108,10 +110,11 @@ const fetchData = async () => {
     loading.value = true
     error.value = null
 
-    // Fetch quality checks and reports in parallel
-    const [checksData, reportsData] = await Promise.all([
+    // Fetch quality checks, reports, and agents in parallel
+    const [checksData, reportsData, agentsData] = await Promise.all([
       apiService.getQualityChecks(),
-      apiService.getReports()
+      apiService.getReports(),
+      apiService.getAgents()
     ])
 
     // Handle HAL format response for quality checks
@@ -119,6 +122,9 @@ const fetchData = async () => {
 
     // Handle HAL format response for reports
     const reportsArray = reportsData._embedded?.reports || (Array.isArray(reportsData) ? reportsData : [])
+
+    // Handle HAL format response for agents
+    agents.value = agentsData._embedded?.agents || (Array.isArray(agentsData) ? agentsData : [])
 
     // Convert quality checks array to Map for quick lookup
     qualityCheckMap.value = new Map(checks.map(check => [check.hash, check]))
