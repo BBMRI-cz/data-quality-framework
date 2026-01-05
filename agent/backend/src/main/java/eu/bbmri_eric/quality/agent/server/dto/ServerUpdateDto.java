@@ -3,8 +3,11 @@ package eu.bbmri_eric.quality.agent.server.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.web.util.HtmlUtils;
 
 /**
  * Data Transfer Object for updating an existing Server.
@@ -13,7 +16,8 @@ import lombok.Setter;
  * fields are optional to allow partial updates.
  */
 @Getter
-@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Schema(description = "Data for updating an existing server (all fields optional)")
 public class ServerUpdateDto {
 
@@ -33,6 +37,7 @@ public class ServerUpdateDto {
   /** Client ID used for authentication with the server. */
   @Size(max = 255, message = "Client ID must not exceed 255 characters")
   @Schema(description = "Client ID used for authentication", example = "client-12345")
+  @Setter
   private String clientId;
 
   /** Client secret used for authentication with the server. */
@@ -40,23 +45,24 @@ public class ServerUpdateDto {
   @Schema(
       description = "Client secret used for authentication (Base64 encoded)",
       example = "Y2xpZW50LXNlY3JldA==")
+  @Setter
   private String clientSecret;
 
-  /** Default constructor. */
-  public ServerUpdateDto() {}
+  /**
+   * Sets the URL.
+   *
+   * @param url the URL
+   */
+  public void setUrl(String url) {
+    this.url = url != null ? url.trim() : null;
+  }
 
   /**
-   * Constructor with all fields.
+   * Sets the name.
    *
-   * @param url the server URL
-   * @param name the server name
-   * @param clientId the client ID
-   * @param clientSecret the client secret
+   * @param name the name
    */
-  public ServerUpdateDto(String url, String name, String clientId, String clientSecret) {
-    this.url = url;
-    this.name = name;
-    this.clientId = clientId;
-    this.clientSecret = clientSecret;
+  public void setName(String name) {
+    this.name = name != null ? HtmlUtils.htmlEscape(name.trim()) : null;
   }
 }

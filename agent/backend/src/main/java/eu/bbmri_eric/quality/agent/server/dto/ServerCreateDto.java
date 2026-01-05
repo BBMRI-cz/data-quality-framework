@@ -4,7 +4,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.springframework.web.util.HtmlUtils;
 
 /**
@@ -13,6 +15,8 @@ import org.springframework.web.util.HtmlUtils;
  * <p>Contains the essential fields required to create a new server entity.
  */
 @Getter
+@NoArgsConstructor
+@AllArgsConstructor
 @Schema(description = "Data required to create a new server")
 public class ServerCreateDto {
 
@@ -34,20 +38,6 @@ public class ServerCreateDto {
       example = "Production Central Server",
       requiredMode = Schema.RequiredMode.REQUIRED)
   private String name;
-
-  /** Default constructor. */
-  public ServerCreateDto() {}
-
-  /**
-   * Constructor with all fields.
-   *
-   * @param url the server URL
-   * @param name the server name
-   */
-  public ServerCreateDto(String url, String name) {
-    this.url = url;
-    this.name = name;
-  }
 
   /**
    * Sets the URL.

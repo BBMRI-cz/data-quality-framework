@@ -2,7 +2,9 @@ package eu.bbmri_eric.quality.agent.server.dto;
 
 import eu.bbmri_eric.quality.agent.server.domain.ServerConnectionStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.hateoas.server.core.Relation;
 
@@ -16,6 +18,8 @@ import org.springframework.hateoas.server.core.Relation;
 @Relation(itemRelation = "server", collectionRelation = "servers")
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class ServerDto {
 
   /** Unique identifier for the server. */
@@ -34,21 +38,4 @@ public class ServerDto {
   @Schema(description = "Current status of the server connection", example = "ACTIVE")
   private ServerConnectionStatus status;
 
-  /** Default constructor. */
-  public ServerDto() {}
-
-  /**
-   * Constructor with all fields.
-   *
-   * @param id the server ID
-   * @param url the server URL
-   * @param name the server name
-   * @param status the server status
-   */
-  public ServerDto(String id, String url, String name, ServerConnectionStatus status) {
-    this.id = id;
-    this.url = url;
-    this.name = name;
-    this.status = status;
-  }
 }

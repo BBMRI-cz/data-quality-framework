@@ -5,10 +5,12 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Setter
 @Getter
+@NoArgsConstructor
 @Schema(description = "FHIR server configuration settings")
 public class SettingsDTO {
 
@@ -43,11 +45,9 @@ public class SettingsDTO {
       accessMode = Schema.AccessMode.READ_ONLY)
   private String agentId;
 
-  public SettingsDTO() {}
-
   public SettingsDTO(String fhirUrl, String fhirUsername, String fhirPassword) {
-    this.fhirUrl = fhirUrl;
-    this.fhirUsername = fhirUsername;
-    this.fhirPassword = fhirPassword;
+      this.fhirUrl = fhirUrl;
+      this.fhirUsername = fhirUsername;
+      this.fhirPassword = fhirPassword;
   }
 }

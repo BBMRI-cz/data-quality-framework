@@ -2,12 +2,14 @@ package eu.bbmri_eric.quality.agent.user.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Pattern;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
 @Schema(description = "Request object for changing user password")
 @Getter
 @Setter
+@AllArgsConstructor
 public class PasswordChangeRequest {
 
   @Schema(
@@ -35,12 +37,6 @@ public class PasswordChangeRequest {
       example = "newPassword123!",
       requiredMode = Schema.RequiredMode.REQUIRED)
   private String confirmPassword;
-
-  public PasswordChangeRequest(String currentPassword, String newPassword, String confirmPassword) {
-    this.currentPassword = currentPassword;
-    this.newPassword = newPassword;
-    this.confirmPassword = confirmPassword;
-  }
 
   public void validate() {
     if (!newPassword.equals(confirmPassword)) {

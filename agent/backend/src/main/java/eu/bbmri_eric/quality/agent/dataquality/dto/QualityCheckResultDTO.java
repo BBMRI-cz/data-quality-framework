@@ -6,9 +6,12 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.util.Objects;
+
+import lombok.Getter;
 import org.springframework.hateoas.server.core.Relation;
 
 /** DTO for quality check result data. */
+@Getter
 @Schema(name = "Quality Check Result", description = "Result of a quality check execution")
 @Relation(itemRelation = "result", collectionRelation = "results")
 public final class QualityCheckResultDTO {
@@ -51,19 +54,7 @@ public final class QualityCheckResultDTO {
     this.result = result;
   }
 
-  public String getHash() {
-    return hash;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public Double getResult() {
-    return result;
-  }
-
-  @Override
+    @Override
   public boolean equals(Object obj) {
     if (obj == this) return true;
     if (obj == null || obj.getClass() != this.getClass()) return false;

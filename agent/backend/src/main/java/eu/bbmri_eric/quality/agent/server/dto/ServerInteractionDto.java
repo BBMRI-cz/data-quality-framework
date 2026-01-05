@@ -4,7 +4,9 @@ import eu.bbmri_eric.quality.agent.server.domain.InteractionType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.hateoas.server.core.Relation;
 
@@ -15,6 +17,8 @@ import org.springframework.hateoas.server.core.Relation;
  */
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Schema(description = "Server interaction log entry")
 @Relation(itemRelation = "server-interaction", collectionRelation = "server-interactions")
 public class ServerInteractionDto {
@@ -38,22 +42,4 @@ public class ServerInteractionDto {
   @Schema(description = "Timestamp when the interaction occurred", example = "2025-10-21T14:30:00")
   private LocalDateTime timestamp;
 
-  /** Default constructor. */
-  public ServerInteractionDto() {}
-
-  /**
-   * Constructor with all fields.
-   *
-   * @param id the interaction ID
-   * @param type the interaction type
-   * @param description the interaction description
-   * @param timestamp the interaction timestamp
-   */
-  public ServerInteractionDto(
-      Long id, InteractionType type, String description, LocalDateTime timestamp) {
-    this.id = id;
-    this.type = type;
-    this.description = description;
-    this.timestamp = timestamp;
-  }
 }
