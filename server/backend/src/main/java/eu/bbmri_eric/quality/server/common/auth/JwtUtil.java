@@ -116,13 +116,11 @@ public class JwtUtil {
       String payloadJson = new String(Base64.getUrlDecoder().decode(parts[1]));
       JsonNode payloadNode = OBJECT_MAPPER.readTree(payloadJson);
 
-      if (!payloadNode.has("iss")) {
-        throw new IllegalArgumentException("JWT token missing 'iss' (issuer) claim");
-      }
+      String issuer =
+          payloadNode.has("iss") ? payloadNode.get("iss").asText() : null;
 
-      String issuer = payloadNode.get("iss").asText();
       if (issuer == null || issuer.isBlank()) {
-        throw new IllegalArgumentException("JWT token has empty 'iss' (issuer) claim");
+        throw new IllegalArgumentException("JWT token missing or empty 'iss' (issuer) claim");
       }
 
       logger.debug("Extracted issuer from token: '{}'", issuer);

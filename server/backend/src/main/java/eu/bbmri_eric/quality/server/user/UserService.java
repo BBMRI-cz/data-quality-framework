@@ -1,17 +1,18 @@
 package eu.bbmri_eric.quality.server.user;
 
-import java.util.Optional;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 public interface UserService {
   UserDTO createUser(UserCreateDTO userCreateDTO);
 
   /**
-   * Find a user by subject ID,
+   * Find a user by subject ID.
    *
    * @param subjectId the OIDC subject ID
-   * @return the found or created user
+   * @return the found user
+   * @throws UsernameNotFoundException if user is not found
    */
-  Optional<UserDTO> findBySubjectId(String subjectId);
+  UserDTO findBySubjectId(String subjectId);
 
   UserDTO createBySubjectId(String subjectId, String username);
 

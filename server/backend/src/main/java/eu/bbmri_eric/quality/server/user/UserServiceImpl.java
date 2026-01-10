@@ -3,7 +3,6 @@ package eu.bbmri_eric.quality.server.user;
 import jakarta.transaction.Transactional;
 import java.security.SecureRandom;
 import java.util.Objects;
-import java.util.Optional;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -45,10 +44,12 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
-  public Optional<UserDTO> findBySubjectId(String subjectId) {
+  public UserDTO findBySubjectId(String subjectId) {
     return userRepository
         .findBySubjectId(subjectId)
-        .map(user -> modelMapper.map(user, UserDTO.class));
+        .map(user -> modelMapper.map(user, UserDTO.class))
+        .orElseThrow(
+            () -> new UsernameNotFoundException("User not found with subject ID: " + subjectId));
   }
 
   @Override
