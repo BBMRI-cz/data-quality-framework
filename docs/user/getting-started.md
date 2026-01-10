@@ -121,50 +121,6 @@ In a real-world scenario, you would have multiple Data Quality Agents running at
 same central Data Quality Server. This enables federated data quality assessment across your network.
 :::
 
-## OIDC Authentication (Optional)
-
-For testing OIDC authentication locally, the repository includes a mock OIDC server pre-configured with test users and clients.
-
-### Step 8 (Optional): Start the OIDC Mock Server
-
-The easiest way to run all components including the OIDC mock server is to use the provided `compose.yaml` file:
-
-```shell
-# From the repository root
-docker compose up -d
-```
-
-This will start:
-- **Data Quality Agent** on port 8081
-- **Data Quality Server** on port 8082  
-- **OIDC Mock Server** on port 4011
-
-::: info About the OIDC Mock Server
-The OIDC mock server is based on [oidc-server-mock](https://github.com/Soluto/oidc-server-mock) and provides a fully functional OpenID Connect provider for local development and testing. It comes pre-configured with test users and is automatically discovered by the Data Quality Server.
-:::
-
-### Step 9 (Optional): Verify OIDC Configuration
-
-The mock server is automatically configured with test users and clients. You can verify it's running:
-
-```shell
-# Check if the OIDC discovery endpoint is accessible
-curl http://localhost:4011/.well-known/openid-configuration
-```
-
-### Step 10 (Optional): Test OIDC Authentication
-
-The mock server includes pre-configured test user:
-
-**Researcher Account:**
-- **Username**: `Researcher`
-- **Password**: `researcher`
-- **Subject ID**: `1000@bbmri.eu`
-
-::: warning Local Testing Only
-The OIDC mock server is intended for **local development and testing only**. Never use it in production environments. See the [Deployment Guide](/user/deployment#step-7-configure-oidc-authentication-optional) for production OIDC configuration.
-:::
-
 ## Next Steps
 
 Once you have completed the setup:
