@@ -65,7 +65,7 @@ class CustomAuthenticationManagerResolver
             e.getMessage());
       }
     } else {
-      logger.warn("OIDC authentication disabled (no issuer URI configured)");
+      logger.info("OIDC authentication disabled (no issuer URI configured)");
     }
   }
 

@@ -171,6 +171,8 @@ class JwtAuthenticationConverter implements Converter<Jwt, AbstractAuthenticatio
     String clientId = jwt.getClaimAsString("client_id");
     String scope = jwt.getClaimAsString("scope");
     boolean isClientCredentials = clientId != null && scope != null && !scope.contains("openid");
-    return isClientCredentials ? OAuth2FlowType.CLIENT_CREDENTIALS : OAuth2FlowType.AUTHORIZATION_CODE;
+    return isClientCredentials
+        ? OAuth2FlowType.CLIENT_CREDENTIALS
+        : OAuth2FlowType.AUTHORIZATION_CODE;
   }
 }

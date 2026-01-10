@@ -108,7 +108,8 @@ public class JwtUtil {
   public String extractIssuer(String token) {
     String[] parts = token.split("\\.");
     if (parts.length != 3) {
-      throw new IllegalArgumentException("Invalid JWT structure: expected 3 parts, got " + parts.length);
+      throw new IllegalArgumentException(
+          "Invalid JWT structure: expected 3 parts, got " + parts.length);
     }
 
     String payloadJson = new String(Base64.getUrlDecoder().decode(parts[1]));

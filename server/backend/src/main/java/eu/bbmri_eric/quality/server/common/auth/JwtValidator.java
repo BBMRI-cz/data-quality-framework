@@ -12,8 +12,8 @@ import org.springframework.security.oauth2.jwt.JwtTimestampValidator;
 import org.springframework.stereotype.Component;
 
 /**
- * Validates JWT tokens by checking timestamps and required claims. Supports both authorization
- * code flow (with 'sub') and client-credentials flow (with 'client_id').
+ * Validates JWT tokens by checking timestamps and required claims. Supports both authorization code
+ * flow (with 'sub') and client-credentials flow (with 'client_id').
  */
 @Component
 class JwtValidator {
@@ -65,4 +65,3 @@ class JwtValidator {
     };
   }
 }
-
