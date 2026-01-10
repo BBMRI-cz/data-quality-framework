@@ -106,32 +106,27 @@ public class JwtUtil {
    * @throws IllegalArgumentException if token is malformed or issuer claim is missing
    */
   public String extractIssuer(String token) {
+    String[] parts = token.split("\\.");
+    if (parts.length != 3) {
+      throw new IllegalArgumentException("Invalid JWT structure: expected 3 parts, got " + parts.length);
+    }
+
+    String payloadJson = new String(Base64.getUrlDecoder().decode(parts[1]));
+    JsonNode payloadNode;
     try {
-      String[] parts = token.split("\\.");
-      if (parts.length != 3) {
-        throw new IllegalArgumentException(
-            "Invalid JWT structure: expected 3 parts, got " + parts.length);
-      }
-
-      String payloadJson = new String(Base64.getUrlDecoder().decode(parts[1]));
-      JsonNode payloadNode = OBJECT_MAPPER.readTree(payloadJson);
-
-      String issuer =
-          payloadNode.has("iss") ? payloadNode.get("iss").asText() : null;
-
-      if (issuer == null || issuer.isBlank()) {
-        throw new IllegalArgumentException("JWT token missing or empty 'iss' (issuer) claim");
-      }
-
-      logger.debug("Extracted issuer from token: '{}'", issuer);
-      return issuer;
-    } catch (IllegalArgumentException e) {
-      logger.warn("Invalid token format: {}", e.getMessage());
-      throw e;
+      payloadNode = OBJECT_MAPPER.readTree(payloadJson);
     } catch (Exception e) {
-      logger.warn("Failed to extract issuer from token: {}", e.getMessage());
       throw new IllegalArgumentException("Failed to parse JWT token: " + e.getMessage(), e);
     }
+
+    String issuer = payloadNode.has("iss") ? payloadNode.get("iss").asText() : null;
+
+    if (issuer == null || issuer.isBlank()) {
+      throw new IllegalArgumentException("JWT token missing or empty 'iss' (issuer) claim");
+    }
+
+    logger.debug("Extracted issuer from token: '{}'", issuer);
+    return issuer;
   }
 
   /**
