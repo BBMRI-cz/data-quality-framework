@@ -43,6 +43,14 @@ class JwtAuthenticationConverter implements Converter<Jwt, AbstractAuthenticatio
   }
 
   /**
+   * Internal record to hold identity information extracted from JWT.
+   *
+   * @param identityId the unique identifier (sub for users, client_id for clients)
+   * @param username the display name or identifier to use
+   */
+  private record TokenIdentity(String identityId, String username) {}
+
+  /**
    * Converts the given Jwt into a JwtAuthenticationToken after validation and user retrieval.
    * Supports both authorization code flow (user authentication) and client-credentials flow
    * (service/client authentication).
@@ -57,45 +65,71 @@ class JwtAuthenticationConverter implements Converter<Jwt, AbstractAuthenticatio
 
     jwtValidator.validate(jwt);
 
-    record TokenIdentity(String identityId, String username) {}
-
-    OAuth2FlowType flowType = determineFlowType(jwt);
-    TokenIdentity identity =
-        switch (flowType) {
-          case CLIENT_CREDENTIALS -> {
-            String clientId = jwt.getClaimAsString("client_id");
-            logger.debug("Processing client-credentials token for client: {}", clientId);
-            yield new TokenIdentity(clientId, clientId);
-          }
-          case AUTHORIZATION_CODE -> {
-            String subjectId = jwt.getSubject();
-            if (subjectId == null || subjectId.isBlank()) {
-              throw new IllegalArgumentException(
-                  "JWT from authorization code flow must contain 'sub' claim");
-            }
-            String userName = extractUsername(jwt);
-            logger.debug(
-                "Processing authorization code token for user: {} (sub: {})",
-                userName,
-                subjectId);
-            yield new TokenIdentity(subjectId, userName);
-          }
-        };
-
-    String identityId = identity.identityId();
-    String username = identity.username();
-
-    UserDTO user;
-    try {
-      user = userService.findBySubjectId(identityId);
-    } catch (UsernameNotFoundException e) {
-      logger.debug("User not found for subject ID: {}, creating new user", identityId);
-      user = userService.createBySubjectId(identityId, username);
-    }
-
+    TokenIdentity identity = extractIdentity(jwt);
+    UserDTO user = findOrCreateUser(identity);
     Set<GrantedAuthority> authorities = extractAuthorities(user);
 
-    return new JwtAuthenticationToken(jwt, authorities, username);
+    return new JwtAuthenticationToken(jwt, authorities, identity.username());
+  }
+
+  /**
+   * Extracts identity information from JWT based on the OAuth2 flow type.
+   *
+   * @param jwt the JWT token
+   * @return TokenIdentity containing identityId and username
+   * @throws IllegalArgumentException if required claims are missing
+   */
+  private TokenIdentity extractIdentity(Jwt jwt) {
+    OAuth2FlowType flowType = determineFlowType(jwt);
+    return switch (flowType) {
+      case CLIENT_CREDENTIALS -> extractClientIdentity(jwt);
+      case AUTHORIZATION_CODE -> extractUserIdentity(jwt);
+    };
+  }
+
+  /**
+   * Extracts identity for client-credentials flow.
+   *
+   * @param jwt the JWT token
+   * @return TokenIdentity with client_id as both identityId and username
+   */
+  private TokenIdentity extractClientIdentity(Jwt jwt) {
+    String clientId = jwt.getClaimAsString("client_id");
+    logger.debug("Processing client-credentials token for client: {}", clientId);
+    return new TokenIdentity(clientId, clientId);
+  }
+
+  /**
+   * Extracts identity for authorization code flow.
+   *
+   * @param jwt the JWT token
+   * @return TokenIdentity with sub as identityId and extracted username
+   * @throws IllegalArgumentException if sub claim is missing or blank
+   */
+  private TokenIdentity extractUserIdentity(Jwt jwt) {
+    String subjectId = jwt.getSubject();
+    if (subjectId == null || subjectId.isBlank()) {
+      throw new IllegalArgumentException(
+          "JWT from authorization code flow must contain 'sub' claim");
+    }
+    String userName = extractUsername(jwt);
+    logger.debug("Processing authorization code token for user: {} (sub: {})", userName, subjectId);
+    return new TokenIdentity(subjectId, userName);
+  }
+
+  /**
+   * Finds an existing user by subject ID or creates a new one if not found.
+   *
+   * @param identity the token identity containing subject ID and username
+   * @return UserDTO representing the user
+   */
+  private UserDTO findOrCreateUser(TokenIdentity identity) {
+    try {
+      return userService.findBySubjectId(identity.identityId());
+    } catch (UsernameNotFoundException e) {
+      logger.debug("User not found for subject ID: {}, creating new user", identity.identityId());
+      return userService.createBySubjectId(identity.identityId(), identity.username());
+    }
   }
 
   /**
