@@ -41,6 +41,13 @@
             icon-bg-color="#e7e7e7"
           />
           <StatsCard
+            :label="'Received Date'"
+            :value="formatTimestamp(report.timestamp)"
+            icon="bi bi-clock-history"
+            icon-color="#0dcaf0"
+            icon-bg-color="#cff4fc"
+          />
+          <StatsCard
             :label="'Passed'"
             :value="countPassed()"
             icon="bi bi-check-circle"
@@ -76,16 +83,24 @@
           </small>
         </AppCallout>
 
+        <!-- Category Filter -->
+        <div class="mb-4">
+          <CategoryFilter
+            :categories="categories"
+            v-model="selectedCategory"
+          />
+        </div>
+
         <!-- Results Section -->
         <div class="card border-0 shadow-sm">
           <div class="card-body">
-            <div v-if="!report.results || report.results.length === 0" class="text-center py-4 text-muted">
+            <div v-if="filteredResults.length === 0" class="text-center py-4 text-muted">
               <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
               <p class="mb-0">No results available</p>
             </div>
             <div v-else class="results-container">
               <div
-                v-for="result in report.results"
+                v-for="result in filteredResults"
                 :key="getCheckIdKey(result)"
                 :id="getCheckIdKey(result)"
                 :class="['result-card', 'card', 'mb-3', getResultClass(result), 'cursor-pointer']"
@@ -121,11 +136,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, nextTick, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '../components/PageHeader.vue'
 import StatsCard from '../components/StatsCard.vue'
 import AppCallout from '../components/AppCallout.vue'
+import CategoryFilter from '../components/CategoryFilter.vue'
 import { apiService } from '../services/apiService.js'
 import { getCheckStatus, CheckStatus } from '../utils/qualityCheckUtils.js'
 
@@ -136,6 +152,33 @@ const loading = ref(true)
 const error = ref(null)
 const report = ref(null)
 const qualityCheckMap = ref(new Map())
+const selectedCategory = ref(null)
+
+const categories = computed(() => {
+  const cats = new Set()
+  qualityCheckMap.value.forEach(check => {
+    if (check.category && check.category.name) {
+      cats.add(check.category.name)
+    } else {
+      cats.add('No Category')
+    }
+  })
+  return Array.from(cats).sort()
+})
+
+const filteredResults = computed(() => {
+  if (!report.value?.results) return []
+
+  if (!selectedCategory.value) {
+    return report.value.results
+  }
+
+  return report.value.results.filter(result => {
+    const check = qualityCheckMap.value.get(result.hash)
+    const categoryName = check?.category?.name || 'No Category'
+    return categoryName === selectedCategory.value
+  })
+})
 
 const goBack = () => {
   router.push('/reports')
@@ -161,8 +204,7 @@ function getCheckDescription(result) {
 }
 
 const countErrors = () => {
-  if (!report.value?.results) return 0
-  return report.value.results.filter(result => {
+  return filteredResults.value.filter(result => {
     const check = qualityCheckMap.value.get(result.hash)
     if (!check) return false
     return getCheckStatus(result, check) === CheckStatus.FAILED
@@ -170,8 +212,7 @@ const countErrors = () => {
 }
 
 const countWarnings = () => {
-  if (!report.value?.results) return 0
-  return report.value.results.filter(result => {
+  return filteredResults.value.filter(result => {
     const check = qualityCheckMap.value.get(result.hash)
     if (!check) return false
     return getCheckStatus(result, check) === CheckStatus.WARNING
@@ -179,8 +220,7 @@ const countWarnings = () => {
 }
 
 const countPassed = () => {
-  if (!report.value?.results) return 0
-  return report.value.results.filter(result => {
+  return filteredResults.value.filter(result => {
     const check = qualityCheckMap.value.get(result.hash)
     if (!check) return false
     return getCheckStatus(result, check) === CheckStatus.PASSED
@@ -211,6 +251,43 @@ function getThresholds(result) {
   return {
     warning: check.warningThreshold,
     error: check.errorThreshold
+  }
+}
+
+function formatTimestamp(timestamp) {
+  if (!timestamp) return 'N/A'
+
+  try {
+    const date = new Date(timestamp)
+    const now = new Date()
+    const diffMs = now - date
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+
+    // If less than 1 hour ago, show "X minutes ago"
+    if (diffMins < 60) {
+      return diffMins <= 1 ? 'Just now' : `${diffMins} min ago`
+    }
+
+    // If less than 24 hours ago, show "X hours ago"
+    if (diffHours < 24) {
+      return diffHours === 1 ? '1 hour ago' : `${diffHours} hours ago`
+    }
+
+    // If less than 7 days ago, show "X days ago"
+    if (diffDays < 7) {
+      return diffDays === 1 ? '1 day ago' : `${diffDays} days ago`
+    }
+
+    // Otherwise show formatted date
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+    })
+  } catch (err) {
+    return 'Invalid date'
   }
 }
 
