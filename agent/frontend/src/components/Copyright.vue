@@ -1,7 +1,7 @@
 <template>
   <div class="copyright">
     <p class="mb-0">
-      Developed by BBMRI-ERIC<sup>®</sup> under
+      Developed by BBMRI-ERIC<sup>®</sup> & MMCI under
       <a
         href="https://www.gnu.org/licenses/gpl-3.0.html"
         target="_blank"
