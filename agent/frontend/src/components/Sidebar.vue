@@ -260,12 +260,30 @@ const closeMobileMenu = () => {
   padding: 0;
 }
 
+.sidebar-footer :deep(.org-link) {
+  color: white;
+  font-weight: 500;
+}
+
+.sidebar-footer :deep(.org-link:hover) {
+  color: rgba(255, 255, 255, 0.9);
+}
+
 .sidebar-footer :deep(.license-link) {
   color: white;
   font-weight: 500;
 }
 
 .sidebar-footer :deep(.license-link:hover) {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.sidebar-footer :deep(.feedback-link) {
+  color: white;
+  font-weight: 500;
+}
+
+.sidebar-footer :deep(.feedback-link:hover) {
   color: rgba(255, 255, 255, 0.9);
 }
 
