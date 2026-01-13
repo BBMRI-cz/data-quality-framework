@@ -22,14 +22,10 @@ public class AgentDTO {
       allowableValues = {"ACTIVE", "INACTIVE", "PENDING"})
   private AgentStatus status;
 
-  @Schema(
-      description = "Human-readable name of the agent",
-      example = "Hospital Alpha Data Center")
+  @Schema(description = "Human-readable name of the agent", example = "Hospital Alpha Data Center")
   private String name;
 
-  @Schema(
-      description = "Version of the agent software",
-      example = "1.0.0")
+  @Schema(description = "Version of the agent software", example = "1.0.0")
   private String version;
 
   @Schema(description = "List of agent interactions (only included when expand=interactions)")
