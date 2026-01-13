@@ -1,7 +1,25 @@
 <template>
   <div class="copyright">
     <p class="mb-0">
-      Developed by BBMRI-ERIC<sup>®</sup> & MMCI under
+      Developed by
+      <a
+        href="https://bbmri-eric.eu/"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="org-link"
+      >
+        BBMRI-ERIC<sup>®</sup>
+      </a>
+      &
+      <a
+        href="https://mou.cz"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="org-link"
+      >
+        MMCI
+      </a>
+      under
       <a
         href="https://www.gnu.org/licenses/gpl-3.0.html"
         target="_blank"
@@ -9,6 +27,17 @@
         class="license-link"
       >
         GNU General Public License
+      </a>
+    </p>
+    <p class="feedback-section">
+      <a
+        href="https://forms.cloud.microsoft/e/Vsc9Qbcka9"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="feedback-link"
+      >
+        <i class="bi bi-chat-square-text-fill"></i>
+        Give Feedback
       </a>
     </p>
   </div>
@@ -26,6 +55,18 @@
   font-size: 0.875rem;
 }
 
+.org-link {
+  color: #667eea;
+  text-decoration: none;
+  transition: color 0.2s ease;
+  font-weight: 500;
+}
+
+.org-link:hover {
+  color: #764ba2;
+  text-decoration: underline;
+}
+
 .license-link {
   color: #667eea;
   text-decoration: none;
@@ -33,6 +74,30 @@
 }
 
 .license-link:hover {
+  color: #764ba2;
+  text-decoration: underline;
+}
+
+.feedback-section {
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}
+
+.feedback-link {
+  color: #667eea;
+  text-decoration: none;
+  transition: color 0.2s ease;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.feedback-link i {
+  font-size: 0.875rem;
+}
+
+.feedback-link:hover {
   color: #764ba2;
   text-decoration: underline;
 }
