@@ -16,15 +16,26 @@ public class AgentDTO {
       example = "550e8400-e29b-41d4-a716-446655440000")
   private String id;
 
+  @Schema(
+      description = "Current status of the agent",
+      example = "ACTIVE",
+      allowableValues = {"ACTIVE", "INACTIVE", "PENDING"})
   private AgentStatus status;
 
+  @Schema(
+      description = "Human-readable name of the agent",
+      example = "Hospital Alpha Data Center")
   private String name;
 
+  @Schema(
+      description = "Version of the agent software",
+      example = "1.0.0")
   private String version;
 
   @Schema(description = "List of agent interactions (only included when expand=interactions)")
   private List<AgentInteractionDTO> interactions;
 
+  @Schema(description = "List of groups this agent belongs to")
   private List<GroupDTO> groups;
 
   public AgentDTO() {}
