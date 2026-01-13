@@ -36,7 +36,7 @@
         rel="noopener noreferrer"
         class="feedback-link"
       >
-        <i class="bi bi-chat-square-text-fill"></i>
+        <i class="bi bi-chat-square-text-fill" aria-hidden="true"></i>
         Give Feedback
       </a>
     </p>
