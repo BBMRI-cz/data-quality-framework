@@ -231,9 +231,9 @@ const agentStatusClass = computed(() => ({
 const agentStatusIcon = computed(() => {
   switch (agentOverallStatus.value) {
     case 'error':
-      return 'bi bi-x-circle-fill'
-    case 'warning':
       return 'bi bi-exclamation-triangle-fill'
+    case 'warning':
+      return 'bi bi-exclamation-circle-fill'
     case 'success':
     default:
       return 'bi bi-check-circle-fill'
@@ -290,7 +290,7 @@ function getCheckStatusIcon(check) {
     case CheckStatus.FAILED:
       return 'bi bi-x-circle-fill'
     case CheckStatus.WARNING:
-      return 'bi bi-exclamation-triangle-fill'
+      return 'bi bi-exclamation-circle-fill'
     case CheckStatus.PASSED:
     default:
       return 'bi bi-check-circle-fill'
