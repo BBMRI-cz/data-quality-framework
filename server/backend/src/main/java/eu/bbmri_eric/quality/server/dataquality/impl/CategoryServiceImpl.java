@@ -11,7 +11,6 @@ import eu.bbmri_eric.quality.server.dataquality.dto.CategoryDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.CategoryUpdateDTO;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,11 +44,14 @@ class CategoryServiceImpl implements CategoryService {
 
   @Override
   @Transactional(readOnly = true)
-  public Optional<CategoryDTO> findById(Long id) {
+  public CategoryDTO findById(Long id) {
     Objects.requireNonNull(id, "ID cannot be null");
-    return categoryRepository
-        .findById(id)
-        .map(category -> modelMapper.map(category, CategoryDTO.class));
+    return modelMapper.map(
+        categoryRepository
+            .findById(id)
+            .orElseThrow(
+                () -> new EntityNotFoundException("Category with ID %s not found".formatted(id))),
+        CategoryDTO.class);
   }
 
   @Override

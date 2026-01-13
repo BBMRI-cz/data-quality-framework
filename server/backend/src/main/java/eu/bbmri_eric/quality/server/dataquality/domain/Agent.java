@@ -6,6 +6,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +30,9 @@ public class Agent {
   @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
   @JoinColumn(name = "agent_id", nullable = false)
   private List<Report> reports = new ArrayList<>();
+
+  @ManyToMany(mappedBy = "agents")
+  private final List<Group> groups = new ArrayList<>();
 
   public Agent(String id) {
     this.id = id;
@@ -87,6 +91,10 @@ public class Agent {
   public void addReport(Report report) {
     report.setAgentId(getId());
     reports.add(report);
+  }
+
+  public List<Group> getGroups() {
+    return groups.stream().toList();
   }
 
   @Override
