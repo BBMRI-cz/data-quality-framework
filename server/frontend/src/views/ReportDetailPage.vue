@@ -25,7 +25,7 @@
 
       <!-- Error state -->
       <div v-else-if="error" class="alert alert-danger">
-        <i class="bi bi-exclamation-triangle me-2"></i>
+        <i :class="`${getStatusIcon(CheckStatus.FAILED)} me-2`"></i>
         {{ error }}
       </div>
 
@@ -50,23 +50,23 @@
           <StatsCard
             :label="'Passed'"
             :value="countPassed()"
-            icon="bi bi-check-circle"
-            icon-color="#198754"
-            icon-bg-color="#d1e7dd"
+            :icon="getStatusIcon(CheckStatus.PASSED)"
+            :icon-color="getStatusColor(CheckStatus.PASSED)"
+            :icon-bg-color="getStatusBgColor(CheckStatus.PASSED)"
           />
           <StatsCard
             :label="'Warnings'"
             :value="countWarnings()"
-            icon="bi bi-exclamation-triangle"
-            icon-color="#ffc107"
-            icon-bg-color="#fff3cd"
+            :icon="getStatusIcon(CheckStatus.WARNING)"
+            :icon-color="getStatusColor(CheckStatus.WARNING)"
+            :icon-bg-color="getStatusBgColor(CheckStatus.WARNING)"
           />
           <StatsCard
             :label="'Errors'"
             :value="countErrors()"
-            icon="bi bi-x-circle"
-            icon-color="#dc3545"
-            icon-bg-color="#f8d7da"
+            :icon="getStatusIcon(CheckStatus.FAILED)"
+            :icon-color="getStatusColor(CheckStatus.FAILED)"
+            :icon-bg-color="getStatusBgColor(CheckStatus.FAILED)"
           />
         </div>
 
@@ -143,7 +143,7 @@ import StatsCard from '../components/StatsCard.vue'
 import AppCallout from '../components/AppCallout.vue'
 import CategoryFilter from '../components/CategoryFilter.vue'
 import { apiService } from '../services/apiService.js'
-import { getCheckStatus, CheckStatus } from '../utils/qualityCheckUtils.js'
+import { getCheckStatus, CheckStatus, getStatusIcon, getStatusColor, getStatusBgColor } from '../utils/qualityCheckUtils.js'
 
 const route = useRoute()
 const router = useRouter()
