@@ -303,9 +303,9 @@ const loadGroup = async () => {
   try {
     group.value = await apiService.getGroup(groupId.value)
 
-    // Initialize form
+    // Initialize form (create copies to avoid reference issues)
     editForm.name = group.value.name || ''
-    editForm.agentIds = group.value.agentIds || []
+    editForm.agentIds = [...(group.value.agentIds || [])]
   } catch (err) {
     error.value = err.message || 'Failed to load group'
     console.error('Error loading group:', err)
@@ -409,7 +409,7 @@ const resetForm = () => {
     editForm.agentIds = []
   } else {
     editForm.name = group.value.name || ''
-    editForm.agentIds = group.value.agentIds || []
+    editForm.agentIds = [...(group.value.agentIds || [])]
   }
 
   validationErrors.name = ''

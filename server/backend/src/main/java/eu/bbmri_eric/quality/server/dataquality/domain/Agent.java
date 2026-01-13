@@ -4,6 +4,7 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToMany;
@@ -31,8 +32,8 @@ public class Agent {
   @JoinColumn(name = "agent_id", nullable = false)
   private List<Report> reports = new ArrayList<>();
 
-  @ManyToMany(mappedBy = "agents")
-  private final List<Group> groups = new ArrayList<>();
+  @ManyToMany(mappedBy = "agents", fetch = FetchType.EAGER)
+  private List<Group> groups = new ArrayList<>();
 
   public Agent(String id) {
     this.id = id;
@@ -95,6 +96,10 @@ public class Agent {
 
   public List<Group> getGroups() {
     return groups.stream().toList();
+  }
+
+  public void setGroups(List<Group> groups) {
+    this.groups = groups;
   }
 
   @Override

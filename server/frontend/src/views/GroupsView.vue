@@ -87,33 +87,31 @@
             </div>
           </div>
           <div class="card-body p-0">
-            <div class="table-responsive">
-              <table class="table table-hover mb-0 align-middle">
-                <thead class="table-light">
-                  <tr>
-                    <th class="ps-4">Name</th>
-                    <th>Agents</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="group in filteredGroups"
-                    :key="group.id"
-                    class="table-row-hover cursor-pointer"
-                    @click="viewGroupDetail(group)"
-                  >
-                    <td class="ps-4">
-                      <div class="fw-medium">{{ group.name }}</div>
-                    </td>
-                    <td>
-                      <span class="badge bg-primary">
-                        {{ group.agentIds?.length || 0 }} agents
-                      </span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <table class="table table-hover mb-0 align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th class="ps-4">Name</th>
+                  <th>Agents</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="group in filteredGroups"
+                  :key="group.id"
+                  class="table-row-hover cursor-pointer"
+                  @click="viewGroupDetail(group)"
+                >
+                  <td class="ps-4">
+                    <div class="fw-medium">{{ group.name }}</div>
+                  </td>
+                  <td>
+                    <span class="badge bg-primary">
+                      {{ group.agentIds?.length || 0 }} agents
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -202,29 +200,28 @@ onMounted(() => {
 .stat-number {
   font-size: 2rem;
   font-weight: 700;
-  line-height: 1;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
 }
 
 .stat-label {
-  color: #6c757d;
   font-size: 0.875rem;
+  color: #6c757d;
   font-weight: 500;
 }
 
-/* Filters Card */
+/* Filters */
 .filters-card {
   background: white;
-  padding: 1.25rem;
+  padding: 1rem;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .filters-content {
   display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
   align-items: center;
-  flex-wrap: wrap;
 }
 
 .search-filter {
@@ -233,21 +230,21 @@ onMounted(() => {
 }
 
 .results-count {
-  display: flex;
-  align-items: center;
+  margin-left: auto;
 }
 
-/* States */
+/* Loading State */
 .loading-state {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 3rem;
+  padding: 4rem 0;
 }
 
+/* Empty State */
 .empty-state {
   text-align: center;
-  padding: 3rem 1rem;
+  padding: 4rem 2rem;
   background: white;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -255,11 +252,12 @@ onMounted(() => {
 
 .empty-state-icon {
   font-size: 4rem;
-  color: #dee2e6;
+  color: #e0e0e0;
   margin-bottom: 1rem;
 }
 
 .empty-state-title {
+  color: #2c3e50;
   font-weight: 600;
   margin-bottom: 0.5rem;
 }
@@ -269,27 +267,111 @@ onMounted(() => {
   margin-bottom: 0;
 }
 
-/* Table */
+/* Table Styling */
+.card {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.table {
+  font-size: 0.875rem;
+}
+
+.table th {
+  font-weight: 600;
+  font-size: 0.813rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #6c757d;
+  padding: 1rem 0.75rem;
+  border-bottom: 2px solid #dee2e6;
+  white-space: nowrap;
+}
+
+.table td {
+  vertical-align: middle;
+  padding: 1rem 0.75rem;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 0.875rem;
+}
+
 .table-row-hover {
-  transition: all 0.2s ease;
-}
-
-.table-row-hover:hover {
-  background-color: rgba(102, 126, 234, 0.05);
-  transform: translateX(2px);
-}
-
-.cursor-pointer {
+  transition: all 0.2s ease-in-out;
   cursor: pointer;
 }
 
-@media (max-width: 576px) {
+.table-row-hover:hover {
+  background-color: #f8f9fa;
+  transform: translateX(2px);
+  box-shadow: inset 3px 0 0 #0d6efd;
+}
+
+.badge {
+  font-weight: 500;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .table th,
+  .table td {
+    padding: 0.75rem 0.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
   .stat-number {
     font-size: 1.5rem;
   }
 
   .stat-label {
     font-size: 0.75rem;
+  }
+
+  .filters-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .results-count {
+    margin-left: 0;
+    text-align: center;
+  }
+
+  .table {
+    font-size: 0.75rem;
+  }
+
+  .table th,
+  .table td {
+    padding: 0.5rem 0.35rem;
+  }
+
+  .badge {
+    font-size: 0.65rem;
+    padding: 0.25rem 0.45rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+
+  .stat-card {
+    padding: 0.875rem 0.5rem;
+  }
+
+  .container-fluid {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
   }
 }
 </style>

@@ -25,7 +25,17 @@ public class AgentDTO {
   @Schema(description = "List of agent interactions (only included when expand=interactions)")
   private List<AgentInteractionDTO> interactions;
 
+  private List<GroupDTO> groups;
+
   public AgentDTO() {}
+
+  public List<GroupDTO> getGroups() {
+    return groups;
+  }
+
+  public void setGroups(List<GroupDTO> groups) {
+    this.groups = groups;
+  }
 
   public String getId() {
     return id;
