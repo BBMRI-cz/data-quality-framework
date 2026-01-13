@@ -5,6 +5,30 @@ INSERT INTO agent (id, name, status) VALUES
     ('agent-004', 'Biobank Delta Repository', 'ACTIVE'),
     ('agent-005', 'Clinical Data Hub Epsilon', 'ACTIVE');
 
+-- Insert groups for organizing agents
+INSERT INTO agent_group (id, name) VALUES
+    (1, 'European Medical Centers'),
+    (2, 'Research Facilities'),
+    (3, 'Biobanks'),
+    (4, 'Clinical Data Hubs'),
+    (5, 'Inactive Facilities');
+
+-- Link agents to groups (many-to-many relationship)
+INSERT INTO group_agent (group_id, agent_id) VALUES
+    -- Hospital Alpha is a European Medical Center
+    (1, 'agent-001'),
+    -- Research Institute Beta is both a European Medical Center and Research Facility
+    (1, 'agent-002'),
+    (2, 'agent-002'),
+    -- Medical Center Gamma is inactive
+    (1, 'agent-003'),
+    (5, 'agent-003'),
+    -- Biobank Delta is in Biobanks group
+    (3, 'agent-004'),
+    -- Clinical Data Hub Epsilon is in multiple groups
+    (1, 'agent-005'),
+    (4, 'agent-005');
+
 -- Insert categories for organizing quality checks
 INSERT INTO category (name, color_hex) VALUES
     ('Data Completeness', '#2196F3'),

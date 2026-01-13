@@ -15,6 +15,8 @@ import CategoriesView from '../views/CategoriesView.vue'
 import CategoryDetailView from '../views/CategoryDetailView.vue'
 import LoginView from '../views/LoginView.vue'
 import NotFound from '../views/NotFound.vue'
+import GroupsView from "../views/GroupsView.vue";
+import GroupDetailView from "../views/GroupDetailView.vue";
 
 const routes = [
   {
@@ -80,6 +82,24 @@ const routes = [
     path: '/categories/:id',
     name: 'CategoryDetail',
     component: CategoryDetailView,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/groups',
+    name: 'Groups',
+    component: GroupsView,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/groups/new',
+    name: 'GroupCreate',
+    component: GroupDetailView,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/groups/:id',
+    name: 'GroupDetail',
+    component: GroupDetailView,
     meta: { requiresAuth: true }
   },
   {

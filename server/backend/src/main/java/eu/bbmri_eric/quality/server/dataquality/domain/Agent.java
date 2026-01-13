@@ -4,8 +4,10 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +31,9 @@ public class Agent {
   @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
   @JoinColumn(name = "agent_id", nullable = false)
   private List<Report> reports = new ArrayList<>();
+
+  @ManyToMany(mappedBy = "agents", fetch = FetchType.EAGER)
+  private List<Group> groups = new ArrayList<>();
 
   public Agent(String id) {
     this.id = id;
@@ -87,6 +92,14 @@ public class Agent {
   public void addReport(Report report) {
     report.setAgentId(getId());
     reports.add(report);
+  }
+
+  public List<Group> getGroups() {
+    return groups.stream().toList();
+  }
+
+  public void setGroups(List<Group> groups) {
+    this.groups = groups;
   }
 
   @Override

@@ -35,11 +35,7 @@ class CategoryController {
       description = "Retrieves a specific category by its unique identifier")
   @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<EntityModel<CategoryDTO>> findById(@PathVariable Long id) {
-    return categoryService
-        .findById(id)
-        .map(linkBuilder::toModel)
-        .map(ResponseEntity::ok)
-        .orElse(ResponseEntity.notFound().build());
+    return ResponseEntity.ok(linkBuilder.toModel(categoryService.findById(id)));
   }
 
   @GetMapping("/categories")

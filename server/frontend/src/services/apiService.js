@@ -123,6 +123,36 @@ class ApiService {
         const response = await api.delete(`/v1/categories/${categoryId}`);
         return response.data;
     }
+
+    async getGroups() {
+        const response = await api.get('/v1/groups');
+        return response.data;
+    }
+
+    async getGroup(groupId) {
+        const response = await api.get(`/v1/groups/${groupId}`);
+        return response.data;
+    }
+
+    async createGroup(data) {
+        const response = await api.post('/v1/groups', data);
+        return response.data;
+    }
+
+    async updateGroup(groupId, data) {
+        const response = await api.put(`/v1/groups/${groupId}`, data);
+        return response.data;
+    }
+
+    async deleteGroup(groupId) {
+        const response = await api.delete(`/v1/groups/${groupId}`);
+        return response.data;
+    }
+
+    async assignAgentsToGroup(groupId, agentIds) {
+        const response = await api.put(`/v1/groups/${groupId}/agents`, { agentIds });
+        return response.data;
+    }
 }
 
 export const apiService = new ApiService();

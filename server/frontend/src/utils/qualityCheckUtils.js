@@ -170,3 +170,100 @@ export function formatScore(score) {
 export function formatScoreRounded(score) {
   return Math.round(score * 100)
 }
+
+/**
+ * Get the Bootstrap icon class for a check status
+ * @param {string} status - The check status (PASSED, WARNING, FAILED, etc.)
+ * @param {boolean} filled - Whether to use filled icon variant (default: true)
+ * @returns {string} Bootstrap icon class name
+ */
+export function getStatusIcon(status, filled = true) {
+  const suffix = filled ? '-fill' : ''
+
+  switch (status) {
+    case CheckStatus.PASSED:
+      return `bi bi-check-circle${suffix}`
+    case CheckStatus.WARNING:
+      return `bi bi-exclamation-circle${suffix}`
+    case CheckStatus.FAILED:
+      return `bi bi-exclamation-triangle${suffix}`
+    case CheckStatus.NO_DATA:
+      return 'bi bi-question-circle'
+    case CheckStatus.UNKNOWN:
+    default:
+      return 'bi bi-question-circle'
+  }
+}
+
+/**
+ * Get the color hex code for a check status
+ * @param {string} status - The check status (PASSED, WARNING, FAILED, etc.)
+ * @returns {string} Color hex code
+ */
+export function getStatusColor(status) {
+  switch (status) {
+    case CheckStatus.PASSED:
+      return '#198754' // Bootstrap success
+    case CheckStatus.WARNING:
+      return '#ffc107' // Bootstrap warning
+    case CheckStatus.FAILED:
+      return '#dc3545' // Bootstrap danger
+    case CheckStatus.NO_DATA:
+    case CheckStatus.UNKNOWN:
+    default:
+      return '#6c757d' // Bootstrap secondary
+  }
+}
+
+/**
+ * Get the background color hex code for a check status
+ * @param {string} status - The check status (PASSED, WARNING, FAILED, etc.)
+ * @returns {string} Background color hex code
+ */
+export function getStatusBgColor(status) {
+  switch (status) {
+    case CheckStatus.PASSED:
+      return '#d1e7dd' // Bootstrap success background
+    case CheckStatus.WARNING:
+      return '#fff3cd' // Bootstrap warning background
+    case CheckStatus.FAILED:
+      return '#f8d7da' // Bootstrap danger background
+    case CheckStatus.NO_DATA:
+    case CheckStatus.UNKNOWN:
+    default:
+      return '#e2e3e5' // Bootstrap secondary background
+  }
+}
+
+/**
+ * Get the Bootstrap text color class for a check status
+ * @param {string} status - The check status (PASSED, WARNING, FAILED, etc.)
+ * @returns {string} Bootstrap text color class
+ */
+export function getStatusTextClass(status) {
+  switch (status) {
+    case CheckStatus.PASSED:
+      return 'text-success'
+    case CheckStatus.WARNING:
+      return 'text-warning'
+    case CheckStatus.FAILED:
+      return 'text-danger'
+    case CheckStatus.NO_DATA:
+    case CheckStatus.UNKNOWN:
+    default:
+      return 'text-secondary'
+  }
+}
+
+/**
+ * Get icon with text color class for a check status
+ * @param {string} status - The check status (PASSED, WARNING, FAILED, etc.)
+ * @param {boolean} filled - Whether to use filled icon variant (default: true)
+ * @returns {string} Icon class with color class
+ */
+export function getStatusIconWithColor(status, filled = true) {
+  const icon = getStatusIcon(status, filled)
+  const colorClass = getStatusTextClass(status)
+  return `${icon} ${colorClass}`
+}
+

@@ -3,7 +3,6 @@ package eu.bbmri_eric.quality.server.common;
 import eu.bbmri_eric.quality.server.common.dto.FilterDTO;
 import eu.bbmri_eric.quality.server.common.dto.PageResponse;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Generic CRUD service interface providing standard Create, Read, Update, and Delete operations.
@@ -33,7 +32,7 @@ public interface CRUDService<T, CreateDTO, UpdateDTO, ID> {
    * @return an Optional containing the entity if found, or empty if not found
    * @throws IllegalArgumentException if the id is null
    */
-  Optional<T> findById(ID id);
+  T findById(ID id);
 
   /**
    * Retrieves all entities.
