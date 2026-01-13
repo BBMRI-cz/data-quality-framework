@@ -34,6 +34,10 @@
           <i class="bi bi-tags-fill"></i>
           <span>Categories</span>
         </router-link>
+        <router-link to="/groups" class="nav-link" :class="{ active: $route.name === 'Groups' }" @click="closeMobileMenu">
+          <i class="bi bi-collection-fill"></i>
+          <span>Groups</span>
+        </router-link>
         <div class="nav-section">
           <div class="nav-section-header">
             <i class="bi bi-gear-fill"></i>
