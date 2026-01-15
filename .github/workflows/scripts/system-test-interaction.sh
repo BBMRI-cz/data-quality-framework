@@ -8,14 +8,20 @@
 
 set -e
 
+# Get the directory of this script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Configuration
 AGENT_URL="http://localhost:8081"
 SERVER_URL="http://localhost:8082"
 REGISTRATION_URL="http://host.docker.internal:8082"
+OIDC_SERVER_URL="http://localhost:4011"
 AGENT_ADMIN_USERNAME="admin"
 AGENT_ADMIN_PASSWORD="adminpass"
 SERVER_ADMIN_USERNAME="admin"
 SERVER_ADMIN_PASSWORD="adminpass"
+OIDC_TEST_USERNAME="Researcher"
+OIDC_TEST_PASSWORD="researcher"
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -236,4 +242,80 @@ if [ "$REPORT_VERIFICATION_SUCCESS" = false ]; then
   exit 1
 fi
 
-echo -e "\n${GREEN}System test completed successfully!${NC}"
+echo -e "\n${GREEN}✓ Basic authentication flow completed successfully!${NC}"
+
+# =====================================================================
+# OIDC AUTHENTICATION TEST
+# =====================================================================
+
+echo -e "\n${YELLOW}========================================${NC}"
+echo -e "${YELLOW}Testing OIDC Authentication Flow${NC}"
+echo -e "${YELLOW}========================================${NC}"
+
+# Step 8: Check OIDC server health
+echo -e "\n${YELLOW}Step 8: Checking OIDC server health...${NC}"
+
+if ! "${SCRIPT_DIR}/wait-for-url.sh" "${OIDC_SERVER_URL}/.well-known/openid-configuration"; then
+  echo -e "${RED}✗ OIDC server is not responding${NC}"
+  echo -e "${YELLOW}Tip: Make sure OIDC server is running with: docker compose up -d oidc-server-mock${NC}"
+  exit 1
+fi
+
+echo -e "${GREEN}✓ OIDC server is healthy${NC}"
+
+# Step 9: Test OIDC authentication with the server
+echo -e "\n${YELLOW}Step 9: Testing OIDC authentication with server...${NC}"
+
+# Get OIDC access token
+OIDC_TOKEN_RESPONSE=$(curl -s -X POST \
+  "${OIDC_SERVER_URL}/connect/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=password" \
+  -d "client_id=auth-code-client" \
+  -d "scope=openid profile email" \
+  -d "username=${OIDC_TEST_USERNAME}" \
+  -d "password=${OIDC_TEST_PASSWORD}")
+
+OIDC_ACCESS_TOKEN=$(echo "$OIDC_TOKEN_RESPONSE" | jq -r '.access_token // empty')
+
+if [ -z "$OIDC_ACCESS_TOKEN" ]; then
+  echo -e "${RED}✗ Failed to obtain OIDC access token${NC}"
+  echo "Token response: $OIDC_TOKEN_RESPONSE"
+  exit 1
+fi
+
+echo -e "${GREEN}✓ Successfully obtained OIDC access token${NC}"
+
+# Step 10: Verify OIDC user can access protected endpoints
+echo -e "\n${YELLOW}Step 10: Verifying OIDC user can list reports...${NC}"
+
+OIDC_REPORTS_RESPONSE=$(curl -s -w "\n%{http_code}" -X GET \
+  "${SERVER_URL}/api/v1/reports" \
+  -H "Authorization: Bearer ${OIDC_ACCESS_TOKEN}")
+
+OIDC_REPORTS_HTTP_STATUS=$(echo "$OIDC_REPORTS_RESPONSE" | tail -n 1)
+OIDC_REPORTS_BODY=$(echo "$OIDC_REPORTS_RESPONSE" | head -n -1)
+
+echo "HTTP Status: $OIDC_REPORTS_HTTP_STATUS"
+echo "Response: $OIDC_REPORTS_BODY"
+
+if [ "$OIDC_REPORTS_HTTP_STATUS" == "200" ]; then
+  echo -e "${GREEN}✓ OIDC user successfully accessed reports endpoint${NC}"
+
+  # Verify the report from the basic auth test is still visible
+  REPORT_COUNT=$(echo "$OIDC_REPORTS_BODY" | jq '._embedded.reports | length' 2>/dev/null)
+  if [ ! -z "$REPORT_COUNT" ] && [ "$REPORT_COUNT" -gt 0 ]; then
+    echo -e "${GREEN}✓ OIDC user can see ${REPORT_COUNT} report(s)${NC}"
+  fi
+else
+  echo -e "${RED}✗ OIDC user reports access returned HTTP ${OIDC_REPORTS_HTTP_STATUS}${NC}"
+  echo -e "${YELLOW}This might indicate an issue with OIDC token validation${NC}"
+  exit 1
+fi
+
+echo -e "\n${GREEN}✓ OIDC authentication flow completed!${NC}"
+
+echo -e "\n${GREEN}========================================${NC}"
+echo -e "${GREEN}System test completed successfully!${NC}"
+echo -e "${GREEN}Both Basic Auth and OIDC flows verified!${NC}"
+echo -e "${GREEN}========================================${NC}"

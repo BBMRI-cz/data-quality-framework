@@ -44,6 +44,25 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
+  public UserDTO findBySubjectId(String subjectId) {
+    return userRepository
+        .findBySubjectId(subjectId)
+        .map(user -> modelMapper.map(user, UserDTO.class))
+        .orElseThrow(
+            () -> new UserNotFoundException("User not found with subject ID: " + subjectId));
+  }
+
+  @Override
+  @Transactional
+  public UserDTO createBySubjectId(String subjectId, String username) {
+    User user = new User(username, subjectId);
+    user.addRole(UserRole.ADMIN);
+    user.addRole(UserRole.HUMAN_USER);
+    User savedUser = userRepository.save(user);
+    return modelMapper.map(savedUser, UserDTO.class);
+  }
+
+  @Override
   @Transactional
   public void changePassword(Long userId, PasswordChangeRequest passwordChangeRequest) {
     Objects.requireNonNull(userId, "User ID cannot be null");

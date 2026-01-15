@@ -3,12 +3,13 @@ package eu.bbmri_eric.quality.server.common;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.bbmri_eric.quality.server.auth.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationManagerResolver;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -25,17 +26,17 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 class SecurityConfig {
 
-  private final JwtAuthenticationFilter jwtAuthenticationFilter;
   private final AuthenticationEntryPoint authenticationEntryPoint;
   private final HttpRequestLoggingFilter httpRequestLoggingFilter;
+  private final AuthenticationManagerResolver<HttpServletRequest> authenticationManagerResolver;
 
   public SecurityConfig(
-      JwtAuthenticationFilter jwtAuthenticationFilter,
       AuthenticationEntryPoint authenticationEntryPoint,
-      HttpRequestLoggingFilter httpRequestLoggingFilter) {
-    this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+      HttpRequestLoggingFilter httpRequestLoggingFilter,
+      AuthenticationManagerResolver<HttpServletRequest> authenticationManagerResolver) {
     this.authenticationEntryPoint = authenticationEntryPoint;
     this.httpRequestLoggingFilter = httpRequestLoggingFilter;
+    this.authenticationManagerResolver = authenticationManagerResolver;
   }
 
   @Bean
@@ -44,8 +45,7 @@ class SecurityConfig {
         .anonymous(AbstractHttpConfigurer::disable)
         .cors(Customizer.withDefaults())
         .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
-        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-        .addFilterBefore(httpRequestLoggingFilter, JwtAuthenticationFilter.class)
+        .addFilterBefore(httpRequestLoggingFilter, UsernamePasswordAuthenticationFilter.class)
         .authorizeHttpRequests(
             auth ->
                 auth.requestMatchers(HttpMethod.OPTIONS, "/**")
@@ -96,6 +96,8 @@ class SecurityConfig {
                     .authenticated()
                     .requestMatchers(HttpMethod.PATCH, "/api/v1/settings")
                     .authenticated()
+                    .requestMatchers(HttpMethod.POST, "/api/auth/oidc")
+                    .hasRole("HUMAN_USER")
                     .requestMatchers(
                         "/api/health",
                         "/api/info",
@@ -108,6 +110,8 @@ class SecurityConfig {
                     .denyAll() // default deny for all API paths
                     .requestMatchers("/**")
                     .permitAll())
+        .oauth2ResourceServer(
+            oauth2 -> oauth2.authenticationManagerResolver(authenticationManagerResolver))
         .exceptionHandling(
             ex ->
                 ex.accessDeniedHandler(

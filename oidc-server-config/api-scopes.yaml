@@ -1,0 +1,6 @@
+- Name: some-app-scope-1
+- Name: some-app-scope-2
+- Name: quality_server_api
+- Name: quality_server_authz_management
+- Name: quality_server_resource_management
+- Name: quality_server_monitoring

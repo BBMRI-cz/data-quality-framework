@@ -1,4 +1,4 @@
-package eu.bbmri_eric.quality.server.auth;
+package eu.bbmri_eric.quality.server.common.auth;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -83,11 +83,7 @@ class JwtServiceTest {
         Base64.getUrlEncoder().withoutPadding().encodeToString("{\"sub\":\"hacker\"}".getBytes());
     String tamperedToken = tokenParts[0] + "." + tamperedPayload + "." + tokenParts[2];
 
-    assertThrows(
-        SignatureException.class,
-        () -> {
-          jwtService.extractUsername(tamperedToken);
-        });
+    assertThrows(SignatureException.class, () -> jwtService.extractUsername(tamperedToken));
   }
 
   @Test
@@ -119,11 +115,7 @@ class JwtServiceTest {
 
     assertFalse(differentService.validateToken(token, "testuser"));
 
-    assertThrows(
-        JwtException.class,
-        () -> {
-          differentService.extractUsername(token);
-        });
+    assertThrows(JwtException.class, () -> differentService.extractUsername(token));
   }
 
   @Test

@@ -1,0 +1,9 @@
+- Name: https://data-quality-framework.bbmri-eric.eu
+  Scopes:
+    - some-app-scope-1
+    - some-app-scope-2
+    - quality_server_api
+    - quality_server_authz_management
+    - quality_server_resource_management
+  ApiSecrets:
+    - quality_server-secret

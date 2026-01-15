@@ -1,9 +1,12 @@
-package eu.bbmri_eric.quality.server.auth;
+package eu.bbmri_eric.quality.server.common.auth;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.SignatureException;
+import java.util.Base64;
 import java.util.Date;
 import java.util.stream.Collectors;
 import javax.crypto.SecretKey;
@@ -22,6 +25,7 @@ import org.springframework.stereotype.Service;
 public class JwtUtil {
 
   private static final Logger logger = LoggerFactory.getLogger(JwtUtil.class);
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   private final SecretKey key;
   private final long jwtExpiration;
@@ -50,6 +54,7 @@ public class JwtUtil {
         .subject(authentication.getName())
         .claim("authorities", authorities)
         .issuedAt(new Date())
+        .issuer("quality-server")
         .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
         .signWith(key)
         .compact();
@@ -90,6 +95,39 @@ public class JwtUtil {
       logger.error("Unexpected error during token validation: {}", e.getMessage());
       return false;
     }
+  }
+
+  /**
+   * Extracts the issuer from a JWT token without verifying signature. Used to determine token type
+   * and route to the appropriate authentication provider.
+   *
+   * @param token JWT token
+   * @return issuer claim value (never null)
+   * @throws IllegalArgumentException if token is malformed or issuer claim is missing
+   */
+  public String extractIssuer(String token) {
+    String[] parts = token.split("\\.");
+    if (parts.length != 3) {
+      throw new IllegalArgumentException(
+          "Invalid JWT structure: expected 3 parts, got " + parts.length);
+    }
+
+    String payloadJson = new String(Base64.getUrlDecoder().decode(parts[1]));
+    JsonNode payloadNode;
+    try {
+      payloadNode = OBJECT_MAPPER.readTree(payloadJson);
+    } catch (Exception e) {
+      throw new IllegalArgumentException("Failed to parse JWT token: " + e.getMessage(), e);
+    }
+
+    String issuer = payloadNode.has("iss") ? payloadNode.get("iss").asText() : null;
+
+    if (issuer == null || issuer.isBlank()) {
+      throw new IllegalArgumentException("JWT token missing or empty 'iss' (issuer) claim");
+    }
+
+    logger.debug("Extracted issuer from token: '{}'", issuer);
+    return issuer;
   }
 
   /**

@@ -48,7 +48,8 @@ export default defineConfig({
                         {text: 'Overview', link: '/user/'},
                         {text: 'Getting Started', link: '/user/getting-started'},
                         {text: 'Privacy and Security', link: '/user/privacy'},
-                        {text: 'Deployment', link: '/user/deployment'}
+                        {text: 'Deployment', link: '/user/deployment'},
+                        {text: 'OIDC Configuration', link: '/user/oidc-configuration'}
                     ]
                 }
             ],

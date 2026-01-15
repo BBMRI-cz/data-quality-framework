@@ -222,7 +222,6 @@ services:
       - "8082:8082"
     volumes:
       - server-data:/app/data
-
   # Remove this service if you do not want automatic updates
   watchtower:
     image: containrrr/watchtower:1.7.1
@@ -240,6 +239,14 @@ volumes:
   server-data:
     driver: local
 ```
+
+::: tip OIDC Authentication
+The Data Quality Server supports **dual authentication modes**:
+- **Internal authentication**: Uses username/password with JWT tokens (always available)
+- **OIDC authentication**: Integrates with external OpenID Connect providers (optional)
+
+Both methods can be used simultaneously. Users authenticated via OIDC are automatically created on first login.
+:::
 
 ### Step 3: Start the Services
 
@@ -291,6 +298,19 @@ For security, change the default admin password immediately after first login:
 2. Select **Change Password** from the dropdown menu
 3. Enter a strong new password
 4. Save the changes
+
+### Step 7: Configure OIDC Authentication (Optional)
+
+The Data Quality Server supports OpenID Connect (OIDC) authentication for single sign-on integration with external identity providers. OIDC authentication works alongside the internal authentication system, allowing both methods to be used simultaneously.
+
+For detailed instructions on configuring OIDC authentication, including:
+- Understanding the authentication flows
+- Configuring your OIDC provider
+- Setting up the server for OIDC
+- Local development with OIDC server mock
+- Troubleshooting common issues
+
+Please refer to the [OIDC Configuration Guide](./oidc-configuration.md)
 
 ## Production Considerations
 
