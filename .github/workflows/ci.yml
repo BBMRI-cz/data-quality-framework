@@ -516,7 +516,7 @@ jobs:
           docker load -i /tmp/server-image.tar
 
       - name: Docker Compose Up
-        run: docker compose -f compose.yaml -f compose.override.yaml up -d
+        run: docker compose -f compose.yaml -f .github/compose.override.yaml up -d
 
       - name: Check agent health
         run: |
