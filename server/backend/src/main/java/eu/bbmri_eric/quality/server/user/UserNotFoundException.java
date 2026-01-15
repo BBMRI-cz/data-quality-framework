@@ -1,8 +1,6 @@
 package eu.bbmri_eric.quality.server.user;
 
-/**
- * Exception thrown when a user cannot be found.
- */
+/** Exception thrown when a user cannot be found. */
 public class UserNotFoundException extends RuntimeException {
 
   public UserNotFoundException(String message) {
@@ -13,4 +11,3 @@ public class UserNotFoundException extends RuntimeException {
     super("User not found");
   }
 }
-
