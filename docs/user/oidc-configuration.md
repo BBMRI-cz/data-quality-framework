@@ -1,5 +1,9 @@
 # OIDC Authentication Configuration
 
+::: warning Under Construction
+This feature is currently under development and the documentation may be incomplete.
+:::
+
 The Data Quality Server supports OpenID Connect (OIDC) authentication for single sign-on integration with external identity providers.
 
 #### Understanding OIDC Integration
@@ -8,34 +12,24 @@ OIDC authentication works alongside the internal authentication system:
 - The server validates JWT tokens from both internal and external sources
 - Token routing is automatic based on the issuer claim in the JWT
 - Users authenticating via OIDC are automatically created in the database on first login
-- The subject ID from the OIDC token is used as the unique identifier
+- The server supports both Authorization Code Flow and Client Credentials Flow OAuth 2.0 grant types
 
 #### OIDC Configuration Steps
 
-1. **Configure Your OIDC Provider**
-
-   In your OIDC provider, create a new client/application:
-    - **Client Type**: Public or Confidential (depending on your setup)
-    - **Redirect URI**: Configure appropriate callback URLs for your deployment
-    - **Access Type**: Configure according to your security requirements
+1. **Configure Your OIDC Provider (Authorization Server)**
+    - Ensure tokens include either `preferred_username` or `client_id`
+    - Obtain the issuer URI from your OIDC provider (e.g., `https://your-oidc-provider.com`)
+    - Verify the OIDC provider exposes a JWKS endpoint at `{issuer-uri}/.well-known/jwks.json` for token signature validation
 
 2. **Update Docker Compose Configuration**
 
-   Edit your `compose.yaml` file and configure the OIDC issuer URI:
+   Add the OIDC issuer URI to your server's environment variables in `compose.yaml`:
 
    ```yaml
-   services:
-     quality-server:
-       image: ghcr.io/bbmri-cz/data-quality-server:latest
-       container_name: quality-server
-       restart: unless-stopped
-       ports:
-         - "8082:8082"
-       volumes:
-         - server-data:/app/data
-       environment:
-         # Enable OIDC authentication
-         - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=https://your-oidc-provider.com
+   environment:
+     # Enable OIDC authentication
+     - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=https://your-oidc-provider.com
+   ```
 
    ::: warning Important Configuration Notes
    - The issuer URI must be accessible from the server (network connectivity required)
@@ -49,29 +43,13 @@ OIDC authentication works alongside the internal authentication system:
    docker compose down
    docker compose up -d
    ```
-
-4. **Verify OIDC Configuration**
-
-   Check the server logs to confirm OIDC initialization:
-
-**For Internal Users:**
-1. Log in via the login form with username/password
-2. Server generates a JWT token with internal issuer
-3. Token is stored in browser and used for API requests
-4. Token validated against internal user database
-
-**For OIDC Users:**
+   
+#### OIDC Authentication Flow
 1. User authenticates with external OIDC provider
 2. OIDC provider issues JWT token
 3. Client sends token to server API
 4. Server validates token against OIDC provider's public keys
 5. User automatically created in database on first successful authentication
-
-**Token Validation Process:**
-- Server examines the `iss` (issuer) claim in the JWT
-- If issuer matches internal issuer → validates with internal authentication
-- If issuer matches OIDC provider → validates with OIDC provider's JWKS endpoint
-- Invalid or expired tokens are rejected with 401 Unauthorized
 
 #### Troubleshooting OIDC
 
@@ -84,7 +62,6 @@ OIDC authentication works alongside the internal authentication system:
 
 **Server fails to start with OIDC enabled:**
 - The server will start even if the OIDC provider is temporarily unavailable
-- Internal authentication remains functional if OIDC initialization fails
 - Check for configuration syntax errors in the issuer URI
 - Verify environment variables are properly set
 
