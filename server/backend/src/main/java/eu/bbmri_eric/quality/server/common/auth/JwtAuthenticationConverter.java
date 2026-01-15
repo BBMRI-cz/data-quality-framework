@@ -1,6 +1,7 @@
 package eu.bbmri_eric.quality.server.common.auth;
 
 import eu.bbmri_eric.quality.server.user.UserDTO;
+import eu.bbmri_eric.quality.server.user.UserNotFoundException;
 import eu.bbmri_eric.quality.server.user.UserService;
 import java.util.Collections;
 import java.util.Objects;
@@ -15,7 +16,6 @@ import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
@@ -126,7 +126,7 @@ class JwtAuthenticationConverter implements Converter<Jwt, AbstractAuthenticatio
   private UserDTO findOrCreateUser(TokenIdentity identity) {
     try {
       return userService.findBySubjectId(identity.identityId());
-    } catch (UsernameNotFoundException e) {
+    } catch (UserNotFoundException e) {
       logger.debug("User not found for subject ID: {}, creating new user", identity.identityId());
       return userService.createBySubjectId(identity.identityId(), identity.username());
     }

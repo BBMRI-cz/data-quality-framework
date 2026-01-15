@@ -49,7 +49,7 @@ public class UserServiceImpl implements UserService {
         .findBySubjectId(subjectId)
         .map(user -> modelMapper.map(user, UserDTO.class))
         .orElseThrow(
-            () -> new UsernameNotFoundException("User not found with subject ID: " + subjectId));
+            () -> new UserNotFoundException("User not found with subject ID: " + subjectId));
   }
 
   @Override
