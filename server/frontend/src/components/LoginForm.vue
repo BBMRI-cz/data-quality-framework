@@ -111,6 +111,22 @@
                 <span v-if="authStore.isLoading" class="spinner-border spinner-border-sm me-2" role="status"></span>
                 {{ authStore.isLoading ? 'Signing in...' : 'Sign In' }}
               </button>
+              <template v-if="isOidcConfigured">
+                <div class="d-flex align-items-center my-3">
+                  <hr class="flex-grow-1">
+                  <span class="mx-2 text-muted small">OR</span>
+                  <hr class="flex-grow-1">
+                </div>
+
+                <button
+                    type="button"
+                    class="btn btn-primary w-100 py-2 fw-semibold btn-mobile"
+                    @click="handleOidcLogin"
+                    :disabled="authStore.isLoading"
+                >
+                  Sign in with OIDC
+                </button>
+              </template>
 
               <div v-if="authStore.error" class="alert alert-danger mt-3 mb-0">
                 {{ authStore.error }}
@@ -126,9 +142,12 @@
 <script setup>
 import { reactive, computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuth } from 'vue3-oidc'
 import { authStore } from '../stores/authStore.js'
 import { apiService } from '../services/apiService.js'
 import { notificationService } from '../services/notificationService.js'
+import { initializeOidc } from '../utils/oidc.js'
+import settingsStore from '../stores/settingsStore.js'
 
 const router = useRouter()
 const appVersion = ref('unknown')
@@ -136,6 +155,12 @@ const agentCount = ref(0)
 const reportCount = ref(0)
 const displayAgentCount = ref(0)
 const displayReportCount = ref(0)
+
+const { settings } = settingsStore
+
+const isOidcConfigured = computed(() => {
+  return settings.value?.oidcAuthority && settings.value.oidcAuthority.trim() !== ''
+})
 
 const form = reactive({
   username: '',
@@ -171,6 +196,12 @@ const animateCount = (displayRef, targetValue, duration = 1500) => {
 }
 
 onMounted(async () => {
+  try {
+    await settingsStore.fetchOidcSettings()
+  } catch (error) {
+    console.error('Failed to fetch OIDC settings:', error)
+  }
+
   try {
     const response = await apiService.getInfo()
     appVersion.value = response.version || 'unknown'
@@ -219,6 +250,18 @@ const validateForm = () => {
   }
 
   return isValid
+}
+
+const handleOidcLogin = async () => {
+  try {
+    await initializeOidc()
+
+    const { signinRedirect } = useAuth()
+    await signinRedirect()
+  } catch (error) {
+    console.error('OIDC login failed:', error)
+    authStore.setError('OIDC login failed. Please try again.')
+  }
 }
 
 const handleLogin = async () => {

@@ -4,7 +4,9 @@
       <div class="header-content">
         <div class="d-flex align-items-center gap-2 mb-1">
           <h1 v-if="!isEditing" class="page-title mb-0">
-            <i v-if="icon" :class="['me-2', 'text-primary', icon]"></i>
+            <slot name="icon">
+              <i v-if="icon" :class="['me-2', 'text-primary', icon]"></i>
+            </slot>
             <span :class="{ 'd-none d-sm-inline': mobileTitle }">{{ title }}</span>
             <span v-if="mobileTitle" class="d-inline d-sm-none">{{ mobileTitle }}</span>
           </h1>
@@ -232,6 +234,14 @@ defineExpose({ resetEditingState })
 .btn-icon-action:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* OIDC Icon */
+:deep(.oidc-icon) {
+  margin-right: 0.5rem;
+  fill: #0d6efd;
+  color: #0d6efd;
+  vertical-align: middle;
 }
 
 @media (min-width: 768px) {

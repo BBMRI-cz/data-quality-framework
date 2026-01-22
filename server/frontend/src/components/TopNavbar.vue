@@ -19,19 +19,43 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
+import { useAuth } from 'vue3-oidc'
 import { authStore } from '../stores/authStore.js'
 import { notificationService } from '../services/notificationService.js'
 
 const router = useRouter()
 
-const handleLogout = () => {
+const handleLogout = async () => {
+  const isOidcMode = authStore.mode === 'oidc'
+
   authStore.logout()
-  notificationService.info('Signed Out', 'You have been successfully signed out.')
-  router.push('/login')
+
+  if (isOidcMode) {
+    const oidcSuccess = await performOidcSignout()
+    if (!oidcSuccess) {
+      router.push('/login')
+    }
+  } else {
+    notificationService.info('Signed Out', 'You have been successfully signed out.')
+    router.push('/login')
+  }
+}
+
+const performOidcSignout = async () => {
+  try {
+    const { signoutRedirect } = useAuth()
+    await signoutRedirect()
+    return true
+  } catch (error) {
+    console.error('OIDC logout error:', error)
+    return false
+  }
 }
 
 const getUserInitials = () => {
-  const username = authStore.user?.username || 'U'
+  const username = authStore.user?.username ||
+                   authStore.user?.profile?.preferred_username ||
+                   'U'
   return username.substring(0, 2).toUpperCase()
 }
 </script>
