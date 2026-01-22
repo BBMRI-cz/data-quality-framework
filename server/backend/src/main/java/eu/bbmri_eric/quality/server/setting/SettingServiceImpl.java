@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.server.setting;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -48,7 +49,7 @@ public class SettingServiceImpl implements SettingService {
   }
 
   private void updateSettingsFromDto(Object dto) {
-    Map<String, Object> dtoMap = objectMapper.convertValue(dto, Map.class);
+    Map<String, Object> dtoMap = objectMapper.convertValue(dto, new TypeReference<>() {});
     dtoMap.forEach(
         (name, value) -> {
           if (value != null) {

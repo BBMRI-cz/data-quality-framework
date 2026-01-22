@@ -39,10 +39,7 @@ public class SettingController {
     return ResponseEntity.ok(oidcSettings);
   }
 
-  @Operation(
-      summary = "Update OIDC settings",
-      description =
-          "Updates OIDC configuration only. Frontend should reload after OIDC settings change.")
+  @Operation(summary = "Update OIDC settings", description = "Updates OIDC configuration only.")
   @PatchMapping("/oidc")
   @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<OidcSettingsDTO> updateOidcSettings(
@@ -51,13 +48,10 @@ public class SettingController {
     return ResponseEntity.ok(updatedSettings);
   }
 
-  @Operation(
-      summary = "Update settings",
-      description =
-          "Updates application settings. Frontend should reload after OIDC settings change.")
+  @Operation(summary = "Update settings", description = "Updates application settings.")
   @PatchMapping
   @SecurityRequirement(name = "bearerAuth")
-  public ResponseEntity<SettingDTO> updateSettings(SettingDTO settingDTO) {
+  public ResponseEntity<SettingDTO> updateSettings(@Valid @RequestBody SettingDTO settingDTO) {
     SettingDTO updatedSettings = settingService.updateSettings(settingDTO);
     return ResponseEntity.ok(updatedSettings);
   }

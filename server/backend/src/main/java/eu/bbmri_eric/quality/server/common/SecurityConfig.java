@@ -92,6 +92,11 @@ class SecurityConfig {
                     .authenticated()
                     .requestMatchers(HttpMethod.PUT, "/api/users/*/password")
                     .authenticated()
+                    // NOTE: This endpoint is intentionally public to allow the frontend
+                    // to bootstrap OIDC configuration (e.g. client ID, redirect URIs).
+                    // It MUST NOT return any sensitive data such as client secrets or
+                    // credentials. If the response model changes, ensure no secrets
+                    // are exposed before keeping this as permitAll().
                     .requestMatchers(HttpMethod.GET, "/api/v1/settings/oidc")
                     .permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/settings")
