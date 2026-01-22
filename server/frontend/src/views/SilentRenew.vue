@@ -5,15 +5,17 @@
 <script setup>
 import { onMounted } from 'vue'
 import { useOidcStore } from 'vue3-oidc'
+import { authStore } from '../stores/authStore'
 
 onMounted(async () => {
   try {
     const oidcStore = useOidcStore()
+    const maxAttempts = 100
+    const intervalTime = 50
     let userManager = oidcStore.state.value?.userManager
 
     if (!userManager) {
       await new Promise((resolve) => {
-        const maxAttempts = 100
         let attempts = 0
         const checkInterval = setInterval(() => {
           userManager = oidcStore.state.value?.userManager
@@ -21,12 +23,13 @@ onMounted(async () => {
             clearInterval(checkInterval)
             resolve()
           }
-        }, 50)
+        }, intervalTime)
       })
     }
 
     if (!userManager) {
       console.error('UserManager not available')
+      authStore.setSilentRenewFailed(true)
       return
     }
 
@@ -34,10 +37,7 @@ onMounted(async () => {
 
   } catch (error) {
     console.error('Silent renew error:', error)
+    authStore.setSilentRenewFailed(true)
   }
 })
 </script>
-
-<style scoped>
-</style>
-

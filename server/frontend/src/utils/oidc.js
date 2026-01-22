@@ -24,11 +24,14 @@ async function fetchOidcSettings() {
             silent_redirect_uri: settings.oidcSilentRedirectUri,
             loadUserInfo: true,
             monitorSession: false,
-            accessTokenExpiringNotificationTimeInSeconds: 300,
+            accessTokenExpiringNotificationTimeInSeconds: 300
         }
     } catch (error) {
         console.error('Failed to fetch OIDC settings from backend:', error)
-        throw new Error('Could not load OIDC configuration')
+        const errorMessage = error instanceof Error && error.message
+            ? error.message
+            : JSON.stringify(error)
+        throw new Error(`Could not load OIDC configuration: ${errorMessage}`)
     }
 }
 
@@ -72,9 +75,4 @@ export async function initializeOidc() {
     return oidcInitializationPromise
 }
 
-if (window.location.pathname === '/logged-in' || window.location.pathname === '/silent-renew') {
-    initializeOidc().catch(error => {
-        console.error('Auto-initialization of OIDC failed:', error)
-    })
-}
 
