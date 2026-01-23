@@ -14,6 +14,9 @@ import QualityCheckDetailView from '../views/QualityCheckDetailView.vue'
 import CategoriesView from '../views/CategoriesView.vue'
 import CategoryDetailView from '../views/CategoryDetailView.vue'
 import LoginView from '../views/LoginView.vue'
+import LoggedIn from '../views/LoggedIn.vue'
+import SilentRenew from '../views/SilentRenew.vue'
+import OidcSettings from '../views/OidcSettings.vue'
 import NotFound from '../views/NotFound.vue'
 import GroupsView from "../views/GroupsView.vue";
 import GroupDetailView from "../views/GroupDetailView.vue";
@@ -107,6 +110,24 @@ const routes = [
     name: 'Settings',
     component: Settings,
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/oidc-settings',
+    name: 'OidcSettings',
+    component: OidcSettings,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/logged-in',
+    name: 'LoggedIn',
+    component: LoggedIn,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/silent-renew',
+    name: 'SilentRenew',
+    component: SilentRenew,
+    meta: { requiresAuth: false }
   },
   {
     path: '/profile',

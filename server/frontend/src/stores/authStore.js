@@ -6,23 +6,30 @@ export const authStore = reactive({
   isLoading: false,
   error: null,
   redirectPath: null,
+  mode: null,
+  silentRenewFailed: false,
 
   init() {
     const savedUser = localStorage.getItem('user')
     const savedToken = localStorage.getItem('authToken')
+    const savedMode = localStorage.getItem('authMode')
 
     if (savedUser && savedToken) {
       this.user = JSON.parse(savedUser)
       this.isAuthenticated = true
+      this.mode = savedMode || 'basic'
     }
   },
 
-  setUser(user, token) {
+  setUser(user, token, mode = 'basic') {
     this.user = user
     this.isAuthenticated = true
     this.error = null
+    this.mode = mode
+    this.silentRenewFailed = false
 
     localStorage.setItem('user', JSON.stringify(user))
+    localStorage.setItem('authMode', mode)
     if (token) {
       localStorage.setItem('authToken', token)
     }
@@ -33,9 +40,12 @@ export const authStore = reactive({
     this.isAuthenticated = false
     this.error = null
     this.redirectPath = null
+    this.mode = null
+    this.silentRenewFailed = false
 
     localStorage.removeItem('user')
     localStorage.removeItem('authToken')
+    localStorage.removeItem('authMode')
     localStorage.removeItem('rememberedUsername')
   },
 
@@ -59,6 +69,10 @@ export const authStore = reactive({
     const path = this.redirectPath
     this.redirectPath = null // Clear after getting
     return path || '/dashboard'
+  },
+
+  setSilentRenewFailed(failed) {
+    this.silentRenewFailed = failed
   }
 })
 

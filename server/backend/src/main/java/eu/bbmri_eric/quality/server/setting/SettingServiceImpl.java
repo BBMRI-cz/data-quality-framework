@@ -1,5 +1,7 @@
 package eu.bbmri_eric.quality.server.setting;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -13,10 +15,13 @@ public class SettingServiceImpl implements SettingService {
 
   private final ModelMapper modelMapper;
   private final SettingRepository settingRepository;
+  private final ObjectMapper objectMapper;
 
-  public SettingServiceImpl(SettingRepository settingRepository, ModelMapper modelMapper) {
+  public SettingServiceImpl(
+      SettingRepository settingRepository, ModelMapper modelMapper, ObjectMapper objectMapper) {
     this.settingRepository = settingRepository;
     this.modelMapper = modelMapper;
+    this.objectMapper = objectMapper;
   }
 
   @Override
@@ -26,10 +31,31 @@ public class SettingServiceImpl implements SettingService {
   }
 
   @Override
+  public OidcSettingsDTO getOidcSettings() {
+    Map<String, String> values = loadSettingsMap();
+    return modelMapper.map(values, OidcSettingsDTO.class);
+  }
+
+  @Override
   public SettingDTO updateSettings(SettingDTO dto) {
-    Map<String, Object> dtoMap = modelMapper.map(dto, Map.class);
-    dtoMap.forEach((name, value) -> updateSetting(name, value != null ? value.toString() : null));
+    updateSettingsFromDto(dto);
     return dto;
+  }
+
+  @Override
+  public OidcSettingsDTO updateOidcSettings(OidcSettingsDTO dto) {
+    updateSettingsFromDto(dto);
+    return dto;
+  }
+
+  private void updateSettingsFromDto(Object dto) {
+    Map<String, Object> dtoMap = objectMapper.convertValue(dto, new TypeReference<>() {});
+    dtoMap.forEach(
+        (name, value) -> {
+          if (value != null) {
+            updateSetting(name, value.toString());
+          }
+        });
   }
 
   private void updateSetting(String name, String value) {
@@ -46,6 +72,7 @@ public class SettingServiceImpl implements SettingService {
 
   private Map<String, String> loadSettingsMap() {
     return StreamSupport.stream(settingRepository.findAll().spliterator(), false)
+        .filter(setting -> setting.getValue() != null)
         .collect(Collectors.toMap(Setting::getName, Setting::getValue));
   }
 }

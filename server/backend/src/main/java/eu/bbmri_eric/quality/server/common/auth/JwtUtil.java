@@ -117,7 +117,7 @@ public class JwtUtil {
     try {
       payloadNode = OBJECT_MAPPER.readTree(payloadJson);
     } catch (Exception e) {
-      throw new IllegalArgumentException("Failed to parse JWT token: " + e.getMessage(), e);
+      throw new JwtException("Failed to parse JWT token: " + e.getMessage(), e);
     }
 
     String issuer = payloadNode.has("iss") ? payloadNode.get("iss").asText() : null;

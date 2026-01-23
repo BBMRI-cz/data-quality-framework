@@ -47,6 +47,13 @@
             <i class="bi bi-person-fill"></i>
             <span>Profile</span>
           </router-link>
+          <router-link to="/oidc-settings" class="nav-link nav-subitem" :class="{ active: $route.name === 'OidcSettings' }" @click="closeMobileMenu">
+            <!-- OIDC icon from Font Awesome Free v7.1.0 - see https://fontawesome.com/license/free -->
+            <svg class="oidc-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+              <path d="M367.5 496L299.5 528C184.5 517.7 96 456.5 96 382.2C96 310.7 178.5 251.2 287.7 237.9L287.7 280.9C216.2 293.4 163.7 333.9 163.7 382.2C163.7 433.2 222.2 475.5 299.4 485.2L299.4 145.2L367.4 112L367.4 496L367.5 496zM544 355L412.7 326.5L449.5 305.8C430 294.3 406 285.8 379.5 281L379.5 238C425.7 243.5 467.2 257.5 499.8 277.3L534.8 257.5L544 355z"/>
+            </svg>
+            <span>OIDC</span>
+          </router-link>
         </div>
       </nav>
 
@@ -246,6 +253,19 @@ const closeMobileMenu = () => {
 
 .nav-subitem i {
   font-size: 1.125rem !important;
+}
+
+/* OIDC Icon */
+.oidc-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  min-width: 1.25rem;
+  fill: currentColor;
+  transition: transform 0.2s ease;
+}
+
+.nav-link:hover .oidc-icon {
+  transform: scale(1.1);
 }
 
 /* Sidebar Footer */
