@@ -20,8 +20,7 @@ async function fetchOidcSettings() {
             post_logout_redirect_uri: settings.oidcPostLogoutRedirectUri || window.location.origin,
             response_type: 'code',
             scope: settings.oidcScopes,
-            automaticSilentRenew: true,
-            silent_redirect_uri: settings.oidcSilentRedirectUri,
+            automaticSilentRenew: false,
             loadUserInfo: true,
             monitorSession: false,
             accessTokenExpiringNotificationTimeInSeconds: 300
@@ -56,9 +55,6 @@ export async function initializeOidc() {
                         if (user && authStore.mode === 'oidc') {
                             authStore.setUser(user, user.access_token, 'oidc')
                         }
-                    },
-                    addSilentRenewError: (error) => {
-                        console.error('Silent renew failed:', error)
                     }
                 }
             }

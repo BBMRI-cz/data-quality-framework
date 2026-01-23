@@ -1,43 +1,17 @@
 <template>
-  <div>Renewing session...</div>
+  <div>Token refresh is handled automatically...</div>
 </template>
 
 <script setup>
 import { onMounted } from 'vue'
-import { useOidcStore } from 'vue3-oidc'
-import { authStore } from '../stores/authStore'
+import { useRouter } from 'vue-router'
 
-onMounted(async () => {
-  try {
-    const oidcStore = useOidcStore()
-    const maxAttempts = 100
-    const intervalTime = 50
-    let userManager = oidcStore.state.value?.userManager
+const router = useRouter()
 
-    if (!userManager) {
-      await new Promise((resolve) => {
-        let attempts = 0
-        const checkInterval = setInterval(() => {
-          userManager = oidcStore.state.value?.userManager
-          if (userManager || attempts++ >= maxAttempts) {
-            clearInterval(checkInterval)
-            resolve()
-          }
-        }, intervalTime)
-      })
-    }
-
-    if (!userManager) {
-      console.error('UserManager not available')
-      authStore.setSilentRenewFailed(true)
-      return
-    }
-
-    await userManager.signinSilentCallback(window.location.href)
-
-  } catch (error) {
-    console.error('Silent renew error:', error)
-    authStore.setSilentRenewFailed(true)
-  }
+onMounted(() => {
+  // This page is no longer needed for silent renewal
+  // Redirect to dashboard or login
+  console.warn('Silent renew page is deprecated - token refresh is now automatic')
+  router.push('/login')
 })
 </script>

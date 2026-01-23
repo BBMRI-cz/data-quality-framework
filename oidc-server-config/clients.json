@@ -29,7 +29,7 @@
       "http://localhost:5173"
     ],
     "IdentityTokenLifetime": 36000,
-    "AccessTokenLifetime": 3600,
+    "AccessTokenLifetime": 60,
     "AllowOfflineAccess": true,
     "ClientClaimsPrefix": "",
     "RequireClientSecret": false

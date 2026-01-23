@@ -8,40 +8,35 @@ import NotificationContainer from './components/NotificationContainer.vue'
 import CookieConsent from './components/CookieConsent.vue'
 import { authStore } from './stores/authStore.js'
 import { notificationService } from './services/notificationService.js'
+import { useTokenRefresh } from './composables/useTokenRefresh.js'
 
 const router = useRouter()
 const notificationContainer = ref(null)
+const { startTokenRefreshCheck, stopTokenRefreshCheck } = useTokenRefresh()
 
-const handleSessionExpired = () => {
-  notificationService.error('Your session has expired. Please sign in again.')
-  authStore.logout()
-  router.push('/login')
-}
-
-const handleVisibilityChange = () => {
-  if (document.visibilityState === 'visible' && authStore.silentRenewFailed) {
-    handleSessionExpired()
-  }
-}
-
+// Start/stop token refresh based on authentication state
 watch(
-  () => authStore.silentRenewFailed,
-  (failed) => {
-    if (failed) {
-      handleSessionExpired()
+  () => authStore.isAuthenticated,
+  (isAuthenticated) => {
+    if (isAuthenticated && authStore.mode === 'oidc') {
+      console.log('User authenticated with OIDC, starting token refresh monitoring')
+      startTokenRefreshCheck()
+    } else {
+      console.log('User not authenticated or not using OIDC, stopping token refresh monitoring')
+      stopTokenRefreshCheck()
     }
-  }
+  },
+  { immediate: true }
 )
 
 onMounted(() => {
   if (notificationContainer.value) {
     notificationService.setContainer(notificationContainer.value)
   }
-  document.addEventListener('visibilitychange', handleVisibilityChange)
 })
 
 onUnmounted(() => {
-  document.removeEventListener('visibilitychange', handleVisibilityChange)
+  stopTokenRefreshCheck()
 })
 </script>
 
