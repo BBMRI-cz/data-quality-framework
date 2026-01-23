@@ -1,18 +1,18 @@
--- Insert default OIDC settings
+-- Insert OIDC settings
 INSERT INTO setting (setting_name, setting_value)
-VALUES ('oidcAuthority', 'http://localhost:4011');
+VALUES ('oidcAuthority', NULL);
 
 INSERT INTO setting (setting_name, setting_value)
-VALUES ('oidcClientId', 'auth-code-client');
+VALUES ('oidcClientId', NULL);
 
 INSERT INTO setting (setting_name, setting_value)
-VALUES ('oidcRedirectUri', 'http://localhost:8082/logged-in');
+VALUES ('oidcRedirectUri', NULL);
 
 INSERT INTO setting (setting_name, setting_value)
-VALUES ('oidcPostLogoutRedirectUri', 'http://localhost:8082');
+VALUES ('oidcPostLogoutRedirectUri', NULL);
 
 INSERT INTO setting (setting_name, setting_value)
-VALUES ('oidcScopes', 'openid profile email permissions some-app-scope-1');
+VALUES ('oidcScopes', NULL);
 
 INSERT INTO setting (setting_name, setting_value)
-VALUES ('oidcSilentRedirectUri', 'http://localhost:8082/silent-renew');
+VALUES ('oidcSilentRedirectUri', NULL);
