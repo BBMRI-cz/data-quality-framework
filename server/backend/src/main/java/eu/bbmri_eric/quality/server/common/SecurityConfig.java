@@ -105,8 +105,6 @@ class SecurityConfig {
                     .authenticated()
                     .requestMatchers(HttpMethod.PATCH, "/api/v1/settings")
                     .authenticated()
-                    .requestMatchers(HttpMethod.POST, "/api/auth/oidc")
-                    .hasRole("HUMAN_USER")
                     .requestMatchers(
                         "/api/health",
                         "/api/info",
