@@ -3,6 +3,7 @@ package eu.bbmri_eric.quality.server.common.auth;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,9 +12,14 @@ import org.springframework.security.authentication.AuthenticationManagerResolver
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoders;
 import org.springframework.security.oauth2.jwt.JwtException;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
 import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
@@ -54,7 +60,8 @@ class CustomAuthenticationManagerResolver
 
     if (oidcIssuerUri != null && !oidcIssuerUri.isBlank()) {
       try {
-        JwtDecoder jwtDecoder = JwtDecoders.fromIssuerLocation(oidcIssuerUri);
+        NimbusJwtDecoder jwtDecoder = JwtDecoders.fromIssuerLocation(oidcIssuerUri);
+        jwtDecoder.setJwtValidator(getJwtOAuth2TokenValidator());
         JwtAuthenticationProvider oidcProvider = new JwtAuthenticationProvider(jwtDecoder);
         oidcProvider.setJwtAuthenticationConverter(jwtAuthenticationConverter);
         AuthenticationManager oidcAuthManager = new ProviderManager(oidcProvider);
@@ -94,5 +101,20 @@ class CustomAuthenticationManagerResolver
       throw new IllegalStateException(
           "Failed to resolve AuthenticationManager: " + e.getMessage(), e);
     }
+  }
+
+  private static @NonNull OAuth2TokenValidator<Jwt> getJwtOAuth2TokenValidator() {
+    return jwt -> {
+      Object typObj = jwt.getHeaders().get("typ");
+      if (typObj == null) {
+        return OAuth2TokenValidatorResult.success();
+      }
+      String typ = typObj.toString();
+      if ("JWT".equalsIgnoreCase(typ) || "at+jwt".equalsIgnoreCase(typ)) {
+        return OAuth2TokenValidatorResult.success();
+      }
+      return OAuth2TokenValidatorResult.failure(
+          new OAuth2Error(OAuth2ErrorCodes.INVALID_TOKEN, "Unsupported JOSE typ: " + typ, null));
+    };
   }
 }
