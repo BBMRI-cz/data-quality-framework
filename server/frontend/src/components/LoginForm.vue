@@ -120,11 +120,27 @@
 
                 <button
                     type="button"
-                    class="btn btn-primary w-100 py-2 fw-semibold btn-mobile"
+                    class="btn btn-primary w-100 py-2 fw-semibold btn-mobile d-flex align-items-center justify-content-center gap-2 oidc-button"
                     @click="handleOidcLogin"
                     :disabled="authStore.isLoading"
                 >
-                  Sign in with OIDC
+                  <span class="oidc-provider-badge">
+                    <img
+                      v-if="oidcLogo"
+                      :src="oidcLogo"
+                      :alt="`${oidcDisplayName} logo`"
+                      class="oidc-provider-logo"
+                    />
+                    <svg v-else class="oidc-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+                      <path d="M367.5 496L299.5 528C184.5 517.7 96 456.5 96 382.2C96 310.7 178.5 251.2 287.7 237.9L287.7 280.9C216.2 293.4 163.7 333.9 163.7 382.2C163.7 433.2 222.2 475.5 299.4 485.2L299.4 145.2L367.4 112L367.4 496L367.5 496zM544 355L412.7 326.5L449.5 305.8C430 294.3 406 285.8 379.5 281L379.5 238C425.7 243.5 467.2 257.5 499.8 277.3L534.8 257.5L544 355z"/>
+                    </svg>
+                  </span>
+                  <span
+                    class="oidc-provider-label"
+                    :title="`${oidcDisplayName}`"
+                  >
+                    {{ oidcDisplayName }}
+                  </span>
                 </button>
               </template>
 
@@ -161,6 +177,9 @@ const { settings } = settingsStore
 const isOidcConfigured = computed(() => {
   return settings.value?.oidcAuthority && settings.value.oidcAuthority.trim() !== ''
 })
+
+const oidcDisplayName = computed(() => settings.value?.oidcAuthorityName?.trim() || 'OIDC')
+const oidcLogo = computed(() => settings.value?.oidcAuthorityLogo?.trim() || null)
 
 const form = reactive({
   username: '',
@@ -439,5 +458,50 @@ const handleLogin = async () => {
   .form-control {
     min-height: 44px;
   }
+}
+
+.oidc-provider-badge {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.2rem;
+}
+
+.oidc-provider-logo {
+  width: 100%;
+  height: 100%;
+  max-width: 32px;
+  max-height: 32px;
+  object-fit: contain;
+}
+
+.oidc-icon {
+  width: 28px;
+  height: 28px;
+  fill: currentColor;
+}
+
+.oidc-button {
+  gap: 0.5rem;
+  padding: 0.45rem 1rem;
+  max-height: 56px;
+  font-size: 0.95rem;
+  justify-content: center;
+  text-align: center;
+}
+
+.oidc-provider-label {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: inherit;
+  font-weight: inherit;
+  color: inherit;
 }
 </style>

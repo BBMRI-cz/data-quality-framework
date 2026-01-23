@@ -31,3 +31,9 @@ VALUES ('oidcScopes', NULL);
 
 INSERT INTO setting (setting_name, setting_value)
 VALUES ('oidcSilentRedirectUri', NULL);
+
+INSERT INTO setting (setting_name, setting_value)
+VALUES ('oidcAuthorityName', NULL);
+
+INSERT INTO setting (setting_name, setting_value)
+VALUES ('oidcAuthorityLogo', NULL);

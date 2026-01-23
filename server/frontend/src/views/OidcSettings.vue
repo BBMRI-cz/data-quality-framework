@@ -110,6 +110,34 @@
                 <div class="form-text">URI for silent token renewal</div>
               </div>
 
+              <div class="mb-3">
+                <label for="oidcAuthorityName" class="form-label">
+                  Authority Display Name
+                </label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="oidcAuthorityName"
+                  v-model="settings.oidcAuthorityName"
+                  placeholder="BBMRI Identity Provider"
+                />
+                <div class="form-text">Name shown to users during authentication flows</div>
+              </div>
+
+              <div class="mb-3">
+                <label for="oidcAuthorityLogo" class="form-label">
+                  Authority Logo URL
+                </label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="oidcAuthorityLogo"
+                  v-model="settings.oidcAuthorityLogo"
+                  placeholder="https://your-oidc-provider.com/logo.svg"
+                />
+                <div class="form-text">Logo displayed alongside the authority name</div>
+              </div>
+
               <div class="mb-4">
                 <label for="oidcScopes" class="form-label">
                   Scopes

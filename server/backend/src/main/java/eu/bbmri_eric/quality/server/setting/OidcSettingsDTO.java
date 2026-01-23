@@ -35,6 +35,12 @@ public class OidcSettingsDTO {
   @Pattern(regexp = "^https?://.*", message = "Must be a valid HTTP(S) URL")
   private String oidcSilentRedirectUri;
 
+  @Schema(description = "Display name for the OIDC authority", example = "BBMRI Identity Provider")
+  private String oidcAuthorityName;
+
+  @Schema(description = "OIDC authority logo URL", example = "https://example.test/logo.svg")
+  private String oidcAuthorityLogo;
+
   public OidcSettingsDTO() {}
 
   public String getOidcAuthority() {
@@ -85,6 +91,22 @@ public class OidcSettingsDTO {
     this.oidcSilentRedirectUri = oidcSilentRedirectUri;
   }
 
+  public String getOidcAuthorityName() {
+    return oidcAuthorityName;
+  }
+
+  public void setOidcAuthorityName(String oidcAuthorityName) {
+    this.oidcAuthorityName = oidcAuthorityName;
+  }
+
+  public String getOidcAuthorityLogo() {
+    return oidcAuthorityLogo;
+  }
+
+  public void setOidcAuthorityLogo(String oidcAuthorityLogo) {
+    this.oidcAuthorityLogo = oidcAuthorityLogo;
+  }
+
   @Override
   public String toString() {
     return "OidcSettingsDTO{"
@@ -105,6 +127,12 @@ public class OidcSettingsDTO {
         + '\''
         + ", oidcSilentRedirectUri='"
         + oidcSilentRedirectUri
+        + '\''
+        + ", oidcAuthorityName='"
+        + oidcAuthorityName
+        + '\''
+        + ", oidcAuthorityLogo='"
+        + oidcAuthorityLogo
         + '\''
         + '}';
   }

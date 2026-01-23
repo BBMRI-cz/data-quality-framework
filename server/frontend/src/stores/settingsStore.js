@@ -7,7 +7,9 @@ const settings = ref({
   oidcRedirectUri: '',
   oidcPostLogoutRedirectUri: '',
   oidcScopes: '',
-  oidcSilentRedirectUri: ''
+  oidcSilentRedirectUri: '',
+  oidcAuthorityName: '',
+  oidcAuthorityLogo: ''
 })
 const loading = ref(false)
 const error = ref(null)
@@ -47,6 +49,3 @@ export default {
   fetchOidcSettings,
   updateOidcSettings
 }
-
-
-
