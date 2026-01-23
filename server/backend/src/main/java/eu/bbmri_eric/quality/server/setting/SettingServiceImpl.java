@@ -72,6 +72,7 @@ public class SettingServiceImpl implements SettingService {
 
   private Map<String, String> loadSettingsMap() {
     return StreamSupport.stream(settingRepository.findAll().spliterator(), false)
+        .filter(setting -> setting.getValue() != null)
         .collect(Collectors.toMap(Setting::getName, Setting::getValue));
   }
 }
