@@ -287,6 +287,15 @@ const closeMobileMenu = () => {
   color: rgba(255, 255, 255, 0.9);
 }
 
+.sidebar-footer :deep(.github-link) {
+  color: white;
+  font-weight: 500;
+}
+
+.sidebar-footer :deep(.github-link:hover) {
+  color: rgba(255, 255, 255, 0.9);
+}
+
 .mobile-menu-toggle {
   display: none;
   position: fixed;

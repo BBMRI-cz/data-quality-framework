@@ -40,6 +40,17 @@
         Give Feedback
       </a>
     </p>
+    <p class="github-section">
+      <a
+        href="https://github.com/BBMRI-cz/data-quality-framework"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="github-link"
+      >
+        <i class="bi bi-github" aria-hidden="true"></i>
+        View on GitHub
+      </a>
+    </p>
   </div>
 </template>
 
@@ -98,6 +109,30 @@
 }
 
 .feedback-link:hover {
+  color: #764ba2;
+  text-decoration: underline;
+}
+
+.github-section {
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+}
+
+.github-link {
+  color: #667eea;
+  text-decoration: none;
+  transition: color 0.2s ease;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.github-link i {
+  font-size: 0.875rem;
+}
+
+.github-link:hover {
   color: #764ba2;
   text-decoration: underline;
 }
