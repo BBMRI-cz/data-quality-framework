@@ -159,7 +159,7 @@
                 {{ error }}
               </div>
 
-              <div class="d-flex gap-2">
+              <div class="d-flex gap-2 flex-wrap">
                 <button
                   type="submit"
                   class="btn btn-primary"
@@ -176,25 +176,77 @@
                 >
                   Reset
                 </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-danger"
+                  @click="showRemoveModal = true"
+                  :disabled="loading"
+                >
+                  <i class="bi bi-trash me-1"></i>
+                  Remove OIDC Config
+                </button>
               </div>
             </form>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Remove OIDC Config Confirmation Modal -->
+    <DeleteConfirmModal
+      :show="showRemoveModal"
+      title="Remove OIDC Configuration"
+      subtitle="This action will disable OIDC authentication"
+      message="Are you sure you want to remove the OIDC configuration? This will clear all OIDC settings and may affect user authentication."
+      warning="You will be logged out and redirected to the login page."
+      confirm-text="Remove Configuration"
+      :loading="loading"
+      @close="showRemoveModal = false"
+      @confirm="removeOidcConfig"
+    />
   </div>
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import settingsStore from '../stores/settingsStore'
 import { authStore } from '../stores/authStore'
 import PageHeader from '../components/PageHeader.vue'
+import DeleteConfirmModal from '../components/DeleteConfirmModal.vue'
+
 const reloadTimeout = 500
 const { settings, loading, error } = settingsStore
+const showRemoveModal = ref(false)
 
 async function saveSettings() {
   await settingsStore.updateOidcSettings()
+
+  if (!error.value) {
+    if (authStore.mode === 'oidc') {
+      authStore.logout()
+      setTimeout(() => {
+        window.location.href = '/login'
+      }, reloadTimeout)
+    } else {
+      setTimeout(() => {
+        window.location.reload()
+      }, reloadTimeout)
+    }
+  }
+}
+
+async function removeOidcConfig() {
+  settings.value.oidcAuthority = ''
+  settings.value.oidcClientId = ''
+  settings.value.oidcRedirectUri = ''
+  settings.value.oidcPostLogoutRedirectUri = ''
+  settings.value.oidcSilentRedirectUri = ''
+  settings.value.oidcAuthorityName = ''
+  settings.value.oidcAuthorityLogo = ''
+  settings.value.oidcScopes = ''
+
+  await settingsStore.updateOidcSettings()
+  showRemoveModal.value = false
 
   if (!error.value) {
     if (authStore.mode === 'oidc') {

@@ -1,38 +1,33 @@
 package eu.bbmri_eric.quality.server.setting;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 
 @Schema(description = "OIDC configuration settings for frontend initialization")
 public class OidcSettingsDTO {
 
   @Schema(description = "OIDC authority URL", example = "http://localhost:4011")
-  @NotBlank(message = "OIDC authority is required")
-  @Pattern(regexp = "^https?://.*", message = "Must be a valid HTTP(S) URL")
+  @Pattern(regexp = "^$|^https?://.*", message = "Must be a valid HTTP(S) URL or blank")
   private String oidcAuthority;
 
   @Schema(description = "OIDC client ID", example = "auth-code-client")
-  @NotBlank(message = "OIDC client ID is required")
   private String oidcClientId;
 
   @Schema(description = "OIDC redirect URI", example = "http://localhost:5173/logged-in")
-  @NotBlank(message = "OIDC redirect URI is required")
-  @Pattern(regexp = "^https?://.*", message = "Must be a valid HTTP(S) URL")
+  @Pattern(regexp = "^$|^https?://.*", message = "Must be a valid HTTP(S) URL or blank")
   private String oidcRedirectUri;
 
   @Schema(description = "OIDC post logout redirect URI", example = "http://localhost:5173")
-  @Pattern(regexp = "^https?://.*", message = "Must be a valid HTTP(S) URL")
+  @Pattern(regexp = "^$|^https?://.*", message = "Must be a valid HTTP(S) URL or blank")
   private String oidcPostLogoutRedirectUri;
 
   @Schema(
       description = "OIDC scopes",
       example = "openid profile email permissions some-app-scope-1")
-  @NotBlank(message = "OIDC scopes are required")
   private String oidcScopes;
 
   @Schema(description = "OIDC silent redirect URI", example = "http://localhost:5173/silent-renew")
-  @Pattern(regexp = "^https?://.*", message = "Must be a valid HTTP(S) URL")
+  @Pattern(regexp = "^$|^https?://.*", message = "Must be a valid HTTP(S) URL or blank")
   private String oidcSilentRedirectUri;
 
   @Schema(description = "Display name for the OIDC authority", example = "BBMRI Identity Provider")
