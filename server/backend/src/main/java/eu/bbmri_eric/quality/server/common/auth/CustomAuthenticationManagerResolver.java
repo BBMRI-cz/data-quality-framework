@@ -1,5 +1,7 @@
 package eu.bbmri_eric.quality.server.common.auth;
 
+import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.proc.DefaultJOSEObjectTypeVerifier;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,7 +19,6 @@ import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtDecoders;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
@@ -60,8 +61,15 @@ class CustomAuthenticationManagerResolver
 
     if (oidcIssuerUri != null && !oidcIssuerUri.isBlank()) {
       try {
-        NimbusJwtDecoder jwtDecoder = JwtDecoders.fromIssuerLocation(oidcIssuerUri);
-        jwtDecoder.setJwtValidator(getJwtOAuth2TokenValidator());
+        NimbusJwtDecoder jwtDecoder =
+            NimbusJwtDecoder.withIssuerLocation(oidcIssuerUri)
+                .jwtProcessorCustomizer(
+                    processor -> {
+                      processor.setJWSTypeVerifier(
+                          new DefaultJOSEObjectTypeVerifier<>(
+                              new JOSEObjectType("at+jwt"), new JOSEObjectType("JWT"), null));
+                    })
+                .build();
         JwtAuthenticationProvider oidcProvider = new JwtAuthenticationProvider(jwtDecoder);
         oidcProvider.setJwtAuthenticationConverter(jwtAuthenticationConverter);
         AuthenticationManager oidcAuthManager = new ProviderManager(oidcProvider);

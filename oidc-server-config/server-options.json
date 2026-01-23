@@ -1,5 +1,5 @@
 {
-  "AccessTokenJwtType": "JWT",
+  "AccessTokenJwtType": "at+jwt",
   "Discovery": {
     "ShowKeySet": true
   },
