@@ -8,10 +8,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationManagerResolver;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtDecoders;
+import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
 import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
@@ -59,7 +61,7 @@ class CustomAuthenticationManagerResolver
         authManagers.put(oidcIssuerUri, oidcAuthManager);
         logger.debug("Registered OIDC authentication for issuer: {}", oidcIssuerUri);
       } catch (Exception e) {
-        logger.warn(
+        logger.error(
             "Failed to initialize OIDC authentication for issuer '{}': {}. OIDC authentication will not be available.",
             oidcIssuerUri,
             e.getMessage());
@@ -86,6 +88,8 @@ class CustomAuthenticationManagerResolver
       return authManager != null ? authManager : defaultAuthManager;
     } catch (IllegalArgumentException e) {
       return defaultAuthManager;
+    } catch (JwtException e) {
+      throw new AuthenticationServiceException(e.getMessage());
     } catch (Exception e) {
       throw new IllegalStateException(
           "Failed to resolve AuthenticationManager: " + e.getMessage(), e);
