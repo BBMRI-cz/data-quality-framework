@@ -12,7 +12,7 @@
     "axios": "^1.13.2",
     "bootstrap": "^5.3.6",
     "bootstrap-icons": "^1.11.1",
-    "vue": "^3.5.26",
+    "vue": "^3.5.27",
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
