@@ -21,10 +21,9 @@ async function fetchOidcSettings() {
             response_type: 'code',
             scope: settings.oidcScopes,
             automaticSilentRenew: true,
-            silent_redirect_uri: settings.oidcSilentRedirectUri,
+            useRefreshToken: true,
             loadUserInfo: true,
-            monitorSession: false,
-            accessTokenExpiringNotificationTimeInSeconds: 300
+            monitorSession: false
         }
     } catch (error) {
         console.error('Failed to fetch OIDC settings from backend:', error)
@@ -56,9 +55,6 @@ export async function initializeOidc() {
                         if (user && authStore.mode === 'oidc') {
                             authStore.setUser(user, user.access_token, 'oidc')
                         }
-                    },
-                    addSilentRenewError: (error) => {
-                        console.error('Silent renew failed:', error)
                     }
                 }
             }

@@ -7,7 +7,6 @@ const settings = ref({
   oidcRedirectUri: '',
   oidcPostLogoutRedirectUri: '',
   oidcScopes: '',
-  oidcSilentRedirectUri: '',
   oidcAuthorityName: '',
   oidcAuthorityLogo: ''
 })

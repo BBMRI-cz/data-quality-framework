@@ -4,20 +4,20 @@
     "Description": "Client for authorization code flow",
     "AllowedGrantTypes": [
       "authorization_code",
+      "refresh_token",
       "password"
     ],
     "AllowAccessTokensViaBrowser": true,
     "RedirectUris": [
       "http://localhost:8082/logged-in",
       "http://localhost:8082",
-      "http://localhost:8082/silent-renew",
       "http://localhost:5173/logged-in",
-      "http://localhost:5173",
-      "http://localhost:5173/silent-renew"
+      "http://localhost:5173"
     ],
     "AllowedScopes": [
       "openid",
       "profile",
+      "offline_access",
       "email",
       "permissions",
       "some-app-scope-1"
@@ -28,6 +28,7 @@
     ],
     "IdentityTokenLifetime": 36000,
     "AccessTokenLifetime": 3600,
+    "AllowOfflineAccess": true,
     "ClientClaimsPrefix": "",
     "RequireClientSecret": false
   },

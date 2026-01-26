@@ -7,7 +7,6 @@ export const authStore = reactive({
   error: null,
   redirectPath: null,
   mode: null,
-  silentRenewFailed: false,
 
   init() {
     const savedUser = localStorage.getItem('user')
@@ -26,7 +25,6 @@ export const authStore = reactive({
     this.isAuthenticated = true
     this.error = null
     this.mode = mode
-    this.silentRenewFailed = false
 
     localStorage.setItem('user', JSON.stringify(user))
     localStorage.setItem('authMode', mode)
@@ -41,7 +39,6 @@ export const authStore = reactive({
     this.error = null
     this.redirectPath = null
     this.mode = null
-    this.silentRenewFailed = false
 
     localStorage.removeItem('user')
     localStorage.removeItem('authToken')
@@ -69,10 +66,6 @@ export const authStore = reactive({
     const path = this.redirectPath
     this.redirectPath = null // Clear after getting
     return path || '/dashboard'
-  },
-
-  setSilentRenewFailed(failed) {
-    this.silentRenewFailed = failed
   }
 })
 

@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, onUnmounted, watch } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import Sidebar from './components/Sidebar.vue'
 import TopNavbar from './components/TopNavbar.vue'
@@ -12,36 +12,10 @@ import { notificationService } from './services/notificationService.js'
 const router = useRouter()
 const notificationContainer = ref(null)
 
-const handleSessionExpired = () => {
-  notificationService.error('Your session has expired. Please sign in again.')
-  authStore.logout()
-  router.push('/login')
-}
-
-const handleVisibilityChange = () => {
-  if (document.visibilityState === 'visible' && authStore.silentRenewFailed) {
-    handleSessionExpired()
-  }
-}
-
-watch(
-  () => authStore.silentRenewFailed,
-  (failed) => {
-    if (failed) {
-      handleSessionExpired()
-    }
-  }
-)
-
 onMounted(() => {
   if (notificationContainer.value) {
     notificationService.setContainer(notificationContainer.value)
   }
-  document.addEventListener('visibilitychange', handleVisibilityChange)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('visibilitychange', handleVisibilityChange)
 })
 </script>
 
