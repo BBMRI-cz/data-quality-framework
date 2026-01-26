@@ -50,27 +50,28 @@ INSERT INTO quality_check (hash, name, description, registered_at, warning_thres
     ('invalid-coding-check', 'Invalid Medical Codes', 'Percentage of records with invalid or non-standard medical codes (ICD-10, SNOMED CT)', '2024-01-15 11:45:00', 3.0, 10.0, 2);
 
 -- Insert dummy reports for the past 30 days
-INSERT INTO report (id, timestamp, agent_id) VALUES
-    ('report-001', '2024-10-01 09:00:00', 'agent-001'),
-    ('report-002', '2024-10-01 14:30:00', 'agent-002'),
-    ('report-003', '2024-10-02 08:15:00', 'agent-001'),
-    ('report-004', '2024-10-02 16:45:00', 'agent-004'),
-    ('report-005', '2024-10-03 10:20:00', 'agent-002'),
-    ('report-006', '2024-10-03 13:10:00', 'agent-005'),
-    ('report-007', '2024-10-04 11:30:00', 'agent-001'),
-    ('report-008', '2024-10-04 15:20:00', 'agent-004'),
-    ('report-009', '2024-10-05 09:45:00', 'agent-002'),
-    ('report-010', '2024-10-05 14:15:00', 'agent-005'),
-    ('report-011', '2024-10-06 10:00:00', 'agent-001'),
-    ('report-012', '2024-10-06 16:30:00', 'agent-004'),
-    ('report-013', '2024-10-07 08:45:00', 'agent-002'),
-    ('report-014', '2024-10-07 12:20:00', 'agent-005'),
-    ('report-015', '2024-10-08 11:15:00', 'agent-001'),
-    ('report-016', '2024-10-08 15:40:00', 'agent-004'),
-    ('report-017', '2024-10-09 09:30:00', 'agent-002'),
-    ('report-018', '2024-10-09 14:50:00', 'agent-005'),
-    ('report-019', '2024-10-10 10:45:00', 'agent-001'),
-    ('report-020', '2024-10-10 16:10:00', 'agent-004');
+-- Some reports include total_patients and total_samples, others are NULL for backwards compatibility testing
+INSERT INTO report (id, timestamp, agent_id, total_patients, total_samples) VALUES
+    ('report-001', '2024-10-01 09:00:00', 'agent-001', 1250, 3800),
+    ('report-002', '2024-10-01 14:30:00', 'agent-002', 890, 2450),
+    ('report-003', '2024-10-02 08:15:00', 'agent-001', NULL, NULL),  -- backwards compatibility test
+    ('report-004', '2024-10-02 16:45:00', 'agent-004', 2100, 6500),
+    ('report-005', '2024-10-03 10:20:00', 'agent-002', 920, 2600),
+    ('report-006', '2024-10-03 13:10:00', 'agent-005', NULL, NULL),  -- backwards compatibility test
+    ('report-007', '2024-10-04 11:30:00', 'agent-001', 1300, 3950),
+    ('report-008', '2024-10-04 15:20:00', 'agent-004', 2150, 6700),
+    ('report-009', '2024-10-05 09:45:00', 'agent-002', NULL, NULL),  -- backwards compatibility test
+    ('report-010', '2024-10-05 14:15:00', 'agent-005', 1680, 5200),
+    ('report-011', '2024-10-06 10:00:00', 'agent-001', 1280, 3900),
+    ('report-012', '2024-10-06 16:30:00', 'agent-004', NULL, NULL),  -- backwards compatibility test
+    ('report-013', '2024-10-07 08:45:00', 'agent-002', 905, 2520),
+    ('report-014', '2024-10-07 12:20:00', 'agent-005', 1700, 5300),
+    ('report-015', '2024-10-08 11:15:00', 'agent-001', 1310, 4000),
+    ('report-016', '2024-10-08 15:40:00', 'agent-004', 2200, 6850),
+    ('report-017', '2024-10-09 09:30:00', 'agent-002', NULL, NULL),  -- backwards compatibility test
+    ('report-018', '2024-10-09 14:50:00', 'agent-005', 1720, 5400),
+    ('report-019', '2024-10-10 10:45:00', 'agent-001', 1290, 3920),
+    ('report-020', '2024-10-10 16:10:00', 'agent-004', 2180, 6750);
 
 -- Insert quality check results for the reports
 -- Report 1 results (good quality data - low error rates)
@@ -166,10 +167,10 @@ INSERT INTO quality_check_result (report_id, quality_check_hash, result) VALUES
     ('report-010', 'invalid-coding-check', 0.02);
 
 -- Add some recent reports with current timestamps for immediate testing
-INSERT INTO report (id, timestamp, agent_id) VALUES
-    ('report-current-1', datetime('now', '-2 hours'), 'agent-001'),
-    ('report-current-2', datetime('now', '-1 hour'), 'agent-002'),
-    ('report-current-3', datetime('now', '-30 minutes'), 'agent-004');
+INSERT INTO report (id, timestamp, agent_id, total_patients, total_samples) VALUES
+    ('report-current-1', datetime('now', '-2 hours'), 'agent-001', 1275, 3850),
+    ('report-current-2', datetime('now', '-1 hour'), 'agent-002', 895, 2475),
+    ('report-current-3', datetime('now', '-30 minutes'), 'agent-004', 2125, 6600);
 
 -- Add results for current reports
 INSERT INTO quality_check_result (report_id, quality_check_hash, result) VALUES

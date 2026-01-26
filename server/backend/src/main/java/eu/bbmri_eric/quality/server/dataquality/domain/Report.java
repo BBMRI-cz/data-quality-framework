@@ -28,6 +28,12 @@ public class Report {
   @Column(name = "agent_id", insertable = false, updatable = false)
   private String agentId;
 
+  @Column(name = "total_patients")
+  private Integer totalPatients;
+
+  @Column(name = "total_samples")
+  private Integer totalSamples;
+
   @OneToMany(
       mappedBy = "report",
       cascade = CascadeType.ALL,
@@ -79,6 +85,42 @@ public class Report {
   }
 
   /**
+   * Gets the total number of patients.
+   *
+   * @return the total number of patients
+   */
+  public Integer getTotalPatients() {
+    return totalPatients;
+  }
+
+  /**
+   * Sets the total number of patients.
+   *
+   * @param totalPatients the total number of patients
+   */
+  public void setTotalPatients(Integer totalPatients) {
+    this.totalPatients = totalPatients;
+  }
+
+  /**
+   * Gets the total number of samples.
+   *
+   * @return the total number of samples
+   */
+  public Integer getTotalSamples() {
+    return totalSamples;
+  }
+
+  /**
+   * Sets the total number of samples.
+   *
+   * @param totalSamples the total number of samples
+   */
+  public void setTotalSamples(Integer totalSamples) {
+    this.totalSamples = totalSamples;
+  }
+
+  /**
    * Gets an unmodifiable list of quality check results.
    *
    * @return the quality check results
@@ -120,11 +162,13 @@ public class Report {
     Report report = (Report) o;
     return Objects.equals(id, report.id)
         && Objects.equals(timestamp, report.timestamp)
-        && Objects.equals(agentId, report.agentId);
+        && Objects.equals(agentId, report.agentId)
+        && totalPatients == report.totalPatients
+        && totalSamples == report.totalSamples;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, timestamp, agentId);
+    return Objects.hash(id, timestamp, agentId, totalPatients, totalSamples);
   }
 }

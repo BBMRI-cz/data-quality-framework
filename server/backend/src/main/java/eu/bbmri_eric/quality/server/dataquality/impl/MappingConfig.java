@@ -35,6 +35,8 @@ public class MappingConfig {
             map(source.getId(), destination.getId());
             map(source.getTimestamp(), destination.getTimestamp());
             map(source.getAgentId(), destination.getAgentId());
+            map(source.getTotalPatients(), destination.getTotalPatients());
+            map(source.getTotalSamples(), destination.getTotalSamples());
             map(source.getQualityCheckResults(), destination.getResults());
           }
         });
