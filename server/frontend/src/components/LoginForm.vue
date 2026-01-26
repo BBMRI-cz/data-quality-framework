@@ -27,17 +27,13 @@
 
             <div class="border-top border-secondary pt-4">
               <div class="row text-center">
-                <div class="col-4">
+                <div class="col-6">
                   <div class="h4 fw-bold mb-1 count-animation">{{ displayAgentCount }}</div>
                   <small class="text-uppercase text-light">Repositories</small>
                 </div>
-                <div class="col-4">
+                <div class="col-6">
                   <div class="h4 fw-bold mb-1 count-animation">{{ displayReportCount }}</div>
                   <small class="text-uppercase text-light">Generated Reports</small>
-                </div>
-                <div class="col-4">
-                  <div class="h4 fw-bold mb-1">{{ appVersion }}</div>
-                  <small class="text-uppercase text-light">Version</small>
                 </div>
               </div>
             </div>
@@ -166,7 +162,6 @@ import { initializeOidc } from '../utils/oidc.js'
 import settingsStore from '../stores/settingsStore.js'
 
 const router = useRouter()
-const appVersion = ref('unknown')
 const agentCount = ref(0)
 const reportCount = ref(0)
 const displayAgentCount = ref(0)
@@ -221,13 +216,6 @@ onMounted(async () => {
     console.error('Failed to fetch OIDC settings:', error)
   }
 
-  try {
-    const response = await apiService.getInfo()
-    appVersion.value = response.version || 'unknown'
-  } catch (error) {
-    console.error('Failed to fetch app info:', error)
-    appVersion.value = 'unknown'
-  }
 
   try {
     const counts = await apiService.getCounts()

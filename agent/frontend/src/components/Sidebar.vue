@@ -296,6 +296,10 @@ const closeMobileMenu = () => {
   color: rgba(255, 255, 255, 0.9);
 }
 
+.sidebar-footer :deep(.build-info) {
+  color: rgba(255, 255, 255, 0.7);
+}
+
 .mobile-menu-toggle {
   display: none;
   position: fixed;

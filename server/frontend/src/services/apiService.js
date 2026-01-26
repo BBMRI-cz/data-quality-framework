@@ -90,7 +90,9 @@ class ApiService {
         const response = await api.get('/info');
         const data = response.data;
         return {
-            version: data?.build?.version || 'unknown'
+            version: data?.build?.version || 'unknown',
+            gitCommit: data?.git?.commit?.id?.abbrev || 'unknown',
+            buildTime: data?.build?.time || null
         };
     }
 

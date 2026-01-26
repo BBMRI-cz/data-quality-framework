@@ -51,11 +51,35 @@
         View on GitHub
       </a>
     </p>
+    <p v-if="buildInfo" class="build-info">
+      {{ buildInfo.version }} • {{ buildInfo.gitCommit }}<span v-if="buildInfo.buildTime"> • {{ formatBuildTime(buildInfo.buildTime) }}</span>
+    </p>
   </div>
 </template>
 
 <script setup>
-// Copyright component for BBMRI-ERIC
+import { ref, onMounted } from 'vue'
+import {apiService} from '../services/apiService'
+
+const buildInfo = ref(null)
+
+const formatBuildTime = (buildTime) => {
+  if (!buildTime) return ''
+  const date = new Date(buildTime)
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  })
+}
+
+onMounted(async () => {
+  try {
+    buildInfo.value = await apiService.getInfo()
+  } catch (error) {
+    console.error('Failed to fetch build info:', error)
+  }
+})
 </script>
 
 <style scoped>
@@ -139,6 +163,14 @@
 
 sup {
   font-size: 0.7em;
+}
+
+.build-info {
+  margin-top: 0.75rem;
+  margin-bottom: 0;
+  font-size: 0.7rem;
+  color: #9ca3af;
+  opacity: 0.85;
 }
 </style>
 
