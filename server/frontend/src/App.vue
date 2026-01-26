@@ -8,13 +8,18 @@ import NotificationContainer from './components/NotificationContainer.vue'
 import CookieConsent from './components/CookieConsent.vue'
 import { authStore } from './stores/authStore.js'
 import { notificationService } from './services/notificationService.js'
+import { initializeOidc } from './utils/oidc.js'
 
 const router = useRouter()
 const notificationContainer = ref(null)
 
-onMounted(() => {
+onMounted(async () => {
   if (notificationContainer.value) {
     notificationService.setContainer(notificationContainer.value)
+  }
+
+  if (authStore.isAuthenticated && authStore.mode === 'oidc') {
+    await initializeOidc()
   }
 })
 </script>
