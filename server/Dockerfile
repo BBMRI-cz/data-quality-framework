@@ -1,16 +1,18 @@
 FROM node:20-alpine AS frontend-builder
 WORKDIR /app/frontend
-COPY frontend/package*.json ./
+COPY server/frontend/package*.json ./
 RUN npm install --silent
-COPY frontend/ .
+COPY server/frontend/ .
 RUN npm run build --silent
 
 FROM maven:3.9.9-eclipse-temurin-21 AS backend-builder
 ARG ARTIFACT_VERSION=unknown
+WORKDIR /app
+COPY .git ./.git
 WORKDIR /app/backend
-COPY backend/pom.xml .
+COPY server/backend/pom.xml .
 RUN mvn dependency:go-offline --quiet
-COPY backend/src ./src
+COPY server/backend/src ./src
 COPY --from=frontend-builder /app/frontend/dist ./src/main/resources/static
 RUN mvn --quiet -B versions:set -DnewVersion=$ARTIFACT_VERSION
 RUN mvn package --quiet -DskipTests
