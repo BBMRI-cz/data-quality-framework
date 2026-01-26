@@ -26,17 +26,13 @@
 
                 <div class="border-top border-secondary pt-4">
                   <div class="row text-center">
-                    <div class="col-4">
+                    <div class="col-6">
                       <div class="h4 fw-bold mb-1">CQL</div>
                       <small class="text-uppercase text-light">Quality Checks</small>
                     </div>
-                    <div class="col-4">
+                    <div class="col-6">
                       <div class="h4 fw-bold mb-1">Auto</div>
                       <small class="text-uppercase text-light">Reporting</small>
-                    </div>
-                    <div class="col-4">
-                      <div class="h4 fw-bold mb-1">{{ appVersion }}</div>
-                      <small class="text-uppercase text-light">Version</small>
                     </div>
                   </div>
                 </div>
@@ -131,7 +127,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { authenticate, getAppInfo } from '../js/api.js'
+import { authenticate } from '../js/api.js'
 import { useUserStore } from '../stores/userStore.js'
 import Copyright from '../components/Copyright.vue'
 import { notificationService } from '../services/notificationService.js'
@@ -141,15 +137,12 @@ const password = ref('')
 const loading = ref(false)
 const error = ref('')
 const showPassword = ref(false)
-const appVersion = ref('unknown')
 
 const route = useRoute()
 const router = useRouter()
 const { updateDefaultPasswordStatus } = useUserStore()
 
 onMounted(async () => {
-  const info = await getAppInfo()
-  appVersion.value = info.version
 
   // Check if user was redirected due to session expiration
   if (route.query.sessionExpired === 'true') {

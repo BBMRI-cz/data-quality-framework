@@ -169,7 +169,7 @@ export async function validateServerUrl(serverUrl) {
 
 /**
  * Fetches application info including version
- * @returns {Promise<{version: string}>}
+ * @returns {Promise<{version: string, gitCommit: string, buildTime: string|null}>}
  */
 export async function getAppInfo() {
     try {
@@ -178,11 +178,15 @@ export async function getAppInfo() {
         });
 
         return {
-            version: response.data?.build?.version || 'unknown'
+            version: response.data?.build?.version || 'unknown',
+            gitCommit: response.data?.git?.commit?.id?.abbrev || 'unknown',
+            buildTime: response.data?.build?.time || null
         };
     } catch (error) {
         return {
-            version: 'unknown'
+            version: 'unknown',
+            gitCommit: 'unknown',
+            buildTime: null
         };
     }
 }
