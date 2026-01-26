@@ -26,10 +26,6 @@ public class OidcSettingsDTO {
       example = "openid profile email permissions some-app-scope-1")
   private String oidcScopes;
 
-  @Schema(description = "OIDC silent redirect URI", example = "http://localhost:5173/silent-renew")
-  @Pattern(regexp = "^$|^https?://.*", message = "Must be a valid HTTP(S) URL or blank")
-  private String oidcSilentRedirectUri;
-
   @Schema(description = "Display name for the OIDC authority", example = "BBMRI Identity Provider")
   private String oidcAuthorityName;
 
@@ -78,14 +74,6 @@ public class OidcSettingsDTO {
     this.oidcScopes = oidcScopes;
   }
 
-  public String getOidcSilentRedirectUri() {
-    return oidcSilentRedirectUri;
-  }
-
-  public void setOidcSilentRedirectUri(String oidcSilentRedirectUri) {
-    this.oidcSilentRedirectUri = oidcSilentRedirectUri;
-  }
-
   public String getOidcAuthorityName() {
     return oidcAuthorityName;
   }
@@ -119,9 +107,6 @@ public class OidcSettingsDTO {
         + '\''
         + ", oidcScopes='"
         + oidcScopes
-        + '\''
-        + ", oidcSilentRedirectUri='"
-        + oidcSilentRedirectUri
         + '\''
         + ", oidcAuthorityName='"
         + oidcAuthorityName

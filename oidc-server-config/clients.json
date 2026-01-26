@@ -11,10 +11,8 @@
     "RedirectUris": [
       "http://localhost:8082/logged-in",
       "http://localhost:8082",
-      "http://localhost:8082/silent-renew",
       "http://localhost:5173/logged-in",
-      "http://localhost:5173",
-      "http://localhost:5173/silent-renew"
+      "http://localhost:5173"
     ],
     "AllowedScopes": [
       "openid",
@@ -29,7 +27,7 @@
       "http://localhost:5173"
     ],
     "IdentityTokenLifetime": 36000,
-    "AccessTokenLifetime": 60,
+    "AccessTokenLifetime": 3600,
     "AllowOfflineAccess": true,
     "ClientClaimsPrefix": "",
     "RequireClientSecret": false

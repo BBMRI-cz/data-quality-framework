@@ -97,20 +97,6 @@
               </div>
 
               <div class="mb-3">
-                <label for="oidcSilentRedirectUri" class="form-label">
-                  Silent Redirect URI
-                </label>
-                <input
-                  type="url"
-                  class="form-control"
-                  id="oidcSilentRedirectUri"
-                  v-model="settings.oidcSilentRedirectUri"
-                  placeholder="https://your-app.com/silent-renew"
-                />
-                <div class="form-text">URI for silent token renewal</div>
-              </div>
-
-              <div class="mb-3">
                 <label for="oidcAuthorityName" class="form-label">
                   Authority Display Name
                 </label>
@@ -240,7 +226,6 @@ async function removeOidcConfig() {
   settings.value.oidcClientId = ''
   settings.value.oidcRedirectUri = ''
   settings.value.oidcPostLogoutRedirectUri = ''
-  settings.value.oidcSilentRedirectUri = ''
   settings.value.oidcAuthorityName = ''
   settings.value.oidcAuthorityLogo = ''
   settings.value.oidcScopes = ''
