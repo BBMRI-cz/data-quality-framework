@@ -43,7 +43,6 @@ const handleLogout = async () => {
 
 const performOidcSignout = async () => {
   try {
-    await initializeOidc()
     const { signoutRedirect } = useAuth()
     await signoutRedirect()
     return true
