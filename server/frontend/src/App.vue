@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, onUnmounted, watch } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import Sidebar from './components/Sidebar.vue'
 import TopNavbar from './components/TopNavbar.vue'
@@ -8,35 +8,14 @@ import NotificationContainer from './components/NotificationContainer.vue'
 import CookieConsent from './components/CookieConsent.vue'
 import { authStore } from './stores/authStore.js'
 import { notificationService } from './services/notificationService.js'
-import { useTokenRefresh } from './composables/useTokenRefresh.js'
 
 const router = useRouter()
 const notificationContainer = ref(null)
-const { startTokenRefreshCheck, stopTokenRefreshCheck } = useTokenRefresh()
-
-// Start/stop token refresh based on authentication state
-watch(
-  () => authStore.isAuthenticated,
-  (isAuthenticated) => {
-    if (isAuthenticated && authStore.mode === 'oidc') {
-      console.log('User authenticated with OIDC, starting token refresh monitoring')
-      startTokenRefreshCheck()
-    } else {
-      console.log('User not authenticated or not using OIDC, stopping token refresh monitoring')
-      stopTokenRefreshCheck()
-    }
-  },
-  { immediate: true }
-)
 
 onMounted(() => {
   if (notificationContainer.value) {
     notificationService.setContainer(notificationContainer.value)
   }
-})
-
-onUnmounted(() => {
-  stopTokenRefreshCheck()
 })
 </script>
 

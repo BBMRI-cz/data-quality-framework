@@ -20,10 +20,10 @@ async function fetchOidcSettings() {
             post_logout_redirect_uri: settings.oidcPostLogoutRedirectUri || window.location.origin,
             response_type: 'code',
             scope: settings.oidcScopes,
-            automaticSilentRenew: false,
+            automaticSilentRenew: true,
+            useRefreshToken: true,
             loadUserInfo: true,
-            monitorSession: false,
-            accessTokenExpiringNotificationTimeInSeconds: 300
+            monitorSession: false
         }
     } catch (error) {
         console.error('Failed to fetch OIDC settings from backend:', error)
