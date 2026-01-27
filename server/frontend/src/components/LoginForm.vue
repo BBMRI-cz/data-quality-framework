@@ -132,6 +132,7 @@
                     </svg>
                   </span>
                   <span v-if="isOidcLoading" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                  <span v-if="isOidcLoading" class="visually-hidden">Redirecting to login provider...</span>
                   <span
                     class="oidc-provider-label"
                     :title="`${oidcDisplayName}`"
