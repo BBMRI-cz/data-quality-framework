@@ -118,9 +118,9 @@
                     type="button"
                     class="btn btn-primary w-100 py-2 fw-semibold btn-mobile d-flex align-items-center justify-content-center gap-2 oidc-button"
                     @click="handleOidcLogin"
-                    :disabled="authStore.isLoading"
+                    :disabled="authStore.isLoading || isOidcLoading"
                 >
-                  <span class="oidc-provider-badge">
+                  <span v-if="!isOidcLoading" class="oidc-provider-badge">
                     <img
                       v-if="oidcLogo"
                       :src="oidcLogo"
@@ -131,11 +131,12 @@
                       <path d="M367.5 496L299.5 528C184.5 517.7 96 456.5 96 382.2C96 310.7 178.5 251.2 287.7 237.9L287.7 280.9C216.2 293.4 163.7 333.9 163.7 382.2C163.7 433.2 222.2 475.5 299.4 485.2L299.4 145.2L367.4 112L367.4 496L367.5 496zM544 355L412.7 326.5L449.5 305.8C430 294.3 406 285.8 379.5 281L379.5 238C425.7 243.5 467.2 257.5 499.8 277.3L534.8 257.5L544 355z"/>
                     </svg>
                   </span>
+                  <span v-if="isOidcLoading" class="spinner-border spinner-border-sm me-2" role="status"></span>
                   <span
                     class="oidc-provider-label"
                     :title="`${oidcDisplayName}`"
                   >
-                    {{ oidcDisplayName }}
+                    {{ isOidcLoading ? 'Redirecting...' : oidcDisplayName }}
                   </span>
                 </button>
               </template>
@@ -166,6 +167,7 @@ const agentCount = ref(0)
 const reportCount = ref(0)
 const displayAgentCount = ref(0)
 const displayReportCount = ref(0)
+const isOidcLoading = ref(false)
 
 const { settings } = settingsStore
 
@@ -260,6 +262,8 @@ const validateForm = () => {
 }
 
 const handleOidcLogin = async () => {
+  isOidcLoading.value = true
+
   try {
     await initializeOidc()
 
@@ -268,6 +272,7 @@ const handleOidcLogin = async () => {
   } catch (error) {
     console.error('OIDC login failed:', error)
     authStore.setError('OIDC login failed. Please try again.')
+    isOidcLoading.value = false
   }
 }
 
