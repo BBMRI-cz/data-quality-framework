@@ -5,7 +5,6 @@ import eu.bbmri_eric.quality.server.user.UserNotFoundException;
 import eu.bbmri_eric.quality.server.user.UserService;
 import java.util.Collections;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -36,10 +35,15 @@ class JwtAuthenticationConverter implements Converter<Jwt, AbstractAuthenticatio
 
   private final UserService userService;
   private final JwtValidator jwtValidator;
+  private final OidcUserInfoService oidcUserInfoService;
 
-  public JwtAuthenticationConverter(@Lazy UserService userService, JwtValidator jwtValidator) {
+  public JwtAuthenticationConverter(
+      @Lazy UserService userService,
+      JwtValidator jwtValidator,
+      OidcUserInfoService oidcUserInfoService) {
     this.userService = userService;
     this.jwtValidator = jwtValidator;
+    this.oidcUserInfoService = oidcUserInfoService;
   }
 
   /**
@@ -100,7 +104,7 @@ class JwtAuthenticationConverter implements Converter<Jwt, AbstractAuthenticatio
   }
 
   /**
-   * Extracts identity for authorization code flow.
+   * Extracts identity for authorization code flow and username from userinfo endpoint.
    *
    * @param jwt the JWT token
    * @return TokenIdentity with sub as identityId and extracted username
@@ -133,15 +137,31 @@ class JwtAuthenticationConverter implements Converter<Jwt, AbstractAuthenticatio
   }
 
   /**
-   * Extracts username from JWT, preferring 'preferred_username', then 'sub' as fallback.
+   * Extracts username from JWT, preferring userinfo endpoint data (with 15-min cache), then JWT
+   * claims ('preferred_username'), and finally 'sub' as fallback.
    *
    * @param jwt the JWT token
    * @return username (never null or blank)
    */
   private String extractUsername(Jwt jwt) {
-    return Optional.ofNullable(jwt.getClaimAsString("preferred_username"))
-        .filter(name -> !name.isBlank())
-        .orElseGet(jwt::getSubject);
+    String accessToken = jwt.getTokenValue();
+    String subjectId = jwt.getSubject();
+
+    OidcUserInfo userInfo = oidcUserInfoService.fetchUserInfo(accessToken);
+
+    if (userInfo != null) {
+      String username = userInfo.getName();
+      if (username != null && !username.isBlank()) {
+
+        try {
+          userService.updateUsername(subjectId, username);
+        } catch (UserNotFoundException e) {
+          logger.warn("User not yet created for subject {}, will be created later", subjectId);
+        }
+        return username;
+      }
+    }
+    return subjectId;
   }
 
   /**
