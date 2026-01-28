@@ -19,7 +19,7 @@ public interface UserService {
   /**
    * Update username for a user identified by subject ID if it has changed.
    *
-   * @param subjectId   the OIDC subject ID
+   * @param subjectId the OIDC subject ID
    * @param newUsername the new username from OIDC userinfo
    */
   void updateUsername(String subjectId, String newUsername);
