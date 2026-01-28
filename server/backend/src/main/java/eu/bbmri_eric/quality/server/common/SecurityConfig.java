@@ -105,6 +105,8 @@ class SecurityConfig {
                     .authenticated()
                     .requestMatchers(HttpMethod.PATCH, "/api/v1/settings")
                     .authenticated()
+                    .requestMatchers(HttpMethod.GET, "/api/userinfo")
+                    .authenticated()
                     .requestMatchers(
                         "/api/health",
                         "/api/info",

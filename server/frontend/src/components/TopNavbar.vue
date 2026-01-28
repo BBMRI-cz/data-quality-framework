@@ -53,9 +53,13 @@ const performOidcSignout = async () => {
 }
 
 const getUserInitials = () => {
-  const username = authStore.user?.username ||
-                   authStore.user?.profile?.preferred_username ||
-                   'U'
+  const username = authStore.user?.username?.trim()
+  if (!username) return 'U'
+
+  const parts = username.split(' ')
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+  }
   return username.substring(0, 2).toUpperCase()
 }
 </script>

@@ -4,6 +4,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -33,5 +37,15 @@ public class UserController {
       @Parameter(description = "Password change request", required = true) @Valid @RequestBody
           PasswordChangeRequest request) {
     userService.changePassword(userId, request);
+  }
+
+  @Operation(
+      summary = "Get current user",
+      description = "Retrieves information about the currently authenticated user.")
+  @GetMapping("/api/userinfo")
+  public ResponseEntity<UserDTO> getCurrentUser(@AuthenticationPrincipal Jwt jwt) {
+    String subjectId = jwt.getSubject();
+    UserDTO userDTO = userService.findBySubjectId(subjectId);
+    return ResponseEntity.ok(userDTO);
   }
 }

@@ -15,7 +15,6 @@ import { useAuth, useOidcStore } from 'vue3-oidc'
 import { initializeOidc } from '../utils/oidc.js'
 import { authStore } from '../stores/authStore.js'
 import { useRouter } from 'vue-router'
-import { apiService } from '../services/apiService.js'
 
 const router = useRouter()
 
@@ -41,13 +40,7 @@ onMounted(async () => {
                        oidcStore.state.value?.token
 
     if (user && accessToken) {
-      authStore.setUser(user, accessToken, 'oidc')
-
-      try {
-        await apiService.getInfo()
-      } catch (error) {
-        console.warn('Could not fetch server info:', error)
-      }
+      await authStore.setUser(user, accessToken, 'oidc')
 
       const redirectPath = authStore.getRedirectPath()
       router.push(redirectPath)

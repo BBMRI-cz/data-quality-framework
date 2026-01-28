@@ -1,4 +1,5 @@
 import { reactive } from 'vue'
+import { apiService } from '../services/apiService'
 
 export const authStore = reactive({
   user: null,
@@ -20,16 +21,21 @@ export const authStore = reactive({
     }
   },
 
-  setUser(user, token, mode = 'basic') {
+  async setUser(user, token, mode = 'basic') {
     this.user = user
     this.isAuthenticated = true
     this.error = null
     this.mode = mode
 
-    localStorage.setItem('user', JSON.stringify(user))
     localStorage.setItem('authMode', mode)
     if (token) {
       localStorage.setItem('authToken', token)
+    }
+
+    if (mode === 'oidc') {
+      await this.mergeUserData()
+    } else {
+      localStorage.setItem('user', JSON.stringify(user))
     }
   },
 
@@ -66,7 +72,30 @@ export const authStore = reactive({
     const path = this.redirectPath
     this.redirectPath = null // Clear after getting
     return path || '/dashboard'
+  },
+
+  async mergeUserData() {
+    if (!this.user) return
+
+    this.setLoading(true)
+    try {
+      const userData = await apiService.getUserProfile()
+      this.user = {
+        ...this.user,
+        id: userData.id,
+        agentId: userData.agentId,
+        roles: userData.roles,
+        username: userData.username
+      }
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error)
+      this.setError('Failed to load user profile data')
+    } finally {
+      localStorage.setItem('user', JSON.stringify(this.user))
+      this.setLoading(false)
+    }
   }
+
 })
 
 authStore.init()
