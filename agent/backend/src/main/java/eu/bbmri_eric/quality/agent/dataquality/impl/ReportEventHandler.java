@@ -42,7 +42,9 @@ class ReportEventHandler {
         .ifPresent(
             report -> {
               int count = fhirStore.countResources("Patient");
+              int sampleCount = fhirStore.countResources("Specimen");
               report.setNumberOfEntities(count);
+              report.setNumberOfSecondaryEntities(sampleCount);
               report.setStatus(ReportStatus.GENERATED);
               publisher.publishEvent(new ReportGeneratedEvent(report.getId()));
             });

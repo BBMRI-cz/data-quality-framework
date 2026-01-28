@@ -14,13 +14,15 @@ public final class ReportCreateRequest {
       requiredMode = Schema.RequiredMode.REQUIRED)
   @Valid
   @NotEmpty(message = "Results cannot be empty")
-  private final List<QualityCheckResultDTO> results;
+  private List<QualityCheckResultDTO> results;
 
   @Schema(description = "Total number of patients", requiredMode = Schema.RequiredMode.REQUIRED)
-  private final int totalPatients;
+  private int totalPatients;
 
   @Schema(description = "Total number of samples", requiredMode = Schema.RequiredMode.REQUIRED)
-  private final int totalSamples;
+  private int totalSamples;
+
+  public ReportCreateRequest() {}
 
   /**
    * Constructs a new {@code ReportCreateRequest} with the specified list of quality check results.

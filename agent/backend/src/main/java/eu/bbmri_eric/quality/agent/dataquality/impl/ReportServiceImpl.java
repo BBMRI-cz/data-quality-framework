@@ -68,7 +68,8 @@ class ReportServiceImpl implements ReportService {
                       checkIdLabel, result.getCheckName(), roundedValue);
                 })
             .collect(Collectors.toList());
-    return new ReportDTO(results);
+    return new ReportDTO(
+        results, report.getNumberOfEntities(), report.getNumberOfSecondaryEntities());
   }
 
   private static String getCheckId(Result result, List<CQLQueryDTO> cqlQueryDTOS) {
