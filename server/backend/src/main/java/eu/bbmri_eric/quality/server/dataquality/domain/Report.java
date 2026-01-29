@@ -163,8 +163,8 @@ public class Report {
     return Objects.equals(id, report.id)
         && Objects.equals(timestamp, report.timestamp)
         && Objects.equals(agentId, report.agentId)
-        && totalPatients == report.totalPatients
-        && totalSamples == report.totalSamples;
+        && Objects.equals(totalPatients, report.totalPatients)
+        && Objects.equals(totalSamples, report.totalSamples);
   }
 
   @Override
