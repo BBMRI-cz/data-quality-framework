@@ -16,10 +16,10 @@ import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class UpdateCheck implements DataQualityCheck {
+class UpdateCheck implements DataQualityCheck {
   private static final Logger log = LoggerFactory.getLogger(UpdateCheck.class);
-  private static final String NAME = "Patients last updated more than six months ago";
-  private static final String DESCRIPTION = "Patients last updated more than six months ago";
+  private static final String NAME = "Patients last updated more than three months ago";
+  private static final String DESCRIPTION = "Patients last updated more than three months ago";
   private final Clock clock;
 
   UpdateCheck() {
@@ -34,7 +34,7 @@ public class UpdateCheck implements DataQualityCheck {
   public ResultDTO execute(FHIRStore fhirStore) {
     try {
       List<Resource> patients = fhirStore.fetchAllResources("Patient", List.of("id", "meta"));
-      Instant cutoff = ZonedDateTime.now(clock).minusMonths(6).toInstant();
+      Instant cutoff = ZonedDateTime.now(clock).minusMonths(3).toInstant();
       Set<String> staleIds = new HashSet<>();
       for (Resource resource : patients) {
         if (resource instanceof Patient patient) {

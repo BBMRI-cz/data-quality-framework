@@ -1,4 +1,4 @@
-ALTER TABLE report ADD COLUMN number_of_secondary_entities INTEGER ;
+ALTER TABLE report ADD COLUMN number_of_secondary_entities INTEGER;
 
 DELETE FROM cql_check WHERE name = 'Last update happened more than a year ago';
 
