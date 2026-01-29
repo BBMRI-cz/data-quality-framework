@@ -88,7 +88,6 @@ watch(() => route.query.view, (newView) => {
     viewMode.value = newView
   }
 })
-const viewMode = ref('site') // 'site' or 'patient'
 const loading = ref(true)
 
 const headerTitle = computed(() =>
