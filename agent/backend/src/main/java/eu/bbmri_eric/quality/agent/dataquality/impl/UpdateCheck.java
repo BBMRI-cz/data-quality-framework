@@ -34,7 +34,7 @@ public class UpdateCheck implements DataQualityCheck {
   public ResultDTO execute(FHIRStore fhirStore) {
     try {
       List<Resource> patients = fhirStore.fetchAllResources("Patient", List.of("id", "meta"));
-      Instant cutoff = ZonedDateTime.now(clock).minusMonths(1).toInstant();
+      Instant cutoff = ZonedDateTime.now(clock).minusMonths(6).toInstant();
       Set<String> staleIds = new HashSet<>();
       for (Resource resource : patients) {
         if (resource instanceof Patient patient) {
