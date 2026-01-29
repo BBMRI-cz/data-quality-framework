@@ -129,7 +129,6 @@ import { notificationService } from '../services/notificationService.js'
 import PageHeader from '../components/PageHeader.vue'
 
 const user = computed(() => authStore.user)
-console.log(user)
 
 const passwordForm = reactive({
   currentPassword: '',
