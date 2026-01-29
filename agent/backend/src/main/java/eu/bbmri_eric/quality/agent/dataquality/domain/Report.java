@@ -40,6 +40,8 @@ public class Report {
 
   private int numberOfEntities;
 
+  private int numberOfSecondaryEntities;
+
   @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
   @JoinColumn(name = "report_id")
   private List<Result> results = new ArrayList<>();

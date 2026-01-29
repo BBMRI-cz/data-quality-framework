@@ -25,6 +25,12 @@ public class ReportDTO {
       example = "550e8400-e29b-41d4-a716-446655440000")
   private String agentId;
 
+  @Schema(description = "Total number of patients", example = "100")
+  private Integer totalPatients;
+
+  @Schema(description = "Total number of samples", example = "250")
+  private Integer totalSamples;
+
   @Schema(description = "Quality check results for this report")
   private List<QualityCheckResultDTO> results;
 
@@ -52,6 +58,22 @@ public class ReportDTO {
 
   public void setAgentId(String agentId) {
     this.agentId = agentId;
+  }
+
+  public Integer getTotalPatients() {
+    return totalPatients;
+  }
+
+  public void setTotalPatients(Integer totalPatients) {
+    this.totalPatients = totalPatients;
+  }
+
+  public Integer getTotalSamples() {
+    return totalSamples;
+  }
+
+  public void setTotalSamples(Integer totalSamples) {
+    this.totalSamples = totalSamples;
   }
 
   public List<QualityCheckResultDTO> getResults() {

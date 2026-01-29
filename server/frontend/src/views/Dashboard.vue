@@ -58,16 +58,36 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '../components/PageHeader.vue'
 import SiteView from '../components/SiteView.vue'
 import PatientView from '../components/PatientView.vue'
 import { apiService } from '../services/apiService.js'
 
+const route = useRoute()
+const router = useRouter()
+
 const reports = ref([])
 const qualityCheckMap = ref(new Map())
 const agents = ref([])
-const viewMode = ref('site') // 'site' or 'patient'
+
+// Initialize viewMode from URL query parameter, default to 'site'
+const viewMode = ref(route.query.view === 'patient' ? 'patient' : 'site')
+
+// Watch for viewMode changes and update URL
+watch(viewMode, (newView) => {
+  router.push({
+    query: { ...route.query, view: newView }
+  })
+})
+
+// Watch for URL changes (browser back/forward) and update viewMode
+watch(() => route.query.view, (newView) => {
+  if (newView && (newView === 'site' || newView === 'patient')) {
+    viewMode.value = newView
+  }
+})
 const loading = ref(true)
 
 const headerTitle = computed(() =>

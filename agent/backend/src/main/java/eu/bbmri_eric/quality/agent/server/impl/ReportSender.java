@@ -17,7 +17,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ReportSender {
+class ReportSender {
 
   private static final Logger log = LoggerFactory.getLogger(ReportSender.class);
   private final ReportService reportService;
@@ -27,7 +27,7 @@ public class ReportSender {
   private final CQLQueryService cqlQueryService;
   private final ObjectMapper objectMapper;
 
-  public ReportSender(
+  ReportSender(
       ReportService reportService,
       CentralServerClientFactory clientFactory,
       ServerRepository serverRepository,
@@ -55,6 +55,8 @@ public class ReportSender {
                   clientFactory.createClient(
                       agentId, server.getUrl(), server.getClientId(), server.getClientSecret());
               try {
+                reportDTO.setTotalPatients(((reportDTO.getTotalPatients() + 9) / 10) * 10);
+                reportDTO.setTotalSamples(((reportDTO.getTotalSamples() + 9) / 10) * 10);
                 client.sendReport(reportDTO);
                 String reportJson = objectMapper.writeValueAsString(reportDTO);
                 server.addInteraction(

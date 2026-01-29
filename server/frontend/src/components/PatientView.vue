@@ -4,40 +4,80 @@
     <div class="stats-row mb-4">
       <StatsCard
         label="Total Patients"
-        :value="`0`"
+        :value="`${totalPatients.toLocaleString()}`"
         icon="bi bi-people-fill"
         iconColor="#0d6efd"
         iconBgColor="#cfe2ff"
       />
       <StatsCard
         label="From Sites"
-        :value="`0`"
+        :value="`${fromSites}`"
         icon="bi bi-hospital-fill"
         iconColor="#198754"
         iconBgColor="#d1e7dd"
       />
       <StatsCard
         label="Total Samples"
-        :value="`0`"
+        :value="`${totalSamples.toLocaleString()}`"
         icon="bi bi-eyedropper"
         iconColor="#6610f2"
         iconBgColor="#e0cffc"
       />
     </div>
 
-    <!-- Placeholder Content -->
-    <div class="placeholder-content">
-      <div class="placeholder-message">
-        <i class="bi bi-person-fill-gear" style="font-size: 4rem; color: #6c757d; opacity: 0.3;"></i>
-        <h4 class="mt-3 text-muted">Patient-Centric View</h4>
-        <p class="text-muted">Patient-level quality check data will be displayed here.</p>
+    <!-- Category Filter -->
+    <div class="mb-4">
+      <div class="filter-label">Categories:</div>
+      <CategoryFilter
+        :categories="categories"
+        v-model="selectedCategory"
+      />
+    </div>
+
+    <!-- Group Filter -->
+    <div class="mb-4" v-if="groups.length > 0">
+      <div class="filter-label">Groups:</div>
+      <CategoryFilter
+        :categories="groups"
+        v-model="selectedGroup"
+      />
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="content-grid">
+      <!-- No Results Message -->
+      <div v-if="aggregatedCheckResults.length === 0" class="no-results">
+        <i class="bi bi-info-circle"></i>
+        <span>No quality checks match the selected criteria</span>
+      </div>
+
+      <!-- Quality Checks List (one per row) -->
+      <div v-else class="checks-list">
+        <QualityCheckRow
+          v-for="check in aggregatedCheckResults"
+          :key="check.checkHash"
+          :check-hash="check.checkHash"
+          :check-name="check.checkName"
+          :category="check.category"
+          :patients-meeting-criteria="check.patientsMeetingCriteria"
+          :total-patients="totalPatients"
+          :quality-check="check.qualityCheck"
+          :reports="reports"
+          :agents="agents"
+          :selected-category="selectedCategory"
+          :selected-group="selectedGroup"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import { toRefs } from 'vue'
 import StatsCard from './StatsCard.vue'
+import CategoryFilter from './CategoryFilter.vue'
+import QualityCheckRow from './QualityCheckRow.vue'
+import { usePatientStats } from '../composables/usePatientStats'
 
 const props = defineProps({
   reports: {
@@ -53,6 +93,19 @@ const props = defineProps({
     required: true
   }
 })
+
+const { reports, qualityCheckMap, agents } = toRefs(props)
+
+const {
+  selectedCategory,
+  selectedGroup,
+  categories,
+  groups,
+  totalPatients,
+  totalSamples,
+  fromSites,
+  aggregatedCheckResults
+} = usePatientStats(reports, qualityCheckMap, agents)
 </script>
 
 <style scoped>
@@ -63,30 +116,46 @@ const props = defineProps({
   gap: 1rem;
 }
 
-/* Placeholder Content */
-.placeholder-content {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 400px;
-  background: #f8f9fa;
-  border-radius: 12px;
-  border: 2px dashed #dee2e6;
-}
-
-.placeholder-message {
-  text-align: center;
-  padding: 2rem;
-}
-
-.placeholder-message h4 {
-  font-weight: 600;
+/* Filter Labels */
+.filter-label {
+  font-size: 0.875rem;
+  color: #6c757d;
+  font-weight: 500;
   margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.placeholder-message p {
-  margin-bottom: 0;
-  font-size: 0.95rem;
+/* Main Content Grid */
+.content-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+/* No Results State */
+.no-results {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xl);
+  color: var(--color-gray-500);
+  font-style: italic;
+  font-size: 0.9rem;
+  background-color: var(--color-gray-50);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-gray-200);
+}
+
+.no-results i {
+  font-size: 1.2rem;
+}
+
+.checks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 /* Tablet Layout */
@@ -103,24 +172,17 @@ const props = defineProps({
     gap: 0.75rem;
   }
 
-  .placeholder-content {
-    min-height: 300px;
+  .content-grid {
+    gap: 0.75rem;
   }
 
-  .placeholder-message {
-    padding: 1.5rem;
+  .checks-list {
+    gap: 0;
   }
 
-  .placeholder-message i {
-    font-size: 3rem !important;
-  }
-
-  .placeholder-message h4 {
-    font-size: 1.25rem;
-  }
-
-  .placeholder-message p {
-    font-size: 0.875rem;
+  .no-results {
+    padding: var(--spacing-lg);
+    font-size: 0.85rem;
   }
 }
 </style>

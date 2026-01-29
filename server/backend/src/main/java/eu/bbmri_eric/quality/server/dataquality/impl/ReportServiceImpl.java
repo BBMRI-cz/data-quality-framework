@@ -64,6 +64,9 @@ class ReportServiceImpl implements ReportService {
 
   private @NonNull Report parseReportDTO(ReportCreateRequest createRequest) {
     Report report = new Report();
+    report.setTotalPatients(createRequest.getTotalPatients());
+    report.setTotalSamples(createRequest.getTotalSamples());
+
     for (QualityCheckResultDTO resultDTO : createRequest.getResults()) {
       QualityCheck qualityCheck =
           qualityCheckRepository
