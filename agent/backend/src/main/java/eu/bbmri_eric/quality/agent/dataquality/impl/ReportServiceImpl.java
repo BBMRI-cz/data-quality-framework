@@ -63,9 +63,10 @@ class ReportServiceImpl implements ReportService {
                   }
                   double roundedValue =
                       BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_UP).doubleValue();
+                  double boundedValue = Math.min(1.0, Math.max(0.0, roundedValue));
                   String checkIdLabel = formatCheckIdWithStratum(result, cqlQueryDTOS);
                   return new QualityCheckResultDTO(
-                      checkIdLabel, result.getCheckName(), roundedValue);
+                      checkIdLabel, result.getCheckName(), boundedValue);
                 })
             .collect(Collectors.toList());
     return new ReportDTO(
