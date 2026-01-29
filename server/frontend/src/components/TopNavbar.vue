@@ -60,7 +60,7 @@ const getUserInitials = () => {
   if (parts.length >= 2) {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
   }
-  return username.substring(0, 2).toUpperCase()
+  return parts[0].substring(0, Math.min(2, parts[0].length)).toUpperCase()
 }
 </script>
 

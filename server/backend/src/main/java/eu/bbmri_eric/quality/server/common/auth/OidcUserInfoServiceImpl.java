@@ -1,8 +1,14 @@
 package eu.bbmri_eric.quality.server.common.auth;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import jakarta.annotation.PostConstruct;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
+import java.util.HexFormat;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,20 +25,56 @@ class OidcUserInfoServiceImpl implements OidcUserInfoService {
 
   private static final Logger logger = LoggerFactory.getLogger(OidcUserInfoServiceImpl.class);
   private static final Duration CACHE_DURATION = Duration.ofMinutes(15);
+  private static final String OIDC_DISCOVERY_PATH = "/.well-known/openid-configuration";
+  private static final String USERINFO_ENDPOINT_KEY = "userinfo_endpoint";
 
-  private final Map<String, CachedUserInfo> cache = new ConcurrentHashMap<>();
+  private final Cache<String, OidcUserInfo> cache;
   private final RestTemplate restTemplate;
-  private final String userInfoEndpoint;
+  private String userInfoEndpoint;
+  private final String issuerUri;
 
   public OidcUserInfoServiceImpl(
       @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri:#{null}}") String issuerUri) {
     this.restTemplate = new RestTemplate();
-    this.userInfoEndpoint = issuerUri != null ? issuerUri + "/connect/userinfo" : null;
+    this.issuerUri = issuerUri;
+    this.cache = Caffeine.newBuilder().expireAfterWrite(CACHE_DURATION).maximumSize(10_000).build();
+  }
+
+  @PostConstruct
+  private void init() {
+    if (issuerUri == null || issuerUri.isBlank()) {
+      logger.info("OIDC issuer URI not configured, userinfo endpoint will not be available");
+      return;
+    }
+
+    try {
+      var discoveryUri = issuerUri + OIDC_DISCOVERY_PATH;
+      logger.debug("Fetching OIDC discovery document from: {}", discoveryUri);
+
+      Map<String, Object> discoveryResult = restTemplate.getForObject(discoveryUri, Map.class);
+
+      if (discoveryResult == null || !discoveryResult.containsKey(USERINFO_ENDPOINT_KEY)) {
+        logger.error(
+            "Invalid OIDC discovery document from {}, missing {}",
+            discoveryUri,
+            USERINFO_ENDPOINT_KEY);
+        this.userInfoEndpoint = null;
+        return;
+      }
+
+      this.userInfoEndpoint = (String) discoveryResult.get(USERINFO_ENDPOINT_KEY);
+      logger.info("OIDC userinfo endpoint configured: {}", userInfoEndpoint);
+    } catch (Exception e) {
+      logger.error(
+          "Failed to fetch OIDC discovery document from issuer: {}, userinfo endpoint will not be available",
+          issuerUri,
+          e);
+      this.userInfoEndpoint = null;
+    }
   }
 
   @Override
   public OidcUserInfo fetchUserInfo(String accessToken) {
-
     if (userInfoEndpoint == null) {
       logger.warn("OIDC issuer URI not configured, skipping userinfo fetch");
       return null;
@@ -43,9 +85,10 @@ class OidcUserInfoServiceImpl implements OidcUserInfoService {
       return null;
     }
 
-    var cached = cache.get(accessToken);
-    if (cached != null && !cached.isExpired()) {
-      return cached.userInfo();
+    var cacheKey = hashToken(accessToken);
+    var cached = cache.getIfPresent(cacheKey);
+    if (cached != null) {
+      return cached;
     }
 
     try {
@@ -59,7 +102,7 @@ class OidcUserInfoServiceImpl implements OidcUserInfoService {
 
       var userInfo = response.getBody();
       if (userInfo != null) {
-        cache.put(accessToken, new CachedUserInfo(userInfo, System.currentTimeMillis()));
+        cache.put(cacheKey, userInfo);
       } else {
         logger.warn("UserInfo response body is null");
       }
@@ -72,20 +115,20 @@ class OidcUserInfoServiceImpl implements OidcUserInfoService {
   }
 
   /**
-   * Internal record to hold cached userinfo with timestamp.
+   * Hashes the access token using SHA-256 to create a secure cache key. This prevents the actual
+   * token from being stored in memory as a map key, reducing the attack surface.
    *
-   * @param userInfo the OIDC user information
-   * @param timestamp the time when this entry was cached
+   * @param token the access token to hash
+   * @return SHA-256 hash of the token as a hex string
    */
-  private record CachedUserInfo(OidcUserInfo userInfo, long timestamp) {
-
-    /**
-     * Checks if this cache entry has expired.
-     *
-     * @return true if expired, false otherwise
-     */
-    boolean isExpired() {
-      return System.currentTimeMillis() - timestamp > CACHE_DURATION.toMillis();
+  private String hashToken(String token) {
+    try {
+      MessageDigest digest = MessageDigest.getInstance("SHA-256");
+      byte[] hash = digest.digest(token.getBytes(StandardCharsets.UTF_8));
+      return HexFormat.of().formatHex(hash);
+    } catch (NoSuchAlgorithmException e) {
+      logger.error("SHA-256 algorithm not available", e);
+      throw new IllegalStateException("SHA-256 algorithm not available", e);
     }
   }
 }

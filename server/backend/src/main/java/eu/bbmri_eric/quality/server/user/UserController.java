@@ -44,7 +44,7 @@ public class UserController {
       description = "Retrieves information about the currently authenticated user.")
   @GetMapping("/api/userinfo")
   public ResponseEntity<UserDTO> getCurrentUser(@AuthenticationPrincipal Jwt jwt) {
-    if(jwt == null) {
+    if (jwt == null) {
       return ResponseEntity.status(401).build();
     }
     String subjectId = jwt.getSubject();
