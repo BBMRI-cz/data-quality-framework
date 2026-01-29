@@ -18,8 +18,8 @@ import org.slf4j.LoggerFactory;
 
 public class UpdateCheck implements DataQualityCheck {
   private static final Logger log = LoggerFactory.getLogger(UpdateCheck.class);
-  private static final String NAME = "Stale patient updates";
-  private static final String DESCRIPTION = "Patients last updated more than one month ago";
+  private static final String NAME = "Patients last updated more than six months ago";
+  private static final String DESCRIPTION = "Patients last updated more than six months ago";
   private final Clock clock;
 
   UpdateCheck() {
