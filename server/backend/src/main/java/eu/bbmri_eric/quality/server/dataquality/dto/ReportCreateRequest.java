@@ -17,10 +17,10 @@ public final class ReportCreateRequest {
   private List<QualityCheckResultDTO> results;
 
   @Schema(description = "Total number of patients", requiredMode = Schema.RequiredMode.REQUIRED)
-  private int totalPatients;
+  private Integer totalPatients;
 
   @Schema(description = "Total number of samples", requiredMode = Schema.RequiredMode.REQUIRED)
-  private int totalSamples;
+  private Integer totalSamples;
 
   public ReportCreateRequest() {}
 
@@ -43,7 +43,7 @@ public final class ReportCreateRequest {
    * @throws NullPointerException if {@code results} is null
    */
   public ReportCreateRequest(
-      List<QualityCheckResultDTO> results, int totalPatients, int totalSamples) {
+      List<QualityCheckResultDTO> results, Integer totalPatients, Integer totalSamples) {
     Objects.requireNonNull(results);
     this.results = results;
     this.totalPatients = totalPatients;
@@ -54,11 +54,11 @@ public final class ReportCreateRequest {
     return results;
   }
 
-  public int getTotalPatients() {
+  public Integer getTotalPatients() {
     return totalPatients;
   }
 
-  public int getTotalSamples() {
+  public Integer getTotalSamples() {
     return totalSamples;
   }
 
@@ -68,8 +68,8 @@ public final class ReportCreateRequest {
     if (obj == null || obj.getClass() != this.getClass()) return false;
     var that = (ReportCreateRequest) obj;
     return Objects.equals(this.results, that.results)
-        && this.totalPatients == that.totalPatients
-        && this.totalSamples == that.totalSamples;
+        && Objects.equals(this.totalPatients, that.totalPatients)
+        && Objects.equals(this.totalSamples, that.totalSamples);
   }
 
   @Override
