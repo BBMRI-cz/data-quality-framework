@@ -150,7 +150,7 @@ class JwtAuthenticationConverter implements Converter<Jwt, AbstractAuthenticatio
     OidcUserInfo userInfo = oidcUserInfoService.fetchUserInfo(accessToken);
 
     if (userInfo != null) {
-      String username = userInfo.getName();
+      String username = userInfo.getFullName();
       if (username != null && !username.isBlank()) {
 
         try {

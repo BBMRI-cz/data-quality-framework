@@ -16,7 +16,7 @@ record OidcUserInfo(
    *
    * @return username
    */
-  public String getName() {
+  public String getFullName() {
     if (name != null && !name.isBlank()) {
       return name;
     }
