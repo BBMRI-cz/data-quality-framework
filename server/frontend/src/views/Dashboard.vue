@@ -30,8 +30,15 @@
       </template>
     </PageHeader>
 
+    <!-- Loading state -->
+    <div v-if="loading" class="loading-state">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+
     <!-- View Components with Transition -->
-    <Transition name="view-fade" mode="out-in">
+    <Transition v-else name="view-fade" mode="out-in">
       <SiteView
         v-if="viewMode === 'site'"
         key="site-view"
@@ -81,6 +88,8 @@ watch(() => route.query.view, (newView) => {
     viewMode.value = newView
   }
 })
+const viewMode = ref('site') // 'site' or 'patient'
+const loading = ref(true)
 
 const headerTitle = computed(() =>
   viewMode.value === 'site' ? 'Site Performance Overview' : 'Patient Data Overview'
@@ -98,6 +107,8 @@ const headerIcon = computed(() =>
 
 const loadReportsData = async () => {
   try {
+    loading.value = true
+
     // Fetch quality checks, reports, and agents in parallel
     const [checksData, reportsData, agentsData] = await Promise.all([
       apiService.getQualityChecks(),
@@ -123,6 +134,8 @@ const loadReportsData = async () => {
     )
   } catch (err) {
     console.error('Error fetching reports:', err)
+  } finally {
+    loading.value = false
   }
 }
 
@@ -132,6 +145,14 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* Loading State */
+.loading-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
 /* View Toggle */
 
 .view-toggle {
