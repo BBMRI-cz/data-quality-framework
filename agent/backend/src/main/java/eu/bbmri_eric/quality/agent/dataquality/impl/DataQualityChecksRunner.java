@@ -39,6 +39,7 @@ class DataQualityChecksRunner {
     dataQualityChecks.add(new DuplicateIdentifierCheck());
     dataQualityChecks.add(new SurvivalRateCheck());
     dataQualityChecks.add(new InvalidConditionICDCheck());
+    dataQualityChecks.add(new UpdateCheck());
     for (DataQualityCheck dataQualityCheck : dataQualityChecks) {
       if (dataQualityCheck instanceof StratifiedDataQualityCheck) {
         Map<String, ResultDTO> results =
