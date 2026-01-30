@@ -233,6 +233,12 @@ sudo systemctl enable --now data-quality-agent-updater.timer
 sudo systemctl list-timers --all | grep data-quality-agent
 ```
 
+5. **Check update service logs**
+
+```bash
+sudo journalctl -u data-quality-agent-updater.service
+```
+
 ## Data Quality Server Deployment
 
 The Data Quality Server runs centrally to collect and aggregate reports from multiple agents.
@@ -387,6 +393,12 @@ sudo systemctl enable --now data-quality-server-updater.timer
 
 ```bash
 sudo systemctl list-timers --all | grep data-quality-server
+```
+
+5. **Check update service logs**
+
+```bash
+sudo journalctl -u data-quality-server-updater.service
 ```
 
 ## Production Considerations
