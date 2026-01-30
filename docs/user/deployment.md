@@ -230,7 +230,7 @@ sudo systemctl enable --now data-quality-agent-updater.timer
 4. **Verify the timer**
 
 ```bash
-systemctl list-timers --all | grep data-quality-agent
+sudo systemctl list-timers --all | grep data-quality-agent
 ```
 
 ## Data Quality Server Deployment
