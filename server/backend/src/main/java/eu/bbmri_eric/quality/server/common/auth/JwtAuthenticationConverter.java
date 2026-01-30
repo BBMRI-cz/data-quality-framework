@@ -5,7 +5,6 @@ import eu.bbmri_eric.quality.server.user.UserNotFoundException;
 import eu.bbmri_eric.quality.server.user.UserService;
 import java.util.Collections;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -13,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.lang.NonNull;
+import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -36,10 +36,15 @@ class JwtAuthenticationConverter implements Converter<Jwt, AbstractAuthenticatio
 
   private final UserService userService;
   private final JwtValidator jwtValidator;
+  private final OidcUserInfoService oidcUserInfoService;
 
-  public JwtAuthenticationConverter(@Lazy UserService userService, JwtValidator jwtValidator) {
+  public JwtAuthenticationConverter(
+      @Lazy UserService userService,
+      JwtValidator jwtValidator,
+      OidcUserInfoService oidcUserInfoService) {
     this.userService = userService;
     this.jwtValidator = jwtValidator;
+    this.oidcUserInfoService = oidcUserInfoService;
   }
 
   /**
@@ -100,7 +105,7 @@ class JwtAuthenticationConverter implements Converter<Jwt, AbstractAuthenticatio
   }
 
   /**
-   * Extracts identity for authorization code flow.
+   * Extracts identity for authorization code flow and username from userinfo endpoint.
    *
    * @param jwt the JWT token
    * @return TokenIdentity with sub as identityId and extracted username
@@ -128,20 +133,40 @@ class JwtAuthenticationConverter implements Converter<Jwt, AbstractAuthenticatio
       return userService.findBySubjectId(identity.identityId());
     } catch (UserNotFoundException e) {
       logger.debug("User not found for subject ID: {}, creating new user", identity.identityId());
-      return userService.createBySubjectId(identity.identityId(), identity.username());
+      try {
+        // To catch concurrent writes
+        return userService.createBySubjectId(identity.identityId(), identity.username());
+      } catch (JpaSystemException ex) {
+        return userService.findBySubjectId(identity.identityId());
+      }
     }
   }
 
   /**
-   * Extracts username from JWT, preferring 'preferred_username', then 'sub' as fallback.
+   * Extracts username from JWT, preferring userinfo endpoint data (with 15-min cache), then JWT
+   * claims ('preferred_username'), and finally 'sub' as fallback.
    *
    * @param jwt the JWT token
    * @return username (never null or blank)
    */
   private String extractUsername(Jwt jwt) {
-    return Optional.ofNullable(jwt.getClaimAsString("preferred_username"))
-        .filter(name -> !name.isBlank())
-        .orElseGet(jwt::getSubject);
+    String accessToken = jwt.getTokenValue();
+    String subjectId = jwt.getSubject();
+
+    OidcUserInfo userInfo = oidcUserInfoService.fetchUserInfo(accessToken);
+
+    if (userInfo != null) {
+      String username = userInfo.getFullName();
+      if (username != null && !username.isBlank()) {
+        try {
+          userService.updateUsername(subjectId, username);
+        } catch (UserNotFoundException e) {
+          logger.debug("User not yet created for subject {}, will be created later", subjectId);
+        }
+        return username;
+      }
+    }
+    return subjectId;
   }
 
   /**

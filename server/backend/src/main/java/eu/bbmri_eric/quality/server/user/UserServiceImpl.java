@@ -64,6 +64,29 @@ public class UserServiceImpl implements UserService {
 
   @Override
   @Transactional
+  public void updateUsername(String subjectId, String newUsername) {
+    if (subjectId == null || subjectId.isBlank()) {
+      throw new IllegalArgumentException("Subject ID cannot be null or blank");
+    }
+
+    if (newUsername == null || newUsername.isBlank()) {
+      throw new IllegalArgumentException("Username cannot be null or blank");
+    }
+
+    User user =
+        userRepository
+            .findBySubjectId(subjectId)
+            .orElseThrow(
+                () -> new UserNotFoundException("User not found with subject ID: " + subjectId));
+
+    if (!user.getUsername().equals(newUsername)) {
+      user.updateUsername(newUsername);
+      userRepository.save(user);
+    }
+  }
+
+  @Override
+  @Transactional
   public void changePassword(Long userId, PasswordChangeRequest passwordChangeRequest) {
     Objects.requireNonNull(userId, "User ID cannot be null");
     Objects.requireNonNull(passwordChangeRequest, "Password change request cannot be null");

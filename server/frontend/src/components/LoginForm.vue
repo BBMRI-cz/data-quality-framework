@@ -287,7 +287,7 @@ const handleLogin = async () => {
 
   try {
     const response = await apiService.login(form.username, form.password)
-    authStore.setUser(response.user || { username: form.username }, response.token)
+    await authStore.setUser(response.user || { username: form.username }, response.token)
 
     notificationService.success(
       'Login Successful',

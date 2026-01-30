@@ -17,6 +17,14 @@ public interface UserService {
   UserDTO createBySubjectId(String subjectId, String username);
 
   /**
+   * Update username for a user identified by subject ID if it has changed.
+   *
+   * @param subjectId the OIDC subject ID
+   * @param newUsername the new username from OIDC userinfo
+   */
+  void updateUsername(String subjectId, String newUsername);
+
+  /**
    * Change the password of a user. Users can only change their own password.
    *
    * @param userId the ID of the user whose password should be changed

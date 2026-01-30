@@ -155,6 +155,11 @@ class ApiService {
         const response = await api.put(`/v1/groups/${groupId}/agents`, { agentIds });
         return response.data;
     }
+
+    async getUserProfile() {
+        const response = await api.get('/userinfo');
+        return response.data;
+    }
 }
 
 export const apiService = new ApiService();

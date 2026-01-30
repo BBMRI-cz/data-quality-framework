@@ -29,7 +29,7 @@ class User {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private final Long id;
 
-  private final String username;
+  private String username;
   private String password;
   private String agentId;
   private String subjectId;
@@ -96,6 +96,18 @@ class User {
    */
   public void updatePassword(String newPassword) {
     this.password = Objects.requireNonNull(newPassword, "Password cannot be null");
+  }
+
+  /**
+   * Updates the user's username.
+   *
+   * @param newUsername the new username, must not be null or blank
+   */
+  public void updateUsername(String newUsername) {
+    if (newUsername == null || newUsername.isBlank()) {
+      throw new IllegalArgumentException("Username cannot be null or blank");
+    }
+    this.username = newUsername;
   }
 
   public void addRole(UserRole role) {
