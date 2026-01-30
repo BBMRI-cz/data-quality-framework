@@ -94,28 +94,25 @@ class ReportServiceImpl implements ReportService {
   @Override
   @Transactional(readOnly = true)
   public PageResponse<ReportDTO> findAll(FilterDTO filter) {
-    Sort sort =
-        Sort.by(
-            filter.getOrder() == null || filter.getOrder().name().equalsIgnoreCase("ASC")
-                ? Sort.Direction.ASC
-                : Sort.Direction.DESC,
-            filter.getSort() != null ? filter.getSort() : "id");
+    Sort.Direction direction =
+        filter.getOrder() == null || filter.getOrder().name().equalsIgnoreCase("ASC")
+            ? Sort.Direction.ASC
+            : Sort.Direction.DESC;
+
+    String sortProperty = filter.getSort();
+    if (sortProperty == null) {
+      sortProperty = "generatedAt";
+      direction = Sort.Direction.DESC;
+    }
+
+    Sort sort = Sort.by(direction, sortProperty);
     PageRequest pageRequest = PageRequest.of(filter.getPage(), filter.getSize(), sort);
     Page<Report> page = reportRepository.findAll(pageRequest);
+
     List<ReportDTO> content =
-        page.getContent().stream()
-            .map(report -> modelMapper.map(report, ReportDTO.class))
-            .collect(Collectors.toList());
-    return new PageResponse<>(
-        content,
-        page.getNumber(),
-        page.getSize(),
-        page.getTotalElements(),
-        page.getTotalPages(),
-        page.isFirst(),
-        page.isLast(),
-        page.hasNext(),
-        page.hasPrevious());
+        page.getContent().stream().map(report -> modelMapper.map(report, ReportDTO.class)).toList();
+
+    return new PageResponse<>(content, page.getNumber(), page.getSize(), page.getTotalElements());
   }
 
   @Override

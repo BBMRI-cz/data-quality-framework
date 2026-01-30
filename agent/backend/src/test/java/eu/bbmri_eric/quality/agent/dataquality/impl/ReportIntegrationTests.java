@@ -21,9 +21,12 @@ import org.springframework.test.web.servlet.MockMvc;
 @AutoConfigureMockMvc
 @WithUserDetails("admin")
 public class ReportIntegrationTests {
+  public static final String API_REPORTS = "/api/v1/reports";
   @Autowired private MockMvc mockMvc;
 
   @Autowired private ObjectMapper objectMapper;
+
+  @Autowired private ReportRepository reportRepository;
 
   @Test
   void testCreateReportWithStatusGeneratingSetsGeneratedAt() throws Exception {
@@ -33,7 +36,7 @@ public class ReportIntegrationTests {
 
     String location =
         mockMvc
-            .perform(post("/api/reports").contentType(MediaType.APPLICATION_JSON).content(json))
+            .perform(post(API_REPORTS).contentType(MediaType.APPLICATION_JSON).content(json))
             .andExpect(status().isCreated())
             .andExpect(header().exists("Location"))
             .andReturn()
@@ -50,9 +53,36 @@ public class ReportIntegrationTests {
   }
 
   @Test
+  void testGetReportsWithPagination() throws Exception {
+
+    // Create 15 reports to ensure pagination
+    for (int i = 0; i < 15; i++) {
+      reportRepository.save(new Report());
+    }
+
+    mockMvc
+        .perform(get(API_REPORTS).param("page", "0").param("size", "10"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$._embedded.reports").isArray())
+        .andExpect(jsonPath("$._embedded.reports.length()").value(10))
+        .andExpect(jsonPath("$.page.size").value(10))
+        .andExpect(jsonPath("$.page.totalElements").isNotEmpty())
+        .andExpect(jsonPath("$.page.totalPages").isNotEmpty())
+        .andExpect(jsonPath("$._links.next").exists());
+
+    mockMvc
+        .perform(get(API_REPORTS).param("page", "1").param("size", "10"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$._embedded.reports").isArray())
+        .andExpect(
+            jsonPath("$._embedded.reports.length()")
+                .value(org.hamcrest.Matchers.greaterThanOrEqualTo(5)));
+  }
+
+  @Test
   void testGetReportsReturnsEmbeddedList() throws Exception {
     mockMvc
-        .perform(get("/api/reports"))
+        .perform(get(API_REPORTS))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$._embedded.reports").exists());
   }

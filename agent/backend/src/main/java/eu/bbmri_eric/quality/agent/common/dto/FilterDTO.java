@@ -38,8 +38,8 @@ public class FilterDTO {
       description = "Sort order (ASC or DESC)",
       example = "ASC",
       allowableValues = {"ASC", "DESC"},
-      defaultValue = "ASC")
-  private SortOrder order = SortOrder.ASC;
+      defaultValue = "DESC")
+  private SortOrder order = SortOrder.DESC;
 
   @Override
   public boolean equals(Object o) {

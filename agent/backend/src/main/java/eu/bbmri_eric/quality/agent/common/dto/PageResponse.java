@@ -4,7 +4,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 import java.util.Objects;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -17,7 +16,6 @@ import lombok.ToString;
  */
 @Setter
 @Getter
-@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @ToString
 @Schema(description = "Paginated response with metadata")
@@ -52,15 +50,35 @@ public class PageResponse<T> {
   @Schema(description = "Whether there are pages before this one")
   private boolean hasPrevious;
 
+  /**
+   * Creates a page response with all metadata.
+   *
+   * @param content the list of items in this page
+   * @param page the current page number (zero-based)
+   * @param size the number of items per page
+   * @param totalElements the total number of elements across all pages
+   */
+  public PageResponse(List<T> content, int page, int size, long totalElements) {
+    this.content = content;
+    this.page = page;
+    this.size = size;
+    this.totalElements = totalElements;
+    this.totalPages = size > 0 ? (int) Math.ceil((double) totalElements / size) : 0;
+    this.first = page == 0;
+    this.last = page >= totalPages - 1;
+    this.hasNext = page < totalPages - 1;
+    this.hasPrevious = page > 0;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     PageResponse<?> that = (PageResponse<?>) o;
-    return page == that.page
-        && size == that.size
-        && totalElements == that.totalElements
-        && totalPages == that.totalPages
+    return Objects.equals(page, that.page)
+        && Objects.equals(size, that.size)
+        && Objects.equals(totalElements, that.totalElements)
+        && Objects.equals(totalPages, that.totalPages)
         && first == that.first
         && last == that.last
         && hasNext == that.hasNext
