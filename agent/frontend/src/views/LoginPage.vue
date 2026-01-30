@@ -27,7 +27,7 @@
                 <div class="border-top border-secondary pt-4">
                   <div class="row text-center">
                     <div class="col-6">
-                      <div class="h4 fw-bold mb-1">CQL</div>
+                      <div class="h4 fw-bold mb-1">Custom</div>
                       <small class="text-uppercase text-light">Quality Checks</small>
                     </div>
                     <div class="col-6">

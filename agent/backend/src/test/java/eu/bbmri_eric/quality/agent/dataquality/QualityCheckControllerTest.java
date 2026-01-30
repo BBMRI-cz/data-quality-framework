@@ -16,9 +16,9 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-class CQLQueryControllerTest {
+class QualityCheckControllerTest {
 
-  public static final String CQLEndpoint = "/api/cql-queries";
+  public static final String QualityCheckEndpoint = "/api/quality-checks";
 
   @Autowired private MockMvc mockMvc;
 
@@ -26,14 +26,14 @@ class CQLQueryControllerTest {
 
   @Test
   @WithUserDetails("admin")
-  void post_validCQLQuery_createdAndRetrievable() throws Exception {
+  void post_validQualityCheck_createdAndRetrievable() throws Exception {
     QualityCheck check =
-        new QualityCheck("Test CQL", "Checks patients with diabetes", "define Test: true");
+        new QualityCheck("Test Check", "Checks patients with diabetes", "define Test: true");
 
     String location =
         mockMvc
             .perform(
-                post(CQLEndpoint)
+                post(QualityCheckEndpoint)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(check)))
             .andExpect(status().isCreated())
@@ -46,25 +46,27 @@ class CQLQueryControllerTest {
     mockMvc
         .perform(get(location))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.name").value("Test CQL"))
+        .andExpect(jsonPath("$.name").value("Test Check"))
         .andExpect(jsonPath("$.description").value("Checks patients with diabetes"))
         .andExpect(jsonPath("$.query").value("define Test: true"));
   }
 
   @Test
   @WithUserDetails("admin")
-  void put_existingCQLQuery_updatedSuccessfully() throws Exception {
+  void put_existingQualityCheck_updatedSuccessfully() throws Exception {
     QualityCheck check = new QualityCheck("UpdateTest", "Initial", "define Test: false");
 
     String location =
         mockMvc
             .perform(
-                post(CQLEndpoint)
+                post(QualityCheckEndpoint)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(check)))
             .andReturn()
             .getResponse()
             .getHeader("Location");
+
+    assertThat(location).isNotNull();
 
     check.setDescription("Updated Description");
 
@@ -82,14 +84,14 @@ class CQLQueryControllerTest {
 
   @Test
   @WithUserDetails("admin")
-  void delete_existingCQLQuery_deletedSuccessfully() throws Exception {
+  void delete_existingQualityCheck_deletedSuccessfully() throws Exception {
     QualityCheck check =
         new QualityCheck("DeleteTest", "To be deleted", "define Test: exists [Patient]");
 
     String location =
         mockMvc
             .perform(
-                post(CQLEndpoint)
+                post(QualityCheckEndpoint)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(check)))
             .andReturn()
@@ -103,21 +105,22 @@ class CQLQueryControllerTest {
 
   @Test
   @WithUserDetails("admin")
-  void post_invalidCQLQuery_missingFields_returnsBadRequest() throws Exception {
+  void post_invalidQualityCheck_missingFields_returnsBadRequest() throws Exception {
     String invalidJson = "{\"name\": \"Invalid Query\"}";
     mockMvc
-        .perform(post(CQLEndpoint).contentType(MediaType.APPLICATION_JSON).content(invalidJson))
+        .perform(
+            post(QualityCheckEndpoint).contentType(MediaType.APPLICATION_JSON).content(invalidJson))
         .andExpect(status().isConflict());
   }
 
   @Test
   @WithUserDetails("admin")
-  void put_nonExistingCQLQuery_returnsNotFound() throws Exception {
+  void put_nonExistingQualityCheck_returnsNotFound() throws Exception {
     QualityCheck check = new QualityCheck(9999L, "Nonexistent", "No such ID", "define Test: false");
 
     mockMvc
         .perform(
-            put(CQLEndpoint + "/99999")
+            put(QualityCheckEndpoint + "/99999")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(check)))
         .andExpect(status().isNotFound());
@@ -125,13 +128,13 @@ class CQLQueryControllerTest {
 
   @Test
   @WithUserDetails("admin")
-  void delete_nonExistingCQLQuery_returnsNotFound() throws Exception {
-    mockMvc.perform(delete(CQLEndpoint + "/9999")).andExpect(status().isNotFound());
+  void delete_nonExistingQualityCheck_returnsNotFound() throws Exception {
+    mockMvc.perform(delete(QualityCheckEndpoint + "/9999")).andExpect(status().isNotFound());
   }
 
   @Test
   @WithUserDetails("admin")
   void get_malformedId_returnsBadRequest() throws Exception {
-    mockMvc.perform(get(CQLEndpoint + "/abc")).andExpect(status().isBadRequest());
+    mockMvc.perform(get(QualityCheckEndpoint + "/abc")).andExpect(status().isBadRequest());
   }
 }

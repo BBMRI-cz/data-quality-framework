@@ -1,15 +1,15 @@
 <template>
-  <div class="cql-check-page">
+  <div class="quality-check-page">
     <PageHeader
       :title="isEditing ? 'Edit Quality Check' : 'Add Quality Check'"
       :mobileTitle="isEditing ? 'Edit Check' : 'Add Check'"
-      :subtitle="isEditing ? 'Update check configuration' : 'Create a new CQL quality check'"
+      :subtitle="isEditing ? 'Update check configuration' : 'Create a new quality check'"
       icon="bi bi-check2-square"
     />
 
     <div class="page-content">
       <div class="form-container">
-        <form @submit.prevent="handleSave" class="cql-check-form">
+        <form @submit.prevent="handleSave" class="quality-check-form">
           <!-- Basic Information Section -->
           <div class="form-section">
             <h6 class="section-title">
@@ -54,7 +54,7 @@
             </h6>
             <div class="mb-3">
               <label for="checkQuery" class="form-label fw-semibold">
-                CQL Query <span class="text-danger">*</span>
+                Query <span class="text-danger">*</span>
               </label>
               <textarea
                 v-model="formData.query"
@@ -203,7 +203,7 @@ const loadCheck = async () => {
   if (route.params.id) {
     loading.value = true;
     try {
-      const response = await api.get(`/api/cql-queries/${route.params.id}`);
+      const response = await api.get(`/api/quality-checks/${route.params.id}`);
       formData.value = response.data;
     } catch (error) {
       console.error('Failed to load check:', error);
@@ -222,9 +222,9 @@ const handleSave = async () => {
   saving.value = true;
   try {
     if (isEditing.value) {
-      await api.put(`/api/cql-queries/${formData.value.id}`, formData.value);
+      await api.put(`/api/quality-checks/${formData.value.id}`, formData.value);
     } else {
-      await api.post('/api/cql-queries', formData.value);
+      await api.post('/api/quality-checks', formData.value);
     }
     router.push('/quality-checks');
   } catch (error) {
@@ -246,7 +246,7 @@ const handleDelete = async () => {
 
   saving.value = true;
   try {
-    await api.delete(`/api/cql-queries/${formData.value.id}`);
+    await api.delete(`/api/quality-checks/${formData.value.id}`);
     router.push('/quality-checks');
   } catch (error) {
     console.error('Failed to delete check:', error);
@@ -262,7 +262,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.cql-check-page {
+.quality-check-page {
   min-height: 100%;
   padding: 2rem;
 }
@@ -276,7 +276,7 @@ onMounted(() => {
   margin: 0 auto;
 }
 
-.cql-check-form {
+.quality-check-form {
   background: white;
   border-radius: 0.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -382,7 +382,7 @@ onMounted(() => {
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .cql-check-page {
+  .quality-check-page {
     padding: 1rem;
   }
 
@@ -406,7 +406,7 @@ onMounted(() => {
 }
 
 @media (max-width: 576px) {
-  .cql-check-page {
+  .quality-check-page {
     padding: 0.75rem;
   }
 

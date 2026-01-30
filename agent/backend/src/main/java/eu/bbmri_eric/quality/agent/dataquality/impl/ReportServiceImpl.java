@@ -36,7 +36,7 @@ class ReportServiceImpl implements ReportService {
   private static final Logger log = LoggerFactory.getLogger(ReportServiceImpl.class);
   private final ReportRepository reportRepository;
   private final ReportEventHandler reportRestEventHandler;
-  private final QualityCheckService cqlQueryService;
+  private final QualityCheckService qualityCheckService;
   private final ModelMapper modelMapper;
 
   ReportServiceImpl(
@@ -46,7 +46,7 @@ class ReportServiceImpl implements ReportService {
       ModelMapper modelMapper) {
     this.reportRepository = reportRepository;
     this.reportRestEventHandler = reportRestEventHandler;
-    this.cqlQueryService = cqlQueryService;
+    this.qualityCheckService = cqlQueryService;
     this.modelMapper = modelMapper;
   }
 
@@ -151,7 +151,7 @@ class ReportServiceImpl implements ReportService {
   public ObfuscatedReportDTO getObfuscatedById(Long id) {
     Report report =
         reportRepository.findById(id).orElseThrow(() -> new ReportNotFoundException(id));
-    List<QualityCheckDTO> cqlQueryDTOS = cqlQueryService.findAll();
+    List<QualityCheckDTO> qualityCheckDTOS = qualityCheckService.findAll();
     var results =
         report.getResults().stream()
             .map(
@@ -166,7 +166,7 @@ class ReportServiceImpl implements ReportService {
                   double roundedValue =
                       BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_UP).doubleValue();
                   double boundedValue = Math.min(1.0, Math.max(0.0, roundedValue));
-                  String checkIdLabel = formatCheckIdWithStratum(result, cqlQueryDTOS);
+                  String checkIdLabel = formatCheckIdWithStratum(result, qualityCheckDTOS);
                   return new QualityCheckResultDTO(
                       checkIdLabel, result.getCheckName(), boundedValue);
                 })
@@ -186,8 +186,8 @@ class ReportServiceImpl implements ReportService {
   }
 
   private static String formatCheckIdWithStratum(
-      Result result, List<QualityCheckDTO> cqlQueryDTOS) {
-    String checkId = getCheckId(result, cqlQueryDTOS);
+      Result result, List<QualityCheckDTO> qualityCheckDTOS) {
+    String checkId = getCheckId(result, qualityCheckDTOS);
     if (result.getStratum() != null) {
       return "%s (%s)".formatted(checkId, result.getStratum());
     }

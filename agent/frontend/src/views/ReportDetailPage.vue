@@ -183,7 +183,7 @@ const router = useRouter()
 const loading = ref(true)
 const error = ref(null)
 const report = ref(null)
-const cqlQueries = ref([])
+const qualityChecks = ref([])
 const openIds = ref({})
 const pageSize = 60
 const idPage = ref({})
@@ -195,7 +195,7 @@ const goBack = () => {
 }
 
 const checkExists = (checkId) => {
-  return cqlQueries.value.some(check => check.id === checkId)
+  return qualityChecks.value.some(check => check.id === checkId)
 }
 
 const navigateToCheck = (checkId) => {
@@ -321,13 +321,13 @@ onMounted(async () => {
     const reportId = route.params.id
     report.value = await reportStore.fetchReportById(reportId)
 
-    // Load all CQL queries
+    // Load all quality checks
     try {
-      const response = await api.get('/api/cql-queries')
-      cqlQueries.value = response.data._embedded?.cqlChecks || []
+      const response = await api.get('/api/quality-checks')
+      qualityChecks.value = response.data._embedded?.qualityChecks || []
     } catch (err) {
-      console.error('Failed to load CQL queries:', err)
-      cqlQueries.value = []
+      console.error('Failed to load quality checks:', err)
+      qualityChecks.value = []
     }
 
     // Scroll to the specific check if hash is present

@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
 @RepositoryRestResource(
-    itemResourceRel = "cqlCheck",
-    collectionResourceRel = "cqlChecks",
-    path = "cql-queries")
+    itemResourceRel = "qualityCheck",
+    collectionResourceRel = "qualityChecks",
+    path = "quality-checks")
 interface QualityCheckRepository extends JpaRepository<QualityCheck, Long> {}

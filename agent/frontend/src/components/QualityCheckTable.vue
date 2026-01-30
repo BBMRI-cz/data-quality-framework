@@ -48,7 +48,7 @@
     <div v-else class="card border-0 shadow-sm">
       <div class="card-header bg-white border-bottom py-3">
         <div class="d-flex justify-content-between align-items-center">
-          <h5 class="mb-0 fw-semibold">CQL Quality Checks</h5>
+          <h5 class="mb-0 fw-semibold">Quality Checks</h5>
           <span class="badge bg-secondary">{{ filteredChecks.length }} checks</span>
         </div>
       </div>
@@ -118,7 +118,7 @@ const loading = ref(false);
 const error = ref(null);
 const searchQuery = ref('');
 
-const url = '/api/cql-queries';
+const url = '/api/quality-checks';
 
 const filteredChecks = computed(() => {
   if (!searchQuery.value) {
@@ -139,7 +139,7 @@ const fetchChecks = async () => {
 
   try {
     const { data } = await api.get(url);
-    qualityChecks.value = data._embedded?.cqlChecks || [];
+    qualityChecks.value = data._embedded?.qualityChecks || [];
   } catch (err) {
     error.value = err.message || 'Failed to load quality checks';
     console.error('Error fetching checks:', err);

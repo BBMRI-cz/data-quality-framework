@@ -3,18 +3,18 @@
     <PageHeader
       title="Quality Checks"
       mobileTitle="Checks"
-      subtitle="View and manage CQL quality checks for your data"
+      subtitle="View and manage quality checks for your data"
       icon="bi bi-check2-square"
     />
 
     <div class="page-content">
-      <CQLCheckTable />
+      <QualityCheckTable />
     </div>
   </div>
 </template>
 
 <script setup>
-import CQLCheckTable from "@/components/CQLCheckTable.vue";
+import QualityCheckTable from "@/components/QualityCheckTable.vue";
 import PageHeader from "@/components/PageHeader.vue";
 </script>
 

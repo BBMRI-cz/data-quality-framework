@@ -1,7 +1,6 @@
 package eu.bbmri_eric.quality.agent.server.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.bbmri_eric.quality.agent.dataquality.QualityCheckService;
 import eu.bbmri_eric.quality.agent.dataquality.ReportService;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ObfuscatedReportDTO;
 import eu.bbmri_eric.quality.agent.dataquality.event.ReportGeneratedEvent;
@@ -24,7 +23,6 @@ class ReportSender {
   private final CentralServerClientFactory clientFactory;
   private final ServerRepository serverRepository;
   private final SettingsService settingsService;
-  private final QualityCheckService cqlQueryService;
   private final ObjectMapper objectMapper;
 
   ReportSender(
@@ -32,13 +30,11 @@ class ReportSender {
       CentralServerClientFactory clientFactory,
       ServerRepository serverRepository,
       SettingsService settingsService,
-      QualityCheckService cqlQueryService,
       ObjectMapper objectMapper) {
     this.reportService = reportService;
     this.clientFactory = clientFactory;
     this.serverRepository = serverRepository;
     this.settingsService = settingsService;
-    this.cqlQueryService = cqlQueryService;
     this.objectMapper = objectMapper;
   }
 
