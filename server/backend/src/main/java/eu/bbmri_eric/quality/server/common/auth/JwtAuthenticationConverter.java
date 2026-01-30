@@ -133,10 +133,10 @@ class JwtAuthenticationConverter implements Converter<Jwt, AbstractAuthenticatio
       return userService.findBySubjectId(identity.identityId());
     } catch (UserNotFoundException e) {
       logger.debug("User not found for subject ID: {}, creating new user", identity.identityId());
-      try{
+      try {
         // To catch concurrent writes
         return userService.createBySubjectId(identity.identityId(), identity.username());
-      } catch (JpaSystemException ex){
+      } catch (JpaSystemException ex) {
         return userService.findBySubjectId(identity.identityId());
       }
     }
