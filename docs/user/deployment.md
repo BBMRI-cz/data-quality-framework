@@ -386,7 +386,7 @@ sudo systemctl enable --now data-quality-server-updater.timer
 4. **Verify the timer**
 
 ```bash
-systemctl list-timers --all | grep data-quality-server
+sudo systemctl list-timers --all | grep data-quality-server
 ```
 
 ## Production Considerations
