@@ -75,7 +75,7 @@ export default defineConfig({
 
         footer: {
             message: 'Licensed under the GNU GPL v3.0',
-            copyright: 'Copyright © 2025 BBMRI-ERIC® & Masaryk Memorial Cancer Institute'
+            copyright: 'Copyright © 2026 BBMRI-ERIC® & Masaryk Memorial Cancer Institute'
         },
 
         search: {
