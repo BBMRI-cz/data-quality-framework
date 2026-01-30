@@ -3,6 +3,8 @@ package eu.bbmri_eric.quality.agent.common.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import java.util.Objects;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Common data transfer object for filtering, pagination, and sorting.
@@ -10,6 +12,8 @@ import java.util.Objects;
  * <p>This DTO provides standard fields for querying collections with pagination and sorting
  * capabilities. It can be extended for domain-specific filtering needs.
  */
+@Setter
+@Getter
 @Schema(description = "Common filter DTO for pagination and sorting")
 public class FilterDTO {
 
@@ -46,38 +50,6 @@ public class FilterDTO {
     this.page = page;
     this.size = size;
     this.sort = sort;
-    this.order = order;
-  }
-
-  public int getPage() {
-    return page;
-  }
-
-  public void setPage(int page) {
-    this.page = page;
-  }
-
-  public int getSize() {
-    return size;
-  }
-
-  public void setSize(int size) {
-    this.size = size;
-  }
-
-  public String getSort() {
-    return sort;
-  }
-
-  public void setSort(String sort) {
-    this.sort = sort;
-  }
-
-  public SortOrder getOrder() {
-    return order;
-  }
-
-  public void setOrder(SortOrder order) {
     this.order = order;
   }
 
