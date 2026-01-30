@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.lang.NonNull;
+import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -132,7 +133,12 @@ class JwtAuthenticationConverter implements Converter<Jwt, AbstractAuthenticatio
       return userService.findBySubjectId(identity.identityId());
     } catch (UserNotFoundException e) {
       logger.debug("User not found for subject ID: {}, creating new user", identity.identityId());
-      return userService.createBySubjectId(identity.identityId(), identity.username());
+      try{
+        // To catch concurrent writes
+        return userService.createBySubjectId(identity.identityId(), identity.username());
+      } catch (JpaSystemException ex){
+        return userService.findBySubjectId(identity.identityId());
+      }
     }
   }
 
