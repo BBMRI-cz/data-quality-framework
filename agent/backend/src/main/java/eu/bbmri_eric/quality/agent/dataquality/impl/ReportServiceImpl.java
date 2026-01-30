@@ -6,7 +6,7 @@ import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Result;
 import eu.bbmri_eric.quality.agent.dataquality.dto.CQLQueryDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckResultDTO;
-import eu.bbmri_eric.quality.agent.dataquality.dto.ReportDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.ObfuscatedReportDTO;
 import eu.bbmri_eric.quality.agent.dataquality.exception.ReportNotFoundException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -46,7 +46,7 @@ class ReportServiceImpl implements ReportService {
 
   @Transactional(readOnly = true)
   @Override
-  public ReportDTO getById(Long id) {
+  public ObfuscatedReportDTO getObfuscatedById(Long id) {
     Report report =
         reportRepository.findById(id).orElseThrow(() -> new ReportNotFoundException(id));
     List<CQLQueryDTO> cqlQueryDTOS = cqlQueryService.findAll();
@@ -69,7 +69,7 @@ class ReportServiceImpl implements ReportService {
                       checkIdLabel, result.getCheckName(), boundedValue);
                 })
             .collect(Collectors.toList());
-    return new ReportDTO(
+    return new ObfuscatedReportDTO(
         results, report.getNumberOfEntities(), report.getNumberOfSecondaryEntities());
   }
 

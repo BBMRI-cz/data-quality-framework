@@ -10,7 +10,7 @@ import eu.bbmri_eric.quality.agent.dataquality.domain.ReportStatus;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Result;
 import eu.bbmri_eric.quality.agent.dataquality.dto.CQLQueryDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckResultDTO;
-import eu.bbmri_eric.quality.agent.dataquality.dto.ReportDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.ObfuscatedReportDTO;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -89,7 +89,7 @@ class ReportServiceImplTest {
     @Test
     @DisplayName("should never expose raw count values")
     void shouldNeverExposeRawValues() {
-      ReportDTO reportDTO = reportService.getById(testReport.getId());
+      ObfuscatedReportDTO reportDTO = reportService.getObfuscatedById(testReport.getId());
 
       double[] returnedValues =
           reportDTO.getResults().stream().mapToDouble(QualityCheckResultDTO::getResult).toArray();
@@ -109,7 +109,7 @@ class ReportServiceImplTest {
     @Test
     @DisplayName("should apply noise to all non-suppressed values")
     void shouldApplyNoiseToValues() {
-      ReportDTO reportDTO = reportService.getById(testReport.getId());
+      ObfuscatedReportDTO reportDTO = reportService.getObfuscatedById(testReport.getId());
 
       QualityCheckResultDTO check1 = reportDTO.getResults().get(0);
       assertThat(check1.getResult()).isEqualTo(0.16);
@@ -121,7 +121,7 @@ class ReportServiceImplTest {
     @Test
     @DisplayName("should suppress low counts (return 0.0)")
     void shouldSuppressLowCounts() {
-      ReportDTO reportDTO = reportService.getById(testReport.getId());
+      ObfuscatedReportDTO reportDTO = reportService.getObfuscatedById(testReport.getId());
 
       QualityCheckResultDTO check3 = reportDTO.getResults().get(2);
       assertThat(check3.getResult()).isEqualTo(0.0);
@@ -140,7 +140,7 @@ class ReportServiceImplTest {
       addResultToReport(report, "Test Check", 1L, 50, 60.0, null);
       Report savedReport = reportRepository.save(report);
 
-      ReportDTO reportDTO = reportService.getById(savedReport.getId());
+      ObfuscatedReportDTO reportDTO = reportService.getObfuscatedById(savedReport.getId());
 
       assertThat(reportDTO.getResults().get(0).getResult()).isEqualTo(0.6);
     }
@@ -154,7 +154,7 @@ class ReportServiceImplTest {
       addResultToReport(report, "Test Check", 1L, 0, 0.0, null);
       Report savedReport = reportRepository.save(report);
 
-      ReportDTO reportDTO = reportService.getById(savedReport.getId());
+      ObfuscatedReportDTO reportDTO = reportService.getObfuscatedById(savedReport.getId());
 
       assertThat(reportDTO.getResults()).hasSize(1);
       assertThat(reportDTO.getResults().get(0).getResult()).isEqualTo(0.0);
@@ -164,7 +164,7 @@ class ReportServiceImplTest {
     @DisplayName(
         "should protect against inference attacks - multiple queries don't reveal exact values")
     void shouldProtectAgainstInferenceAttacks() {
-      ReportDTO reportDTO = reportService.getById(testReport.getId());
+      ObfuscatedReportDTO reportDTO = reportService.getObfuscatedById(testReport.getId());
 
       QualityCheckResultDTO check1 = reportDTO.getResults().get(0);
       double noisyProportion = check1.getResult();
@@ -182,7 +182,7 @@ class ReportServiceImplTest {
     @Test
     @DisplayName("should create hash for check ID")
     void shouldCreateHashForCheckId() {
-      ReportDTO reportDTO = reportService.getById(testReport.getId());
+      ObfuscatedReportDTO reportDTO = reportService.getObfuscatedById(testReport.getId());
 
       for (QualityCheckResultDTO result : reportDTO.getResults()) {
         assertThat(result.getHash())
@@ -195,7 +195,7 @@ class ReportServiceImplTest {
     @Test
     @DisplayName("should hash CQL query content, not just ID")
     void shouldHashQueryContent() {
-      ReportDTO reportDTO = reportService.getById(testReport.getId());
+      ObfuscatedReportDTO reportDTO = reportService.getObfuscatedById(testReport.getId());
 
       String hash = reportDTO.getResults().get(0).getHash();
       assertThat(hash).matches("[a-f0-9]{64}");
@@ -204,7 +204,7 @@ class ReportServiceImplTest {
     @Test
     @DisplayName("should append stratum to hash when present")
     void shouldAppendStratumToHash() {
-      ReportDTO reportDTO = reportService.getById(testReport.getId());
+      ObfuscatedReportDTO reportDTO = reportService.getObfuscatedById(testReport.getId());
 
       QualityCheckResultDTO check4 = reportDTO.getResults().get(3);
       assertThat(check4.getHash()).contains("stratum_A");
@@ -218,7 +218,7 @@ class ReportServiceImplTest {
     @Test
     @DisplayName("should not append stratum when null")
     void shouldNotAppendStratumWhenNull() {
-      ReportDTO reportDTO = reportService.getById(testReport.getId());
+      ObfuscatedReportDTO reportDTO = reportService.getObfuscatedById(testReport.getId());
 
       QualityCheckResultDTO check1 = reportDTO.getResults().get(0);
       assertThat(check1.getHash()).doesNotContain("(");
@@ -228,7 +228,7 @@ class ReportServiceImplTest {
     @Test
     @DisplayName("should use same hash for same check ID")
     void shouldUseSameHashForSameCheckId() {
-      ReportDTO reportDTO = reportService.getById(testReport.getId());
+      ObfuscatedReportDTO reportDTO = reportService.getObfuscatedById(testReport.getId());
 
       String hash1 = reportDTO.getResults().get(0).getHash();
       String hash2 = reportDTO.getResults().get(1).getHash();
@@ -241,7 +241,7 @@ class ReportServiceImplTest {
     @Test
     @DisplayName("should use different hash for different check IDs")
     void shouldUseDifferentHashForDifferentCheckIds() {
-      ReportDTO reportDTO = reportService.getById(testReport.getId());
+      ObfuscatedReportDTO reportDTO = reportService.getObfuscatedById(testReport.getId());
 
       String hash1Base = reportDTO.getResults().get(0).getHash();
       String hash4WithStratum = reportDTO.getResults().get(3).getHash();
@@ -259,7 +259,7 @@ class ReportServiceImplTest {
     @Test
     @DisplayName("should return report with obfuscated results")
     void shouldReturnReportWithObfuscatedResults() {
-      ReportDTO reportDTO = reportService.getById(testReport.getId());
+      ObfuscatedReportDTO reportDTO = reportService.getObfuscatedById(testReport.getId());
 
       assertThat(reportDTO.getResults()).hasSize(5);
       assertThat(reportDTO.getResults().get(0).getResult()).isGreaterThan(0.0);

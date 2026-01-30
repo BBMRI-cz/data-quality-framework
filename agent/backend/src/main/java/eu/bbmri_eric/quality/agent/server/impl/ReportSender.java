@@ -3,7 +3,7 @@ package eu.bbmri_eric.quality.agent.server.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.agent.dataquality.CQLQueryService;
 import eu.bbmri_eric.quality.agent.dataquality.ReportService;
-import eu.bbmri_eric.quality.agent.dataquality.dto.ReportDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.ObfuscatedReportDTO;
 import eu.bbmri_eric.quality.agent.dataquality.event.ReportGeneratedEvent;
 import eu.bbmri_eric.quality.agent.server.CentralServerClientFactory;
 import eu.bbmri_eric.quality.agent.server.domain.InteractionType;
@@ -45,7 +45,7 @@ class ReportSender {
   @EventListener
   @Transactional
   protected void onFinished(ReportGeneratedEvent event) {
-    ReportDTO reportDTO = reportService.getById(event.getReportId());
+    ObfuscatedReportDTO reportDTO = reportService.getObfuscatedById(event.getReportId());
     String agentId = settingsService.getSettings().getAgentId();
     serverRepository
         .findAllByStatusIs(ServerConnectionStatus.ACTIVE)

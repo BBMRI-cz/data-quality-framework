@@ -8,7 +8,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class ReportDTO {
+public class ObfuscatedReportDTO {
 
   private List<QualityCheckResultDTO> results;
 
@@ -18,11 +18,11 @@ public class ReportDTO {
   @Schema(description = "Total number of samples", example = "250")
   private Integer totalSamples;
 
-  public ReportDTO(List<QualityCheckResultDTO> results) {
+  public ObfuscatedReportDTO(List<QualityCheckResultDTO> results) {
     this.results = results;
   }
 
-  public ReportDTO(
+  public ObfuscatedReportDTO(
       List<QualityCheckResultDTO> results, Integer totalPatients, Integer totalSamples) {
     this.results = results;
     this.totalPatients = totalPatients;
@@ -32,7 +32,7 @@ public class ReportDTO {
   @Override
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
-    ReportDTO reportDTO = (ReportDTO) o;
+    ObfuscatedReportDTO reportDTO = (ObfuscatedReportDTO) o;
     return Objects.equals(results, reportDTO.results);
   }
 

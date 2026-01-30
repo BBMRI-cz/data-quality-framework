@@ -1,6 +1,6 @@
 package eu.bbmri_eric.quality.agent.dataquality;
 
-import eu.bbmri_eric.quality.agent.dataquality.dto.ReportDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.ObfuscatedReportDTO;
 
 public interface ReportService {
 
@@ -11,10 +11,10 @@ public interface ReportService {
   void generateReport();
 
   /**
-   * Get a report by ID and convert it to a DTO.
+   * Get a report by ID.
    *
    * @param id the report ID
-   * @return the report as a DTO
+   * @return the report as a DTO with obfuscated values safe for sharing
    */
-  ReportDTO getById(Long id);
+  ObfuscatedReportDTO getObfuscatedById(Long id);
 }
