@@ -3,13 +3,13 @@ package eu.bbmri_eric.quality.agent.dataquality.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-import eu.bbmri_eric.quality.agent.dataquality.CQLQueryService;
+import eu.bbmri_eric.quality.agent.dataquality.QualityCheckService;
 import eu.bbmri_eric.quality.agent.dataquality.ReportService;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
 import eu.bbmri_eric.quality.agent.dataquality.domain.ReportStatus;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Result;
-import eu.bbmri_eric.quality.agent.dataquality.dto.CQLQueryDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ObfuscatedReportDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckResultDTO;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,7 +27,7 @@ class ReportServiceImplTest {
 
   @Autowired private ReportRepository reportRepository;
   @Autowired private ReportService reportService;
-  @MockitoBean private CQLQueryService cqlQueryService;
+  @MockitoBean private QualityCheckService cqlQueryService;
 
   private Report testReport;
 
@@ -35,12 +35,12 @@ class ReportServiceImplTest {
   void setUp() {
     reportRepository.deleteAll();
 
-    CQLQueryDTO mockQuery1 =
-        new CQLQueryDTO(
+    QualityCheckDTO mockQuery1 =
+        new QualityCheckDTO(
             1L, "Query 1", "Description 1", "library Query1 version '1.0.0'", 10, 30, 1.0f);
 
-    CQLQueryDTO mockQuery2 =
-        new CQLQueryDTO(
+    QualityCheckDTO mockQuery2 =
+        new QualityCheckDTO(
             2L, "Query 2", "Description 2", "library Query2 version '1.0.0'", 10, 30, 1.0f);
 
     when(cqlQueryService.findAll()).thenReturn(List.of(mockQuery1, mockQuery2));

@@ -9,7 +9,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import eu.bbmri_eric.quality.agent.dataquality.domain.CQLQuery;
+import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
 import java.util.Set;
 import org.json.JSONArray;
@@ -69,7 +69,7 @@ class CQLQueryTest {
   @Test
   void execute_returnsCorrectPatientIds() throws Exception {
     FHIRStore mockStore = mock(FHIRStore.class);
-    CQLQuery query = new CQLQuery("name", "desc", "query");
+    QualityCheck query = new QualityCheck("name", "desc", "query");
 
     stubMeasureSetup(mockStore);
     // measureReport
@@ -103,7 +103,7 @@ class CQLQueryTest {
   void execute_returnsEmptySet_whenPopulationCountIsZero_andDoesNotCallGetPatientList()
       throws Exception {
     FHIRStore store = mock(FHIRStore.class);
-    CQLQuery query = new CQLQuery("name", "desc", "query");
+    QualityCheck query = new QualityCheck("name", "desc", "query");
     stubMeasureSetup(store);
 
     when(store.evaluateMeasureList("measure1")).thenReturn(measureReportWith(0, "List/list123"));
@@ -118,7 +118,7 @@ class CQLQueryTest {
   @Test
   void execute_returnsEmptySet_whenListReferenceMissing_evenIfCountPositive() throws Exception {
     FHIRStore store = mock(FHIRStore.class);
-    CQLQuery query = new CQLQuery("name", "desc", "query");
+    QualityCheck query = new QualityCheck("name", "desc", "query");
     stubMeasureSetup(store);
 
     when(store.evaluateMeasureList("measure1")).thenReturn(measureReportWith(3, null));

@@ -1,6 +1,6 @@
 package eu.bbmri_eric.quality.agent.dataquality.impl;
 
-import eu.bbmri_eric.quality.agent.dataquality.domain.CQLQuery;
+import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
@@ -8,4 +8,4 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
     itemResourceRel = "cqlCheck",
     collectionResourceRel = "cqlChecks",
     path = "cql-queries")
-interface CQLCheckRepository extends JpaRepository<CQLQuery, Long> {}
+interface QualityCheckRepository extends JpaRepository<QualityCheck, Long> {}

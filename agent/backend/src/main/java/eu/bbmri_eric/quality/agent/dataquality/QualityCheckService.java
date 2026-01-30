@@ -1,10 +1,10 @@
 package eu.bbmri_eric.quality.agent.dataquality;
 
-import eu.bbmri_eric.quality.agent.dataquality.dto.CQLQueryDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
 import java.util.List;
 
 /** Service interface for managing CQL queries. */
-public interface CQLQueryService {
+public interface QualityCheckService {
 
   /**
    * Finds a CQL query by its ID.
@@ -12,12 +12,12 @@ public interface CQLQueryService {
    * @param id the CQL query ID
    * @return the CQL query DTO
    */
-  CQLQueryDTO findById(Long id);
+  QualityCheckDTO findById(Long id);
 
   /**
    * Finds all CQL queries.
    *
    * @return list of all CQL query DTOs
    */
-  List<CQLQueryDTO> findAll();
+  List<QualityCheckDTO> findAll();
 }

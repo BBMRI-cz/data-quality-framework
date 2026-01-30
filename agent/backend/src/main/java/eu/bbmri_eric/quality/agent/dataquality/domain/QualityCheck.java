@@ -18,10 +18,10 @@ import lombok.Setter;
 import org.json.JSONObject;
 
 /** A data quality check utilizing the Hl7 Clinical Quality Language queries for evaluation. */
-@Entity(name = "cql_check")
+@Entity(name = "quality_check")
 @Getter
 @Setter
-public class CQLQuery implements DataQualityCheck {
+public class QualityCheck implements DataQualityCheck {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,9 +34,9 @@ public class CQLQuery implements DataQualityCheck {
   private int errorThreshold = 30;
   private float epsilonBudget = 1.0f;
 
-  protected CQLQuery() {}
+  protected QualityCheck() {}
 
-  public CQLQuery(
+  public QualityCheck(
       Long id, @NotNull String name, @NotNull String description, @NotNull String query) {
     this.id = id;
     this.name = name;
@@ -44,7 +44,7 @@ public class CQLQuery implements DataQualityCheck {
     this.query = query;
   }
 
-  public CQLQuery(String name, String description, String query) {
+  public QualityCheck(String name, String description, String query) {
     this.name = name;
     this.description = description;
     this.query = query;

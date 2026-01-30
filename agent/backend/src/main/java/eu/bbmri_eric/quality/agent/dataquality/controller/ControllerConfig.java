@@ -1,6 +1,6 @@
 package eu.bbmri_eric.quality.agent.dataquality.controller;
 
-import eu.bbmri_eric.quality.agent.dataquality.domain.CQLQuery;
+import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.rest.core.config.RepositoryRestConfiguration;
 import org.springframework.data.rest.core.event.ValidatingRepositoryEventListener;
@@ -20,7 +20,7 @@ class ControllerConfig implements RepositoryRestConfigurer {
   @Override
   public void configureRepositoryRestConfiguration(
       RepositoryRestConfiguration config, CorsRegistry cors) {
-    config.exposeIdsFor(CQLQuery.class);
+    config.exposeIdsFor(QualityCheck.class);
   }
 
   @Override

@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 /** DTO for CQL Query entity. */
 @Schema(name = "CQL Query", description = "A CQL-based data quality check")
-public class CQLQueryDTO {
+public class QualityCheckDTO {
 
   @Schema(description = "Unique identifier of the CQL query", example = "1")
   private Long id;
@@ -31,9 +31,9 @@ public class CQLQueryDTO {
   @Schema(description = "Epsilon budget for differential privacy", example = "1.0")
   private float epsilonBudget;
 
-  public CQLQueryDTO() {}
+  public QualityCheckDTO() {}
 
-  public CQLQueryDTO(
+  public QualityCheckDTO(
       Long id,
       String name,
       String description,

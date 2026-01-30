@@ -20,12 +20,12 @@ import org.springframework.stereotype.Component;
 class DataQualityChecksRunner {
 
   private static final Logger log = LoggerFactory.getLogger(DataQualityChecksRunner.class);
-  private final CQLCheckRepository repository;
+  private final QualityCheckRepository repository;
   private final EventPublisher eventPublisher;
   private final FHIRStore fhirStore;
 
   DataQualityChecksRunner(
-      CQLCheckRepository repository, EventPublisher eventPublisher, FHIRStore fhirStore) {
+      QualityCheckRepository repository, EventPublisher eventPublisher, FHIRStore fhirStore) {
     this.repository = repository;
     this.eventPublisher = eventPublisher;
     this.fhirStore = fhirStore;

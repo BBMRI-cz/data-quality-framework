@@ -3,12 +3,12 @@ package eu.bbmri_eric.quality.agent.dataquality.impl;
 import eu.bbmri_eric.quality.agent.common.dto.FilterDTO;
 import eu.bbmri_eric.quality.agent.common.dto.PageResponse;
 import eu.bbmri_eric.quality.agent.common.exception.EntityNotFoundException;
-import eu.bbmri_eric.quality.agent.dataquality.CQLQueryService;
+import eu.bbmri_eric.quality.agent.dataquality.QualityCheckService;
 import eu.bbmri_eric.quality.agent.dataquality.ReportService;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Result;
-import eu.bbmri_eric.quality.agent.dataquality.dto.CQLQueryDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ObfuscatedReportDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckResultDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportDTO;
@@ -36,13 +36,13 @@ class ReportServiceImpl implements ReportService {
   private static final Logger log = LoggerFactory.getLogger(ReportServiceImpl.class);
   private final ReportRepository reportRepository;
   private final ReportEventHandler reportRestEventHandler;
-  private final CQLQueryService cqlQueryService;
+  private final QualityCheckService cqlQueryService;
   private final ModelMapper modelMapper;
 
   ReportServiceImpl(
       ReportRepository reportRepository,
       ReportEventHandler reportRestEventHandler,
-      CQLQueryService cqlQueryService,
+      QualityCheckService cqlQueryService,
       ModelMapper modelMapper) {
     this.reportRepository = reportRepository;
     this.reportRestEventHandler = reportRestEventHandler;
@@ -151,7 +151,7 @@ class ReportServiceImpl implements ReportService {
   public ObfuscatedReportDTO getObfuscatedById(Long id) {
     Report report =
         reportRepository.findById(id).orElseThrow(() -> new ReportNotFoundException(id));
-    List<CQLQueryDTO> cqlQueryDTOS = cqlQueryService.findAll();
+    List<QualityCheckDTO> cqlQueryDTOS = cqlQueryService.findAll();
     var results =
         report.getResults().stream()
             .map(
@@ -175,17 +175,18 @@ class ReportServiceImpl implements ReportService {
         results, report.getNumberOfEntities(), report.getNumberOfSecondaryEntities());
   }
 
-  private static String getCheckId(Result result, List<CQLQueryDTO> cqlQueryDTOS) {
+  private static String getCheckId(Result result, List<QualityCheckDTO> cqlQueryDTOS) {
     String query =
         cqlQueryDTOS.stream()
             .filter(cqlQueryDTO -> cqlQueryDTO.getId().equals(result.getCheckId()))
             .findFirst()
-            .map(CQLQueryDTO::getQuery)
+            .map(QualityCheckDTO::getQuery)
             .orElse(result.getCheckId().toString());
     return hashQuery(query);
   }
 
-  private static String formatCheckIdWithStratum(Result result, List<CQLQueryDTO> cqlQueryDTOS) {
+  private static String formatCheckIdWithStratum(
+      Result result, List<QualityCheckDTO> cqlQueryDTOS) {
     String checkId = getCheckId(result, cqlQueryDTOS);
     if (result.getStratum() != null) {
       return "%s (%s)".formatted(checkId, result.getStratum());

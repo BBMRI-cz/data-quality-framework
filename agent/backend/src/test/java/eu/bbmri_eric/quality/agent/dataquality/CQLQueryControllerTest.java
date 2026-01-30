@@ -5,7 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.bbmri_eric.quality.agent.dataquality.domain.CQLQuery;
+import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -27,7 +27,8 @@ class CQLQueryControllerTest {
   @Test
   @WithUserDetails("admin")
   void post_validCQLQuery_createdAndRetrievable() throws Exception {
-    CQLQuery check = new CQLQuery("Test CQL", "Checks patients with diabetes", "define Test: true");
+    QualityCheck check =
+        new QualityCheck("Test CQL", "Checks patients with diabetes", "define Test: true");
 
     String location =
         mockMvc
@@ -53,7 +54,7 @@ class CQLQueryControllerTest {
   @Test
   @WithUserDetails("admin")
   void put_existingCQLQuery_updatedSuccessfully() throws Exception {
-    CQLQuery check = new CQLQuery("UpdateTest", "Initial", "define Test: false");
+    QualityCheck check = new QualityCheck("UpdateTest", "Initial", "define Test: false");
 
     String location =
         mockMvc
@@ -82,7 +83,8 @@ class CQLQueryControllerTest {
   @Test
   @WithUserDetails("admin")
   void delete_existingCQLQuery_deletedSuccessfully() throws Exception {
-    CQLQuery check = new CQLQuery("DeleteTest", "To be deleted", "define Test: exists [Patient]");
+    QualityCheck check =
+        new QualityCheck("DeleteTest", "To be deleted", "define Test: exists [Patient]");
 
     String location =
         mockMvc
@@ -111,7 +113,7 @@ class CQLQueryControllerTest {
   @Test
   @WithUserDetails("admin")
   void put_nonExistingCQLQuery_returnsNotFound() throws Exception {
-    CQLQuery check = new CQLQuery(9999L, "Nonexistent", "No such ID", "define Test: false");
+    QualityCheck check = new QualityCheck(9999L, "Nonexistent", "No such ID", "define Test: false");
 
     mockMvc
         .perform(
