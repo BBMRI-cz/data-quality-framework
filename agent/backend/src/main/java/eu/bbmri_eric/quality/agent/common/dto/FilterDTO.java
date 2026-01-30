@@ -3,8 +3,12 @@ package eu.bbmri_eric.quality.agent.common.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import java.util.Objects;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 /**
  * Common data transfer object for filtering, pagination, and sorting.
@@ -14,6 +18,9 @@ import lombok.Setter;
  */
 @Setter
 @Getter
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@ToString
 @Schema(description = "Common filter DTO for pagination and sorting")
 public class FilterDTO {
 
@@ -35,24 +42,6 @@ public class FilterDTO {
       defaultValue = "ASC")
   private SortOrder order = SortOrder.ASC;
 
-  /** Default constructor. */
-  public FilterDTO() {}
-
-  /**
-   * Constructor with all fields.
-   *
-   * @param page the page number (zero-based)
-   * @param size the page size
-   * @param sort the field name to sort by
-   * @param order the sort order
-   */
-  public FilterDTO(int page, int size, String sort, SortOrder order) {
-    this.page = page;
-    this.size = size;
-    this.sort = sort;
-    this.order = order;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -67,21 +56,6 @@ public class FilterDTO {
   @Override
   public int hashCode() {
     return Objects.hash(page, size, sort, order);
-  }
-
-  @Override
-  public String toString() {
-    return "FilterDTO{"
-        + "page="
-        + page
-        + ", size="
-        + size
-        + ", sort='"
-        + sort
-        + '\''
-        + ", order="
-        + order
-        + '}';
   }
 
   /** Enum representing sort order. */
