@@ -45,7 +45,6 @@ docker ps
 ### Security Tools (Optional but Recommended)
 
 - **Cosign**: For verifying Docker image signatures
-- **Watchtower**: For automatic container updates
 
 ```bash
 # Install Cosign (Linux/macOS)
@@ -110,18 +109,7 @@ services:
       - REPORTING_SERVER_URL=https://quality-dashboard.bbmri-eric.eu
       - REPORTING_SERVER_NAME=Central Data Quality Server of BBMRI
 
-  # Remove this service if you do not want automatic updates
-  watchtower:
-    image: containrrr/watchtower:1.7.1
-    container_name: watchtower
-    restart: unless-stopped
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - WATCHTOWER_CLEANUP=true
-      - WATCHTOWER_SCHEDULE=0 0 2 * * *  # Check daily at 2 AM
-      - WATCHTOWER_INCLUDE_STOPPED=true
-    command: quality-agent
+
 
 volumes:
   agent-data:
@@ -195,6 +183,62 @@ If you are deploying this agent as part of the **BBMRI-ERIC Federated Search Pla
 This allows the agent to connect to the local FHIR store provided by the Bridgehead component.
 :::
 
+### Step 8: Configure Automatic Updates (Optional)
+
+Instead of running a separate container for updates, you can use a systemd timer to automatically pull the latest images and restart the agent.
+
+1. **Create the update service file**
+
+Create `/etc/systemd/system/data-quality-agent-updater.service`:
+
+```ini
+[Unit]
+Description=Update Data Quality Agent
+After=docker.service network.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/data-quality-agent
+ExecStart=/usr/bin/docker compose pull
+ExecStart=/usr/bin/docker compose up -d
+```
+
+2. **Create the timer file**
+
+Create `/etc/systemd/system/data-quality-agent-updater.timer`:
+
+```ini
+[Unit]
+Description=Run Data Quality Agent updater daily
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+```
+
+3. **Enable and start the timer**
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now data-quality-agent-updater.timer
+```
+
+4. **Verify the timer**
+
+```bash
+sudo systemctl list-timers --all | grep data-quality-agent
+```
+
+5. **Check update service logs**
+
+```bash
+sudo journalctl -u data-quality-agent-updater.service
+```
+
 ## Data Quality Server Deployment
 
 The Data Quality Server runs centrally to collect and aggregate reports from multiple agents.
@@ -222,18 +266,7 @@ services:
       - "8082:8082"
     volumes:
       - server-data:/app/data
-  # Remove this service if you do not want automatic updates
-  watchtower:
-    image: containrrr/watchtower:1.7.1
-    container_name: watchtower
-    restart: unless-stopped
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - WATCHTOWER_CLEANUP=true
-      - WATCHTOWER_SCHEDULE=0 0 2 * * *  # Check daily at 2 AM
-      - WATCHTOWER_INCLUDE_STOPPED=true
-    command: quality-server
+
 
 volumes:
   server-data:
@@ -311,6 +344,62 @@ For detailed instructions on configuring OIDC authentication, including:
 - Troubleshooting common issues
 
 Please refer to the [OIDC Configuration Guide](./oidc-configuration.md)
+
+### Step 8: Configure Automatic Updates (Optional)
+
+Instead of running a separate container for updates, you can use a systemd timer to automatically pull the latest images and restart the server.
+
+1. **Create the update service file**
+
+Create `/etc/systemd/system/data-quality-server-updater.service`:
+
+```ini
+[Unit]
+Description=Update Data Quality Server
+After=docker.service network.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/data-quality-server
+ExecStart=/usr/bin/docker compose pull
+ExecStart=/usr/bin/docker compose up -d
+```
+
+2. **Create the timer file**
+
+Create `/etc/systemd/system/data-quality-server-updater.timer`:
+
+```ini
+[Unit]
+Description=Run Data Quality Server updater daily
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+```
+
+3. **Enable and start the timer**
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now data-quality-server-updater.timer
+```
+
+4. **Verify the timer**
+
+```bash
+sudo systemctl list-timers --all | grep data-quality-server
+```
+
+5. **Check update service logs**
+
+```bash
+sudo journalctl -u data-quality-server-updater.service
+```
 
 ## Production Considerations
 
