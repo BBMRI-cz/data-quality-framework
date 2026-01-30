@@ -213,8 +213,7 @@ Create `/etc/systemd/system/data-quality-agent-updater.timer`:
 Description=Run Data Quality Agent updater daily
 
 [Timer]
-OnCalendar=daily
-RandomizedDelaySec=3600
+OnCalendar=hourly
 Persistent=true
 
 [Install]
@@ -370,8 +369,7 @@ Create `/etc/systemd/system/data-quality-server-updater.timer`:
 Description=Run Data Quality Server updater daily
 
 [Timer]
-OnCalendar=daily
-RandomizedDelaySec=3600
+OnCalendar=hourly
 Persistent=true
 
 [Install]
