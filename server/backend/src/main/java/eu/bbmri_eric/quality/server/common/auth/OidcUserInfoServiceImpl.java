@@ -1,14 +1,14 @@
 package eu.bbmri_eric.quality.server.common.auth;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import jakarta.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.util.HexFormat;
-import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,88 +25,100 @@ class OidcUserInfoServiceImpl implements OidcUserInfoService {
 
   private static final Logger logger = LoggerFactory.getLogger(OidcUserInfoServiceImpl.class);
   private static final Duration CACHE_DURATION = Duration.ofMinutes(15);
+  private static final long MAX_CACHE_SIZE = 10_000;
   private static final String OIDC_DISCOVERY_PATH = "/.well-known/openid-configuration";
-  private static final String USERINFO_ENDPOINT_KEY = "userinfo_endpoint";
 
   private final Cache<String, OidcUserInfo> cache;
   private final RestTemplate restTemplate;
-  private String userInfoEndpoint;
+  private final String userInfoEndpoint;
   private final String issuerUri;
 
   public OidcUserInfoServiceImpl(
       @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri:#{null}}") String issuerUri) {
     this.restTemplate = new RestTemplate();
     this.issuerUri = issuerUri;
-    this.cache = Caffeine.newBuilder().expireAfterWrite(CACHE_DURATION).maximumSize(10_000).build();
+    this.cache =
+        Caffeine.newBuilder().expireAfterWrite(CACHE_DURATION).maximumSize(MAX_CACHE_SIZE).build();
+    this.userInfoEndpoint = initializeUserInfoEndpoint();
   }
 
-  @PostConstruct
-  private void init() {
+  private String initializeUserInfoEndpoint() {
     if (issuerUri == null || issuerUri.isBlank()) {
       logger.info("OIDC issuer URI not configured, userinfo endpoint will not be available");
-      return;
+      return null;
     }
-
     try {
       var discoveryUri = issuerUri + OIDC_DISCOVERY_PATH;
-      logger.debug("Fetching OIDC discovery document from: {}", discoveryUri);
-
-      Map<String, Object> discoveryResult = restTemplate.getForObject(discoveryUri, Map.class);
-
-      if (discoveryResult == null || !discoveryResult.containsKey(USERINFO_ENDPOINT_KEY)) {
-        logger.error(
-            "Invalid OIDC discovery document from {}, missing {}",
-            discoveryUri,
-            USERINFO_ENDPOINT_KEY);
-        this.userInfoEndpoint = null;
-        return;
-      }
-
-      this.userInfoEndpoint = (String) discoveryResult.get(USERINFO_ENDPOINT_KEY);
-      logger.info("OIDC userinfo endpoint configured: {}", userInfoEndpoint);
+      var discoveryResponse = fetchDiscoveryDocument(discoveryUri);
+      return extractUserInfoEndpoint(discoveryResponse, discoveryUri);
     } catch (Exception e) {
       logger.error(
           "Failed to fetch OIDC discovery document from issuer: {}, userinfo endpoint will not be available",
           issuerUri,
           e);
-      this.userInfoEndpoint = null;
+      return null;
     }
+  }
+
+  private OidcDiscoveryResponse fetchDiscoveryDocument(String discoveryUri) {
+    logger.debug("Fetching OIDC discovery document from: {}", discoveryUri);
+    return restTemplate.getForObject(discoveryUri, OidcDiscoveryResponse.class);
+  }
+
+  private String extractUserInfoEndpoint(
+      OidcDiscoveryResponse discoveryResponse, String discoveryUri) {
+    if (discoveryResponse == null || discoveryResponse.userInfoEndpoint() == null) {
+      logger.error(
+          "Invalid OIDC discovery document from {}, missing userinfo_endpoint", discoveryUri);
+      return null;
+    }
+    var endpoint = discoveryResponse.userInfoEndpoint();
+    logger.info("OIDC userinfo endpoint configured: {}", endpoint);
+    return endpoint;
   }
 
   @Override
   public OidcUserInfo fetchUserInfo(String accessToken) {
-    if (userInfoEndpoint == null) {
-      logger.warn("OIDC issuer URI not configured, skipping userinfo fetch");
+    if (!canFetchUserInfo(accessToken)) {
       return null;
     }
-
-    if (accessToken == null || accessToken.isBlank()) {
-      logger.warn("Access token is null or blank, cannot fetch userinfo");
-      return null;
-    }
-
     var cacheKey = hashToken(accessToken);
     var cached = cache.getIfPresent(cacheKey);
     if (cached != null) {
       return cached;
     }
+    var userInfo = fetchRemoteUserInfo(accessToken);
+    if (userInfo != null) {
+      cache.put(cacheKey, userInfo);
+    }
+    return userInfo;
+  }
 
+  private boolean canFetchUserInfo(String accessToken) {
+    if (userInfoEndpoint == null) {
+      logger.warn("OIDC issuer URI not configured, skipping userinfo fetch");
+      return false;
+    }
+    if (accessToken == null || accessToken.isBlank()) {
+      logger.warn("Access token is null or blank, cannot fetch userinfo");
+      return false;
+    }
+    return true;
+  }
+
+  private OidcUserInfo fetchRemoteUserInfo(String accessToken) {
     try {
       var headers = new HttpHeaders();
       headers.setBearerAuth(accessToken);
-
       var request = new HttpEntity<>(headers);
 
       ResponseEntity<OidcUserInfo> response =
           restTemplate.exchange(userInfoEndpoint, HttpMethod.GET, request, OidcUserInfo.class);
 
       var userInfo = response.getBody();
-      if (userInfo != null) {
-        cache.put(cacheKey, userInfo);
-      } else {
+      if (userInfo == null) {
         logger.warn("UserInfo response body is null");
       }
-
       return userInfo;
     } catch (Exception e) {
       logger.error("Failed to fetch userinfo from {}: {}", userInfoEndpoint, e.getMessage(), e);
@@ -131,4 +143,8 @@ class OidcUserInfoServiceImpl implements OidcUserInfoService {
       throw new IllegalStateException("SHA-256 algorithm not available", e);
     }
   }
+
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  private record OidcDiscoveryResponse(
+      @JsonProperty("userinfo_endpoint") String userInfoEndpoint) {}
 }

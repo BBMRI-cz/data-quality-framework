@@ -152,11 +152,10 @@ class JwtAuthenticationConverter implements Converter<Jwt, AbstractAuthenticatio
     if (userInfo != null) {
       String username = userInfo.getFullName();
       if (username != null && !username.isBlank()) {
-
         try {
           userService.updateUsername(subjectId, username);
         } catch (UserNotFoundException e) {
-          logger.warn("User not yet created for subject {}, will be created later", subjectId);
+          logger.debug("User not yet created for subject {}, will be created later", subjectId);
         }
         return username;
       }
