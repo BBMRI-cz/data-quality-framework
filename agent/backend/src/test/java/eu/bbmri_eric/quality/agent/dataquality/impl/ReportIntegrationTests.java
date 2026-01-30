@@ -21,7 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @AutoConfigureMockMvc
 @WithUserDetails("admin")
 public class ReportIntegrationTests {
-  public static final String API_REPORTS = "/api/v1/reports";
+  public static final String API_REPORTS = "/api/reports";
   @Autowired private MockMvc mockMvc;
 
   @Autowired private ObjectMapper objectMapper;

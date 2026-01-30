@@ -63,6 +63,22 @@ class GlobalRestExceptionHandler {
     return problemDetail;
   }
 
+  @ExceptionHandler(eu.bbmri_eric.quality.agent.common.exception.EntityNotFoundException.class)
+  @ApiResponse(
+      responseCode = "404",
+      description = "Entity Not Found",
+      content =
+          @Content(
+              mediaType = "application/problem+json",
+              schema = @Schema(implementation = ProblemDetail.class)))
+  public ProblemDetail handleStaleState(
+      eu.bbmri_eric.quality.agent.common.exception.EntityNotFoundException ex) {
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, "Entity not found");
+    problemDetail.setTitle("Entity Not Found");
+    return problemDetail;
+  }
+
   @ExceptionHandler(ConversionFailedException.class)
   @ApiResponse(
       responseCode = "400",
