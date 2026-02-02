@@ -2,7 +2,9 @@ package eu.bbmri_eric.quality.server.user;
 
 import jakarta.transaction.Transactional;
 import java.security.SecureRandom;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -31,6 +33,21 @@ public class UserServiceImpl implements UserService {
     this.passwordEncoder = passwordEncoder;
     this.modelMapper = modelMapper;
     this.authenticationContextService = authenticationContextService;
+  }
+
+  @Override
+  public List<UserDTO> getAllUsers() {
+    return userRepository.findAll().stream()
+        .map(user -> modelMapper.map(user, UserDTO.class))
+        .collect(Collectors.toList());
+  }
+
+  @Override
+  public UserDTO findById(Long userId) {
+    return userRepository
+        .findById(userId)
+        .map(user -> modelMapper.map(user, UserDTO.class))
+        .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
   }
 
   @Override

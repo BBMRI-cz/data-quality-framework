@@ -1,9 +1,26 @@
 package eu.bbmri_eric.quality.server.user;
 
+import java.util.List;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 public interface UserService {
   UserDTO createUser(UserCreateDTO userCreateDTO);
+
+  /**
+   * Get all users in the system.
+   *
+   * @return list of all users
+   */
+  List<UserDTO> getAllUsers();
+
+  /**
+   * Find a user by their ID.
+   *
+   * @param userId the user ID
+   * @return the found user
+   * @throws UsernameNotFoundException if user is not found
+   */
+  UserDTO findById(Long userId);
 
   /**
    * Find a user by subject ID.
