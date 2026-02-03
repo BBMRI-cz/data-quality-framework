@@ -18,7 +18,7 @@ public interface UserService {
    *
    * @param userId the user ID
    * @return the found user
-   * @throws UsernameNotFoundException if user is not found
+   * @throws UserNotFoundException if user is not found
    */
   UserDTO findById(Long userId);
 

@@ -5,7 +5,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
@@ -33,8 +32,7 @@ public class UserController {
   @GetMapping("/api/v1/users")
   public ResponseEntity<CollectionModel<EntityModel<UserDTO>>> getAllUsers() {
     List<UserDTO> users = userService.getAllUsers();
-    List<EntityModel<UserDTO>> userModels =
-        users.stream().map(linkBuilder::toModel).collect(Collectors.toList());
+    List<EntityModel<UserDTO>> userModels = users.stream().map(linkBuilder::toModel).toList();
     return ResponseEntity.ok(CollectionModel.of(userModels));
   }
 

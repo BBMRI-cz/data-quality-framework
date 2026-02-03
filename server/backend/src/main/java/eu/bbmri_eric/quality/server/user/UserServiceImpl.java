@@ -4,7 +4,6 @@ import jakarta.transaction.Transactional;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -39,7 +38,7 @@ public class UserServiceImpl implements UserService {
   public List<UserDTO> getAllUsers() {
     return userRepository.findAll().stream()
         .map(user -> modelMapper.map(user, UserDTO.class))
-        .collect(Collectors.toList());
+        .toList();
   }
 
   @Override
