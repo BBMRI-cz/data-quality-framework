@@ -12,12 +12,16 @@ record OidcUserInfo(
     @JsonProperty("family_name") String familyName) {
 
   /**
-   * Returns the Name from the user info, or falls back to the subject if Name is not available.
+   * Returns the givenName + familyName from the user info, or falls back to Name or subject if full
+   * name is not available.
    *
    * @return username
    */
   public String getFullName() {
-    if (name != null && !name.isBlank()) {
+    if ((givenName != null && !givenName.isBlank())
+        && (familyName != null && !familyName.isBlank())) {
+      return givenName + " " + familyName;
+    } else if (name != null && !name.isBlank()) {
       return name;
     }
     return subject;
