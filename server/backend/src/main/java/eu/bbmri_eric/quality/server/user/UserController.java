@@ -30,9 +30,9 @@ public class UserController {
 
   @Operation(summary = "Get all users", description = "Retrieves all users in the system.")
   @GetMapping("/api/v1/users")
-  public ResponseEntity<CollectionModel<EntityModel<UserDTO>>> getAllUsers() {
-    List<UserDTO> users = userService.getAllUsers();
-    List<EntityModel<UserDTO>> userModels = users.stream().map(linkBuilder::toModel).toList();
+  public ResponseEntity<CollectionModel<EntityModel<UserDTO>>> findAll() {
+    List<UserDTO> users = userService.findAll();
+    CollectionModel<EntityModel<UserDTO>> userModels = linkBuilder.toCollectionModel(users);
     return ResponseEntity.ok(CollectionModel.of(userModels));
   }
 

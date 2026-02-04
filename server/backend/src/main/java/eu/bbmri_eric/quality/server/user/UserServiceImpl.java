@@ -1,9 +1,12 @@
 package eu.bbmri_eric.quality.server.user;
 
+import eu.bbmri_eric.quality.server.common.dto.FilterDTO;
+import eu.bbmri_eric.quality.server.common.dto.PageResponse;
 import jakarta.transaction.Transactional;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Objects;
+import org.apache.commons.lang3.NotImplementedException;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -32,21 +35,6 @@ public class UserServiceImpl implements UserService {
     this.passwordEncoder = passwordEncoder;
     this.modelMapper = modelMapper;
     this.authenticationContextService = authenticationContextService;
-  }
-
-  @Override
-  public List<UserDTO> getAllUsers() {
-    return userRepository.findAll().stream()
-        .map(user -> modelMapper.map(user, UserDTO.class))
-        .toList();
-  }
-
-  @Override
-  public UserDTO findById(Long userId) {
-    return userRepository
-        .findById(userId)
-        .map(user -> modelMapper.map(user, UserDTO.class))
-        .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
   }
 
   @Override
@@ -141,5 +129,50 @@ public class UserServiceImpl implements UserService {
     }
 
     return password.toString();
+  }
+
+  @Override
+  public UserDTO create(UserCreateDTO userCreateDTO) {
+    throw new NotImplementedException("Not yet implemented");
+  }
+
+  @Override
+  public UserDTO findById(Long userId) {
+    return userRepository
+        .findById(userId)
+        .map(user -> modelMapper.map(user, UserDTO.class))
+        .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
+  }
+
+  @Override
+  public List<UserDTO> findAll() {
+    return userRepository.findAll().stream()
+        .map(user -> modelMapper.map(user, UserDTO.class))
+        .toList();
+  }
+
+  @Override
+  public PageResponse<UserDTO> findAll(FilterDTO filter) {
+    throw new NotImplementedException("Not yet implemented");
+  }
+
+  @Override
+  public UserDTO update(Long id, UserDTO userDTO) {
+    throw new NotImplementedException("Not yet implemented");
+  }
+
+  @Override
+  public long count() {
+    throw new NotImplementedException("Not yet implemented");
+  }
+
+  @Override
+  public void delete(Long id) {
+    throw new NotImplementedException("Not yet implemented");
+  }
+
+  @Override
+  public boolean exists(Long id) {
+    throw new NotImplementedException("Not yet implemented");
   }
 }
