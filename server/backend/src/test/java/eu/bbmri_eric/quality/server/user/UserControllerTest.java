@@ -2,6 +2,7 @@ package eu.bbmri_eric.quality.server.user;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -251,6 +252,65 @@ public class UserControllerTest {
                 .content(
                     objectMapper.writeValueAsString(
                         new PasswordChangeRequest("current", "newPass123!", "newPass123!"))))
+        .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  void getAllUsers_withValidToken_returnsUsersList() throws Exception {
+    String token = authenticateAndGetToken();
+
+    mockMvc
+        .perform(get("/api/v1/users").header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$._embedded").exists())
+        .andExpect(jsonPath("$._embedded.userDTOList").isArray());
+  }
+
+  @Test
+  void getAllUsers_withoutToken_returnsUnauthorized() throws Exception {
+    mockMvc.perform(get("/api/v1/users")).andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  void getAllUsers_withInvalidToken_returnsUnauthorized() throws Exception {
+    mockMvc
+        .perform(get("/api/v1/users").header("Authorization", "Bearer invalid-token"))
+        .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  void getUserById_withValidTokenAndExistingUser_returnsUser() throws Exception {
+    String token = authenticateAndGetToken();
+    User adminUser = userRepository.findByUsername(ADMIN_USER).orElseThrow();
+    Long adminUserId = adminUser.getId();
+
+    mockMvc
+        .perform(get("/api/v1/users/" + adminUserId).header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.username", is(ADMIN_USER)))
+        .andExpect(jsonPath("$.id").value(adminUserId));
+  }
+
+  @Test
+  void getUserById_withValidTokenAndNonExistingUser_returnsNotFound() throws Exception {
+    String token = authenticateAndGetToken();
+    long nonExistingUserId = 999999L;
+
+    mockMvc
+        .perform(
+            get("/api/v1/users/" + nonExistingUserId).header("Authorization", "Bearer " + token))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void getUserById_withoutToken_returnsUnauthorized() throws Exception {
+    mockMvc.perform(get("/api/v1/users/1")).andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  void getUserById_withInvalidToken_returnsUnauthorized() throws Exception {
+    mockMvc
+        .perform(get("/api/v1/users/1").header("Authorization", "Bearer invalid-token"))
         .andExpect(status().isUnauthorized());
   }
 

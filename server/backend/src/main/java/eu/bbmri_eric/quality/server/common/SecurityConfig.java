@@ -107,6 +107,8 @@ class SecurityConfig {
                     .authenticated()
                     .requestMatchers(HttpMethod.GET, "/api/userinfo")
                     .authenticated()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/users/**")
+                    .hasRole("ADMIN")
                     .requestMatchers(
                         "/api/health",
                         "/api/info",

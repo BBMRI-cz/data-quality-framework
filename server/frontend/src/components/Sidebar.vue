@@ -38,6 +38,10 @@
           <i class="bi bi-collection-fill"></i>
           <span>Groups</span>
         </router-link>
+        <router-link to="/users" class="nav-link" :class="{ active: $route.name === 'Users' }" @click="closeMobileMenu">
+          <i class="bi bi-people-fill"></i>
+          <span>Users</span>
+        </router-link>
         <div class="nav-section">
           <div class="nav-section-header">
             <i class="bi bi-gear-fill"></i>

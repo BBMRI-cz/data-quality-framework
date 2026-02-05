@@ -19,6 +19,8 @@ import OidcSettings from '../views/OidcSettings.vue'
 import NotFound from '../views/NotFound.vue'
 import GroupsView from "../views/GroupsView.vue";
 import GroupDetailView from "../views/GroupDetailView.vue";
+import UsersView from "../views/UsersView.vue";
+import UserDetailView from "../views/UserDetailView.vue";
 
 const routes = [
   {
@@ -102,6 +104,24 @@ const routes = [
     path: '/groups/:id',
     name: 'GroupDetail',
     component: GroupDetailView,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/users',
+    name: 'Users',
+    component: UsersView,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/users/new',
+    name: 'NewUser',
+    component: UserDetailView,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/users/:id',
+    name: 'UserDetail',
+    component: UserDetailView,
     meta: { requiresAuth: true }
   },
   {

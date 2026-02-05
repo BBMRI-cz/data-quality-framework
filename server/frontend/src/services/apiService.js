@@ -160,6 +160,31 @@ class ApiService {
         const response = await api.get('/userinfo');
         return response.data;
     }
+
+    async getUsers() {
+        const response = await api.get('/v1/users');
+        return response.data;
+    }
+
+    async getUser(userId) {
+        const response = await api.get(`/v1/users/${userId}`);
+        return response.data;
+    }
+
+    async createUser(data) {
+        const response = await api.post('/v1/users', data);
+        return response.data;
+    }
+
+    async updateUser(userId, data) {
+        const response = await api.put(`/v1/users/${userId}`, data);
+        return response.data;
+    }
+
+    async deleteUser(userId) {
+        const response = await api.delete(`/v1/users/${userId}`);
+        return response.data;
+    }
 }
 
 export const apiService = new ApiService();
