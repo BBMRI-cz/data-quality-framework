@@ -92,7 +92,7 @@
               <thead class="table-light">
                 <tr>
                   <th class="ps-4">Username</th>
-                  <th>Agent ID</th>
+                  <th>Subject ID</th>
                   <th>Roles</th>
                 </tr>
               </thead>
@@ -107,7 +107,7 @@
                     <div class="fw-medium">{{ user.username }}</div>
                   </td>
                   <td>
-                    <span v-if="user.agentId" class="text-muted">{{ user.agentId }}</span>
+                    <span v-if="user.subjectId" class="text-muted">{{ user.subjectId }}</span>
                     <span v-else class="text-muted fst-italic">N/A</span>
                   </td>
                   <td>

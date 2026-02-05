@@ -84,6 +84,21 @@
                 <small class="text-muted">Optional: Associate user with an agent</small>
               </div>
 
+              <!-- Subject ID Display -->
+              <div v-if="user?.subjectId" class="col-md-6">
+                <label for="subjectId" class="form-label fw-semibold">
+                  Subject ID
+                </label>
+                <input
+                  id="subjectId"
+                  :value="user.subjectId"
+                  type="text"
+                  class="form-control bg-light"
+                  disabled
+                >
+                <small class="text-muted">Unique identifier from identity provider</small>
+              </div>
+
               <!-- Roles Display -->
               <div v-if="user?.roles && user.roles.length > 0" class="col-12">
                 <label class="form-label fw-semibold">Roles</label>
@@ -339,6 +354,7 @@ onMounted(() => {
   padding: 0.5rem 0.75rem;
   font-size: 0.813rem;
 }
+
 
 /* Action Buttons */
 .action-buttons {
