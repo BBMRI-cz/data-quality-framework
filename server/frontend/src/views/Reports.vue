@@ -59,7 +59,7 @@
           <div class="mb-4">
             <div class="filter-label">Status:</div>
             <CategoryFilter
-                :categories="Object.values(CheckStatus)"
+                :categories="statuses"
                 v-model="selectedStatus"
             />
           </div>
@@ -91,6 +91,7 @@ const loading = ref(true)
 const error = ref(null)
 
 const selectedStatus = ref(null)
+const statuses = [CheckStatus.PASSED, CheckStatus.WARNING, CheckStatus.FAILED]
 
 const reportStats = computed(() => {
   const stats = {

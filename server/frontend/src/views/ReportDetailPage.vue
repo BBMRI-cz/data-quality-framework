@@ -85,9 +85,18 @@
 
         <!-- Category Filter -->
         <div class="mb-4">
+          <div class="filter-label">Category:</div>
           <CategoryFilter
             :categories="categories"
             v-model="selectedCategory"
+          />
+        </div>
+
+        <div class="mb-4">
+          <div class="filter-label">Status:</div>
+          <CategoryFilter
+              :categories="statuses"
+              v-model="selectedStatus"
           />
         </div>
 
@@ -153,6 +162,8 @@ const error = ref(null)
 const report = ref(null)
 const qualityCheckMap = ref(new Map())
 const selectedCategory = ref(null)
+const selectedStatus = ref(null)
+const statuses = [CheckStatus.PASSED, CheckStatus.WARNING, CheckStatus.FAILED]
 
 const categories = computed(() => {
   const cats = new Set()
@@ -169,14 +180,24 @@ const categories = computed(() => {
 const filteredResults = computed(() => {
   if (!report.value?.results) return []
 
-  if (!selectedCategory.value) {
-    return report.value.results
-  }
-
   return report.value.results.filter(result => {
     const check = qualityCheckMap.value.get(result.hash)
-    const categoryName = check?.category?.name || 'No Category'
-    return categoryName === selectedCategory.value
+
+    if (selectedCategory.value) {
+      const categoryName = check?.category?.name || 'No Category'
+      if (categoryName !== selectedCategory.value) {
+        return false
+      }
+    }
+
+    if (selectedStatus.value) {
+      const status = getCheckStatus(result, check)
+      if (status !== selectedStatus.value) {
+        return false
+      }
+    }
+
+    return true
   })
 })
 
@@ -204,7 +225,8 @@ function getCheckDescription(result) {
 }
 
 const countErrors = () => {
-  return filteredResults.value.filter(result => {
+  if (!report.value?.results) return 0
+  return report.value.results.filter(result => {
     const check = qualityCheckMap.value.get(result.hash)
     if (!check) return false
     return getCheckStatus(result, check) === CheckStatus.FAILED
@@ -212,7 +234,8 @@ const countErrors = () => {
 }
 
 const countWarnings = () => {
-  return filteredResults.value.filter(result => {
+  if (!report.value?.results) return 0
+  return report.value.results.filter(result => {
     const check = qualityCheckMap.value.get(result.hash)
     if (!check) return false
     return getCheckStatus(result, check) === CheckStatus.WARNING
@@ -220,7 +243,8 @@ const countWarnings = () => {
 }
 
 const countPassed = () => {
-  return filteredResults.value.filter(result => {
+  if (!report.value?.results) return 0
+  return report.value.results.filter(result => {
     const check = qualityCheckMap.value.get(result.hash)
     if (!check) return false
     return getCheckStatus(result, check) === CheckStatus.PASSED
@@ -424,6 +448,15 @@ onMounted(async () => {
   font-size: 0.75rem;
   color: var(--color-gray-700);
   font-family: 'Courier New', monospace;
+}
+
+.filter-label {
+  font-size: 0.875rem;
+  color: #6c757d;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 @keyframes highlightPulse {
