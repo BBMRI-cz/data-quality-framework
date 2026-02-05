@@ -55,12 +55,22 @@
         </div>
 
         <!-- Reports table -->
-        <ReportsTable
-          v-else
-          :reports="reports"
-          :quality-check-map="qualityCheckMap"
-          :agents="agents"
-        />
+        <div v-else>
+          <div class="mb-4">
+            <div class="filter-label">Status:</div>
+            <CategoryFilter
+                :categories="Object.values(CheckStatus)"
+                v-model="selectedStatus"
+            />
+          </div>
+          <ReportsTable
+              :reports="reports"
+              :quality-check-map="qualityCheckMap"
+              :agents="agents"
+              :selected-status="selectedStatus"
+          />
+        </div>
+
       </div>
     </div>
   </div>
@@ -70,6 +80,7 @@
 import { ref, onMounted, computed } from 'vue'
 import ReportsTable from '../components/ReportsTable.vue'
 import PageHeader from '../components/PageHeader.vue'
+import CategoryFilter from '../components/CategoryFilter.vue'
 import { apiService } from '../services/apiService.js'
 import { getReportStatus, CheckStatus } from '../utils/qualityCheckUtils.js'
 
@@ -78,6 +89,8 @@ const qualityCheckMap = ref(new Map())
 const agents = ref([])
 const loading = ref(true)
 const error = ref(null)
+
+const selectedStatus = ref(null)
 
 const reportStats = computed(() => {
   const stats = {
@@ -191,6 +204,16 @@ onMounted(() => {
 .spinner-border {
   width: 3rem;
   height: 3rem;
+}
+
+/* Filter Labels */
+.filter-label {
+  font-size: 0.875rem;
+  color: #6c757d;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 @media (min-width: 576px) {

@@ -22,7 +22,7 @@
           </thead>
           <tbody>
             <tr
-              v-for="report in reports"
+              v-for="report in filteredReports"
               :key="report.id"
               class="cursor-pointer table-row-hover"
               @click="navigateToReport(report.id)"
@@ -98,7 +98,22 @@ const props = defineProps({
     type: Array,
     required: true,
     default: () => []
+  },
+  selectedStatus: {
+    type: String,
+    default: null
   }
+})
+
+const filteredReports = computed(() => {
+  if (!props.selectedStatus) {
+    return props.reports
+  }
+
+  return props.reports.filter(report => {
+    const reportStatus = getReportStatus(report, props.qualityCheckMap)
+    return reportStatus === props.selectedStatus
+  })
 })
 
 // Create a map for quick agent lookup by ID
