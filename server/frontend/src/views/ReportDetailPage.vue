@@ -180,7 +180,7 @@ const categories = computed(() => {
 const filteredResults = computed(() => {
   if (!report.value?.results) return []
 
-  return report.value.results.filter(result => {
+  const filtered = report.value.results.filter(result => {
     const check = qualityCheckMap.value.get(result.hash)
 
     if (selectedCategory.value) {
@@ -198,6 +198,25 @@ const filteredResults = computed(() => {
     }
 
     return true
+  })
+
+  const statusOrder = {
+    FAILED: 0,
+    WARNING: 1,
+    PASSED: 2
+  }
+
+  return [...filtered].sort((a, b) => {
+    const order = item => {
+      const check = qualityCheckMap.value.get(item.hash)
+      const status = getCheckStatus(item, check)
+      return statusOrder[status] ?? 999
+    }
+
+    return (
+        order(a) - order(b) ||
+        a.hash.localeCompare(b.hash)
+    )
   })
 })
 
