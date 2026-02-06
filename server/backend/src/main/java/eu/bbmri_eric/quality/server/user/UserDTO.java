@@ -23,6 +23,9 @@ public class UserDTO {
   @Schema(description = "Temporary password", example = "123")
   private String temporaryPassword;
 
+  @Schema(description = "Subject ID from the identity provider", example = "subject123")
+  private String subjectId;
+
   @Schema(description = "Agent ID associated with the user", example = "agent123")
   private String agentId;
 
@@ -84,12 +87,21 @@ public class UserDTO {
     return Objects.equals(username, userDTO.username)
         && Objects.equals(id, userDTO.id)
         && Objects.equals(temporaryPassword, userDTO.temporaryPassword)
+        && Objects.equals(subjectId, userDTO.subjectId)
         && Objects.equals(agentId, userDTO.agentId)
         && Objects.equals(roles, userDTO.roles);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(username, id, temporaryPassword, agentId, roles);
+    return Objects.hash(username, id, temporaryPassword, subjectId, agentId, roles);
+  }
+
+  public String getSubjectId() {
+    return subjectId;
+  }
+
+  public void setSubjectId(String subjectId) {
+    this.subjectId = subjectId;
   }
 }

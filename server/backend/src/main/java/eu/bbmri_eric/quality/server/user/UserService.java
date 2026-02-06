@@ -1,8 +1,9 @@
 package eu.bbmri_eric.quality.server.user;
 
+import eu.bbmri_eric.quality.server.common.CRUDService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-public interface UserService {
+public interface UserService extends CRUDService<UserDTO, UserCreateDTO, UserDTO, Long> {
   UserDTO createUser(UserCreateDTO userCreateDTO);
 
   /**

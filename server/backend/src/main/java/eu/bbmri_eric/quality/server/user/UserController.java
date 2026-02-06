@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.List;
+import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,6 +26,24 @@ public class UserController {
   public UserController(UserService userService, UserLinkBuilder linkBuilder) {
     this.userService = userService;
     this.linkBuilder = linkBuilder;
+  }
+
+  @Operation(summary = "Get all users", description = "Retrieves all users in the system.")
+  @GetMapping("/api/v1/users")
+  public ResponseEntity<CollectionModel<EntityModel<UserDTO>>> findAll() {
+    List<UserDTO> users = userService.findAll();
+    CollectionModel<EntityModel<UserDTO>> userModels = linkBuilder.toCollectionModel(users);
+    return ResponseEntity.ok(CollectionModel.of(userModels));
+  }
+
+  @Operation(summary = "Get user by ID", description = "Retrieves a specific user by their ID.")
+  @GetMapping("/api/v1/users/{userId}")
+  public ResponseEntity<EntityModel<UserDTO>> getUserById(
+      @Parameter(description = "ID of the user to retrieve", required = true, example = "1")
+          @PathVariable
+          Long userId) {
+    UserDTO userDTO = userService.findById(userId);
+    return ResponseEntity.ok(linkBuilder.toModel(userDTO));
   }
 
   @Operation(

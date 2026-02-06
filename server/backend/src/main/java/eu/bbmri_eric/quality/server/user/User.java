@@ -141,13 +141,14 @@ class User {
     return Objects.equals(id, user.id)
         && Objects.equals(username, user.username)
         && Objects.equals(password, user.password)
+        && Objects.equals(subjectId, user.subjectId)
         && Objects.equals(agentId, user.agentId)
         && Objects.equals(roles, user.roles);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, username, password, agentId, roles);
+    return Objects.hash(id, username, password, subjectId, agentId, roles);
   }
 
   @Override

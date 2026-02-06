@@ -101,6 +101,23 @@ public class GlobalRestExceptionHandler {
     return problemDetail;
   }
 
+  @ExceptionHandler(eu.bbmri_eric.quality.server.user.UserNotFoundException.class)
+  @ApiResponse(
+      responseCode = "404",
+      description = "User Not Found",
+      content =
+          @Content(
+              mediaType = "application/problem+json",
+              schema = @Schema(implementation = ProblemDetail.class)))
+  public ProblemDetail handleCustomUserNotFound(
+      eu.bbmri_eric.quality.server.user.UserNotFoundException ex) {
+    logger.debug("User not found: {}", ex.getMessage());
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+    problemDetail.setTitle("User Not Found");
+    return problemDetail;
+  }
+
   @ExceptionHandler(BadCredentialsException.class)
   @ApiResponse(
       responseCode = "401",
