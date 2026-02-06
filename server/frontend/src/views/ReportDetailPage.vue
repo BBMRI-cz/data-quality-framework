@@ -201,9 +201,9 @@ const filteredResults = computed(() => {
   })
 
   const statusOrder = {
-    FAILED: 0,
-    WARNING: 1,
-    PASSED: 2
+    [CheckStatus.FAILED]: 0,
+    [CheckStatus.WARNING]: 1,
+    [CheckStatus.PASSED]: 2,
   }
 
   return [...filtered].sort((a, b) => {
