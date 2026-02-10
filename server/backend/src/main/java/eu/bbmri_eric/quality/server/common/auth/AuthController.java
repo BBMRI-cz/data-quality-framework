@@ -3,6 +3,7 @@ package eu.bbmri_eric.quality.server.common.auth;
 import eu.bbmri_eric.quality.server.user.UserDTO;
 import eu.bbmri_eric.quality.server.user.UserDetailService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -42,6 +43,7 @@ public class AuthController {
       description =
           "Authenticates user credentials and returns a JWT token for subsequent API calls")
   @PostMapping("/api/auth/login")
+  @SecurityRequirements
   public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
     Authentication authentication =
         authenticationManager.authenticate(

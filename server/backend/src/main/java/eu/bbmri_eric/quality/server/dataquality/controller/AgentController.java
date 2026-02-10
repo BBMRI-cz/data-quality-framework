@@ -6,7 +6,7 @@ import eu.bbmri_eric.quality.server.dataquality.dto.AgentRegistration;
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentRegistrationRequest;
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentUpdateRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.hateoas.CollectionModel;
@@ -29,6 +29,7 @@ class AgentController {
 
   @PostMapping
   @Schema(name = "Register an agent")
+  @SecurityRequirements
   public ResponseEntity<EntityModel<AgentRegistration>> create(
       @Valid @RequestBody AgentRegistrationRequest createAgentDto) {
     AgentRegistration createdAgentDto = agentService.create(createAgentDto);
@@ -36,7 +37,6 @@ class AgentController {
   }
 
   @PatchMapping("/{id}")
-  @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<EntityModel<AgentDTO>> update(
       @PathVariable String id, @Valid @RequestBody AgentUpdateRequest updateRequest) {
     AgentDTO agent = agentService.update(updateRequest, id);
@@ -45,7 +45,6 @@ class AgentController {
   }
 
   @GetMapping("/{id}")
-  @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<EntityModel<AgentDTO>> findById(
       @PathVariable String id, @RequestParam(required = false) String expand) {
     boolean expandInteractions = "interactions".equals(expand);
@@ -55,7 +54,6 @@ class AgentController {
   }
 
   @GetMapping
-  @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<CollectionModel<EntityModel<AgentDTO>>> listAll() {
     List<AgentDTO> agents = agentService.listAll();
     CollectionModel<EntityModel<AgentDTO>> agentsModel = linkBuilder.toCollectionModel(agents);
@@ -63,7 +61,6 @@ class AgentController {
   }
 
   @DeleteMapping("/{id}")
-  @SecurityRequirement(name = "bearerAuth")
   @Schema(name = "Delete an agent")
   public ResponseEntity<Void> delete(@PathVariable String id) {
     agentService.delete(id);

@@ -2,6 +2,7 @@ package eu.bbmri_eric.quality.server.setting;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +35,7 @@ public class SettingController {
       summary = "Get OIDC settings",
       description = "Retrieves OIDC configuration for frontend initialization.")
   @GetMapping("/oidc")
+  @SecurityRequirements
   public ResponseEntity<OidcSettingsDTO> getOidcSettings() {
     OidcSettingsDTO oidcSettings = settingService.getOidcSettings();
     return ResponseEntity.ok(oidcSettings);
