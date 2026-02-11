@@ -6,7 +6,6 @@ import eu.bbmri_eric.quality.server.dataquality.dto.GroupCreateDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.GroupDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.GroupUpdateDTO;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -33,14 +32,12 @@ class GroupController {
   @Operation(
       summary = "Get group by ID",
       description = "Retrieves a specific group by its unique identifier")
-  @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<EntityModel<GroupDTO>> findById(@PathVariable Long id) {
     return ResponseEntity.ok(linkBuilder.toModel(groupService.findById(id)));
   }
 
   @GetMapping("/groups")
   @Operation(summary = "Get all groups", description = "Retrieves all group definitions")
-  @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<CollectionModel<EntityModel<GroupDTO>>> findAll() {
     List<GroupDTO> groups = groupService.findAll();
     CollectionModel<EntityModel<GroupDTO>> groupsModel = linkBuilder.toCollectionModel(groups);
@@ -49,7 +46,6 @@ class GroupController {
 
   @PostMapping("/groups")
   @Operation(summary = "Create group", description = "Creates a new group")
-  @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<EntityModel<GroupDTO>> create(
       @Valid @RequestBody GroupCreateDTO createDTO) {
     GroupDTO createdGroup = groupService.create(createDTO);
@@ -59,7 +55,6 @@ class GroupController {
 
   @PutMapping("/groups/{id}")
   @Operation(summary = "Update group", description = "Updates an existing group")
-  @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<EntityModel<GroupDTO>> update(
       @PathVariable Long id, @Valid @RequestBody GroupUpdateDTO updateDTO) {
     GroupDTO updatedGroup = groupService.update(id, updateDTO);
@@ -71,7 +66,6 @@ class GroupController {
   @Operation(
       summary = "Assign agents to group",
       description = "Assigns a list of agents to the specified group")
-  @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<EntityModel<GroupDTO>> assignAgents(
       @PathVariable Long id, @Valid @RequestBody AssignAgentsDTO assignAgentsDTO) {
     GroupDTO updatedGroup = groupService.assignAgents(id, assignAgentsDTO.getAgentIds());
@@ -81,7 +75,6 @@ class GroupController {
 
   @DeleteMapping("/groups/{id}")
   @Operation(summary = "Delete group", description = "Deletes a group by its ID")
-  @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<Void> delete(@PathVariable Long id) {
     groupService.delete(id);
     return ResponseEntity.noContent().build();
