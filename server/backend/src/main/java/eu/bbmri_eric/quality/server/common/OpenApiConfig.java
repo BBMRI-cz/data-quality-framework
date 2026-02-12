@@ -18,16 +18,18 @@ import java.util.Arrays;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/** Configuration for Open API docs */
+/**
+ * Configuration for Open API docs. Uses lazy initialization via OpenApiCustomizer to avoid blocking
+ * application startup with network calls.
+ */
 @Configuration
 class OpenApiConfig {
 
   private static final Logger log = LoggerFactory.getLogger(OpenApiConfig.class);
-  private static final List<String> DEFAULT_SCOPES =
-      List.of("openid", "profile", "email", "permissions");
 
   private final OidcDiscoveryService oidcDiscoveryService;
   private final SettingService settingService;
@@ -38,49 +40,9 @@ class OpenApiConfig {
   }
 
   @Bean
-  OpenAPI customOpenAPI() {
+  OpenAPI baseOpenAPI() {
     final String securitySchemeName = "bearerAuth";
-
-    List<String> scopesList = DEFAULT_SCOPES;
-    try {
-      OidcSettingsDTO oidcSettings = settingService.getOidcSettings();
-      if (oidcSettings.getOidcScopes() != null && !oidcSettings.getOidcScopes().isBlank()) {
-        scopesList = Arrays.asList(oidcSettings.getOidcScopes().trim().split("\\s+"));
-        log.debug("Using OIDC scopes from settings: {}", scopesList);
-      } else {
-        log.debug("Using default OIDC scopes: {}", scopesList);
-      }
-    } catch (Exception e) {
-      log.debug("Could not fetch OIDC scopes from settings, using defaults: {}", e.getMessage());
-    }
-
-    Scopes oauthScopes = new Scopes();
-    for (String scope : scopesList) {
-      oauthScopes.addString(scope, "no description");
-    }
-
-    String authUrl = "http://localhost:4011/connect/authorize";
-    String tokenUrl = "http://localhost:4011/connect/token";
-
-    OidcDiscoveryDTO discovery = oidcDiscoveryService.fetchDiscoveryDocument();
-    if (discovery != null) {
-      if (discovery.getAuthorizationEndpoint() != null) {
-        authUrl = discovery.getAuthorizationEndpoint();
-      }
-      if (discovery.getTokenEndpoint() != null) {
-        tokenUrl = discovery.getTokenEndpoint();
-      }
-    } else {
-      log.warn(
-          "OIDC discovery unavailable, using default endpoints. "
-              + "Swagger UI will use: authUrl={}, tokenUrl={}",
-          authUrl,
-          tokenUrl);
-    }
-
     return new OpenAPI()
-        .addSecurityItem(
-            new SecurityRequirement().addList("bearerAuth").addList("oauth2", scopesList))
         .info(
             new Info()
                 .title("Data Quality Server REST API")
@@ -102,17 +64,58 @@ class OpenApiConfig {
                         .name(securitySchemeName)
                         .type(SecurityScheme.Type.HTTP)
                         .scheme("bearer")
-                        .bearerFormat("JWT"))
-                .addSecuritySchemes(
-                    "oauth2",
-                    new SecurityScheme()
-                        .type(SecurityScheme.Type.OAUTH2)
-                        .flows(
-                            new OAuthFlows()
-                                .authorizationCode(
-                                    new OAuthFlow()
-                                        .authorizationUrl(authUrl)
-                                        .tokenUrl(tokenUrl)
-                                        .scopes(oauthScopes)))));
+                        .bearerFormat("JWT")))
+        .addSecurityItem(new SecurityRequirement().addList("bearerAuth"));
+  }
+
+  @Bean
+  OpenApiCustomizer oauthSecurityCustomizer() {
+    return openApi -> {
+      try {
+        configureOAuth2Security(openApi);
+      } catch (Exception e) {
+        log.warn("Could not configure OAuth2 for Swagger UI: {}", e.getMessage());
+        log.debug("Full error details:", e);
+      }
+    };
+  }
+
+  private void configureOAuth2Security(OpenAPI openApi) {
+    OidcDiscoveryDTO discovery = oidcDiscoveryService.fetchDiscoveryDocument();
+    OidcSettingsDTO oidcSettings = settingService.getOidcSettings();
+
+    if (discovery != null
+        && discovery.getAuthorizationEndpoint() != null
+        && discovery.getTokenEndpoint() != null
+        && oidcSettings.getOidcScopes() != null
+        && !oidcSettings.getOidcScopes().isBlank()) {
+
+      List<String> scopesList = Arrays.asList(oidcSettings.getOidcScopes().trim().split("\\s+"));
+      log.info("Configuring OAuth2 for Swagger UI with scopes: {}", scopesList);
+
+      Scopes oauthScopes = new Scopes();
+      for (String scope : scopesList) {
+        oauthScopes.addString(scope, "no description");
+      }
+
+      openApi
+          .getComponents()
+          .addSecuritySchemes(
+              "oauth2",
+              new SecurityScheme()
+                  .type(SecurityScheme.Type.OAUTH2)
+                  .flows(
+                      new OAuthFlows()
+                          .authorizationCode(
+                              new OAuthFlow()
+                                  .authorizationUrl(discovery.getAuthorizationEndpoint())
+                                  .tokenUrl(discovery.getTokenEndpoint())
+                                  .scopes(oauthScopes))));
+
+      openApi.addSecurityItem(new SecurityRequirement().addList("oauth2", scopesList));
+    } else {
+      log.warn(
+          "OIDC discovery or settings unavailable, OAuth2 security scheme not configured for Swagger UI");
+    }
   }
 }

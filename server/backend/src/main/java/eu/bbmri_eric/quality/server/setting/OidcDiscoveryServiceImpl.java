@@ -23,7 +23,7 @@ class OidcDiscoveryServiceImpl implements OidcDiscoveryService {
   private final HttpClient httpClient;
 
   OidcDiscoveryServiceImpl(
-      @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}") String issuerUri,
+      @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri:#{null}}") String issuerUri,
       ObjectMapper objectMapper) {
     this.issuerUri = issuerUri;
     this.objectMapper = objectMapper;
