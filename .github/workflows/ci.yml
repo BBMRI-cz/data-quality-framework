@@ -161,7 +161,9 @@ jobs:
   build-agent-image:
     name: Docker Image Build (Agent)
     runs-on: ubuntu-latest
-    needs: lint
+    needs:
+        - lint-agent-backend
+        - lint-agent-frontend
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
