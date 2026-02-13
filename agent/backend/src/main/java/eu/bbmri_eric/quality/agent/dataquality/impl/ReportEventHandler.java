@@ -8,13 +8,10 @@ import eu.bbmri_eric.quality.agent.dataquality.event.DQCheckResultsGatheredEvent
 import eu.bbmri_eric.quality.agent.dataquality.event.NewReportEvent;
 import eu.bbmri_eric.quality.agent.dataquality.event.ReportGeneratedEvent;
 import org.springframework.context.event.EventListener;
-import org.springframework.data.rest.core.annotation.HandleAfterCreate;
-import org.springframework.data.rest.core.annotation.RepositoryEventHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 @Component
-@RepositoryEventHandler
 class ReportEventHandler {
 
   private final EventPublisher publisher;
@@ -28,7 +25,6 @@ class ReportEventHandler {
     this.fhirStore = fhirStore;
   }
 
-  @HandleAfterCreate
   @Transactional
   public void onAfterCreate(Report report) {
     publisher.publishEvent(new NewReportEvent(report.getId()));
