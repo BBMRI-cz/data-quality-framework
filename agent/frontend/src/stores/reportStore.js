@@ -1,50 +1,47 @@
-import { reactive } from 'vue'
-import { api } from '../js/api.js'
+import { defineStore } from 'pinia';
+import { reportService } from '@/services/reportService.js';
 
-const store = reactive({
+export const useReportStore = defineStore('report', {
+  state: () => ({
     reports: [],
     currentReport: null,
     isGenerating: false,
+  }),
+
+  actions: {
     async fetchReports() {
-        try {
-            const { data } = await api.get('/api/reports')
-            store.reports = data._embedded?.reports || []
-        } catch (err) {
-            console.error(err)
-            store.reports = []
-        }
+      try {
+        this.reports = await reportService.getAll();
+      } catch (err) {
+        console.error(err);
+        this.reports = [];
+      }
     },
+
     async fetchReportById(id) {
-        try {
-            const { data } = await api.get(`/api/reports/${id}`)
-            store.currentReport = data
-            return data
-        } catch (err) {
-            console.error(err)
-            store.currentReport = null
-            throw err
-        }
+      try {
+        this.currentReport = await reportService.get(id);
+        return this.currentReport;
+      } catch (err) {
+        console.error(err);
+        this.currentReport = null;
+        throw err;
+      }
     },
+
     async generateReport() {
-        store.isGenerating = true
-        try {
-            const { data } = await api.post('/api/reports', {})
-            let report = data
-            const reportUrl = report._links.self.href
+      this.isGenerating = true;
+      try {
+        const report = await reportService.generate();
+        const reportUrl = report._links.self.href;
 
-            while (report.status === 'GENERATING') {
-                await new Promise(r => setTimeout(r, 2000))
-                const poll = await api.get(reportUrl)
-                report = poll.data
-            }
-
-            await store.fetchReports()
-        } catch (err) {
-            console.error(err)
-        } finally {
-            store.isGenerating = false
-        }
-    }
-})
-
-export default store
+        await reportService.pollUntilComplete(reportUrl);
+        await this.fetchReports();
+      } catch (err) {
+        console.error(err);
+      } finally {
+        this.isGenerating = false;
+      }
+    },
+  },
+});

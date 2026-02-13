@@ -1,24 +1,20 @@
-import { ref } from 'vue';
+import { defineStore } from 'pinia';
 
-const showErrorPage = ref(false);
-const errorCode = ref(null);
+export const useErrorStore = defineStore('error', {
+  state: () => ({
+    showErrorPage: false,
+    errorCode: null,
+  }),
 
-export function useErrorStore() {
-  function showError(code) {
-    errorCode.value = code;
-    showErrorPage.value = true;
-  }
+  actions: {
+    showError(code) {
+      this.errorCode = code;
+      this.showErrorPage = true;
+    },
 
-  function hideError() {
-    showErrorPage.value = false;
-    errorCode.value = null;
-  }
-
-  return {
-    showErrorPage,
-    errorCode,
-    showError,
-    hideError,
-  };
-}
-
+    hideError() {
+      this.showErrorPage = false;
+      this.errorCode = null;
+    },
+  },
+});

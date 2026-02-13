@@ -9,10 +9,10 @@
  */
 export function getStatusClass(status) {
   const classes = {
-    'ACTIVE': 'status-active',
-    'INACTIVE': 'status-inactive',
-    'ERROR': 'status-error',
-    'PENDING': 'status-pending'
+    ACTIVE: 'status-active',
+    INACTIVE: 'status-inactive',
+    ERROR: 'status-error',
+    PENDING: 'status-pending',
   };
   return classes[status] || 'status-unknown';
 }
@@ -24,10 +24,10 @@ export function getStatusClass(status) {
  */
 export function getStatusIcon(status) {
   const icons = {
-    'ACTIVE': 'bi bi-check-circle-fill',
-    'INACTIVE': 'bi bi-pause-circle-fill',
-    'ERROR': 'bi bi-x-circle-fill',
-    'PENDING': 'bi bi-clock-fill'
+    ACTIVE: 'bi bi-check-circle-fill',
+    INACTIVE: 'bi bi-pause-circle-fill',
+    ERROR: 'bi bi-x-circle-fill',
+    PENDING: 'bi bi-clock-fill',
   };
   return icons[status] || 'bi bi-question-circle-fill';
 }
@@ -39,10 +39,10 @@ export function getStatusIcon(status) {
  */
 export function getStatusBadgeClass(status) {
   const classes = {
-    'ACTIVE': 'bg-success',
-    'INACTIVE': 'bg-warning',
-    'ERROR': 'bg-danger',
-    'PENDING': 'bg-warning'
+    ACTIVE: 'bg-success',
+    INACTIVE: 'bg-warning',
+    ERROR: 'bg-danger',
+    PENDING: 'bg-warning',
   };
   return classes[status] || 'bg-secondary';
 }
@@ -64,11 +64,13 @@ export function formatStatus(status) {
  */
 export function getStatusTooltip(status) {
   const tooltips = {
-    'ACTIVE': 'Server connection is active. Reports are being sent to this central server.',
-    'INACTIVE': 'Server connection is inactive. Reports will not be sent until the connection is reactivated.',
-    'ERROR': 'Connection error detected. Please check server configuration or contact your administrator.',
-    'PENDING': 'Registration submitted successfully. Waiting for administrator approval on the central server before reports can be sent.'
+    ACTIVE: 'Server connection is active. Reports are being sent to this central server.',
+    INACTIVE:
+      'Server connection is inactive. Reports will not be sent until the connection is reactivated.',
+    ERROR:
+      'Connection error detected. Please check server configuration or contact your administrator.',
+    PENDING:
+      'Registration submitted successfully. Waiting for administrator approval on the central server before reports can be sent.',
   };
   return tooltips[status] || 'Server status is unknown. Please refresh or contact support.';
 }
-

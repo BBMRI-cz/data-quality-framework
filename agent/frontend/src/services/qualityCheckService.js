@@ -1,4 +1,4 @@
-import { api } from '@/js/api.js';
+import { api } from '@/api';
 
 const BASE_URL = '/api/quality-checks';
 
@@ -25,5 +25,5 @@ export const qualityCheckService = {
 
   async delete(id) {
     await api.delete(`${BASE_URL}/${id}`);
-  }
+  },
 };

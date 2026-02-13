@@ -1,104 +1,81 @@
-import { ref } from 'vue';
-import {getUsername, getDefaultPasswordFlag, getUserId, getAuthToken} from '../js/api.js';
+import { defineStore } from 'pinia';
+import { getDefaultPasswordFlag, getUserId } from '@/api';
+import { changePassword as changePasswordApi } from '@/services/authService.js';
 
-export function useUserStore() {
-  const isChangingPassword = ref(false);
-  const passwordError = ref('');
-  const passwordSuccess = ref('');
-  const validationErrors = ref({});
-  const defaultPasswordFlag = ref(getDefaultPasswordFlag());
+export const useUserStore = defineStore('user', {
+  state: () => ({
+    isChangingPassword: false,
+    passwordError: '',
+    passwordSuccess: '',
+    validationErrors: {},
+    defaultPasswordFlag: getDefaultPasswordFlag(),
+  }),
 
-  function initializeDefaultPasswordStatus() {
-    defaultPasswordFlag.value = getDefaultPasswordFlag();
-  }
+  actions: {
+    initializeDefaultPasswordStatus() {
+      this.defaultPasswordFlag = getDefaultPasswordFlag();
+    },
 
-  function updateDefaultPasswordStatus(status) {
-    defaultPasswordFlag.value = status;
-    if (typeof status === 'boolean') {
-      sessionStorage.setItem('defaultPasswordFlag', status.toString());
-    }
-  }
-  function resetPasswordState() {
-    passwordError.value = '';
-    passwordSuccess.value = '';
-    validationErrors.value = {};
-  }
-  async function changePassword(currentPassword, newPassword, confirmPassword) {
-    passwordError.value = '';
-    passwordSuccess.value = '';
-    validationErrors.value = {};
+    updateDefaultPasswordStatus(status) {
+      this.defaultPasswordFlag = status;
+      if (typeof status === 'boolean') {
+        sessionStorage.setItem('defaultPasswordFlag', status.toString());
+      }
+    },
 
-    if (newPassword !== confirmPassword) {
-      passwordError.value = 'New password and confirmation do not match';
-      return false;
-    }
+    resetPasswordState() {
+      this.passwordError = '';
+      this.passwordSuccess = '';
+      this.validationErrors = {};
+    },
 
-    isChangingPassword.value = true;
-    try {
-      const userId = getUserId();
-      const token = getAuthToken();
+    async changePassword(currentPassword, newPassword, confirmPassword) {
+      this.passwordError = '';
+      this.passwordSuccess = '';
+      this.validationErrors = {};
 
-      if (!token) {
-        passwordError.value = 'Not authenticated';
+      if (newPassword !== confirmPassword) {
+        this.passwordError = 'New password and confirmation do not match';
         return false;
       }
 
-      const response = await fetch(`/api/users/${userId}/password`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          currentPassword,
-          newPassword,
-          confirmPassword
-        })
-      });
+      this.isChangingPassword = true;
+      try {
+        const userId = getUserId();
 
-      if (response.ok) {
-        passwordSuccess.value = 'Password changed successfully!';
-        updateDefaultPasswordStatus(false);
+        if (!userId) {
+          this.passwordError = 'Not authenticated';
+          return false;
+        }
+
+        await changePasswordApi(userId, currentPassword, newPassword, confirmPassword);
+        this.passwordSuccess = 'Password changed successfully!';
+        this.updateDefaultPasswordStatus(false);
         return true;
-      } else {
-        if (response.status === 401) {
-          passwordError.value = 'Invalid current password';
-        } else if (response.status === 400) {
-          try {
-            const errorData = await response.json();
-            if (errorData.validationErrors) {
-              validationErrors.value = errorData.validationErrors;
-            } else {
-              passwordError.value = errorData.detail || 'Invalid password format or passwords do not match';
-            }
-          } catch (parseError) {
-            passwordError.value = 'Invalid password format or passwords do not match';
+      } catch (error) {
+        console.error('Password change error:', error);
+
+        const status = error.response?.status;
+        const errorData = error.response?.data;
+
+        if (status === 401) {
+          this.passwordError = 'Invalid current password';
+        } else if (status === 400) {
+          if (errorData?.validationErrors) {
+            this.validationErrors = errorData.validationErrors;
+          } else {
+            this.passwordError =
+              errorData?.detail || 'Invalid password format or passwords do not match';
           }
-        } else if (response.status === 404) {
-          passwordError.value = 'User not found';
+        } else if (status === 404) {
+          this.passwordError = 'User not found';
         } else {
-          passwordError.value = `Server error: ${response.status}`;
+          this.passwordError = error.message || 'Network error - please try again';
         }
         return false;
+      } finally {
+        this.isChangingPassword = false;
       }
-    } catch (error) {
-      console.error('Password change error:', error);
-      passwordError.value = 'Network error - please try again';
-      return false;
-    } finally {
-      isChangingPassword.value = false;
-    }
-  }
-
-  return {
-    isChangingPassword,
-    passwordError,
-    passwordSuccess,
-    validationErrors,
-    defaultPasswordFlag,
-    changePassword,
-    resetPasswordState,
-    initializeDefaultPasswordStatus,
-    updateDefaultPasswordStatus
-  };
-}
+    },
+  },
+});

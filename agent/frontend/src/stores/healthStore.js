@@ -1,30 +1,31 @@
-import { reactive } from 'vue'
-import { api } from '../js/api.js'
+import { defineStore } from 'pinia';
+import { healthService } from '@/services/healthService.js';
 
-const store = reactive({
+export const useHealthStore = defineStore('health', {
+  state: () => ({
     healthStatus: null,
     isChecking: false,
     lastChecked: null,
+  }),
 
+  actions: {
     async checkHealth() {
-        store.isChecking = true
-        try {
-            const { data } = await api.get('/api/entities/health')
-            store.healthStatus = data
-            store.lastChecked = new Date()
-        } catch (err) {
-            console.error('Health check failed:', err)
-            store.healthStatus = {
-                status: 'DOWN',
-                details: {
-                    error: err.response?.data?.details?.error || err.message || 'Connection failed'
-                }
-            }
-            store.lastChecked = new Date()
-        } finally {
-            store.isChecking = false
-        }
-    }
-})
-
-export default store
+      this.isChecking = true;
+      try {
+        this.healthStatus = await healthService.checkHealth();
+        this.lastChecked = new Date();
+      } catch (err) {
+        console.error('Health check failed:', err);
+        this.healthStatus = {
+          status: 'DOWN',
+          details: {
+            error: err.response?.data?.details?.error || err.message || 'Connection failed',
+          },
+        };
+        this.lastChecked = new Date();
+      } finally {
+        this.isChecking = false;
+      }
+    },
+  },
+});

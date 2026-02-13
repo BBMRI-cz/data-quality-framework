@@ -11,10 +11,10 @@
           Warning Threshold
         </label>
         <input
+          id="checkWarningThreshold"
           v-model.number="warningThreshold"
           type="number"
           class="form-control"
-          id="checkWarningThreshold"
           placeholder="10"
         />
         <small class="form-text text-muted">Trigger warning at this value</small>
@@ -25,10 +25,10 @@
           Error Threshold
         </label>
         <input
+          id="checkErrorThreshold"
           v-model.number="errorThreshold"
           type="number"
           class="form-control"
-          id="checkErrorThreshold"
           placeholder="30"
         />
         <small class="form-text text-muted">Trigger error at this value</small>
@@ -39,11 +39,11 @@
           Epsilon Budget
         </label>
         <input
+          id="checkEpsilonBudget"
           v-model.number="epsilonBudget"
           type="number"
           step="0.1"
           class="form-control"
-          id="checkEpsilonBudget"
           placeholder="1.0"
         />
         <small class="form-text text-muted">Privacy budget allocation</small>
@@ -53,72 +53,72 @@
 </template>
 
 <script setup>
-const warningThreshold = defineModel('warningThreshold', { type: Number, default: 10 });
-const errorThreshold = defineModel('errorThreshold', { type: Number, default: 30 });
-const epsilonBudget = defineModel('epsilonBudget', { type: Number, default: 1.0 });
+  const warningThreshold = defineModel('warningThreshold', { type: Number, default: 10 });
+  const errorThreshold = defineModel('errorThreshold', { type: Number, default: 30 });
+  const epsilonBudget = defineModel('epsilonBudget', { type: Number, default: 1.0 });
 </script>
 
 <style scoped>
-.form-section {
-  padding: 2rem;
-  border-bottom: 1px solid #e9ecef;
-}
-
-.form-section:last-of-type {
-  border-bottom: none;
-}
-
-.section-title {
-  color: #495057;
-  font-size: 0.875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-weight: 600;
-  padding-bottom: 1rem;
-  margin-bottom: 1.5rem;
-  border-bottom: 2px solid #e9ecef;
-}
-
-.form-label {
-  margin-bottom: 0.5rem;
-  font-size: 0.875rem;
-  color: #495057;
-}
-
-.form-control {
-  font-size: 0.875rem;
-  border: 1px solid #dee2e6;
-  transition: all 0.2s ease;
-}
-
-.form-control:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-}
-
-.form-text {
-  display: block;
-  margin-top: 0.25rem;
-  font-size: 0.813rem;
-}
-
-@media (max-width: 768px) {
   .form-section {
-    padding: 1.5rem;
-  }
-}
-
-@media (max-width: 576px) {
-  .form-section {
-    padding: 1rem;
+    padding: 2rem;
+    border-bottom: 1px solid #e9ecef;
   }
 
-  .row.g-3 {
-    gap: 1rem !important;
+  .form-section:last-of-type {
+    border-bottom: none;
   }
 
-  .col-md-4 {
-    width: 100%;
+  .section-title {
+    color: #495057;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid #e9ecef;
   }
-}
+
+  .form-label {
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    color: #495057;
+  }
+
+  .form-control {
+    font-size: 0.875rem;
+    border: 1px solid #dee2e6;
+    transition: all 0.2s ease;
+  }
+
+  .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+  }
+
+  .form-text {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.813rem;
+  }
+
+  @media (max-width: 768px) {
+    .form-section {
+      padding: 1.5rem;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .form-section {
+      padding: 1rem;
+    }
+
+    .row.g-3 {
+      gap: 1rem !important;
+    }
+
+    .col-md-4 {
+      width: 100%;
+    }
+  }
 </style>

@@ -48,7 +48,9 @@
                 <span class="text-muted">{{ report.numberOfEntities || 'N/A' }}</span>
               </td>
               <td class="text-center">
-                <span class="text-muted">{{ report.epsilonBudget ? report.epsilonBudget.toFixed(2) : 'N/A' }}</span>
+                <span class="text-muted">{{
+                  report.epsilonBudget ? report.epsilonBudget.toFixed(2) : 'N/A'
+                }}</span>
               </td>
               <td class="text-center">
                 <span :class="getEpsilonClass(report)">
@@ -73,172 +75,173 @@
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router'
+  import { useRouter } from 'vue-router';
 
-const router = useRouter()
+  const router = useRouter();
 
-const props = defineProps({
-  reports: {
-    type: Array,
-    required: true,
-    default: () => []
-  }
-})
+defineProps({
+    reports: {
+      type: Array,
+      required: false,
+      default: () => [],
+    },
+  });
 
-const navigateToReport = (reportId) => {
-  router.push(`/reports/${reportId}`)
-}
+  const navigateToReport = (reportId) => {
+    router.push(`/reports/${reportId}`);
+  };
 
-const formatDateShort = (dateString) => {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  })
-}
+  const formatDateShort = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
 
-const formatTime = (dateString) => {
-  const date = new Date(dateString)
-  return date.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
+  const formatTime = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
 
-const calculateEpsilonUsed = (report) => {
-  if (!report.results || !Array.isArray(report.results)) return 0
-  return report.results.reduce((sum, result) => sum + (result.epsilon || 0), 0)
-}
+  const calculateEpsilonUsed = (report) => {
+    if (!report.results || !Array.isArray(report.results)) return 0;
+    return report.results.reduce((sum, result) => sum + (result.epsilon || 0), 0);
+  };
 
-const getEpsilonClass = (report) => {
-  const used = calculateEpsilonUsed(report)
-  const budget = report.epsilonBudget || 0
+  const getEpsilonClass = (report) => {
+    const used = calculateEpsilonUsed(report);
+    const budget = report.epsilonBudget || 0;
 
-  if (used > budget) {
-    return 'text-danger fw-semibold'
-  }
-  return 'text-muted'
-}
+    if (used > budget) {
+      return 'text-danger fw-semibold';
+    }
+    return 'text-muted';
+  };
 
-const getStatusBadgeClass = (report) => {
-  switch (report.status) {
-    case 'COMPLETED':
-      return 'bg-success'
-    case 'GENERATING':
-      return 'bg-warning text-dark'
-    case 'FAILED':
-      return 'bg-danger'
-    default:
-      return 'bg-secondary'
-  }
-}
+  const getStatusBadgeClass = (report) => {
+    switch (report.status) {
+      case 'COMPLETED':
+        return 'bg-success';
+      case 'GENERATING':
+        return 'bg-warning text-dark';
+      case 'FAILED':
+        return 'bg-danger';
+      default:
+        return 'bg-secondary';
+    }
+  };
 </script>
 
 <style scoped>
-.table th {
-  font-weight: 600;
-  font-size: 0.813rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--color-gray-500);
-  padding: var(--spacing-md) 0.75rem;
-  border-bottom: 2px solid var(--color-gray-200);
-  white-space: nowrap;
-}
-
-.table td {
-  vertical-align: middle;
-  padding: var(--spacing-md) 0.75rem;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.table-responsive {
-  overflow-x: visible;
-}
-
-.table-row-hover {
-  cursor: pointer;
-  transition: background-color var(--transition-base);
-}
-
-.table-row-hover:hover {
-  background-color: var(--bg-hover);
-}
-
-.clickable {
-  cursor: pointer;
-}
-
-.font-monospace {
-  font-family: var(--font-mono);
-  font-size: 0.875rem;
-}
-
-.badge {
-  font-weight: 500;
-  padding: 0.35rem 0.65rem;
-  font-size: 0.75rem;
-  white-space: nowrap;
-}
-
-.badge.rounded-pill {
-  padding: 0.35rem 0.85rem;
-}
-
-.badge.bg-danger,
-.badge.bg-warning {
-  animation: pulse-subtle 2s ease-in-out infinite;
-}
-
-@keyframes pulse-subtle {
-  0%, 100% {
-    opacity: 1;
+  .table th {
+    font-weight: 600;
+    font-size: 0.813rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-gray-500);
+    padding: var(--spacing-md) 0.75rem;
+    border-bottom: 2px solid var(--color-gray-200);
+    white-space: nowrap;
   }
-  50% {
-    opacity: 0.85;
-  }
-}
 
-@media (max-width: 992px) {
-  .table th,
   .table td {
-    padding: 0.75rem var(--spacing-sm);
-  }
-}
-
-@media (max-width: 768px) {
-  .table {
-    font-size: 0.75rem;
+    vertical-align: middle;
+    padding: var(--spacing-md) 0.75rem;
+    border-bottom: 1px solid #f0f0f0;
   }
 
-  .table th,
-  .table td {
-    padding: var(--spacing-sm) 0.35rem;
+  .table-responsive {
+    overflow-x: visible;
+  }
+
+  .table-row-hover {
+    cursor: pointer;
+    transition: background-color var(--transition-base);
+  }
+
+  .table-row-hover:hover {
+    background-color: var(--bg-hover);
+  }
+
+  .clickable {
+    cursor: pointer;
+  }
+
+  .font-monospace {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
   }
 
   .badge {
-    font-size: 0.65rem;
-    padding: var(--spacing-xs) 0.45rem;
+    font-weight: 500;
+    padding: 0.35rem 0.65rem;
+    font-size: 0.75rem;
+    white-space: nowrap;
   }
 
-  .badge i {
-    display: none;
-  }
-}
-
-@media (max-width: 576px) {
-  .table-responsive {
-    overflow-x: auto;
+  .badge.rounded-pill {
+    padding: 0.35rem 0.85rem;
   }
 
-  .table th:nth-child(4),
-  .table td:nth-child(4),
-  .table th:nth-child(5),
-  .table td:nth-child(5),
-  .table th:nth-child(6),
-  .table td:nth-child(6) {
-    display: none;
+  .badge.bg-danger,
+  .badge.bg-warning {
+    animation: pulse-subtle 2s ease-in-out infinite;
   }
-}
+
+  @keyframes pulse-subtle {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.85;
+    }
+  }
+
+  @media (max-width: 992px) {
+    .table th,
+    .table td {
+      padding: 0.75rem var(--spacing-sm);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .table {
+      font-size: 0.75rem;
+    }
+
+    .table th,
+    .table td {
+      padding: var(--spacing-sm) 0.35rem;
+    }
+
+    .badge {
+      font-size: 0.65rem;
+      padding: var(--spacing-xs) 0.45rem;
+    }
+
+    .badge i {
+      display: none;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .table-responsive {
+      overflow-x: auto;
+    }
+
+    .table th:nth-child(4),
+    .table td:nth-child(4),
+    .table th:nth-child(5),
+    .table td:nth-child(5),
+    .table th:nth-child(6),
+    .table td:nth-child(6) {
+      display: none;
+    }
+  }
 </style>

@@ -9,7 +9,7 @@ export function useQualityCheckForm() {
     query: '',
     warningThreshold: 10,
     errorThreshold: 30,
-    epsilonBudget: 1.0
+    epsilonBudget: 1.0,
   });
 
   const errors = ref({});
@@ -95,6 +95,6 @@ export function useQualityCheckForm() {
     loadCheck,
     saveCheck,
     deleteCheck,
-    validateForm
+    validateForm,
   };
 }

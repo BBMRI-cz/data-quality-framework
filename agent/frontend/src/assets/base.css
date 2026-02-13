@@ -117,7 +117,9 @@ body {
   background: var(--bg-card);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
-  transition: transform var(--transition-base), box-shadow var(--transition-base);
+  transition:
+    transform var(--transition-base),
+    box-shadow var(--transition-base);
 }
 
 .card-hover:hover {
@@ -127,7 +129,9 @@ body {
 
 .card-interactive {
   cursor: pointer;
-  transition: transform var(--transition-base), box-shadow var(--transition-base);
+  transition:
+    transform var(--transition-base),
+    box-shadow var(--transition-base);
 }
 
 .card-interactive:hover {

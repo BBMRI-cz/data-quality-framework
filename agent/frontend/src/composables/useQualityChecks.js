@@ -17,10 +17,11 @@ export function useQualityChecks() {
     }
 
     const query = searchQuery.value.toLowerCase();
-    return qualityChecks.value.filter(check =>
-      check.name?.toLowerCase().includes(query) ||
-      check.description?.toLowerCase().includes(query) ||
-      check.query?.toLowerCase().includes(query)
+    return qualityChecks.value.filter(
+      (check) =>
+        check.name?.toLowerCase().includes(query) ||
+        check.description?.toLowerCase().includes(query) ||
+        check.query?.toLowerCase().includes(query)
     );
   });
 
@@ -50,7 +51,6 @@ export function useQualityChecks() {
     error,
     searchQuery,
     fetchChecks,
-    clearSearch
+    clearSearch,
   };
 }
-

@@ -14,12 +14,18 @@
                   <div class="mb-4">
                     <div class="mb-4">
                       <h5 class="fw-semibold mb-2">Local Data Validation</h5>
-                      <p class="text-light mb-0">Performs comprehensive data quality checks directly on your local repository.</p>
+                      <p class="text-light mb-0">
+                        Performs comprehensive data quality checks directly on your local
+                        repository.
+                      </p>
                     </div>
 
                     <div class="mb-4">
                       <h5 class="fw-semibold mb-2">Privacy Preserving Data Quality Reports</h5>
-                      <p class="text-light mb-0">Can periodically generate Data Quality Reports for a central Data Quality Server.</p>
+                      <p class="text-light mb-0">
+                        Can periodically generate Data Quality Reports for a central Data Quality
+                        Server.
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -60,7 +66,7 @@
                     <p class="text-muted mb-0 small">Please sign in to your account</p>
                   </div>
 
-                  <form @submit.prevent="login" class="login-form" novalidate>
+                  <form class="login-form" novalidate @submit.prevent="login">
                     <div class="mb-3">
                       <label for="username" class="form-label fw-semibold">Username</label>
                       <input
@@ -91,11 +97,14 @@
                         <button
                           type="button"
                           class="btn btn-link password-toggle-btn position-absolute top-50 end-0 translate-middle-y me-2"
-                          @click="showPassword = !showPassword"
                           :disabled="loading"
                           tabindex="-1"
+                          @click="showPassword = !showPassword"
                         >
-                          <i :class="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'" class="text-muted"></i>
+                          <i
+                            :class="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"
+                            class="text-muted"
+                          ></i>
                         </button>
                       </div>
                     </div>
@@ -105,7 +114,11 @@
                       class="btn btn-primary w-100 py-3 fw-semibold btn-mobile"
                       :disabled="loading"
                     >
-                      <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                      <span
+                        v-if="loading"
+                        class="spinner-border spinner-border-sm me-2"
+                        role="status"
+                      ></span>
                       {{ loading ? 'Signing in...' : 'Sign In' }}
                     </button>
 
@@ -125,210 +138,211 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { authenticate } from '../js/api.js'
-import { useUserStore } from '../stores/userStore.js'
-import Copyright from '../components/Copyright.vue'
-import { notificationService } from '../services/notificationService.js'
+  import { ref, onMounted } from 'vue';
+  import { useRoute, useRouter } from 'vue-router';
+  import { authenticate } from '@/api';
+  import { useUserStore } from '@/stores/userStore.js';
+  import Copyright from '@/components/Copyright.vue';
+  import { notificationService } from '@/services/notificationService.js';
 
-const username = ref('')
-const password = ref('')
-const loading = ref(false)
-const error = ref('')
-const showPassword = ref(false)
+  const username = ref('');
+  const password = ref('');
+  const loading = ref(false);
+  const error = ref('');
+  const showPassword = ref(false);
 
-const route = useRoute()
-const router = useRouter()
-const { updateDefaultPasswordStatus } = useUserStore()
+  const route = useRoute();
+  const router = useRouter();
+  const userStore = useUserStore();
 
-onMounted(async () => {
+  onMounted(async () => {
+    // Check if user was redirected due to session expiration
+    if (route.query.sessionExpired === 'true') {
+      notificationService.warning(
+        'Session Expired',
+        'Your session has expired. Please log in again.'
+      );
+    }
+  });
 
-  // Check if user was redirected due to session expiration
-  if (route.query.sessionExpired === 'true') {
-    notificationService.warning('Session Expired', 'Your session has expired. Please log in again.')
+  async function login() {
+    error.value = '';
+    loading.value = true;
+    try {
+      const loginResult = await authenticate(username.value, password.value);
+      userStore.updateDefaultPasswordStatus(loginResult.defaultPassword);
+
+      await router.replace((route.query.redirect && String(route.query.redirect)) || '/');
+    } catch (e) {
+      error.value = e?.message || 'Invalid username or password';
+    } finally {
+      loading.value = false;
+    }
   }
-})
-
-async function login() {
-  error.value = ''
-  loading.value = true
-  try {
-    const loginResult = await authenticate(username.value, password.value)
-    updateDefaultPasswordStatus(loginResult.defaultPassword)
-
-    await router.replace((route.query.redirect && String(route.query.redirect)) || '/')
-  } catch (e) {
-    error.value = e?.message || 'Invalid username or password'
-  } finally {
-    loading.value = false
-  }
-}
 </script>
 
 <style scoped>
-.min-vh-50 {
-  min-height: 50vh;
-}
-
-.mobile-card {
-  border-radius: var(--radius-xl);
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.info-panel {
-  background: var(--gradient-primary);
-  color: white;
-}
-
-.info-panel h1 {
-  color: white;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.info-panel .lead {
-  color: rgba(255, 255, 255, 0.95);
-}
-
-.info-panel h5 {
-  color: white;
-}
-
-.info-panel .text-light {
-  color: rgba(255, 255, 255, 0.85) !important;
-}
-
-.info-panel .border-secondary {
-  border-color: rgba(255, 255, 255, 0.2) !important;
-}
-
-.brand-icon-mobile {
-  width: 64px;
-  height: 64px;
-  background: var(--gradient-primary);
-  border-radius: var(--radius-xl);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 2rem;
-  box-shadow: var(--shadow-primary);
-}
-
-.login-form-container {
-  max-width: 400px;
-  margin: 0 auto;
-}
-
-.logo-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.login-logo {
-  width: 120px;
-  height: 120px;
-  object-fit: contain;
-}
-
-.form-label {
-  color: var(--color-gray-700);
-  font-size: 0.9rem;
-  margin-bottom: var(--spacing-sm);
-}
-
-.form-control,
-.form-control-mobile {
-  border: 1px solid var(--color-gray-300);
-  border-radius: var(--radius-md);
-  padding: 0.75rem var(--spacing-md);
-  font-size: 0.95rem;
-  transition: all var(--transition-base);
-}
-
-.form-control:focus,
-.form-control-mobile:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-
-.btn-primary {
-  background: var(--gradient-primary);
-  border: none;
-  border-radius: var(--radius-md);
-  font-size: 1rem;
-  transition: all var(--transition-base);
-  box-shadow: var(--shadow-primary);
-}
-
-.btn-primary:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-primary-hover);
-}
-
-.btn-primary:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.btn-primary:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.password-input-container {
-  position: relative;
-}
-
-.password-toggle-btn {
-  position: absolute;
-  top: 50%;
-  right: 0.75rem;
-  transform: translateY(-50%);
-  padding: 0;
-  border: none;
-  background: none;
-  cursor: pointer;
-  z-index: 10;
-}
-
-.password-toggle-btn:focus {
-  outline: none;
-  box-shadow: none;
-}
-
-@media (max-width: 991px) {
-  .mobile-card {
-    margin: var(--spacing-md);
-  }
-
   .min-vh-50 {
-    min-height: auto;
-  }
-}
-
-@media (max-width: 768px) {
-  .mobile-header {
-    padding: var(--spacing-md) 0;
+    min-height: 50vh;
   }
 
-  .form-control-mobile {
-    font-size: 16px;
-    min-height: 48px;
-  }
-
-  .btn-mobile {
-    min-height: 48px;
-    font-size: 1rem;
-  }
-}
-
-@media (max-width: 576px) {
   .mobile-card {
-    margin: var(--spacing-sm);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-xl);
+    max-width: 1200px;
+    margin: 0 auto;
   }
-}
+
+  .info-panel {
+    background: var(--gradient-primary);
+    color: white;
+  }
+
+  .info-panel h1 {
+    color: white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .info-panel .lead {
+    color: rgba(255, 255, 255, 0.95);
+  }
+
+  .info-panel h5 {
+    color: white;
+  }
+
+  .info-panel .text-light {
+    color: rgba(255, 255, 255, 0.85) !important;
+  }
+
+  .info-panel .border-secondary {
+    border-color: rgba(255, 255, 255, 0.2) !important;
+  }
+
+  .brand-icon-mobile {
+    width: 64px;
+    height: 64px;
+    background: var(--gradient-primary);
+    border-radius: var(--radius-xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2rem;
+    box-shadow: var(--shadow-primary);
+  }
+
+  .login-form-container {
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .logo-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .login-logo {
+    width: 120px;
+    height: 120px;
+    object-fit: contain;
+  }
+
+  .form-label {
+    color: var(--color-gray-700);
+    font-size: 0.9rem;
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .form-control,
+  .form-control-mobile {
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--radius-md);
+    padding: 0.75rem var(--spacing-md);
+    font-size: 0.95rem;
+    transition: all var(--transition-base);
+  }
+
+  .form-control:focus,
+  .form-control-mobile:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+
+  .btn-primary {
+    background: var(--gradient-primary);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    transition: all var(--transition-base);
+    box-shadow: var(--shadow-primary);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-primary-hover);
+  }
+
+  .btn-primary:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
+  .password-input-container {
+    position: relative;
+  }
+
+  .password-toggle-btn {
+    position: absolute;
+    top: 50%;
+    right: 0.75rem;
+    transform: translateY(-50%);
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    z-index: 10;
+  }
+
+  .password-toggle-btn:focus {
+    outline: none;
+    box-shadow: none;
+  }
+
+  @media (max-width: 991px) {
+    .mobile-card {
+      margin: var(--spacing-md);
+    }
+
+    .min-vh-50 {
+      min-height: auto;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .mobile-header {
+      padding: var(--spacing-md) 0;
+    }
+
+    .form-control-mobile {
+      font-size: 16px;
+      min-height: 48px;
+    }
+
+    .btn-mobile {
+      min-height: 48px;
+      font-size: 1rem;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .mobile-card {
+      margin: var(--spacing-sm);
+      border-radius: var(--radius-lg);
+    }
+  }
 </style>
