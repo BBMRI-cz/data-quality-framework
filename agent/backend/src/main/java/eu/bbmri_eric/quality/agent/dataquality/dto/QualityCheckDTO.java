@@ -53,5 +53,4 @@ public class QualityCheckDTO {
     this.errorThreshold = errorThreshold;
     this.epsilonBudget = epsilonBudget;
   }
-
 }
