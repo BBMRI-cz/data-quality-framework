@@ -83,7 +83,7 @@
                   <span class="text-muted small">{{ check.description || 'No description' }}</span>
                 </td>
                 <td class="d-none d-lg-table-cell">
-                  <code class="font-monospace small text-muted query-code">{{ truncateQuery(check.query, 30) }}</code>
+                  <code class="font-monospace small text-muted query-code">{{ truncateText(check.query, 30) }}</code>
                 </td>
                 <td class="text-center d-none d-lg-table-cell">
                   <span class="badge bg-warning-subtle text-warning-emphasis">
@@ -108,55 +108,25 @@
 </template>
 
 <script setup>
-import { onMounted, ref, computed } from 'vue';
+import { onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { api } from "../js/api.js";
+import { useQualityChecks } from '@/composables/useQualityChecks.js';
+import { truncateText } from '@/utils/stringUtils.js';
 
 const router = useRouter();
-const qualityChecks = ref([]);
-const loading = ref(false);
-const error = ref(null);
-const searchQuery = ref('');
 
-const url = '/api/quality-checks';
-
-const filteredChecks = computed(() => {
-  if (!searchQuery.value) {
-    return qualityChecks.value;
-  }
-
-  const query = searchQuery.value.toLowerCase();
-  return qualityChecks.value.filter(check =>
-    check.name?.toLowerCase().includes(query) ||
-    check.description?.toLowerCase().includes(query) ||
-    check.query?.toLowerCase().includes(query)
-  );
-});
-
-const fetchChecks = async () => {
-  loading.value = true;
-  error.value = null;
-
-  try {
-    const { data } = await api.get(url);
-    qualityChecks.value = data._embedded?.qualityChecks || [];
-  } catch (err) {
-    error.value = err.message || 'Failed to load quality checks';
-    console.error('Error fetching checks:', err);
-    qualityChecks.value = [];
-  } finally {
-    loading.value = false;
-  }
-};
+const {
+  filteredChecks,
+  loading,
+  error,
+  searchQuery,
+  fetchChecks
+} = useQualityChecks();
 
 const navigateToEdit = (id) => {
   router.push(`/quality-checks/${id}/edit`);
 };
 
-const truncateQuery = (query, maxLength = 50) => {
-  if (!query) return '';
-  return query.length > maxLength ? `${query.slice(0, maxLength)}...` : query;
-};
 
 onMounted(fetchChecks);
 </script>

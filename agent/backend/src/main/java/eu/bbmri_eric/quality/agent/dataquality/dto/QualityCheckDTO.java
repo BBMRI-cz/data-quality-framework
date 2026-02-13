@@ -1,9 +1,15 @@
 package eu.bbmri_eric.quality.agent.dataquality.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.hateoas.server.core.Relation;
 
 /** DTO for Quality Check entity. */
+@Setter
+@Getter
 @Schema(name = "Quality Check", description = "A data quality check")
+@Relation(itemRelation = "quality-check", collectionRelation = "quality-checks")
 public class QualityCheckDTO {
 
   @Schema(description = "Unique identifier of the quality check", example = "1")
@@ -48,59 +54,4 @@ public class QualityCheckDTO {
     this.epsilonBudget = epsilonBudget;
   }
 
-  public Long getId() {
-    return id;
-  }
-
-  public void setId(Long id) {
-    this.id = id;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public void setName(String name) {
-    this.name = name;
-  }
-
-  public String getDescription() {
-    return description;
-  }
-
-  public void setDescription(String description) {
-    this.description = description;
-  }
-
-  public String getQuery() {
-    return query;
-  }
-
-  public void setQuery(String query) {
-    this.query = query;
-  }
-
-  public int getWarningThreshold() {
-    return warningThreshold;
-  }
-
-  public void setWarningThreshold(int warningThreshold) {
-    this.warningThreshold = warningThreshold;
-  }
-
-  public int getErrorThreshold() {
-    return errorThreshold;
-  }
-
-  public void setErrorThreshold(int errorThreshold) {
-    this.errorThreshold = errorThreshold;
-  }
-
-  public float getEpsilonBudget() {
-    return epsilonBudget;
-  }
-
-  public void setEpsilonBudget(float epsilonBudget) {
-    this.epsilonBudget = epsilonBudget;
-  }
 }
