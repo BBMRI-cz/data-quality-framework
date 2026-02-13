@@ -75,7 +75,7 @@ class QualityCheckControllerTest {
             put(location)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(check)))
-        .andExpect(status().isNoContent());
+        .andExpect(status().isOk());
 
     mockMvc
         .perform(get(location))
@@ -110,7 +110,7 @@ class QualityCheckControllerTest {
     mockMvc
         .perform(
             post(QualityCheckEndpoint).contentType(MediaType.APPLICATION_JSON).content(invalidJson))
-        .andExpect(status().isConflict());
+        .andExpect(status().isBadRequest());
   }
 
   @Test
