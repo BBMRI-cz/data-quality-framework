@@ -121,7 +121,7 @@ onMounted(() => {
 
 .login-page__container {
   width: 100%;
-  max-width: 1200px;
+  max-width: 1000px;
 }
 
 .login-card {
@@ -134,7 +134,7 @@ onMounted(() => {
 .login-card__content {
   display: grid;
   grid-template-columns: 1fr;
-  min-height: 50vh;
+  min-height: 72vh;
 }
 
 .login-card__info {
@@ -193,8 +193,8 @@ onMounted(() => {
 }
 
 .login-logo {
-  width: 120px;
-  height: 120px;
+  width: 200px;
+  height: 200px;
   margin-bottom: var(--spacing-md);
 }
 
