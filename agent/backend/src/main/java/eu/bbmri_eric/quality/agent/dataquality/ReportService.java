@@ -10,12 +10,6 @@ public interface ReportService
     extends CRUDService<ReportDTO, ReportCreateDTO, ReportUpdateDTO, Long> {
 
   /**
-   * Generate a report transactionally. This method creates a new report and triggers the report
-   * generation process.
-   */
-  void generateReport();
-
-  /**
    * Get a report by ID.
    *
    * @param id the report ID

@@ -50,18 +50,10 @@ class ReportServiceImpl implements ReportService {
     this.modelMapper = modelMapper;
   }
 
-  @Transactional
-  public void generateReport() {
-    Report report = reportRepository.save(new Report());
-    reportRestEventHandler.onAfterCreate(report);
-    log.info("📊 Scheduled report created with ID: {}", report.getId());
-  }
-
   @Override
   @Transactional
   public ReportDTO create(ReportCreateDTO createDTO) {
     Report report = new Report();
-    // Potentially map fields from createDTO if any
     report = reportRepository.save(report);
     reportRestEventHandler.onAfterCreate(report);
     log.info("📊 Report created via API with ID: {}", report.getId());

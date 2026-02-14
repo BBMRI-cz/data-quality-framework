@@ -1,6 +1,7 @@
 package eu.bbmri_eric.quality.agent.dataquality.impl;
 
 import eu.bbmri_eric.quality.agent.dataquality.ReportService;
+import eu.bbmri_eric.quality.agent.dataquality.dto.ReportCreateDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -21,6 +22,6 @@ class ReportScheduler {
   @Scheduled(cron = "0 0 0 * * *")
   void generateReport() {
     log.info("Scheduled report generation triggered");
-    reportService.generateReport();
+    reportService.create(new ReportCreateDTO());
   }
 }
