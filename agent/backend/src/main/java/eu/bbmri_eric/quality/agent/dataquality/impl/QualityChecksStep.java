@@ -4,6 +4,7 @@ import eu.bbmri_eric.quality.agent.dataquality.FHIRStore;
 import eu.bbmri_eric.quality.agent.dataquality.ReportPipelineStep;
 import eu.bbmri_eric.quality.agent.dataquality.domain.DataQualityCheck;
 import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
+import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheckType;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Result;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
@@ -33,9 +34,9 @@ class QualityChecksStep implements ReportPipelineStep {
     List<DataQualityCheck> dataQualityChecks = new ArrayList<>();
 
     for (QualityCheck qualityCheck : repository.findAll()) {
-      if (qualityCheck.getQuery() != null) {
+      if (qualityCheck.getType() == QualityCheckType.CQL) {
         dataQualityChecks.add(qualityCheck);
-      } else {
+      } else if (qualityCheck.getType() == QualityCheckType.JAVA) {
         createBuiltInCheck(qualityCheck).ifPresent(dataQualityChecks::add);
       }
     }

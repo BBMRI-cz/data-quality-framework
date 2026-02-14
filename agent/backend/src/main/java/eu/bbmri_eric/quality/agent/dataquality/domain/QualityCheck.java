@@ -4,7 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.agent.dataquality.FHIRStore;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -30,6 +33,12 @@ public class QualityCheck implements DataQualityCheck {
   @NotNull private String name;
   @NotBlank private String description;
   private String query;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "check_type")
+  @NotNull
+  private QualityCheckType type = QualityCheckType.CQL;
+
   private int warningThreshold = 10;
   private int errorThreshold = 30;
   private float epsilonBudget = 1.0f;

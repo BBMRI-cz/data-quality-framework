@@ -7,6 +7,7 @@ export function useQualityCheckForm() {
     name: '',
     description: '',
     query: '',
+    type: 'CQL',
     warningThreshold: 10,
     errorThreshold: 30,
     epsilonBudget: 1.0,
@@ -17,6 +18,7 @@ export function useQualityCheckForm() {
   const loading = ref(false);
 
   const isEditing = computed(() => !!formData.value.id);
+  const isJavaType = computed(() => formData.value.type === 'JAVA');
 
   const validateForm = () => {
     const validationErrors = {};
@@ -25,7 +27,7 @@ export function useQualityCheckForm() {
       validationErrors.name = 'Name is required';
     }
 
-    if (!formData.value.query?.trim()) {
+    if (formData.value.type === 'CQL' && !formData.value.query?.trim()) {
       validationErrors.query = 'CQL query is required';
     }
 
@@ -92,6 +94,7 @@ export function useQualityCheckForm() {
     saving,
     loading,
     isEditing,
+    isJavaType,
     loadCheck,
     saveCheck,
     deleteCheck,

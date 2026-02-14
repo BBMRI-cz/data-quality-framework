@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.agent.dataquality.dto;
 
+import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheckType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
@@ -26,6 +27,9 @@ public class QualityCheckDTO {
   @Schema(description = "Query string", example = "library PatientAgeValidation version '1.0.0'...")
   private String query;
 
+  @Schema(description = "Type of quality check", example = "CQL")
+  private QualityCheckType type;
+
   @Schema(description = "Warning threshold percentage", example = "10")
   private int warningThreshold;
 
@@ -42,6 +46,7 @@ public class QualityCheckDTO {
       String name,
       String description,
       String query,
+      QualityCheckType type,
       int warningThreshold,
       int errorThreshold,
       float epsilonBudget) {
@@ -49,6 +54,7 @@ public class QualityCheckDTO {
     this.name = name;
     this.description = description;
     this.query = query;
+    this.type = type;
     this.warningThreshold = warningThreshold;
     this.errorThreshold = errorThreshold;
     this.epsilonBudget = epsilonBudget;

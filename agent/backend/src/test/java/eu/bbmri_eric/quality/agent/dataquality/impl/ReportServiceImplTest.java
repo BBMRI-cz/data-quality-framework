@@ -5,6 +5,7 @@ import static org.mockito.Mockito.when;
 
 import eu.bbmri_eric.quality.agent.dataquality.QualityCheckService;
 import eu.bbmri_eric.quality.agent.dataquality.ReportService;
+import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheckType;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
 import eu.bbmri_eric.quality.agent.dataquality.domain.ReportStatus;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Result;
@@ -37,11 +38,25 @@ class ReportServiceImplTest {
 
     QualityCheckDTO mockQuery1 =
         new QualityCheckDTO(
-            1L, "Query 1", "Description 1", "library Query1 version '1.0.0'", 10, 30, 1.0f);
+            1L,
+            "Query 1",
+            "Description 1",
+            "library Query1 version '1.0.0'",
+            QualityCheckType.CQL,
+            10,
+            30,
+            1.0f);
 
     QualityCheckDTO mockQuery2 =
         new QualityCheckDTO(
-            2L, "Query 2", "Description 2", "library Query2 version '1.0.0'", 10, 30, 1.0f);
+            2L,
+            "Query 2",
+            "Description 2",
+            "library Query2 version '1.0.0'",
+            QualityCheckType.CQL,
+            10,
+            30,
+            1.0f);
 
     when(cqlQueryService.findAll()).thenReturn(List.of(mockQuery1, mockQuery2));
     when(cqlQueryService.findById(1L)).thenReturn(mockQuery1);

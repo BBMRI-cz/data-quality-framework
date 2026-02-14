@@ -16,7 +16,42 @@
             :errors="errors"
           />
 
-          <QualityCheckQueryConfig v-model:query="formData.query" :errors="errors" />
+          <!-- Type Display (read-only for existing checks) -->
+          <div class="form-section">
+            <h6 class="section-title">
+              <i class="bi bi-tag me-2"></i>
+              Check Type
+            </h6>
+            <div v-if="isEditing" class="type-display">
+              <span class="badge" :class="isJavaType ? 'bg-warning text-dark' : 'bg-primary'">
+                <i :class="isJavaType ? 'bi bi-code-slash' : 'bi bi-file-code'" class="me-1"></i>
+                {{ formData.type }}
+              </span>
+              <small v-if="isJavaType" class="text-muted ms-2">
+                Built-in Java check - query configuration not applicable
+              </small>
+            </div>
+            <div v-else class="mb-3">
+              <select
+                id="checkType"
+                v-model="formData.type"
+                class="form-select"
+              >
+                <option value="CQL">CQL (Clinical Quality Language)</option>
+                <option value="JAVA">Java (Built-in Check)</option>
+              </select>
+              <small class="form-text text-muted">
+                <i class="bi bi-info-circle me-1"></i>
+                CQL checks use Clinical Quality Language queries. Java checks are built-in implementations.
+              </small>
+            </div>
+          </div>
+
+          <QualityCheckQueryConfig
+            v-if="!isJavaType"
+            v-model:query="formData.query"
+            :errors="errors"
+          />
 
           <QualityCheckThresholds
             v-model:warning-threshold="formData.warningThreshold"
@@ -27,7 +62,7 @@
           <!-- Form Actions -->
           <div class="form-actions">
             <button
-              v-if="isEditing"
+              v-if="isEditing && !isJavaType"
               type="button"
               class="btn btn-danger"
               :disabled="saving"
@@ -75,7 +110,7 @@
   const route = useRoute();
   const router = useRouter();
 
-  const { formData, errors, saving, isEditing, loadCheck, saveCheck, deleteCheck } =
+  const { formData, errors, saving, isEditing, isJavaType, loadCheck, saveCheck, deleteCheck } =
     useQualityCheckForm();
 
   const onSave = async () => {
@@ -128,6 +163,34 @@
     background: white;
     border-radius: 0.5rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  .form-section {
+    padding: 2rem;
+    border-bottom: 1px solid #e9ecef;
+  }
+
+  .section-title {
+    color: #495057;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid #e9ecef;
+  }
+
+  .type-display {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .type-display .badge {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
   }
 
   /* Form Actions */
