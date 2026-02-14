@@ -4,7 +4,7 @@
       title="Settings"
       mobile-title="Settings"
       subtitle="Manage your application preferences and configurations"
-      icon="bi bi-gear-fill"
+      icon="bi bi-gear"
     />
 
     <div class="page-content">

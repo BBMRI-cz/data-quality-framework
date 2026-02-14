@@ -1,265 +1,208 @@
 <template>
   <div>
     <!-- Filters and Actions -->
-    <div class="filters-card mb-3 mb-md-4">
+    <div class="filters-card">
       <div class="filters-content">
-        <div class="search-filter">
-          <input
-            v-model="searchQuery"
-            type="text"
-            class="form-control"
-            placeholder="Search quality checks..."
-          />
-        </div>
-        <div class="results-count">
-          <span class="text-muted small">{{ filteredChecks.length }} checks</span>
-        </div>
-        <router-link to="/quality-checks/new" class="btn btn-success">
-          <i class="bi bi-plus me-1"></i>Add Check
+        <input
+          v-model="searchQuery"
+          type="text"
+          class="search-input"
+          placeholder="Search quality checks..."
+        />
+        <span class="results-count">{{ filteredChecks.length }} checks</span>
+        <router-link to="/quality-checks/new" class="add-button">
+          <i class="bi bi-plus"></i> Add Check
         </router-link>
       </div>
     </div>
 
     <!-- Loading state -->
     <div v-if="loading" class="loading-state">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading quality checks...</span>
-      </div>
+      <div class="spinner"></div>
     </div>
 
     <!-- Error state -->
-    <div v-else-if="error" class="alert alert-danger" role="alert">
-      <h6 class="alert-heading">Error Loading Quality Checks</h6>
-      <p class="mb-0">{{ error }}</p>
+    <div v-else-if="error" class="error-state">
+      <h6>Error Loading Quality Checks</h6>
+      <p>{{ error }}</p>
     </div>
 
-    <!-- Empty state -->
-    <div v-else-if="filteredChecks.length === 0" class="empty-state">
-      <div class="empty-state-icon">
-        <i class="bi bi-clipboard-check"></i>
-      </div>
-      <h5 class="empty-state-title">No Quality Checks Found</h5>
-      <p class="empty-state-text">
-        {{
-          searchQuery
-            ? 'Try adjusting your search criteria'
-            : 'No quality checks are configured yet'
-        }}
-      </p>
+    <!-- Empty search state -->
+    <div v-else-if="filteredChecks.length === 0 && searchQuery" class="empty-state">
+      <i class="bi bi-search"></i>
+      <h5>No Results Found</h5>
+      <p>Try adjusting your search criteria</p>
     </div>
 
     <!-- Quality Checks Table -->
-    <div v-else class="card border-0 shadow-sm">
-      <div class="card-header bg-white border-bottom py-3">
-        <div class="d-flex justify-content-between align-items-center">
-          <h5 class="mb-0 fw-semibold">Quality Checks</h5>
-          <span class="badge bg-secondary">{{ filteredChecks.length }} checks</span>
-        </div>
-      </div>
-      <div class="card-body p-0">
-        <div>
-          <table class="table table-hover mb-0 align-middle">
-            <thead class="table-light">
-              <tr>
-                <th class="ps-4">Name</th>
-                <th class="d-none d-md-table-cell">Description</th>
-                <th class="d-none d-lg-table-cell">Query</th>
-                <th class="text-center d-none d-lg-table-cell">Warning</th>
-                <th class="text-center d-none d-lg-table-cell">Error</th>
-                <th class="text-center d-none d-xl-table-cell">Epsilon Budget</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="check in filteredChecks"
-                :key="check.id"
-                class="table-row-hover"
-                @click="navigateToEdit(check.id)"
-              >
-                <td class="ps-4">
-                  <div class="d-flex align-items-center">
-                    <i class="bi bi-check2-square text-primary me-2"></i>
-                    <span class="fw-medium">{{ check.name }}</span>
-                  </div>
-                  <div class="d-md-none small text-muted mt-1">{{ check.description }}</div>
-                </td>
-                <td class="d-none d-md-table-cell">
-                  <span class="text-muted small">{{ check.description || 'No description' }}</span>
-                </td>
-                <td class="d-none d-lg-table-cell">
-                  <code class="font-monospace small text-muted query-code">{{
-                    truncateText(check.query, 30)
-                  }}</code>
-                </td>
-                <td class="text-center d-none d-lg-table-cell">
-                  <span class="badge bg-warning-subtle text-warning-emphasis">
-                    {{ check.warningThreshold }}
-                  </span>
-                </td>
-                <td class="text-center d-none d-lg-table-cell">
-                  <span class="badge bg-danger-subtle text-danger-emphasis">
-                    {{ check.errorThreshold }}
-                  </span>
-                </td>
-                <td class="text-center d-none d-xl-table-cell">
-                  <span class="text-muted">{{ check.epsilonBudget.toFixed(2) }}</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+    <BaseTable
+      v-else
+      title="Quality Checks"
+      :columns="columns"
+      :items="filteredChecks"
+      :item-count="filteredChecks.length"
+      item-label="checks"
+      empty-text="No quality checks configured yet"
+      empty-icon="bi bi-clipboard-check"
+      @row-click="navigateToEdit"
+    >
+      <template #name="{ item }">
+        <i class="bi bi-check2-square icon"></i>
+        {{ item.name }}
+      </template>
+      <template #query="{ value }">
+        {{ truncateText(value, 30) }}
+      </template>
+    </BaseTable>
   </div>
 </template>
 
 <script setup>
-  import { onMounted } from 'vue';
-  import { useRouter } from 'vue-router';
-  import { useQualityChecks } from '@/composables/useQualityChecks.js';
-  import { truncateText } from '@/utils/stringUtils.js';
+import { onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import BaseTable from '@/components/BaseTable.vue';
+import { useQualityChecks } from '@/composables/useQualityChecks.js';
+import { truncateText } from '@/utils/stringUtils.js';
 
-  const router = useRouter();
+const router = useRouter();
+const { filteredChecks, loading, error, searchQuery, fetchChecks } = useQualityChecks();
 
-  const { filteredChecks, loading, error, searchQuery, fetchChecks } = useQualityChecks();
+const columns = [
+  { key: 'name', label: 'Name' },
+  { key: 'description', label: 'Description', headerClass: 'hide-md', cellClass: 'hide-md', fallback: 'No description' },
+  { key: 'query', label: 'Query', headerClass: 'hide-lg', cellClass: 'hide-lg truncate' },
+  { key: 'warningThreshold', label: 'Warning', headerClass: 'center hide-lg', cellClass: 'center warning hide-lg' },
+  { key: 'errorThreshold', label: 'Error', headerClass: 'center hide-lg', cellClass: 'center danger hide-lg' },
+  { key: 'epsilonBudget', label: 'Epsilon', headerClass: 'center hide-xl', cellClass: 'center hide-xl', format: 'decimal' },
+];
 
-  const navigateToEdit = (id) => {
-    router.push(`/quality-checks/${id}/edit`);
-  };
+const navigateToEdit = (item) => {
+  router.push(`/quality-checks/${item.id}/edit`);
+};
 
-  onMounted(fetchChecks);
+onMounted(fetchChecks);
 </script>
 
 <style scoped>
-  /* Filters */
-  .filters-card {
-    background: white;
-    padding: 1rem;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  }
+.filters-card {
+  background: var(--bg-card);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--spacing-lg);
+}
 
+.filters-content {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: center;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 200px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.results-count {
+  color: var(--color-gray-500);
+  font-size: 0.875rem;
+}
+
+.add-button {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-success);
+  color: white;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.add-button:hover {
+  opacity: 0.9;
+}
+
+.icon {
+  color: var(--color-primary);
+  margin-right: var(--spacing-sm);
+}
+
+.loading-state {
+  display: flex;
+  justify-content: center;
+  padding: 4rem 0;
+}
+
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid var(--color-gray-200);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.error-state {
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  color: var(--color-danger);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-lg);
+}
+
+.error-state h6 {
+  margin: 0 0 var(--spacing-sm);
+  font-weight: 600;
+}
+
+.error-state p {
+  margin: 0;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  color: var(--color-gray-400);
+}
+
+.empty-state i {
+  font-size: 4rem;
+  margin-bottom: var(--spacing-md);
+}
+
+.empty-state h5 {
+  color: var(--color-gray-800);
+  margin-bottom: var(--spacing-sm);
+}
+
+.empty-state p {
+  margin: 0;
+}
+
+@media (max-width: 768px) {
   .filters-content {
-    display: flex;
     flex-wrap: wrap;
-    gap: 1rem;
-    align-items: center;
-  }
-
-  .search-filter {
-    flex: 1;
-    min-width: 200px;
   }
 
   .results-count {
-    margin-left: auto;
-  }
-
-  /* Loading State */
-  .loading-state {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 4rem 0;
-  }
-
-  /* Empty State */
-  .empty-state {
-    text-align: center;
-    padding: 4rem 2rem;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  }
-
-  .empty-state-icon {
-    font-size: 4rem;
-    color: #e0e0e0;
-    margin-bottom: 1rem;
-  }
-
-  .empty-state-title {
-    color: #2c3e50;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-  }
-
-  .empty-state-text {
-    color: #6c757d;
-    margin-bottom: 0;
-  }
-
-  /* Table Styling */
-  .card {
-    border-radius: 12px;
-    overflow: hidden;
-  }
-
-  .table {
-    font-size: 0.875rem;
-    table-layout: fixed;
+    order: 3;
     width: 100%;
   }
-
-  .table th {
-    font-weight: 600;
-    font-size: 0.813rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #6c757d;
-    padding: 1rem 0.75rem;
-    border-bottom: 2px solid #dee2e6;
-    white-space: nowrap;
-  }
-
-  .table td {
-    vertical-align: middle;
-    padding: 1rem 0.75rem;
-    border-bottom: 1px solid #f0f0f0;
-    font-size: 0.875rem;
-    word-wrap: break-word;
-  }
-
-  .query-code {
-    max-width: 100%;
-    display: inline-block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .table-row-hover {
-    transition: all 0.2s ease-in-out;
-    cursor: pointer;
-  }
-
-  .table-row-hover:hover {
-    background-color: #f8f9fa;
-    transform: translateX(2px);
-    box-shadow: inset 3px 0 0 #0d6efd;
-  }
-
-  .font-monospace {
-    font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
-    font-size: 0.875rem;
-  }
-
-  .badge {
-    font-weight: 500;
-    padding: 0.35rem 0.65rem;
-    font-size: 0.75rem;
-    white-space: nowrap;
-  }
-
-  /* Responsive adjustments */
-  @media (max-width: 768px) {
-    .filters-content {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .results-count {
-      margin-left: 0;
-    }
-  }
+}
 </style>

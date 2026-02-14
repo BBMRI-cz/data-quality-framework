@@ -6,7 +6,7 @@
       title="Overview"
       mobile-title="Overview"
       subtitle="View and validate the current Data Quality of your repository"
-      icon="bi bi-pie-chart-fill"
+      icon="bi bi-pie-chart"
     />
 
     <div class="page-content">

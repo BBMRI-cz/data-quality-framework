@@ -25,6 +25,12 @@ export function useQualityChecks() {
     );
   });
 
+  const totalChecks = computed(() => qualityChecks.value.length);
+
+  const totalEpsilonBudget = computed(() =>
+    qualityChecks.value.reduce((sum, check) => sum + (check.epsilonBudget || 0), 0)
+  );
+
   const fetchChecks = async () => {
     loading.value = true;
     error.value = null;
@@ -47,6 +53,8 @@ export function useQualityChecks() {
   return {
     qualityChecks,
     filteredChecks,
+    totalChecks,
+    totalEpsilonBudget,
     loading,
     error,
     searchQuery,

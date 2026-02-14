@@ -8,32 +8,68 @@
     />
 
     <div class="page-content">
+      <div class="stats-grid">
+        <StatCard
+          :number="totalChecks"
+          label="Total Checks"
+          number-class="text-dark"
+          help-text="Total number of quality checks configured"
+        />
+        <StatCard
+          :number="totalEpsilonBudget.toFixed(2)"
+          label="Total Epsilon Budget"
+          number-class="text-primary"
+          help-text="Combined epsilon budget across all quality checks for differential privacy"
+        />
+      </div>
+
       <QualityCheckTable />
     </div>
   </div>
 </template>
 
 <script setup>
+  import { onMounted } from 'vue';
   import QualityCheckTable from '@/components/QualityCheckTable.vue';
   import PageHeader from '@/components/PageHeader.vue';
+  import StatCard from '@/components/StatCard.vue';
+  import { useQualityChecks } from '@/composables/useQualityChecks.js';
+
+  const { totalChecks, totalEpsilonBudget, fetchChecks } = useQualityChecks();
+
+  onMounted(fetchChecks);
 </script>
 
 <style scoped>
   .quality-checks-page {
     min-height: 100%;
-    padding: 2rem;
+    padding: var(--spacing-xl);
   }
+
   .page-content {
     width: 100%;
   }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+  }
+
   @media (max-width: 768px) {
     .quality-checks-page {
-      padding: 1rem;
+      padding: var(--spacing-md);
     }
   }
+
   @media (max-width: 576px) {
     .quality-checks-page {
-      padding: 0.75rem;
+      padding: var(--spacing-sm);
+    }
+
+    .stats-grid {
+      grid-template-columns: 1fr;
     }
   }
 </style>
