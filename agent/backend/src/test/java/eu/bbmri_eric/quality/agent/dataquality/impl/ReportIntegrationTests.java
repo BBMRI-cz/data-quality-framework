@@ -2,6 +2,7 @@ package eu.bbmri_eric.quality.agent.dataquality.impl;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -9,9 +10,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -58,12 +61,9 @@ public class ReportIntegrationTests {
 
   @Test
   void testGetReportsWithPagination() throws Exception {
-
-    // Create 15 reports to ensure pagination
     for (int i = 0; i < 15; i++) {
       reportRepository.save(new Report());
     }
-
     mockMvc
         .perform(get(API_REPORTS).param("page", "0").param("size", "10"))
         .andExpect(status().isOk())
@@ -89,5 +89,41 @@ public class ReportIntegrationTests {
         .perform(get(API_REPORTS))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$._embedded.reports").exists());
+  }
+
+  @Test
+  void testGetReportsWithoutParameters_returnsLatestReportFirst() throws Exception {
+    reportRepository.deleteAll();
+
+    Report olderReport = new Report();
+    reportRepository.save(olderReport);
+
+    Thread.sleep(100);
+
+    Report newerReport = new Report();
+    reportRepository.save(newerReport);
+
+    String responseBody =
+        mockMvc
+            .perform(get(API_REPORTS))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$._embedded.reports").isArray())
+            .andExpect(jsonPath("$._embedded.reports.length()").value(2))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    JsonNode root = objectMapper.readTree(responseBody);
+    JsonNode reports = root.path("_embedded").path("reports");
+
+    String firstGeneratedAt = reports.get(0).path("generatedAt").asText();
+    String secondGeneratedAt = reports.get(1).path("generatedAt").asText();
+
+    LocalDateTime firstDateTime = LocalDateTime.parse(firstGeneratedAt);
+    LocalDateTime secondDateTime = LocalDateTime.parse(secondGeneratedAt);
+
+    assertTrue(
+        firstDateTime.isAfter(secondDateTime) || firstDateTime.isEqual(secondDateTime),
+        "First report should be the latest (most recent generatedAt)");
   }
 }
