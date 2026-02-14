@@ -4,7 +4,7 @@
     <TopNavbar v-if="isAuth" />
 
     <main class="main-content" :class="{ 'no-sidebar': !isAuth }">
-      <router-view v-if="!errorStore.showErrorPage.value" />
+      <router-view v-if="!errorStore.showErrorPage" />
       <NotFound v-else />
     </main>
 
