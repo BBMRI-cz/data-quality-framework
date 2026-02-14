@@ -3,12 +3,14 @@ package eu.bbmri_eric.quality.agent.dataquality.impl;
 import eu.bbmri_eric.quality.agent.dataquality.FHIRStore;
 import eu.bbmri_eric.quality.agent.dataquality.ReportPipelineStep;
 import eu.bbmri_eric.quality.agent.dataquality.domain.DataQualityCheck;
+import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Result;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -28,12 +30,15 @@ class QualityChecksStep implements ReportPipelineStep {
   public Report execute(Report report) {
     log.info("Running quality checks for report id: {}", report.getId());
 
-    List<DataQualityCheck> dataQualityChecks =
-        new ArrayList<>(repository.findAll().stream().map(DataQualityCheck.class::cast).toList());
-    dataQualityChecks.add(new DuplicateIdentifierCheck());
-    dataQualityChecks.add(new SurvivalRateCheck());
-    dataQualityChecks.add(new InvalidConditionICDCheck());
-    dataQualityChecks.add(new UpdateCheck());
+    List<DataQualityCheck> dataQualityChecks = new ArrayList<>();
+
+    for (QualityCheck qualityCheck : repository.findAll()) {
+      if (qualityCheck.getQuery() != null) {
+        dataQualityChecks.add(qualityCheck);
+      } else {
+        createBuiltInCheck(qualityCheck).ifPresent(dataQualityChecks::add);
+      }
+    }
 
     for (DataQualityCheck dataQualityCheck : dataQualityChecks) {
       if (dataQualityCheck instanceof StratifiedDataQualityCheck stratifiedCheck) {
@@ -45,6 +50,21 @@ class QualityChecksStep implements ReportPipelineStep {
 
     log.info("Completed quality checks for report id: {}", report.getId());
     return report;
+  }
+
+  private Optional<DataQualityCheck> createBuiltInCheck(QualityCheck config) {
+    Long id = config.getId();
+    if (DuplicateIdentifierCheck.CHECK_ID.equals(id)) {
+      return Optional.of(new DuplicateIdentifierCheck(config));
+    } else if (InvalidConditionICDCheck.CHECK_ID.equals(id)) {
+      return Optional.of(new InvalidConditionICDCheck(config));
+    } else if (SurvivalRateCheck.CHECK_ID.equals(id)) {
+      return Optional.of(new SurvivalRateCheck(config));
+    } else if (UpdateCheck.CHECK_ID.equals(id)) {
+      return Optional.of(new UpdateCheck(config));
+    }
+    log.warn("Unknown built-in check with id: {}", id);
+    return Optional.empty();
   }
 
   private void executeStratifiedCheck(StratifiedDataQualityCheck check, Report report) {

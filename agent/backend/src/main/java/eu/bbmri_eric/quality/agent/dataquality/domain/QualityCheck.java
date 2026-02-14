@@ -29,7 +29,7 @@ public class QualityCheck implements DataQualityCheck {
 
   @NotNull private String name;
   @NotBlank private String description;
-  @NotNull private String query;
+  private String query;
   private int warningThreshold = 10;
   private int errorThreshold = 30;
   private float epsilonBudget = 1.0f;

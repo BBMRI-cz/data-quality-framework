@@ -1,6 +1,7 @@
 package eu.bbmri_eric.quality.agent.dataquality.impl;
 
 import eu.bbmri_eric.quality.agent.dataquality.FHIRStore;
+import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
 import java.util.Arrays;
 import java.util.Collections;
@@ -13,18 +14,14 @@ import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Resource;
 
 class SurvivalRateCheck implements StratifiedDataQualityCheck {
-  private final String name;
-  private final String description;
-  private final List<String> genders;
-  private final int warningThreshold;
-  private final int errorThreshold;
+  static final Long CHECK_ID = 1002L;
 
-  SurvivalRateCheck() {
-    this.name = "Survival rate, stratified per gender value";
-    this.description = "What is the survival rate for different gender values";
+  private final QualityCheck config;
+  private final List<String> genders;
+
+  SurvivalRateCheck(QualityCheck config) {
+    this.config = config;
     this.genders = Arrays.asList("male", "female");
-    this.warningThreshold = 70; // Example threshold, adjust as needed
-    this.errorThreshold = 90; // Example threshold, adjust as needed
   }
 
   @Override
@@ -46,7 +43,7 @@ class SurvivalRateCheck implements StratifiedDataQualityCheck {
 
       return new ResultDTO(totalAlive, "Patient", Collections.emptySet());
     } catch (Exception e) {
-      System.err.println("Error processing " + name + ": " + e.getMessage());
+      System.err.println("Error processing " + getName() + ": " + e.getMessage());
       return new ResultDTO(e.getMessage());
     }
   }
@@ -66,7 +63,7 @@ class SurvivalRateCheck implements StratifiedDataQualityCheck {
       }
       return results;
     } catch (Exception e) {
-      System.err.println("Error processing stratified " + name + ": " + e.getMessage());
+      System.err.println("Error processing stratified " + getName() + ": " + e.getMessage());
       results.put("error", new ResultDTO(e.getMessage()));
       return results;
     }
@@ -92,31 +89,31 @@ class SurvivalRateCheck implements StratifiedDataQualityCheck {
 
   @Override
   public String getName() {
-    return name;
+    return config.getName();
   }
 
   @Override
   public String getDescription() {
-    return description;
+    return config.getDescription();
   }
 
   @Override
   public int getWarningThreshold() {
-    return warningThreshold;
+    return config.getWarningThreshold();
   }
 
   @Override
   public int getErrorThreshold() {
-    return errorThreshold;
+    return config.getErrorThreshold();
   }
 
   @Override
   public float getEpsilonBudget() {
-    return 0.3f; // No differential privacy used
+    return config.getEpsilonBudget();
   }
 
   @Override
   public Long getId() {
-    return 1002L; // Example ID, adjust as needed
+    return config.getId();
   }
 }

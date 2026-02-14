@@ -249,4 +249,45 @@ class QualityCheckIntegrationTests {
         .perform(get(API_QUALITY_CHECKS + "/{id}", savedCheck.getId()))
         .andExpect(status().isNotFound());
   }
+
+  @Test
+  void update_builtInCheck_modifiesThresholdsAndDescription() throws Exception {
+    // Create a built-in check (simulating a custom check with null query)
+    QualityCheck builtInCheck =
+        new QualityCheck(
+            "Invalid ICD-10 Codes", "How many conditions have invalid ICD-10 codes", null);
+    builtInCheck.setWarningThreshold(10);
+    builtInCheck.setErrorThreshold(30);
+    builtInCheck.setEpsilonBudget(0.2f);
+    QualityCheck savedCheck = qualityCheckRepository.save(builtInCheck);
+    Long checkId = savedCheck.getId();
+
+    QualityCheckUpdateDTO updateDTO =
+        new QualityCheckUpdateDTO(
+            "Invalid ICD-10 Codes - Updated",
+            "Modified description for ICD validation check",
+            null, // Keep query as null for built-in check
+            15,
+            40,
+            0.5f);
+
+    mockMvc
+        .perform(
+            put(API_QUALITY_CHECKS + "/{id}", checkId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateDTO)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(checkId))
+        .andExpect(jsonPath("$.name").value("Invalid ICD-10 Codes - Updated"))
+        .andExpect(jsonPath("$.description").value("Modified description for ICD validation check"))
+        .andExpect(jsonPath("$.warningThreshold").value(15))
+        .andExpect(jsonPath("$.errorThreshold").value(40))
+        .andExpect(jsonPath("$.epsilonBudget").value(0.5));
+
+    QualityCheck updatedCheck = qualityCheckRepository.findById(checkId).orElseThrow();
+    assertThat(updatedCheck.getName()).isEqualTo("Invalid ICD-10 Codes - Updated");
+    assertThat(updatedCheck.getWarningThreshold()).isEqualTo(15);
+    assertThat(updatedCheck.getErrorThreshold()).isEqualTo(40);
+    assertThat(updatedCheck.getEpsilonBudget()).isEqualTo(0.5f);
+  }
 }
