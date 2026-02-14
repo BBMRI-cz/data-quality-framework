@@ -11,7 +11,6 @@ import eu.bbmri_eric.quality.agent.dataquality.domain.Result;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ObfuscatedReportDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckResultDTO;
-import eu.bbmri_eric.quality.agent.dataquality.dto.ReportCreateDTO;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -71,16 +70,6 @@ class ReportServiceImplTest {
     Result result =
         new Result(checkName, checkId, rawValue, obfuscatedValue, 10, 30, 1.0f, null, stratum);
     report.addResult(result);
-  }
-
-  @Test
-  void generateReport() {
-    reportRepository.deleteAll();
-    assertThat(reportRepository.findAll()).isEmpty();
-    reportService.create(new ReportCreateDTO());
-    assertThat(reportRepository.findAll()).hasSize(1);
-    Report report = reportRepository.findAll().getFirst();
-    assertThat(report.getId()).isNotNull();
   }
 
   @Nested

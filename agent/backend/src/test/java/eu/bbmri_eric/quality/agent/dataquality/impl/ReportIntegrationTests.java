@@ -1,6 +1,8 @@
 package eu.bbmri_eric.quality.agent.dataquality.impl;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -9,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
+import java.time.Duration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -31,9 +34,7 @@ public class ReportIntegrationTests {
   @Test
   void testCreateReportWithStatusGeneratingSetsGeneratedAt() throws Exception {
     Report report = new Report();
-
     String json = objectMapper.writeValueAsString(report);
-
     String location =
         mockMvc
             .perform(post(API_REPORTS).contentType(MediaType.APPLICATION_JSON).content(json))
@@ -42,14 +43,17 @@ public class ReportIntegrationTests {
             .andReturn()
             .getResponse()
             .getHeader("Location");
-
     assertNotNull(location);
-
-    mockMvc
-        .perform(get(location))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.status").value("GENERATED"))
-        .andExpect(jsonPath("$.generatedAt").exists());
+    await()
+        .atMost(Duration.ofSeconds(30))
+        .pollInterval(Duration.ofMillis(500))
+        .untilAsserted(
+            () ->
+                mockMvc
+                    .perform(get(location).with(user("admin").roles("ADMIN")))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("GENERATED"))
+                    .andExpect(jsonPath("$.generatedAt").exists()));
   }
 
   @Test
