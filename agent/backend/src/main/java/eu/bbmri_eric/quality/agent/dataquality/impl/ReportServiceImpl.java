@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.agent.dataquality.impl;
 
+import eu.bbmri_eric.quality.agent.common.EventPublisher;
 import eu.bbmri_eric.quality.agent.common.dto.FilterDTO;
 import eu.bbmri_eric.quality.agent.common.dto.PageResponse;
 import eu.bbmri_eric.quality.agent.common.exception.EntityNotFoundException;
@@ -13,6 +14,7 @@ import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckResultDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportUpdateDTO;
+import eu.bbmri_eric.quality.agent.dataquality.event.NewReportEvent;
 import eu.bbmri_eric.quality.agent.dataquality.exception.ReportNotFoundException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -35,19 +37,19 @@ class ReportServiceImpl implements ReportService {
 
   private static final Logger log = LoggerFactory.getLogger(ReportServiceImpl.class);
   private final ReportRepository reportRepository;
-  private final ReportEventHandler reportRestEventHandler;
   private final QualityCheckService qualityCheckService;
   private final ModelMapper modelMapper;
+  private final EventPublisher publisher;
 
   ReportServiceImpl(
       ReportRepository reportRepository,
-      ReportEventHandler reportRestEventHandler,
       QualityCheckService cqlQueryService,
-      ModelMapper modelMapper) {
+      ModelMapper modelMapper,
+      EventPublisher publisher) {
     this.reportRepository = reportRepository;
-    this.reportRestEventHandler = reportRestEventHandler;
     this.qualityCheckService = cqlQueryService;
     this.modelMapper = modelMapper;
+    this.publisher = publisher;
   }
 
   @Override
@@ -55,8 +57,7 @@ class ReportServiceImpl implements ReportService {
   public ReportDTO create(ReportCreateDTO createDTO) {
     Report report = new Report();
     report = reportRepository.save(report);
-    reportRestEventHandler.onAfterCreate(report);
-    log.info("📊 Report created via API with ID: {}", report.getId());
+    publisher.publishEvent(new NewReportEvent(report.getId()));
     return modelMapper.map(report, ReportDTO.class);
   }
 

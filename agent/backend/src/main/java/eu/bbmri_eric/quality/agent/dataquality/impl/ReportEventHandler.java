@@ -2,10 +2,8 @@ package eu.bbmri_eric.quality.agent.dataquality.impl;
 
 import eu.bbmri_eric.quality.agent.common.EventPublisher;
 import eu.bbmri_eric.quality.agent.dataquality.FHIRStore;
-import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
 import eu.bbmri_eric.quality.agent.dataquality.domain.ReportStatus;
 import eu.bbmri_eric.quality.agent.dataquality.event.DQCheckResultsGatheredEvent;
-import eu.bbmri_eric.quality.agent.dataquality.event.NewReportEvent;
 import eu.bbmri_eric.quality.agent.dataquality.event.ReportGeneratedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -23,11 +21,6 @@ class ReportEventHandler {
     this.publisher = publisher;
     this.reportRepository = reportRepository;
     this.fhirStore = fhirStore;
-  }
-
-  @Transactional
-  public void onAfterCreate(Report report) {
-    publisher.publishEvent(new NewReportEvent(report.getId()));
   }
 
   @EventListener

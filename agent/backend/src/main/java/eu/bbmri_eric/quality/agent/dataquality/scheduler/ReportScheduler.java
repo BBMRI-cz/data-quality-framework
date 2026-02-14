@@ -1,4 +1,4 @@
-package eu.bbmri_eric.quality.agent.dataquality.impl;
+package eu.bbmri_eric.quality.agent.dataquality.scheduler;
 
 import eu.bbmri_eric.quality.agent.dataquality.ReportService;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportCreateDTO;
