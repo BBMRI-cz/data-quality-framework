@@ -26,54 +26,46 @@
             </div>
 
             <form class="settings-form" @submit.prevent="saveFhirSettings">
-              <div class="form-group">
-                <label for="fhirUrl" class="form-label"> Server URL </label>
-                <input
-                  id="fhirUrl"
-                  v-model="fhirSettings.url"
-                  type="url"
-                  class="form-control"
-                  placeholder="https://fhir-server.example.com/fhir"
-                  required
-                />
-                <small class="form-help"> The base URL of your FHIR® server endpoint </small>
-              </div>
+              <FormField
+                id="fhirUrl"
+                v-model="fhirSettings.url"
+                type="url"
+                label="Server URL"
+                icon="bi-link-45deg"
+                placeholder="https://fhir-server.example.com/fhir"
+                help-text="The base URL of your FHIR® server endpoint"
+                required
+              />
 
-              <div class="form-group">
-                <label for="fhirUsername" class="form-label"> Username </label>
-                <input
-                  id="fhirUsername"
-                  v-model="fhirSettings.username"
-                  type="text"
-                  class="form-control"
-                  placeholder="Enter username"
-                  required
-                  autocomplete="username"
-                />
-                <small class="form-help"> Username for authenticating with the FHIR® server </small>
-              </div>
+              <FormField
+                id="fhirUsername"
+                v-model="fhirSettings.username"
+                label="Username"
+                icon="bi-person"
+                placeholder="Enter username"
+                help-text="Username for authenticating with the FHIR® server"
+                required
+                autocomplete="username"
+              />
 
-              <div class="form-group">
-                <label for="fhirPassword" class="form-label"> Password </label>
-                <input
-                  id="fhirPassword"
-                  v-model="fhirSettings.password"
-                  type="password"
-                  class="form-control"
-                  placeholder="Enter password"
-                  required
-                  autocomplete="current-password"
-                />
-                <small class="form-help"> Password for authenticating with the FHIR® server </small>
-              </div>
+              <FormField
+                id="fhirPassword"
+                v-model="fhirSettings.password"
+                type="password"
+                label="Password"
+                icon="bi-key"
+                placeholder="Enter password"
+                help-text="Password for authenticating with the FHIR® server"
+                required
+                autocomplete="current-password"
+              />
 
-              <div class="form-actions">
-                <SaveButton
-                  type="submit"
-                  :loading="isSaving"
-                  :text="isSaving ? 'Saving...' : 'Save Changes'"
-                />
-              </div>
+              <FormActions
+                :loading="isSaving"
+                :show-cancel-button="false"
+                :save-text="isSaving ? 'Saving...' : 'Save Changes'"
+                save-icon="bi-check-circle"
+              />
             </form>
           </div>
         </div>
@@ -87,7 +79,7 @@
   import { useSettingsStore } from '@/stores/settingsStore.js';
   import PageHeader from '@/components/PageHeader.vue';
   import HealthStatusBanner from '@/components/HealthStatusBanner.vue';
-  import SaveButton from '@/components/SaveButton.vue';
+  import { FormField, FormActions } from '@/components/forms';
   import { useHealthStore } from '@/stores/healthStore.js';
   import { notificationService } from '@/services/notificationService.js';
 
@@ -209,86 +201,18 @@
     color: var(--color-primary);
   }
 
-  .section-description {
-    font-size: 0.95rem;
-    color: var(--color-gray-500);
-    margin: 0;
-    line-height: 1.5;
-  }
-
   .settings-form {
     max-width: 600px;
   }
 
-  .form-group {
-    margin-bottom: 1.75rem;
-  }
-
-  .form-label {
-    display: block;
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--color-gray-700);
-    margin-bottom: var(--spacing-sm);
-  }
-
-  .form-control {
-    width: 100%;
-    padding: 0.75rem var(--spacing-md);
-    font-size: 1rem;
-    border: 2px solid var(--color-gray-200);
-    border-radius: var(--radius-md);
-    transition: all var(--transition-base);
-    background: var(--bg-card);
-  }
-
-  .form-control:focus {
-    outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-  }
-
-  .form-help {
-    display: block;
-    margin-top: var(--spacing-sm);
-    font-size: 0.875rem;
-    color: var(--color-gray-500);
-    line-height: 1.4;
-  }
-
-  .form-actions {
-    margin-top: var(--spacing-xl);
-    padding-top: var(--spacing-lg);
+  /* Override FormActions background for settings context */
+  :deep(.form-actions) {
+    background-color: transparent;
+    border-radius: 0;
+    padding: var(--spacing-lg) 0 0 0;
     border-top: 2px solid var(--color-gray-100);
-  }
-
-  .btn {
-    padding: 0.875rem var(--spacing-xl);
-    font-size: 1rem;
-    font-weight: 600;
-    border: none;
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    transition: all var(--transition-base);
-    display: inline-flex;
-    align-items: center;
-  }
-
-  .btn-primary {
-    background: var(--gradient-primary);
-    color: white;
-    box-shadow: var(--shadow-primary);
-  }
-
-  .btn-primary:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-primary-hover);
-  }
-
-  .btn-primary:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
+    margin-top: var(--spacing-xl);
+    justify-content: flex-start;
   }
 
   @media (max-width: 768px) {
@@ -325,11 +249,6 @@
     .section-title {
       font-size: 1.2rem;
       gap: var(--spacing-sm);
-    }
-
-    .btn {
-      width: 100%;
-      justify-content: center;
     }
   }
 </style>

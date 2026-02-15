@@ -8,21 +8,60 @@
     />
 
     <div class="page-content">
-      <div class="form-container">
-        <form class="quality-check-form" @submit.prevent="onSave">
-          <QualityCheckBasicInfo
-            v-model:name="formData.name"
-            v-model:description="formData.description"
-            :errors="errors"
+      <div class="form-card">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">
+              <i class="bi bi-gear"></i>
+              Check Configuration
+            </h2>
+            <p class="section-description">
+              {{ isEditing ? 'Modify the settings for this quality check' : 'Configure the settings for your new quality check' }}
+            </p>
+          </div>
+        </div>
+
+        <form class="check-form" @submit.prevent="onSave">
+          <FormField
+            id="checkName"
+            v-model="formData.name"
+            label="Name"
+            icon="bi-tag"
+            placeholder="Enter check name"
+            :error="errors.name"
+            required
           />
 
-          <!-- Type Display (read-only for existing checks) -->
-          <div class="form-section">
-            <h6 class="section-title">
-              <i class="bi bi-tag me-2"></i>
-              Check Type
-            </h6>
-            <div v-if="isEditing" class="type-display">
+          <FormTextarea
+            id="checkDescription"
+            v-model="formData.description"
+            label="Description"
+            icon="bi-card-text"
+            :rows="2"
+            placeholder="Enter a brief description of what this check validates"
+            help-text="Optional: Helps others understand the purpose of this check"
+          />
+
+          <FormSelect
+            v-if="!isEditing"
+            id="checkType"
+            v-model="formData.type"
+            label="Check Type"
+            icon="bi-diagram-3"
+            help-text="CQL checks use Clinical Quality Language queries. Java checks are built-in implementations."
+            help-icon="bi-info-circle"
+            :options="[
+              { value: 'CQL', label: 'CQL (Clinical Quality Language)' },
+              { value: 'JAVA', label: 'Java (Built-in Check)' },
+            ]"
+          />
+
+          <div v-else class="form-field type-display-field">
+            <label class="form-label">
+              <i class="bi bi-diagram-3"></i>
+              <span>Check Type</span>
+            </label>
+            <div class="type-display">
               <span class="badge" :class="isJavaType ? 'bg-warning text-dark' : 'bg-primary'">
                 <i :class="isJavaType ? 'bi bi-code-slash' : 'bi bi-file-code'" class="me-1"></i>
                 {{ formData.type }}
@@ -31,66 +70,65 @@
                 Built-in Java check - query configuration not applicable
               </small>
             </div>
-            <div v-else class="mb-3">
-              <select
-                id="checkType"
-                v-model="formData.type"
-                class="form-select"
-              >
-                <option value="CQL">CQL (Clinical Quality Language)</option>
-                <option value="JAVA">Java (Built-in Check)</option>
-              </select>
-              <small class="form-text text-muted">
-                <i class="bi bi-info-circle me-1"></i>
-                CQL checks use Clinical Quality Language queries. Java checks are built-in implementations.
-              </small>
-            </div>
           </div>
 
-          <QualityCheckQueryConfig
+          <FormTextarea
             v-if="!isJavaType"
-            v-model:query="formData.query"
-            :errors="errors"
+            id="checkQuery"
+            v-model="formData.query"
+            label="Query"
+            icon="bi-terminal"
+            :rows="8"
+            placeholder="Enter your CQL query here..."
+            help-text="Write a CQL query to validate data quality"
+            help-icon="bi-lightbulb"
+            :error="errors.query"
+            required
+            monospace
           />
 
-          <QualityCheckThresholds
-            v-model:warning-threshold="formData.warningThreshold"
-            v-model:error-threshold="formData.errorThreshold"
-            v-model:epsilon-budget="formData.epsilonBudget"
-          />
+          <FormRow :cols="3">
+            <FormField
+              id="checkWarningThreshold"
+              v-model="formData.warningThreshold"
+              type="number"
+              label="Warning Threshold"
+              icon="bi-exclamation-triangle"
+              placeholder="10"
+              help-text="Trigger warning at this value"
+            />
 
-          <!-- Form Actions -->
-          <div class="form-actions">
-            <button
-              v-if="isEditing && !isJavaType"
-              type="button"
-              class="btn btn-danger"
-              :disabled="saving"
-              @click="onDelete"
-            >
-              <i class="bi bi-trash me-2"></i>
-              Delete
-            </button>
-            <div class="form-actions-right">
-              <button type="button" class="btn btn-secondary" @click="goBack">
-                <i class="bi bi-arrow-left me-2"></i>
-                Cancel
-              </button>
-              <SaveButton
-                type="submit"
-                :loading="saving"
-                :text="
-                  saving
-                    ? isEditing
-                      ? 'Updating...'
-                      : 'Creating...'
-                    : isEditing
-                      ? 'Update Check'
-                      : 'Create Check'
-                "
-              />
-            </div>
-          </div>
+            <FormField
+              id="checkErrorThreshold"
+              v-model="formData.errorThreshold"
+              type="number"
+              label="Error Threshold"
+              icon="bi-x-circle"
+              placeholder="30"
+              help-text="Trigger error at this value"
+            />
+
+            <FormField
+              id="checkEpsilonBudget"
+              v-model="formData.epsilonBudget"
+              type="number"
+              step="0.1"
+              label="Epsilon Budget"
+              icon="bi-shield-check"
+              placeholder="1.0"
+              help-text="Privacy budget allocation"
+            />
+          </FormRow>
+
+          <FormActions
+            :loading="saving"
+            :show-delete-button="isEditing && !isJavaType"
+            :save-text="isEditing ? 'Update Check' : 'Create Check'"
+            :save-icon="isEditing ? 'bi-check-circle' : 'bi-plus-circle'"
+            @cancel="goBack"
+            @save="onSave"
+            @delete="onDelete"
+          />
         </form>
       </div>
     </div>
@@ -101,11 +139,8 @@
   import { onMounted } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import PageHeader from '@/components/PageHeader.vue';
-  import SaveButton from '@/components/SaveButton.vue';
+  import { FormField, FormTextarea, FormSelect, FormRow, FormActions } from '@/components/forms';
   import { useQualityCheckForm } from '@/composables/useQualityCheckForm.js';
-  import QualityCheckBasicInfo from '@/components/quality-checks/QualityCheckBasicInfo.vue';
-  import QualityCheckQueryConfig from '@/components/quality-checks/QualityCheckQueryConfig.vue';
-  import QualityCheckThresholds from '@/components/quality-checks/QualityCheckThresholds.vue';
 
   const route = useRoute();
   const router = useRouter();
@@ -147,92 +182,115 @@
 <style scoped>
   .quality-check-page {
     min-height: 100%;
-    padding: 2rem;
+    padding: var(--spacing-xl);
   }
 
   .page-content {
-    width: 100%;
-  }
-
-  .form-container {
-    max-width: 900px;
+    max-width: 800px;
     margin: 0 auto;
   }
 
-  .quality-check-form {
-    background: white;
-    border-radius: 0.5rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  .form-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-sm);
+    padding: var(--spacing-2xl);
   }
 
-  .form-section {
-    padding: 2rem;
-    border-bottom: 1px solid #e9ecef;
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-xl);
   }
 
   .section-title {
-    color: #495057;
-    font-size: 0.875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-gray-800);
+    margin: 0 0 var(--spacing-sm) 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .section-title i {
+    color: var(--color-primary);
+  }
+
+  .section-description {
+    font-size: 0.95rem;
+    color: var(--color-gray-500);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  .check-form {
+    max-width: 600px;
+  }
+
+  /* Type display field styling */
+  .type-display-field {
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .type-display-field .form-label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 0.95rem;
     font-weight: 600;
-    padding-bottom: 1rem;
-    margin-bottom: 1.5rem;
-    border-bottom: 2px solid #e9ecef;
+    color: var(--color-gray-700);
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .type-display-field .form-label i {
+    color: var(--color-primary);
   }
 
   .type-display {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: var(--spacing-sm);
   }
 
   .type-display .badge {
     font-size: 0.875rem;
-    padding: 0.5rem 0.75rem;
+    padding: var(--spacing-sm) 0.75rem;
   }
 
-  /* Form Actions */
-  .form-actions {
-    display: flex;
-    gap: 1rem;
-    padding: 2rem;
-    border-top: 1px solid #e9ecef;
-    background-color: #f8f9fa;
-    border-radius: 0 0 0.5rem 0.5rem;
-    justify-content: center;
-    align-items: center;
+  /* Override FormRow margin for threshold fields */
+  :deep(.form-row .form-field) {
+    margin-bottom: 0;
   }
 
-  .form-actions-right {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-  }
-
-  .form-actions .btn {
-    min-width: 120px;
+  /* Override FormActions for this context */
+  :deep(.form-actions) {
+    background-color: transparent;
+    border-radius: 0;
+    padding: var(--spacing-lg) 0 0 0;
+    border-top: 2px solid var(--color-gray-100);
+    margin-top: var(--spacing-xl);
+    justify-content: flex-start;
   }
 
   /* Responsive adjustments */
   @media (max-width: 768px) {
     .quality-check-page {
-      padding: 1rem;
+      padding: var(--spacing-md);
     }
 
-    .form-actions {
-      flex-direction: column;
-      padding: 1.5rem;
+    .form-card {
+      padding: var(--spacing-lg);
     }
 
-    .form-actions-right {
-      flex-direction: column;
-      width: 100%;
+    .section-title {
+      font-size: 1.35rem;
     }
 
-    .form-actions .btn {
-      width: 100%;
+    .check-form {
+      max-width: 100%;
     }
   }
 
@@ -241,8 +299,17 @@
       padding: 0.75rem;
     }
 
-    .form-actions {
-      padding: 1rem;
+    .form-card {
+      padding: 1.25rem;
+    }
+
+    .section-header {
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .section-title {
+      font-size: 1.2rem;
+      gap: var(--spacing-sm);
     }
   }
 </style>

@@ -7,75 +7,57 @@
     size="sm"
     variant="primary"
     :loading="isChangingPassword"
-    :save-button-props="{ text: 'Change Password' }"
+    :save-button-props="{ text: 'Change Password', icon: 'bi-key' }"
     @close="handleClose"
     @save="changePassword"
   >
-    <form @submit.prevent="changePassword">
-      <div class="mb-4">
-        <label for="currentPassword" class="form-label fw-semibold">
-          Current Password <span class="text-danger">*</span>
-        </label>
-        <input
-          id="currentPassword"
-          v-model="passwordForm.currentPassword"
-          type="password"
-          class="form-control"
-          :class="{ 'is-invalid': validationErrors.currentPassword }"
-          placeholder="Enter current password"
-        />
-        <div v-if="validationErrors.currentPassword" class="invalid-feedback">
-          {{ validationErrors.currentPassword }}
-        </div>
-      </div>
+    <form class="modal-form" @submit.prevent="changePassword">
+      <FormField
+        id="currentPassword"
+        v-model="passwordForm.currentPassword"
+        type="password"
+        label="Current Password"
+        icon="bi-lock"
+        placeholder="Enter current password"
+        :error="validationErrors.currentPassword"
+        required
+      />
 
-      <div class="mb-4">
-        <label for="newPassword" class="form-label fw-semibold">
-          New Password <span class="text-danger">*</span>
-        </label>
-        <input
-          id="newPassword"
-          v-model="passwordForm.newPassword"
-          type="password"
-          class="form-control"
-          :class="{ 'is-invalid': validationErrors.newPassword }"
-          placeholder="Enter new password"
-        />
-        <div v-if="validationErrors.newPassword" class="invalid-feedback">
-          {{ validationErrors.newPassword }}
-        </div>
-        <small v-else class="form-text text-muted">
-          <i class="bi bi-info-circle me-1"></i>
-          Password must be at least 8 characters long
-        </small>
-      </div>
+      <FormField
+        id="newPassword"
+        v-model="passwordForm.newPassword"
+        type="password"
+        label="New Password"
+        icon="bi-key"
+        placeholder="Enter new password"
+        help-text="Password must be at least 8 characters long"
+        help-icon="bi-info-circle"
+        :error="validationErrors.newPassword"
+        required
+      />
 
-      <div class="mb-4">
-        <label for="confirmPassword" class="form-label fw-semibold">
-          Confirm New Password <span class="text-danger">*</span>
-        </label>
-        <input
-          id="confirmPassword"
-          v-model="passwordForm.confirmPassword"
-          type="password"
-          class="form-control"
-          :class="{ 'is-invalid': validationErrors.confirmPassword }"
-          placeholder="Confirm new password"
-        />
-        <div v-if="validationErrors.confirmPassword" class="invalid-feedback">
-          {{ validationErrors.confirmPassword }}
-        </div>
-      </div>
+      <FormField
+        id="confirmPassword"
+        v-model="passwordForm.confirmPassword"
+        type="password"
+        label="Confirm New Password"
+        icon="bi-key-fill"
+        placeholder="Confirm new password"
+        :error="validationErrors.confirmPassword"
+        required
+      />
 
-      <div v-if="passwordError" class="alert alert-danger py-2 mb-3" role="alert">
-        <i class="bi bi-exclamation-circle me-2"></i>
-        {{ passwordError }}
-      </div>
+      <FormAlert
+        v-if="passwordError"
+        variant="danger"
+        :message="passwordError"
+      />
 
-      <div v-if="passwordSuccess" class="alert alert-success py-2 mb-3" role="alert">
-        <i class="bi bi-check-circle me-2"></i>
-        {{ passwordSuccess }}
-      </div>
+      <FormAlert
+        v-if="passwordSuccess"
+        variant="success"
+        :message="passwordSuccess"
+      />
     </form>
   </BaseModal>
 </template>
@@ -85,6 +67,7 @@
   import { storeToRefs } from 'pinia';
   import { useUserStore } from '@/stores/userStore.js';
   import BaseModal from './BaseModal.vue';
+  import { FormField, FormAlert } from '@/components/forms';
 
   const props = defineProps({
     isVisible: {
@@ -144,45 +127,20 @@
 </script>
 
 <style scoped>
-  .form-label {
-    margin-bottom: 0.5rem;
-    font-size: 1rem;
-    color: #495057;
+  .modal-form {
+    padding: var(--spacing-sm) 0;
   }
 
-  .form-control {
-    font-size: 1rem;
-    padding: 0.875rem 1rem;
-    border: 1px solid #dee2e6;
-    border-radius: 0.5rem;
-    transition: all 0.2s ease;
+  .modal-form :deep(.form-field) {
+    margin-bottom: var(--spacing-lg);
   }
 
-  .form-control:focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+  .modal-form :deep(.form-field:last-of-type) {
+    margin-bottom: var(--spacing-md);
   }
 
-  .form-text {
-    display: block;
-    margin-top: 0.5rem;
-    font-size: 0.875rem;
-  }
-
-  .alert {
-    border-radius: 0.5rem;
-    border: none;
-    display: flex;
-    align-items: center;
-  }
-
-  .alert-danger {
-    background-color: #fee;
-    color: #c00;
-  }
-
-  .alert-success {
-    background-color: #d4edda;
-    color: #155724;
+  .modal-form :deep(.form-alert) {
+    margin-top: var(--spacing-md);
+    margin-bottom: 0;
   }
 </style>
