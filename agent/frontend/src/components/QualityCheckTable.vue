@@ -1,13 +1,8 @@
 <template>
   <div>
 
-    <!-- Loading state -->
-    <div v-if="loading" class="loading-state">
-      <div class="spinner"></div>
-    </div>
-
     <!-- Error state -->
-    <div v-else-if="error" class="error-state">
+    <div v-if="error" class="error-state">
       <h6>Error Loading Quality Checks</h6>
       <p>{{ error }}</p>
     </div>
@@ -16,6 +11,7 @@
     <BaseTable
       v-else
       title="Quality Checks"
+      :loading="loading"
       :columns="columns"
       :items="qualityChecks"
       :total-elements="pagination.totalElements"
@@ -91,24 +87,6 @@ onMounted(() => {
   margin-right: var(--spacing-sm);
 }
 
-.loading-state {
-  display: flex;
-  justify-content: center;
-  padding: 4rem 0;
-}
-
-.spinner {
-  width: 2rem;
-  height: 2rem;
-  border: 3px solid var(--color-gray-200);
-  border-top-color: var(--color-primary);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
 
 .error-state {
   background: #fee2e2;

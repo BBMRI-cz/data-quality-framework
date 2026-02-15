@@ -5,36 +5,42 @@
       <span class="base-table__count">{{ items.length }} {{ itemLabel }}</span>
     </div>
     <div class="base-table__body">
-      <Transition name="table-fade" mode="out-in">
-        <table :key="tableKey">
-          <thead>
-            <tr>
-              <th v-for="col in columns" :key="col.key" :class="col.headerClass">
-                {{ col.label }}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="item in items"
-              :key="item[itemKey]"
-              @click="$emit('row-click', item)"
-            >
-              <td v-for="col in columns" :key="col.key" :class="getCellClass(col, item)">
-                <slot :name="col.key" :item="item" :value="item[col.key]">
-                  {{ formatValue(item[col.key], col) }}
-                </slot>
-              </td>
-            </tr>
-            <tr v-if="items.length === 0">
-              <td :colspan="columns.length" class="base-table__empty">
-                <i :class="emptyIcon"></i>
-                <p>{{ emptyText }}</p>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </Transition>
+      <table>
+        <thead>
+          <tr>
+            <th v-for="col in columns" :key="col.key" :class="col.headerClass">
+              {{ col.label }}
+            </th>
+          </tr>
+        </thead>
+        <tbody v-if="loading">
+          <tr>
+            <td :colspan="columns.length" class="base-table__loading">
+              <div class="spinner"></div>
+              <p>Loading...</p>
+            </td>
+          </tr>
+        </tbody>
+        <tbody v-else>
+          <tr
+            v-for="item in items"
+            :key="item[itemKey]"
+            @click="$emit('row-click', item)"
+          >
+            <td v-for="col in columns" :key="col.key" :class="getCellClass(col, item)">
+              <slot :name="col.key" :item="item" :value="item[col.key]">
+                {{ formatValue(item[col.key], col) }}
+              </slot>
+            </td>
+          </tr>
+          <tr v-if="showEmptyState">
+            <td :colspan="columns.length" class="base-table__empty">
+              <i :class="emptyIcon"></i>
+              <p>{{ emptyText }}</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
     <div v-if="totalPages > 1" class="base-table__pagination">
       <button
@@ -104,16 +110,15 @@ const props = defineProps({
   },
   loading: {
     type: Boolean,
-    default: false,
+    default: true,
   },
 });
 
 defineEmits(['row-click', 'page-change']);
 
-// Create a unique key based on page and first item ID for reliable transitions
-const tableKey = computed(() => {
-  const firstItemId = props.items.length > 0 ? props.items[0][props.itemKey] : 'empty';
-  return `${props.currentPage}-${firstItemId}`;
+// Show empty state only when not loading and no items
+const showEmptyState = computed(() => {
+  return props.items.length === 0;
 });
 
 const formatValue = (value, col) => {
@@ -138,16 +143,6 @@ const getCellClass = (col, item) => {
   overflow: hidden;
 }
 
-/* Page transition animations */
-.table-fade-enter-active,
-.table-fade-leave-active {
-  transition: opacity 0.2s ease;
-}
-
-.table-fade-enter-from,
-.table-fade-leave-to {
-  opacity: 0;
-}
 
 .base-table__header {
   display: flex;
@@ -253,6 +248,43 @@ tbody tr:hover {
 
 .base-table__empty p {
   margin: 0;
+}
+
+.base-table__loading {
+  text-align: center;
+  padding: var(--spacing-3xl) var(--spacing-lg);
+  color: var(--color-gray-500);
+}
+
+.base-table__loading div,
+.base-table__loading p {
+  display: inline-block;
+}
+
+.base-table__loading .spinner {
+  display: block;
+  margin: 0 auto;
+}
+
+.base-table__loading p {
+  display: block;
+  margin: var(--spacing-md) 0 0;
+  font-size: 0.875rem;
+}
+
+.spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 3px solid var(--color-gray-200);
+  border-top-color: var(--color-primary, #3b82f6);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .base-table__pagination {

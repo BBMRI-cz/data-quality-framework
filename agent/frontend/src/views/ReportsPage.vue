@@ -28,19 +28,9 @@
         <StatCard :number="latestReportTime" label="Latest Report" number-class="text-primary" />
       </div>
 
-      <!-- Loading state -->
-      <div
-        v-if="reportStore.isGenerating && reportStore.reports.length === 0"
-        class="loading-state"
-      >
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Loading...</span>
-        </div>
-      </div>
-
       <!-- Reports table -->
       <ReportsTable
-        v-else
+        :loading="reportStore.isLoading"
         :reports="sortedReports"
         :total-elements="reportStore.pagination.totalElements"
         :total-pages="reportStore.pagination.totalPages"
@@ -129,12 +119,6 @@
     margin-bottom: var(--spacing-md);
   }
 
-  .loading-state {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 300px;
-  }
 
   /* Stats cards */
   .stats-grid {

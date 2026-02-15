@@ -6,6 +6,7 @@ export const useReportStore = defineStore('report', {
     reports: [],
     currentReport: null,
     latestReport: null,
+    isLoading: false,
     isGenerating: false,
     pagination: {
       page: 0,
@@ -17,6 +18,7 @@ export const useReportStore = defineStore('report', {
 
   actions: {
     async fetchReports({ page = 0, size = 10 } = {}) {
+      this.isLoading = true;
       try {
         const result = await reportService.getAll({ page, size });
         this.reports = result.items;
@@ -29,6 +31,8 @@ export const useReportStore = defineStore('report', {
       } catch (err) {
         console.error(err);
         this.reports = [];
+      } finally {
+        this.isLoading = false;
       }
     },
 
