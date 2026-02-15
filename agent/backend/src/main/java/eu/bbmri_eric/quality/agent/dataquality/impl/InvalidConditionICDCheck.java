@@ -9,10 +9,12 @@ import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Condition;
 import org.hl7.fhir.r4.model.Resource;
 
+@Slf4j
 class InvalidConditionICDCheck implements DataQualityCheck {
   static final Long CHECK_ID = 1001L;
 
@@ -63,7 +65,7 @@ class InvalidConditionICDCheck implements DataQualityCheck {
 
       return ResultDTO.resultFromIdPaths(invalidIds, "Patient");
     } catch (Exception e) {
-      System.err.println("Error processing " + getName() + ": " + e.getMessage());
+      log.error("Error processing {}: {}", getName(), e.getMessage());
       return new ResultDTO(e.getMessage());
     }
   }

@@ -10,9 +10,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Resource;
 
+@Slf4j
 class SurvivalRateCheck implements StratifiedDataQualityCheck {
   static final Long CHECK_ID = 1002L;
 
@@ -43,7 +45,7 @@ class SurvivalRateCheck implements StratifiedDataQualityCheck {
 
       return new ResultDTO(totalAlive, "Patient", Collections.emptySet());
     } catch (Exception e) {
-      System.err.println("Error processing " + getName() + ": " + e.getMessage());
+      log.error("Error processing {}: {}", getName(), e.getMessage());
       return new ResultDTO(e.getMessage());
     }
   }
@@ -63,7 +65,7 @@ class SurvivalRateCheck implements StratifiedDataQualityCheck {
       }
       return results;
     } catch (Exception e) {
-      System.err.println("Error processing stratified " + getName() + ": " + e.getMessage());
+      log.error("Error processing stratified {}: {}", getName(), e.getMessage());
       results.put("error", new ResultDTO(e.getMessage()));
       return results;
     }
