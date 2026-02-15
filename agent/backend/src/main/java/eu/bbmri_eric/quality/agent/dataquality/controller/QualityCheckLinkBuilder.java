@@ -26,7 +26,7 @@ class QualityCheckLinkBuilder {
             linkTo(
                     methodOn(QualityCheckController.class)
                         .findAll(new FilterDTO(0, 20, null, FilterDTO.SortOrder.ASC)))
-                .withRel("qualityChecks"));
+                .withRel("quality-checks"));
   }
 
   public PagedModel<EntityModel<QualityCheckDTO>> toPagedModel(
