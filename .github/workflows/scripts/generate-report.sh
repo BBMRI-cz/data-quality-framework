@@ -1,12 +1,4 @@
-#!/bin/bash
-
-# Test: Generate Report on Agent
-# This script tests report generation by:
-# 1. Authenticating with the agent to get a JWT token
-# 2. Triggering report generation
-# 3. Polling until the report status is GENERATED
-
-set -e
+#!/bin/bash -e
 
 # Configuration
 AGENT_URL="${AGENT_URL:-http://localhost:8081}"

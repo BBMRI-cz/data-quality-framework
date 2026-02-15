@@ -1,5 +1,4 @@
-#!/bin/bash
-set -e
+#!/bin/bash -e
 
 # Configuration
 AGENT_URL="${AGENT_URL:-http://localhost:8081}"
