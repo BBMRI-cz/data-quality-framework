@@ -9,6 +9,7 @@ export {
   getUsername,
   getUserId,
   getDefaultPasswordFlag,
+  setDefaultPasswordFlag,
   getAuthToken,
   setAuthToken,
   setUserData,

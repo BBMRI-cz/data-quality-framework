@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { getDefaultPasswordFlag, getUserId } from '@/api';
+import { getDefaultPasswordFlag, setDefaultPasswordFlag, getUserId } from '@/api';
 import { changePassword as changePasswordApi } from '@/services/authService.js';
 
 export const useUserStore = defineStore('user', {
@@ -18,9 +18,7 @@ export const useUserStore = defineStore('user', {
 
     updateDefaultPasswordStatus(status) {
       this.defaultPasswordFlag = status;
-      if (typeof status === 'boolean') {
-        sessionStorage.setItem('defaultPasswordFlag', status.toString());
-      }
+      setDefaultPasswordFlag(status);
     },
 
     resetPasswordState() {

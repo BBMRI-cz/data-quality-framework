@@ -5,13 +5,14 @@
 
 const state = {
   authToken: null,
+  defaultPasswordFlag: false,
 };
 
 export function clearAuth() {
   state.authToken = null;
+  state.defaultPasswordFlag = false;
   sessionStorage.removeItem('authToken');
   sessionStorage.removeItem('username');
-  sessionStorage.removeItem('defaultPasswordFlag');
   sessionStorage.removeItem('userId');
 }
 
@@ -28,8 +29,13 @@ export function getUserId() {
 }
 
 export function getDefaultPasswordFlag() {
-  const stored = sessionStorage.getItem('defaultPasswordFlag');
-  return stored === 'true';
+  return state.defaultPasswordFlag;
+}
+
+export function setDefaultPasswordFlag(flag) {
+  if (typeof flag === 'boolean') {
+    state.defaultPasswordFlag = flag;
+  }
 }
 
 export function getAuthToken() {
@@ -48,7 +54,7 @@ export function setUserData(user, fallbackUsername) {
   sessionStorage.setItem('username', serverUsername);
 
   if (user && typeof user.defaultPassword === 'boolean') {
-    sessionStorage.setItem('defaultPasswordFlag', user.defaultPassword.toString());
+    state.defaultPasswordFlag = user.defaultPassword;
   }
 
   if (user && user.userId) {
