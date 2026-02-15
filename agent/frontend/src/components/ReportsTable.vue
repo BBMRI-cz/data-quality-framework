@@ -1,6 +1,7 @@
 <template>
   <BaseTable
     title="Reports"
+    :loading="loading"
     :columns="columns"
     :items="reports"
     :total-elements="totalElements"
@@ -42,6 +43,10 @@ defineProps({
   reports: {
     type: Array,
     default: () => [],
+  },
+  loading: {
+    type: Boolean,
+    default: false,
   },
   totalElements: {
     type: Number,
