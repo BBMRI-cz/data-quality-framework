@@ -1,74 +1,27 @@
 <template>
   <div
-    class="toast align-items-center border-0 show mobile-toast"
+    class="notification-toast"
     :class="toastClass"
     role="alert"
     aria-live="assertive"
     aria-atomic="true"
   >
-    <div class="d-flex">
-      <div class="toast-body d-flex align-items-center">
-        <div class="me-2 notification-icon">
-          <svg
-            v-if="type === 'success'"
-            width="16"
-            height="16"
-            fill="currentColor"
-            class="text-success"
-            viewBox="0 0 16 16"
-          >
-            <path
-              d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.061L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"
-            />
-          </svg>
-          <svg
-            v-else-if="type === 'error'"
-            width="16"
-            height="16"
-            fill="currentColor"
-            class="text-danger"
-            viewBox="0 0 16 16"
-          >
-            <path
-              d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"
-            />
-          </svg>
-          <svg
-            v-else-if="type === 'warning'"
-            width="16"
-            height="16"
-            fill="currentColor"
-            class="text-warning"
-            viewBox="0 0 16 16"
-          >
-            <path
-              d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"
-            />
-          </svg>
-          <svg
-            v-else
-            width="16"
-            height="16"
-            fill="currentColor"
-            class="text-info"
-            viewBox="0 0 16 16"
-          >
-            <path
-              d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"
-            />
-          </svg>
-        </div>
-        <div class="flex-grow-1">
-          <div class="fw-semibold notification-title">{{ title }}</div>
-          <div v-if="message" class="small opacity-75 notification-message">{{ message }}</div>
-        </div>
+    <div class="notification-content">
+      <div class="notification-icon">
+        <i :class="iconClass"></i>
+      </div>
+      <div class="notification-text">
+        <div class="notification-title">{{ title }}</div>
+        <div v-if="message" class="notification-message">{{ message }}</div>
       </div>
       <button
         type="button"
-        class="btn-close me-2 m-auto mobile-close-btn"
+        class="notification-close"
         aria-label="Close"
         @click="closeNotification"
-      ></button>
+      >
+        <i class="bi bi-x-lg"></i>
+      </button>
     </div>
   </div>
 </template>
@@ -103,16 +56,28 @@
   const emit = defineEmits(['close']);
 
   const toastClass = computed(() => {
-    const baseClass = 'text-bg-';
     switch (props.type) {
       case 'success':
-        return baseClass + 'success';
+        return 'notification-success';
       case 'error':
-        return baseClass + 'danger';
+        return 'notification-error';
       case 'warning':
-        return baseClass + 'warning';
+        return 'notification-warning';
       default:
-        return baseClass + 'info';
+        return 'notification-info';
+    }
+  });
+
+  const iconClass = computed(() => {
+    switch (props.type) {
+      case 'success':
+        return 'bi bi-check-circle-fill';
+      case 'error':
+        return 'bi bi-bug-fill';
+      case 'warning':
+        return 'bi bi-exclamation-triangle-fill';
+      default:
+        return 'bi bi-info-circle-fill';
     }
   });
 
@@ -138,64 +103,125 @@
 </script>
 
 <style scoped>
-  .mobile-toast {
+  .notification-toast {
+    display: flex;
+    width: 100%;
     margin-bottom: var(--spacing-sm);
-    box-shadow: var(--shadow-md);
     border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    border-left-width: 4px;
+    border-left-style: solid;
+    overflow: hidden;
+    transition: all var(--transition-base);
+  }
+
+  .notification-toast.notification-success {
+    background-color: #d1e7dd;
+    border-left-color: var(--color-success);
+    color: #0f5132;
+  }
+
+  .notification-toast.notification-error {
+    background-color: #f8d7da;
+    border-left-color: var(--color-danger);
+    color: #842029;
+  }
+
+  .notification-toast.notification-warning {
+    background-color: #fff3cd;
+    border-left-color: var(--color-warning);
+    color: #664d03;
+  }
+
+  .notification-toast.notification-info {
+    background-color: #cff4fc;
+    border-left-color: var(--color-info);
+    color: #055160;
+  }
+
+  .notification-content {
+    display: flex;
+    align-items: flex-start;
+    width: 100%;
+    padding: var(--spacing-md) var(--spacing-lg);
+    gap: var(--spacing-md);
   }
 
   .notification-icon {
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    margin-top: 2px;
+  }
+
+  .notification-text {
+    flex: 1;
+    min-width: 0;
   }
 
   .notification-title {
-    font-size: 0.9rem;
-    line-height: 1.3;
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: var(--spacing-xs);
   }
 
   .notification-message {
-    font-size: 0.8rem;
-    line-height: 1.4;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    opacity: 0.9;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
   }
 
-  .mobile-close-btn {
-    min-width: 24px;
-    min-height: 24px;
+  .notification-close {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    color: inherit;
+    opacity: 0.6;
+    cursor: pointer;
+    transition:
+      opacity var(--transition-fast),
+      background-color var(--transition-fast);
+  }
+
+  .notification-close:hover {
+    opacity: 1;
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+
+  .notification-close i {
+    font-size: 1rem;
   }
 
   @media (max-width: 768px) {
-    .mobile-toast {
-      margin-bottom: 0.75rem;
-      font-size: 0.9rem;
-    }
-
-    .toast-body {
-      padding: 0.75rem var(--spacing-md);
+    .notification-content {
+      padding: var(--spacing-md);
+      gap: var(--spacing-sm);
     }
 
     .notification-title {
-      font-size: 0.95rem;
+      font-size: 0.9rem;
     }
 
     .notification-message {
-      font-size: 0.85rem;
-      margin-top: var(--spacing-xs);
+      font-size: 0.813rem;
     }
 
-    .mobile-close-btn {
-      min-width: 32px;
-      min-height: 32px;
-      margin-right: var(--spacing-sm) !important;
-    }
-  }
-
-  @media (max-width: 576px) {
-    .mobile-toast {
-      border-radius: var(--radius-lg);
-    }
-
-    .toast-body {
-      padding: var(--spacing-md);
+    .notification-close {
+      width: 36px;
+      height: 36px;
     }
   }
 </style>

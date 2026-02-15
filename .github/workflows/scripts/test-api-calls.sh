@@ -1,17 +1,17 @@
 #!/bin/bash
-
-# Test: Basic Agent API Calls
-# This script tests basic API functionality by:
-# 1. Authenticating with the agent to get a JWT token
-# 2. Getting the list of reports
-# 3. Getting the list of quality checks
-
 set -e
 
 # Configuration
 AGENT_URL="${AGENT_URL:-http://localhost:8081}"
 AGENT_ADMIN_USERNAME="${AGENT_ADMIN_USERNAME:-admin}"
 AGENT_ADMIN_PASSWORD="${AGENT_ADMIN_PASSWORD:-adminpass}"
+
+# API Endpoints
+API_LOGIN="${AGENT_URL}/api/auth/login"
+API_REPORTS="${AGENT_URL}/api/reports"
+API_QUALITY_CHECKS="${AGENT_URL}/api/quality-checks"
+API_SETTINGS="${AGENT_URL}/api/settings"
+API_HEALTH="${AGENT_URL}/api/health"
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -24,7 +24,7 @@ echo -e "${YELLOW}Starting basic API calls test${NC}"
 # Step 1: Get authentication token from agent
 echo -e "\n${YELLOW}Step 1: Authenticating with agent to get JWT token...${NC}"
 AGENT_LOGIN_RESPONSE=$(curl -s -X POST \
-  "${AGENT_URL}/api/auth/login" \
+  "${API_LOGIN}" \
   -H "Content-Type: application/json" \
   -d '{
     "username": "'${AGENT_ADMIN_USERNAME}'",
@@ -47,7 +47,7 @@ echo -e "${GREEN}✓ Successfully obtained JWT token from agent${NC}"
 # Step 2: Get reports
 echo -e "\n${YELLOW}Step 2: Getting list of reports...${NC}"
 REPORTS_RESPONSE=$(curl -s -w "\n%{http_code}" -X GET \
-  "${AGENT_URL}/api/reports" \
+  "${API_REPORTS}" \
   -H "Authorization: Bearer ${AGENT_JWT_TOKEN}")
 
 REPORTS_HTTP_STATUS=$(echo "$REPORTS_RESPONSE" | tail -n 1)
@@ -67,7 +67,7 @@ echo -e "${GREEN}✓ Successfully retrieved reports (found $REPORT_COUNT report(
 # Step 3: Get quality checks
 echo -e "\n${YELLOW}Step 3: Getting list of quality checks...${NC}"
 CHECKS_RESPONSE=$(curl -s -w "\n%{http_code}" -X GET \
-  "${AGENT_URL}/api/qualityChecks" \
+  "${API_QUALITY_CHECKS}" \
   -H "Authorization: Bearer ${AGENT_JWT_TOKEN}")
 
 CHECKS_HTTP_STATUS=$(echo "$CHECKS_RESPONSE" | tail -n 1)
@@ -87,7 +87,7 @@ echo -e "${GREEN}✓ Successfully retrieved quality checks (found $CHECK_COUNT c
 # Step 4: Get settings
 echo -e "\n${YELLOW}Step 4: Getting agent settings...${NC}"
 SETTINGS_RESPONSE=$(curl -s -w "\n%{http_code}" -X GET \
-  "${AGENT_URL}/api/settings" \
+  "${API_SETTINGS}" \
   -H "Authorization: Bearer ${AGENT_JWT_TOKEN}")
 
 SETTINGS_HTTP_STATUS=$(echo "$SETTINGS_RESPONSE" | tail -n 1)
@@ -106,7 +106,7 @@ echo -e "${GREEN}✓ Successfully retrieved agent settings${NC}"
 # Step 5: Get health endpoint (no auth required)
 echo -e "\n${YELLOW}Step 5: Checking health endpoint...${NC}"
 HEALTH_RESPONSE=$(curl -s -w "\n%{http_code}" -X GET \
-  "${AGENT_URL}/api/health")
+  "${API_HEALTH}")
 
 HEALTH_HTTP_STATUS=$(echo "$HEALTH_RESPONSE" | tail -n 1)
 HEALTH_BODY=$(echo "$HEALTH_RESPONSE" | head -n -1)

@@ -5,6 +5,7 @@
 import axios from 'axios';
 import { getAuthToken, clearAuth } from './auth.js';
 import { useErrorStore } from '@/stores/errorStore.js';
+import { notificationService } from '@/services/notificationService.js';
 
 export const api = axios.create({
   headers: {
@@ -34,6 +35,9 @@ api.interceptors.response.use(
       if (window.location.pathname !== '/login') {
         window.location.assign(`/login?redirect=${redirect}&sessionExpired=true`);
       }
+    } else if (error.response?.status === 400) {
+      const message = error.response?.data?.detail || error.response?.data?.message || 'Bad request';
+      notificationService.error('Error', message, { autoClose: false });
     } else if (error.response?.status === 404) {
       if (window.location.pathname !== '/login') {
         const errorStore = useErrorStore();

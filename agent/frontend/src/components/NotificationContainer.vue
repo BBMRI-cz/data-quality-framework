@@ -1,16 +1,18 @@
 <template>
   <Teleport to="body">
     <div class="notification-container mobile-notification-container">
-      <NotificationItem
-        v-for="notification in notifications"
-        :key="notification.id"
-        :type="notification.type"
-        :title="notification.title"
-        :message="notification.message"
-        :duration="notification.duration"
-        :auto-close="notification.autoClose"
-        @close="removeNotification(notification.id)"
-      />
+      <TransitionGroup name="notification">
+        <NotificationItem
+          v-for="notification in notifications"
+          :key="notification.id"
+          :type="notification.type"
+          :title="notification.title"
+          :message="notification.message"
+          :duration="notification.duration"
+          :auto-close="notification.autoClose"
+          @close="removeNotification(notification.id)"
+        />
+      </TransitionGroup>
     </div>
   </Teleport>
 </template>
@@ -29,7 +31,7 @@
     notifications.push({
       id,
       type: 'info',
-      duration: 2000,
+      duration: 8000,
       autoClose: true,
       ...notification,
     });
@@ -77,26 +79,54 @@
 <style scoped>
   .notification-container {
     position: fixed;
-    top: var(--spacing-md);
+    top: calc(var(--navbar-height) + var(--spacing-sm));
     right: var(--spacing-md);
     z-index: var(--z-modal);
-    max-width: 400px;
+    max-width: 500px;
     width: 100%;
+  }
+
+  /* Transition animations */
+  .notification-enter-active {
+    transition: all var(--transition-slow);
+  }
+
+  .notification-leave-active {
+    transition: all var(--transition-base);
+  }
+
+  .notification-enter-from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+
+  .notification-leave-to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+
+  .notification-move {
+    transition: transform var(--transition-base);
   }
 
   /* Mobile responsive notifications */
   @media (max-width: 768px) {
     .mobile-notification-container {
-      top: 80px;
+      top: calc(var(--navbar-height-mobile) + var(--spacing-sm));
       right: var(--spacing-sm);
       left: var(--spacing-sm);
       max-width: none;
+    }
+
+    .notification-enter-from,
+    .notification-leave-to {
+      transform: translateY(-100%);
     }
   }
 
   @media (max-width: 576px) {
     .mobile-notification-container {
-      top: 80px;
+      top: calc(var(--navbar-height-mobile) + var(--spacing-sm));
       right: var(--spacing-xs);
       left: var(--spacing-xs);
     }
