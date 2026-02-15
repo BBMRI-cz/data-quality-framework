@@ -19,12 +19,6 @@
           number-class="text-dark"
           help-text="Total number of quality checks configured"
         />
-        <StatCard
-          :number="totalEpsilonBudget.toFixed(2)"
-          label="Total Epsilon Budget"
-          number-class="text-primary"
-          help-text="Combined epsilon budget across all quality checks for differential privacy"
-        />
       </div>
 
       <QualityCheckTable />
@@ -60,7 +54,6 @@
     justify-content: flex-end;
     margin-bottom: var(--spacing-md);
   }
-
 
   .stats-grid {
     display: grid;

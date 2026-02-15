@@ -3,7 +3,11 @@
     <div class="card-body p-3 position-relative d-flex flex-column">
       <!-- Icon in top right corner -->
       <div class="position-absolute top-0 end-0 p-3">
-        <i class="bi bi-check-square" :class="getResultColorClass(check)" style="font-size: 1.5rem; opacity: 0.75"></i>
+        <i
+          class="bi bi-check-square"
+          :class="getResultColorClass(check)"
+          style="font-size: 1.5rem; opacity: 0.75"
+        ></i>
       </div>
 
       <!-- Check Name -->

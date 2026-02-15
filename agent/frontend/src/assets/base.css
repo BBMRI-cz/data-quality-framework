@@ -178,7 +178,9 @@ body {
   font-size: 1rem;
   border: 1px solid var(--color-gray-300);
   border-radius: var(--radius-md);
-  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+  transition:
+    border-color var(--transition-base),
+    box-shadow var(--transition-base);
   background: var(--bg-card);
 }
 
@@ -267,7 +269,9 @@ body {
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: transform var(--transition-base), box-shadow var(--transition-base);
+  transition:
+    transform var(--transition-base),
+    box-shadow var(--transition-base);
   box-shadow: var(--shadow-primary);
   display: flex;
   align-items: center;

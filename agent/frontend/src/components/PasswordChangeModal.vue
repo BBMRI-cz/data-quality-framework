@@ -47,17 +47,9 @@
         required
       />
 
-      <FormAlert
-        v-if="passwordError"
-        variant="danger"
-        :message="passwordError"
-      />
+      <FormAlert v-if="passwordError" variant="danger" :message="passwordError" />
 
-      <FormAlert
-        v-if="passwordSuccess"
-        variant="success"
-        :message="passwordSuccess"
-      />
+      <FormAlert v-if="passwordSuccess" variant="success" :message="passwordSuccess" />
     </form>
   </BaseModal>
 </template>

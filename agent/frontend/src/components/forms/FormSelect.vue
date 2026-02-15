@@ -200,4 +200,3 @@
     color: var(--color-gray-400);
   }
 </style>
-

@@ -19,10 +19,7 @@
     },
   });
 
-  const rowClasses = computed(() => [
-    `form-row-cols-${props.cols}`,
-    `form-row-gap-${props.gap}`,
-  ]);
+  const rowClasses = computed(() => [`form-row-cols-${props.cols}`, `form-row-gap-${props.gap}`]);
 </script>
 
 <style scoped>
@@ -64,4 +61,3 @@
     }
   }
 </style>
-

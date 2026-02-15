@@ -119,7 +119,6 @@
     margin-bottom: var(--spacing-md);
   }
 
-
   /* Stats cards */
   .stats-grid {
     display: grid;

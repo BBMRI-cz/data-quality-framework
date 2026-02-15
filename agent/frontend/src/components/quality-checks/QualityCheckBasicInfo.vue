@@ -44,4 +44,3 @@
 
   defineEmits(['update:name', 'update:description']);
 </script>
-

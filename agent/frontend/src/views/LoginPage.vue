@@ -90,155 +90,157 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
-import { useRoute } from 'vue-router';
-import Copyright from '@/components/Copyright.vue';
-import LoginInfoPanel from '@/components/LoginInfoPanel.vue';
-import { useLoginForm } from '@/composables/useLoginForm.js';
-import { notificationService } from '@/services/notificationService.js';
+  import { onMounted } from 'vue';
+  import { useRoute } from 'vue-router';
+  import Copyright from '@/components/Copyright.vue';
+  import LoginInfoPanel from '@/components/LoginInfoPanel.vue';
+  import { useLoginForm } from '@/composables/useLoginForm.js';
+  import { notificationService } from '@/services/notificationService.js';
 
-const route = useRoute();
+  const route = useRoute();
 
-const { username, password, loading, error, showPassword, togglePasswordVisibility, login } =
-  useLoginForm();
+  const { username, password, loading, error, showPassword, togglePasswordVisibility, login } =
+    useLoginForm();
 
-onMounted(() => {
-  if (route.query.sessionExpired === 'true') {
-    notificationService.warning('Session Expired', 'Your session has expired. Please log in again.');
-  }
-});
+  onMounted(() => {
+    if (route.query.sessionExpired === 'true') {
+      notificationService.warning(
+        'Session Expired',
+        'Your session has expired. Please log in again.'
+      );
+    }
+  });
 </script>
 
 <style scoped>
-.login-page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--color-gray-100);
-  padding: var(--spacing-md);
-}
-
-.login-page__container {
-  width: 100%;
-  max-width: 1000px;
-}
-
-.login-card {
-  background: var(--bg-card);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lg);
-  overflow: hidden;
-}
-
-.login-card__content {
-  display: grid;
-  grid-template-columns: 1fr;
-  min-height: 72vh;
-}
-
-.login-card__info {
-  display: none;
-}
-
-.login-card__form-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-lg);
-}
-
-.login-form-container {
-  width: 100%;
-  max-width: 400px;
-}
-
-/* Mobile header */
-.mobile-header {
-  text-align: center;
-  margin-bottom: var(--spacing-lg);
-}
-
-.mobile-header__icon {
-  width: 64px;
-  height: 64px;
-  background: var(--gradient-primary);
-  border-radius: var(--radius-xl);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 2rem;
-  margin-bottom: var(--spacing-md);
-  box-shadow: var(--shadow-primary);
-}
-
-.mobile-header__title {
-  font-size: 1.25rem;
-  font-weight: bold;
-  color: var(--color-gray-800);
-  margin-bottom: var(--spacing-xs);
-}
-
-.mobile-header__subtitle {
-  font-size: 0.875rem;
-  color: var(--color-gray-500);
-  margin: 0;
-}
-
-/* Form header */
-.login-form-header {
-  text-align: center;
-  margin-bottom: var(--spacing-lg);
-}
-
-.login-logo {
-  width: 200px;
-  height: 200px;
-  margin-bottom: var(--spacing-md);
-}
-
-.login-form-header__title {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: var(--color-gray-800);
-  margin-bottom: var(--spacing-xs);
-}
-
-.login-form-header__subtitle {
-  font-size: 0.875rem;
-  color: var(--color-gray-500);
-  margin: 0;
-}
-
-/* Large screens */
-@media (min-width: 992px) {
-  .login-card__content {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .login-card__info {
-    display: flex;
-  }
-
-  .login-card__form-wrapper {
-    padding: var(--spacing-2xl);
-  }
-
-  .mobile-header {
-    display: none;
-  }
-}
-
-
-/* Extra small screens */
-@media (max-width: 576px) {
   .login-page {
-    padding: var(--spacing-sm);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-gray-100);
+    padding: var(--spacing-md);
+  }
+
+  .login-page__container {
+    width: 100%;
+    max-width: 1000px;
   }
 
   .login-card {
-    border-radius: var(--radius-lg);
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
   }
-}
+
+  .login-card__content {
+    display: grid;
+    grid-template-columns: 1fr;
+    min-height: 72vh;
+  }
+
+  .login-card__info {
+    display: none;
+  }
+
+  .login-card__form-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-lg);
+  }
+
+  .login-form-container {
+    width: 100%;
+    max-width: 400px;
+  }
+
+  /* Mobile header */
+  .mobile-header {
+    text-align: center;
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .mobile-header__icon {
+    width: 64px;
+    height: 64px;
+    background: var(--gradient-primary);
+    border-radius: var(--radius-xl);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2rem;
+    margin-bottom: var(--spacing-md);
+    box-shadow: var(--shadow-primary);
+  }
+
+  .mobile-header__title {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: var(--color-gray-800);
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .mobile-header__subtitle {
+    font-size: 0.875rem;
+    color: var(--color-gray-500);
+    margin: 0;
+  }
+
+  /* Form header */
+  .login-form-header {
+    text-align: center;
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .login-logo {
+    width: 200px;
+    height: 200px;
+    margin-bottom: var(--spacing-md);
+  }
+
+  .login-form-header__title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--color-gray-800);
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .login-form-header__subtitle {
+    font-size: 0.875rem;
+    color: var(--color-gray-500);
+    margin: 0;
+  }
+
+  /* Large screens */
+  @media (min-width: 992px) {
+    .login-card__content {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .login-card__info {
+      display: flex;
+    }
+
+    .login-card__form-wrapper {
+      padding: var(--spacing-2xl);
+    }
+
+    .mobile-header {
+      display: none;
+    }
+  }
+
+  /* Extra small screens */
+  @media (max-width: 576px) {
+    .login-page {
+      padding: var(--spacing-sm);
+    }
+
+    .login-card {
+      border-radius: var(--radius-lg);
+    }
+  }
 </style>

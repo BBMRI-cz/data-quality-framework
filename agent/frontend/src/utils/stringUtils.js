@@ -49,4 +49,3 @@ export function isValidJson(str) {
     return false;
   }
 }
-

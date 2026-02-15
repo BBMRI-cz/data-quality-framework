@@ -16,7 +16,11 @@
               Check Configuration
             </h2>
             <p class="section-description">
-              {{ isEditing ? 'Modify the settings for this quality check' : 'Configure the settings for your new quality check' }}
+              {{
+                isEditing
+                  ? 'Modify the settings for this quality check'
+                  : 'Configure the settings for your new quality check'
+              }}
             </p>
           </div>
         </div>

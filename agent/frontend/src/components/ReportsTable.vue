@@ -33,91 +33,117 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
-import { useRouter } from 'vue-router';
-import BaseTable from '@/components/BaseTable.vue';
+  import { computed } from 'vue';
+  import { useRouter } from 'vue-router';
+  import BaseTable from '@/components/BaseTable.vue';
 
-const router = useRouter();
+  const router = useRouter();
 
-defineProps({
-  reports: {
-    type: Array,
-    default: () => [],
-  },
-  loading: {
-    type: Boolean,
-    default: false,
-  },
-  totalElements: {
-    type: Number,
-    default: 0,
-  },
-  totalPages: {
-    type: Number,
-    default: 1,
-  },
-  currentPage: {
-    type: Number,
-    default: 0,
-  },
-});
-
-const emit = defineEmits(['page-change']);
-
-const handlePageChange = (page) => {
-  emit('page-change', page);
-};
-
-const columns = computed(() => [
-  { key: 'id', label: 'Report ID' },
-  { key: 'generatedAt', label: 'Generated At' },
-  { key: 'status', label: 'Status', headerClass: 'center', cellClass: getStatusCellClass },
-  { key: 'numberOfEntities', label: 'Entities', headerClass: 'center hide-sm', cellClass: 'center hide-sm', fallback: 'N/A' },
-  { key: 'epsilonBudget', label: 'Budget', headerClass: 'center hide-sm', cellClass: 'center hide-sm', format: 'decimal' },
-  { key: 'epsilonUsed', label: 'Used', headerClass: 'center hide-sm', cellClass: getEpsilonCellClass },
-  { key: 'totalChecks', label: 'Checks', headerClass: 'center hide-md', cellClass: 'center hide-md' },
-]);
-
-const navigateToReport = (item) => {
-  router.push(`/reports/${item.id}`);
-};
-
-const formatDateTime = (dateString) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+  defineProps({
+    reports: {
+      type: Array,
+      default: () => [],
+    },
+    loading: {
+      type: Boolean,
+      default: false,
+    },
+    totalElements: {
+      type: Number,
+      default: 0,
+    },
+    totalPages: {
+      type: Number,
+      default: 1,
+    },
+    currentPage: {
+      type: Number,
+      default: 0,
+    },
   });
-};
 
-const calculateEpsilonUsed = (report) => {
-  if (!report.results || !Array.isArray(report.results)) return 0;
-  return report.results.reduce((sum, result) => sum + (result.epsilon || 0), 0);
-};
+  const emit = defineEmits(['page-change']);
 
-const getStatusCellClass = (item) => {
-  const base = 'center';
-  switch (item.status) {
-    case 'COMPLETED': return `${base} success`;
-    case 'GENERATING': return `${base} warning`;
-    case 'FAILED': return `${base} danger`;
-    default: return base;
-  }
-};
+  const handlePageChange = (page) => {
+    emit('page-change', page);
+  };
 
-const getEpsilonCellClass = (item) => {
-  const used = calculateEpsilonUsed(item);
-  const budget = item.epsilonBudget || 0;
-  return used > budget ? 'center hide-sm danger' : 'center hide-sm';
-};
+  const columns = computed(() => [
+    { key: 'id', label: 'Report ID' },
+    { key: 'generatedAt', label: 'Generated At' },
+    { key: 'status', label: 'Status', headerClass: 'center', cellClass: getStatusCellClass },
+    {
+      key: 'numberOfEntities',
+      label: 'Entities',
+      headerClass: 'center hide-sm',
+      cellClass: 'center hide-sm',
+      fallback: 'N/A',
+    },
+    {
+      key: 'epsilonBudget',
+      label: 'Budget',
+      headerClass: 'center hide-sm',
+      cellClass: 'center hide-sm',
+      format: 'decimal',
+    },
+    {
+      key: 'epsilonUsed',
+      label: 'Used',
+      headerClass: 'center hide-sm',
+      cellClass: getEpsilonCellClass,
+    },
+    {
+      key: 'totalChecks',
+      label: 'Checks',
+      headerClass: 'center hide-md',
+      cellClass: 'center hide-md',
+    },
+  ]);
+
+  const navigateToReport = (item) => {
+    router.push(`/reports/${item.id}`);
+  };
+
+  const formatDateTime = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const calculateEpsilonUsed = (report) => {
+    if (!report.results || !Array.isArray(report.results)) return 0;
+    return report.results.reduce((sum, result) => sum + (result.epsilon || 0), 0);
+  };
+
+  const getStatusCellClass = (item) => {
+    const base = 'center';
+    switch (item.status) {
+      case 'COMPLETED':
+        return `${base} success`;
+      case 'GENERATING':
+        return `${base} warning`;
+      case 'FAILED':
+        return `${base} danger`;
+      default:
+        return base;
+    }
+  };
+
+  const getEpsilonCellClass = (item) => {
+    const used = calculateEpsilonUsed(item);
+    const budget = item.epsilonBudget || 0;
+    return used > budget ? 'center hide-sm danger' : 'center hide-sm';
+  };
 </script>
 
 <style scoped>
-.icon {
-  color: var(--color-primary);
-  margin-right: var(--spacing-sm);
-}
+  .icon {
+    color: var(--color-primary);
+    margin-right: var(--spacing-sm);
+  }
 </style>

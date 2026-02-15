@@ -149,7 +149,6 @@
     }
   });
 
-
   const latestReport = computed(() => reportStore.latestReport);
 
   const calculatePercentage = (result) => {

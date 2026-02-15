@@ -33,4 +33,3 @@
 
   defineEmits(['update:query']);
 </script>
-

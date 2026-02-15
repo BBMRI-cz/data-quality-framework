@@ -47,9 +47,7 @@ export function useServerDetails(serverId) {
 
     if (searchQuery.value) {
       const query = searchQuery.value.toLowerCase();
-      interactions = interactions.filter((i) =>
-        i.description.toLowerCase().includes(query)
-      );
+      interactions = interactions.filter((i) => i.description.toLowerCase().includes(query));
     }
 
     return interactions;
@@ -174,4 +172,3 @@ export function useServerDetails(serverId) {
     closeDeleteModal,
   };
 }
-
