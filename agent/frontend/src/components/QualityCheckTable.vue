@@ -23,12 +23,12 @@
       :current-page="pagination.page"
       item-label="checks"
       empty-text="No quality checks configured yet"
-      empty-icon="bi bi-clipboard-check"
+      empty-icon="bi bi-check-square"
       @row-click="navigateToEdit"
       @page-change="handlePageChange"
     >
       <template #name="{ item }">
-        <i class="bi bi-check2-square icon"></i>
+        <i class="bi bi-check-square icon"></i>
         {{ item.name }}
       </template>
       <template #query="{ value }">

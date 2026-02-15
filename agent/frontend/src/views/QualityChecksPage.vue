@@ -3,8 +3,8 @@
     <PageHeader
       title="Quality Checks"
       mobile-title="Checks"
-      subtitle="View and manage quality checks for your data"
-      icon="bi bi-check2-square"
+      subtitle="View and manage Data Quality Checks for your data"
+      icon="bi bi-check-square"
     />
 
     <div class="page-content">

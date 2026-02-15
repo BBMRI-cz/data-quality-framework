@@ -8,7 +8,7 @@
         <div class="info-panel__feature">
           <h5 class="info-panel__feature-title">Local Data Validation</h5>
           <p class="info-panel__feature-text">
-            Performs comprehensive data quality checks directly on your local repository.
+            Performs comprehensive Data Quality Checks directly on your local repository.
           </p>
         </div>
 

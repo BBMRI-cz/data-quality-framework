@@ -29,7 +29,7 @@
           :class="{ active: $route.path === '/quality-checks' }"
           @click="closeMobileMenu"
         >
-          <i class="bi bi-clipboard-check-fill"></i>
+          <i class="bi bi-check-square-fill"></i>
           <span>Quality Checks</span>
         </router-link>
         <router-link

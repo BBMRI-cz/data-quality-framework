@@ -201,14 +201,14 @@
     border-top: 1px solid #e9ecef;
     background-color: #f8f9fa;
     border-radius: 0 0 0.5rem 0.5rem;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
   }
 
   .form-actions-right {
     display: flex;
     gap: 1rem;
-    justify-content: flex-end;
+    justify-content: center;
   }
 
   .form-actions .btn {
