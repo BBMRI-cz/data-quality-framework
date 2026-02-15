@@ -64,7 +64,10 @@ export const useReportStore = defineStore('report', {
         const reportUrl = report._links.self.href;
 
         await reportService.pollUntilComplete(reportUrl);
-        await this.fetchLatestReport();
+        await Promise.all([
+          this.fetchLatestReport(),
+          this.fetchReports({ page: this.pagination.page, size: this.pagination.size }),
+        ]);
       } catch (err) {
         console.error(err);
       } finally {
