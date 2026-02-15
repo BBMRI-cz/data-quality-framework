@@ -2,6 +2,7 @@ package eu.bbmri_eric.quality.agent.dataquality.impl;
 
 import eu.bbmri_eric.quality.agent.dataquality.FHIRStore;
 import eu.bbmri_eric.quality.agent.dataquality.domain.DataQualityCheck;
+import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,17 +18,17 @@ import org.slf4j.LoggerFactory;
 
 class DuplicateIdentifierCheck implements DataQualityCheck {
   private static final Logger log = LoggerFactory.getLogger(DuplicateIdentifierCheck.class);
-  private final String name;
-  private final String description;
+  static final Long CHECK_ID = 1000L;
+
+  private final QualityCheck config;
   private final String identifierSystem;
 
-  DuplicateIdentifierCheck() {
-    this("https://fhir.bbmri.de/id/patient");
+  DuplicateIdentifierCheck(QualityCheck config) {
+    this(config, "https://fhir.bbmri.de/id/patient");
   }
 
-  DuplicateIdentifierCheck(String identifierSystem) {
-    this.name = "Duplicate identifiers";
-    this.description = "Duplicate patients";
+  DuplicateIdentifierCheck(QualityCheck config, String identifierSystem) {
+    this.config = config;
     this.identifierSystem = identifierSystem;
   }
 
@@ -69,32 +70,32 @@ class DuplicateIdentifierCheck implements DataQualityCheck {
 
   @Override
   public String getName() {
-    return name;
+    return config.getName();
   }
 
   @Override
   public String getDescription() {
-    return description;
+    return config.getDescription();
   }
 
   @Override
   public int getWarningThreshold() {
-    return 10;
+    return config.getWarningThreshold();
   }
 
   @Override
   public int getErrorThreshold() {
-    return 20;
+    return config.getErrorThreshold();
   }
 
   @Override
   public float getEpsilonBudget() {
-    return 0.2f;
+    return config.getEpsilonBudget();
   }
 
   @Override
   public Long getId() {
-    return 1000L;
+    return config.getId();
   }
 
   private String getIdentifierSystem() {

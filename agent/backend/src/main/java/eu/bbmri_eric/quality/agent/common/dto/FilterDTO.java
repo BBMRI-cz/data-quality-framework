@@ -3,6 +3,11 @@ package eu.bbmri_eric.quality.agent.common.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import java.util.Objects;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 /**
  * Common data transfer object for filtering, pagination, and sorting.
@@ -10,6 +15,11 @@ import java.util.Objects;
  * <p>This DTO provides standard fields for querying collections with pagination and sorting
  * capabilities. It can be extended for domain-specific filtering needs.
  */
+@Setter
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor
+@ToString
 @Schema(description = "Common filter DTO for pagination and sorting")
 public class FilterDTO {
 
@@ -28,58 +38,8 @@ public class FilterDTO {
       description = "Sort order (ASC or DESC)",
       example = "ASC",
       allowableValues = {"ASC", "DESC"},
-      defaultValue = "ASC")
-  private SortOrder order = SortOrder.ASC;
-
-  /** Default constructor. */
-  public FilterDTO() {}
-
-  /**
-   * Constructor with all fields.
-   *
-   * @param page the page number (zero-based)
-   * @param size the page size
-   * @param sort the field name to sort by
-   * @param order the sort order
-   */
-  public FilterDTO(int page, int size, String sort, SortOrder order) {
-    this.page = page;
-    this.size = size;
-    this.sort = sort;
-    this.order = order;
-  }
-
-  public int getPage() {
-    return page;
-  }
-
-  public void setPage(int page) {
-    this.page = page;
-  }
-
-  public int getSize() {
-    return size;
-  }
-
-  public void setSize(int size) {
-    this.size = size;
-  }
-
-  public String getSort() {
-    return sort;
-  }
-
-  public void setSort(String sort) {
-    this.sort = sort;
-  }
-
-  public SortOrder getOrder() {
-    return order;
-  }
-
-  public void setOrder(SortOrder order) {
-    this.order = order;
-  }
+      defaultValue = "DESC")
+  private SortOrder order = SortOrder.DESC;
 
   @Override
   public boolean equals(Object o) {
@@ -95,21 +55,6 @@ public class FilterDTO {
   @Override
   public int hashCode() {
     return Objects.hash(page, size, sort, order);
-  }
-
-  @Override
-  public String toString() {
-    return "FilterDTO{"
-        + "page="
-        + page
-        + ", size="
-        + size
-        + ", sort='"
-        + sort
-        + '\''
-        + ", order="
-        + order
-        + '}';
   }
 
   /** Enum representing sort order. */

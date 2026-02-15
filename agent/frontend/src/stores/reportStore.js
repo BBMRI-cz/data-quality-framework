@@ -1,50 +1,71 @@
-import { reactive } from 'vue'
-import { api } from '../js/api.js'
+import { defineStore } from 'pinia';
+import { reportService } from '@/services/reportService.js';
 
-const store = reactive({
+export const useReportStore = defineStore('report', {
+  state: () => ({
     reports: [],
     currentReport: null,
+    latestReport: null,
     isGenerating: false,
-    async fetchReports() {
-        try {
-            const { data } = await api.get('/api/reports')
-            store.reports = data._embedded?.reports || []
-        } catch (err) {
-            console.error(err)
-            store.reports = []
-        }
+    pagination: {
+      page: 0,
+      size: 10,
+      totalElements: 0,
+      totalPages: 0,
     },
+  }),
+
+  actions: {
+    async fetchReports({ page = 0, size = 10 } = {}) {
+      try {
+        const result = await reportService.getAll({ page, size });
+        this.reports = result.items;
+        this.pagination = {
+          page: result.page.number ?? page,
+          size: result.page.size ?? size,
+          totalElements: result.page.totalElements ?? 0,
+          totalPages: result.page.totalPages ?? 0,
+        };
+      } catch (err) {
+        console.error(err);
+        this.reports = [];
+      }
+    },
+
+    async fetchLatestReport() {
+      try {
+        this.latestReport = await reportService.getLatest();
+        return this.latestReport;
+      } catch (err) {
+        console.error(err);
+        this.latestReport = null;
+      }
+    },
+
     async fetchReportById(id) {
-        try {
-            const { data } = await api.get(`/api/reports/${id}`)
-            store.currentReport = data
-            return data
-        } catch (err) {
-            console.error(err)
-            store.currentReport = null
-            throw err
-        }
+      try {
+        this.currentReport = await reportService.get(id);
+        return this.currentReport;
+      } catch (err) {
+        console.error(err);
+        this.currentReport = null;
+        throw err;
+      }
     },
+
     async generateReport() {
-        store.isGenerating = true
-        try {
-            const { data } = await api.post('/api/reports', {})
-            let report = data
-            const reportUrl = report._links.self.href
+      this.isGenerating = true;
+      try {
+        const report = await reportService.generate();
+        const reportUrl = report._links.self.href;
 
-            while (report.status === 'GENERATING') {
-                await new Promise(r => setTimeout(r, 2000))
-                const poll = await api.get(reportUrl)
-                report = poll.data
-            }
-
-            await store.fetchReports()
-        } catch (err) {
-            console.error(err)
-        } finally {
-            store.isGenerating = false
-        }
-    }
-})
-
-export default store
+        await reportService.pollUntilComplete(reportUrl);
+        await this.fetchLatestReport();
+      } catch (err) {
+        console.error(err);
+      } finally {
+        this.isGenerating = false;
+      }
+    },
+  },
+});

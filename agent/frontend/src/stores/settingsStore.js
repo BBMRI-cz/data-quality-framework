@@ -1,46 +1,42 @@
-import { ref } from 'vue'
-import { api } from '../js/api'
+import { defineStore } from 'pinia';
+import { settingsService } from '@/services/settingsService.js';
 
-const settings = ref(null)
-const loading = ref(false)
-const error = ref(null)
+export const useSettingsStore = defineStore('settings', {
+  state: () => ({
+    settings: null,
+    loading: false,
+    error: null,
+  }),
 
-async function fetchSettings() {
-    loading.value = true
-    error.value = null
-    try {
-        const response = await api.get('/api/settings')
-        settings.value = response.data
-        return response.data
-    } catch (err) {
-        console.error('Failed to fetch settings', err)
-        error.value = err.response?.data?.message || 'Failed to fetch settings'
-        throw err
-    } finally {
-        loading.value = false
-    }
-}
+  actions: {
+    async fetchSettings() {
+      this.loading = true;
+      this.error = null;
+      try {
+        this.settings = await settingsService.get();
+        return this.settings;
+      } catch (err) {
+        console.error('Failed to fetch settings', err);
+        this.error = err.response?.data?.message || 'Failed to fetch settings';
+        throw err;
+      } finally {
+        this.loading = false;
+      }
+    },
 
-async function updateSettings(settingsData) {
-    loading.value = true
-    error.value = null
-    try {
-        const response = await api.put('/api/settings', settingsData)
-        settings.value = response.data
-        return response.data
-    } catch (err) {
-        console.error('Failed to update settings', err)
-        error.value = err.response?.data?.message || 'Failed to update settings'
-        throw err
-    } finally {
-        loading.value = false
-    }
-}
-
-export default {
-    settings,
-    loading,
-    error,
-    fetchSettings,
-    updateSettings,
-}
+    async updateSettings(settingsData) {
+      this.loading = true;
+      this.error = null;
+      try {
+        this.settings = await settingsService.update(settingsData);
+        return this.settings;
+      } catch (err) {
+        console.error('Failed to update settings', err);
+        this.error = err.response?.data?.message || 'Failed to update settings';
+        throw err;
+      } finally {
+        this.loading = false;
+      }
+    },
+  },
+});

@@ -1,20 +1,20 @@
-import { ref } from 'vue'
-import { api } from '../js/api.js'
+import { defineStore } from 'pinia';
+import { patientService } from '@/services/patientService.js';
 
-const patientData = ref(null)
+export const usePatientStore = defineStore('patient', {
+  state: () => ({
+    patientData: null,
+  }),
 
-async function fetchPatientData(patientId) {
-    try {
-        const response = await api.get(`/api/entities/Patient/${patientId}`)
-        patientData.value = response.data
-        return response.data
-    } catch (error) {
-        console.error('Failed to fetch patientData', error)
-        throw error
-    }
-}
-
-export default {
-    patientData,
-    fetchPatientData,
-}
+  actions: {
+    async fetchPatientData(patientId) {
+      try {
+        this.patientData = await patientService.get(patientId);
+        return this.patientData;
+      } catch (error) {
+        console.error('Failed to fetch patientData', error);
+        throw error;
+      }
+    },
+  },
+});

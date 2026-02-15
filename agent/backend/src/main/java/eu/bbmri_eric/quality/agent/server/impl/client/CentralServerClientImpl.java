@@ -1,6 +1,6 @@
 package eu.bbmri_eric.quality.agent.server.impl.client;
 
-import eu.bbmri_eric.quality.agent.dataquality.dto.ReportDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.ObfuscatedReportDTO;
 import eu.bbmri_eric.quality.agent.server.CentralServerClient;
 import eu.bbmri_eric.quality.agent.server.RegistrationCredentials;
 import eu.bbmri_eric.quality.agent.server.domain.ServerConnectionStatus;
@@ -104,12 +104,12 @@ class CentralServerClientImpl implements CentralServerClient {
   }
 
   @Override
-  public void sendReport(ReportDTO reportDTO) {
+  public void sendReport(ObfuscatedReportDTO reportDTO) {
     String token = authenticateWithServer();
     String reportUrl = buildApiUrl(AGENTS_ENDPOINT + "/" + agentId + "/reports");
     HttpHeaders headers = createDefaultHeaders();
     headers.setBearerAuth(token);
-    HttpEntity<ReportDTO> requestEntity = new HttpEntity<>(reportDTO, headers);
+    HttpEntity<ObfuscatedReportDTO> requestEntity = new HttpEntity<>(reportDTO, headers);
     restTemplate.exchange(reportUrl, HttpMethod.POST, requestEntity, Void.class);
     log.info("Successfully sent report to server {}", serverUrl);
   }

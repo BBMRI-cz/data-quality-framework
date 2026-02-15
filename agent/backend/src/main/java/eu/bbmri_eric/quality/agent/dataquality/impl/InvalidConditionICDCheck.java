@@ -4,21 +4,24 @@ import eu.bbmri_eric.ICD10Validator;
 import eu.bbmri_eric.ICDValidator;
 import eu.bbmri_eric.quality.agent.dataquality.FHIRStore;
 import eu.bbmri_eric.quality.agent.dataquality.domain.DataQualityCheck;
+import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Condition;
 import org.hl7.fhir.r4.model.Resource;
 
+@Slf4j
 class InvalidConditionICDCheck implements DataQualityCheck {
-  private final String name;
-  private final String description;
+  static final Long CHECK_ID = 1001L;
 
-  InvalidConditionICDCheck() {
-    this.name = "Invalid ICD-10 Codes";
-    this.description = "How many conditions have invalid ICD-10 codes";
+  private final QualityCheck config;
+
+  InvalidConditionICDCheck(QualityCheck config) {
+    this.config = config;
   }
 
   @Override
@@ -62,38 +65,38 @@ class InvalidConditionICDCheck implements DataQualityCheck {
 
       return ResultDTO.resultFromIdPaths(invalidIds, "Patient");
     } catch (Exception e) {
-      System.err.println("Error processing " + name + ": " + e.getMessage());
+      log.error("Error processing {}: {}", getName(), e.getMessage());
       return new ResultDTO(e.getMessage());
     }
   }
 
   @Override
   public String getName() {
-    return name;
+    return config.getName();
   }
 
   @Override
   public String getDescription() {
-    return description;
+    return config.getDescription();
   }
 
   @Override
   public int getWarningThreshold() {
-    return 10;
+    return config.getWarningThreshold();
   }
 
   @Override
   public int getErrorThreshold() {
-    return 30;
+    return config.getErrorThreshold();
   }
 
   @Override
   public float getEpsilonBudget() {
-    return 0.2f;
+    return config.getEpsilonBudget();
   }
 
   @Override
   public Long getId() {
-    return 1001L;
+    return config.getId();
   }
 }

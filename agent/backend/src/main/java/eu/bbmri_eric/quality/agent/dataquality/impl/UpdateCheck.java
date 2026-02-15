@@ -2,6 +2,7 @@ package eu.bbmri_eric.quality.agent.dataquality.impl;
 
 import eu.bbmri_eric.quality.agent.dataquality.FHIRStore;
 import eu.bbmri_eric.quality.agent.dataquality.domain.DataQualityCheck;
+import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
 import java.time.Clock;
 import java.time.Instant;
@@ -18,15 +19,17 @@ import org.slf4j.LoggerFactory;
 
 class UpdateCheck implements DataQualityCheck {
   private static final Logger log = LoggerFactory.getLogger(UpdateCheck.class);
-  private static final String NAME = "Patients last updated more than three months ago";
-  private static final String DESCRIPTION = "Patients last updated more than three months ago";
+  static final Long CHECK_ID = 1003L;
+
+  private final QualityCheck config;
   private final Clock clock;
 
-  UpdateCheck() {
-    this(Clock.systemUTC());
+  UpdateCheck(QualityCheck config) {
+    this(config, Clock.systemUTC());
   }
 
-  UpdateCheck(Clock clock) {
+  UpdateCheck(QualityCheck config, Clock clock) {
+    this.config = config;
     this.clock = Objects.requireNonNull(clock, "clock");
   }
 
@@ -59,31 +62,31 @@ class UpdateCheck implements DataQualityCheck {
 
   @Override
   public String getName() {
-    return NAME;
+    return config.getName();
   }
 
   @Override
   public String getDescription() {
-    return DESCRIPTION;
+    return config.getDescription();
   }
 
   @Override
   public int getWarningThreshold() {
-    return 10;
+    return config.getWarningThreshold();
   }
 
   @Override
   public int getErrorThreshold() {
-    return 30;
+    return config.getErrorThreshold();
   }
 
   @Override
   public float getEpsilonBudget() {
-    return 0.2f;
+    return config.getEpsilonBudget();
   }
 
   @Override
   public Long getId() {
-    return 1004L;
+    return config.getId();
   }
 }

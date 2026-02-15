@@ -1,8 +1,8 @@
 package eu.bbmri_eric.quality.agent.common;
 
 import eu.bbmri_eric.quality.agent.common.dto.FilterDTO;
+import eu.bbmri_eric.quality.agent.common.dto.PageResponse;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Generic CRUD service interface providing standard Create, Read, Update, and Delete operations.
@@ -32,7 +32,7 @@ public interface CRUDService<T, CreateDTO, UpdateDTO, ID> {
    * @return an Optional containing the entity if found, or empty if not found
    * @throws IllegalArgumentException if the id is null
    */
-  Optional<T> findById(ID id);
+  T findById(ID id);
 
   /**
    * Retrieves all entities.
@@ -45,12 +45,29 @@ public interface CRUDService<T, CreateDTO, UpdateDTO, ID> {
    * Retrieves entities with pagination and sorting.
    *
    * @param filter the filter containing pagination and sorting parameters
-   * @return a list of entities as DTOs matching the filter criteria
+   * @return a page response containing entities and pagination metadata
    * @throws IllegalArgumentException if the filter is null or contains invalid data
    */
-  List<T> findAll(FilterDTO filter);
+  PageResponse<T> findAll(FilterDTO filter);
 
+  /**
+   * Updates an existing entity.
+   *
+   * @param id the identifier of the entity to update
+   * @param updateDTO the data transfer object containing the updated entity data
+   * @return the updated entity as a DTO
+   * @throws IllegalArgumentException if the id or updateDTO is null or contains invalid data
+   * @throws eu.bbmri_eric.quality.agent.common.exception.EntityNotFoundException if the entity with
+   *     the given id does not exist
+   */
   T update(ID id, UpdateDTO updateDTO);
+
+  /**
+   * Counts the total number of entities.
+   *
+   * @return the total number of entities
+   */
+  long count();
 
   /**
    * Deletes an entity by its identifier.

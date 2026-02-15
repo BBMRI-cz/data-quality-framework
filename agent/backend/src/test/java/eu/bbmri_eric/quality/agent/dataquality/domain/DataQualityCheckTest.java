@@ -13,7 +13,7 @@ public class DataQualityCheckTest {
     String description = "Checks for null values";
     String query = "SELECT COUNT(*) FROM my_table WHERE col IS NULL";
 
-    CQLQuery check = new CQLQuery(id, name, description, query);
+    QualityCheck check = new QualityCheck(id, name, description, query);
 
     assertEquals(id, check.getId());
     assertEquals(name, check.getName());
@@ -23,7 +23,7 @@ public class DataQualityCheckTest {
 
   @Test
   void testSettersAndGetters() {
-    CQLQuery check = new CQLQuery();
+    QualityCheck check = new QualityCheck();
 
     check.setId(100L);
     check.setName("Test DataQualityCheck");
@@ -38,7 +38,7 @@ public class DataQualityCheckTest {
 
   @Test
   void testExecuteDoesNotThrow() {
-    CQLQuery check = new CQLQuery();
+    QualityCheck check = new QualityCheck();
     assertDoesNotThrow(() -> check.execute(null));
   }
 }
