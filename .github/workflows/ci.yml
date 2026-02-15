@@ -209,6 +209,23 @@ jobs:
       - run: docker compose up -d quality-agent
         name: Spin up latest stable image
 
+      - name: Run blaze
+        run: docker run -d --name blaze -p 8080:8080 samply/blaze:latest
+
+      - name: Wait for Blaze
+        run: .github/workflows/scripts/wait-for-url.sh http://localhost:8080/health
+
+      - name: Install Blazectl
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: .github/workflows/scripts/install-blazectl.sh
+
+      - name: Load Data
+        run: blazectl --no-progress --server http://localhost:8080/fhir upload agent/backend/src/test/resources/test_data
+
+      - name: Generate Data Quality Report
+        run: .github/workflows/scripts/generate-report.sh
+
       - run: docker compose down
         name: Down the container
 
@@ -239,6 +256,12 @@ jobs:
           echo "Container is not healthy"
           docker logs quality-agent
           exit 1
+
+      - name: Generate Data Quality Report
+        run: .github/workflows/scripts/generate-report.sh
+
+      - name: Test basic API calls
+        run: .github/workflows/scripts/test-api-calls.sh
 
   build-server-image:
     name: Docker Image Build (Server)
