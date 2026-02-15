@@ -2,43 +2,66 @@
   <div class="base-table">
     <div class="base-table__header">
       <h5 class="base-table__title">{{ title }}</h5>
-      <span class="base-table__count">{{ itemCount }} {{ itemLabel }}</span>
+      <span class="base-table__count">{{ items.length }} {{ itemLabel }}</span>
     </div>
     <div class="base-table__body">
-      <table>
-        <thead>
-          <tr>
-            <th v-for="col in columns" :key="col.key" :class="col.headerClass">
-              {{ col.label }}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="item in items"
-            :key="item[itemKey]"
-            @click="$emit('row-click', item)"
-          >
-            <td v-for="col in columns" :key="col.key" :class="getCellClass(col, item)">
-              <slot :name="col.key" :item="item" :value="item[col.key]">
-                {{ formatValue(item[col.key], col) }}
-              </slot>
-            </td>
-          </tr>
-          <tr v-if="items.length === 0">
-            <td :colspan="columns.length" class="base-table__empty">
-              <i :class="emptyIcon"></i>
-              <p>{{ emptyText }}</p>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <Transition name="table-fade" mode="out-in">
+        <table :key="tableKey">
+          <thead>
+            <tr>
+              <th v-for="col in columns" :key="col.key" :class="col.headerClass">
+                {{ col.label }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="item in items"
+              :key="item[itemKey]"
+              @click="$emit('row-click', item)"
+            >
+              <td v-for="col in columns" :key="col.key" :class="getCellClass(col, item)">
+                <slot :name="col.key" :item="item" :value="item[col.key]">
+                  {{ formatValue(item[col.key], col) }}
+                </slot>
+              </td>
+            </tr>
+            <tr v-if="items.length === 0">
+              <td :colspan="columns.length" class="base-table__empty">
+                <i :class="emptyIcon"></i>
+                <p>{{ emptyText }}</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </Transition>
+    </div>
+    <div v-if="totalPages > 1" class="base-table__pagination">
+      <button
+        class="pagination-btn"
+        :disabled="currentPage === 0"
+        @click="$emit('page-change', currentPage - 1)"
+      >
+        <i class="bi bi-chevron-left"></i>
+      </button>
+      <span class="pagination-info">
+        Page {{ currentPage + 1 }} of {{ totalPages }}
+      </span>
+      <button
+        class="pagination-btn"
+        :disabled="currentPage >= totalPages - 1"
+        @click="$emit('page-change', currentPage + 1)"
+      >
+        <i class="bi bi-chevron-right"></i>
+      </button>
     </div>
   </div>
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue';
+
+const props = defineProps({
   title: {
     type: String,
     required: true,
@@ -55,7 +78,15 @@ defineProps({
     type: String,
     default: 'id',
   },
-  itemCount: {
+  totalElements: {
+    type: Number,
+    default: 0,
+  },
+  totalPages: {
+    type: Number,
+    default: 1,
+  },
+  currentPage: {
     type: Number,
     default: 0,
   },
@@ -71,9 +102,19 @@ defineProps({
     type: String,
     default: 'bi bi-inbox',
   },
+  loading: {
+    type: Boolean,
+    default: false,
+  },
 });
 
-defineEmits(['row-click']);
+defineEmits(['row-click', 'page-change']);
+
+// Create a unique key based on page and first item ID for reliable transitions
+const tableKey = computed(() => {
+  const firstItemId = props.items.length > 0 ? props.items[0][props.itemKey] : 'empty';
+  return `${props.currentPage}-${firstItemId}`;
+});
 
 const formatValue = (value, col) => {
   if (value == null) return col.fallback || 'N/A';
@@ -95,6 +136,17 @@ const getCellClass = (col, item) => {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
+}
+
+/* Page transition animations */
+.table-fade-enter-active,
+.table-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.table-fade-enter-from,
+.table-fade-leave-to {
+  opacity: 0;
 }
 
 .base-table__header {
@@ -201,6 +253,44 @@ tbody tr:hover {
 
 .base-table__empty p {
   margin: 0;
+}
+
+.base-table__pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-top: 1px solid var(--color-gray-100);
+}
+
+.pagination-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  color: var(--color-gray-600);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: var(--color-gray-100);
+  color: var(--color-gray-800);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  font-size: 0.875rem;
+  color: var(--color-gray-600);
 }
 
 /* Responsive column hiding */

@@ -59,10 +59,11 @@
                 >Generated: {{ formatDate(latestReport.generatedAt) }}</small
               >
             </div>
-            <GenerateReportButton
+            <ActionButton
               :loading="reportStore.isGenerating"
               :disabled="healthStore.healthStatus?.status !== 'UP'"
-              text="Generate New Report"
+              icon="bi bi-plus"
+              text="Generate Report"
               @click="generateReportWithReset"
             />
           </div>
@@ -83,8 +84,9 @@
           <template v-else>
             <i class="bi bi-file-earmark-text-fill display-1 text-muted opacity-50"></i>
             <p class="text-muted mt-3">No Data Quality Reports available.</p>
-            <GenerateReportButton
+            <ActionButton
               :disabled="healthStore.healthStatus?.status !== 'UP'"
+              icon="bi bi-plus"
               text="Generate First Report"
               @click="generateReportWithReset"
             />
@@ -112,7 +114,7 @@
   import PageHeader from '@/components/PageHeader.vue';
   import StatCard from '@/components/StatCard.vue';
   import QualityCheckCard from '@/components/QualityCheckCard.vue';
-  import GenerateReportButton from '@/components/GenerateReportButton.vue';
+  import ActionButton from '@/components/ActionButton.vue';
   import { useUserStore } from '@/stores/userStore.js';
   import { useHealthStore } from '@/stores/healthStore.js';
   import { useReportStore } from '@/stores/reportStore.js';

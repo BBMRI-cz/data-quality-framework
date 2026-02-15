@@ -7,12 +7,18 @@ import { api } from '@/api';
 const BASE_URL = '/api/reports';
 
 /**
- * Fetches all reports
- * @returns {Promise<Array>}
+ * Fetches paginated reports
+ * @param {object} options - Pagination options
+ * @param {number} options.page - Page number (0-based)
+ * @param {number} options.size - Page size (default: 10)
+ * @returns {Promise<{items: Array, page: object}>}
  */
-export async function getAll() {
-  const { data } = await api.get(BASE_URL);
-  return data._embedded?.reports || [];
+export async function getAll({ page = 0, size = 10 } = {}) {
+  const { data } = await api.get(BASE_URL, { params: { page, size } });
+  return {
+    items: data._embedded?.reports || [],
+    page: data.page || { number: 0, size, totalElements: 0, totalPages: 0 },
+  };
 }
 
 /**

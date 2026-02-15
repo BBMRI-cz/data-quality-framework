@@ -1,20 +1,5 @@
 <template>
   <div>
-    <!-- Filters and Actions -->
-    <div class="filters-card">
-      <div class="filters-content">
-        <input
-          v-model="searchQuery"
-          type="text"
-          class="search-input"
-          placeholder="Search quality checks..."
-        />
-        <span class="results-count">{{ filteredChecks.length }} checks</span>
-        <router-link to="/quality-checks/new" class="add-button">
-          <i class="bi bi-plus"></i> Add Check
-        </router-link>
-      </div>
-    </div>
 
     <!-- Loading state -->
     <div v-if="loading" class="loading-state">
@@ -27,24 +12,20 @@
       <p>{{ error }}</p>
     </div>
 
-    <!-- Empty search state -->
-    <div v-else-if="filteredChecks.length === 0 && searchQuery" class="empty-state">
-      <i class="bi bi-search"></i>
-      <h5>No Results Found</h5>
-      <p>Try adjusting your search criteria</p>
-    </div>
-
     <!-- Quality Checks Table -->
     <BaseTable
       v-else
       title="Quality Checks"
       :columns="columns"
-      :items="filteredChecks"
-      :item-count="filteredChecks.length"
+      :items="qualityChecks"
+      :total-elements="pagination.totalElements"
+      :total-pages="pagination.totalPages"
+      :current-page="pagination.page"
       item-label="checks"
       empty-text="No quality checks configured yet"
       empty-icon="bi bi-clipboard-check"
       @row-click="navigateToEdit"
+      @page-change="handlePageChange"
     >
       <template #name="{ item }">
         <i class="bi bi-check2-square icon"></i>
@@ -58,14 +39,15 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { onMounted, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import BaseTable from '@/components/BaseTable.vue';
 import { useQualityChecks } from '@/composables/useQualityChecks.js';
 import { truncateText } from '@/utils/stringUtils.js';
 
 const router = useRouter();
-const { filteredChecks, loading, error, searchQuery, fetchChecks } = useQualityChecks();
+const route = useRoute();
+const { qualityChecks, loading, error, pagination, fetchChecks } = useQualityChecks();
 
 const columns = [
   { key: 'name', label: 'Name' },
@@ -80,56 +62,29 @@ const navigateToEdit = (item) => {
   router.push(`/quality-checks/${item.id}/edit`);
 };
 
-onMounted(fetchChecks);
+const handlePageChange = (page) => {
+  router.replace({ query: { ...route.query, page: page.toString() } });
+};
+
+const getPageFromUrl = () => {
+  const pageParam = route.query.page;
+  const page = parseInt(pageParam, 10);
+  return isNaN(page) || page < 0 ? 0 : page;
+};
+
+watch(
+  () => route.query.page,
+  () => {
+    fetchChecks({ page: getPageFromUrl(), size: pagination.value.size });
+  }
+);
+
+onMounted(() => {
+  fetchChecks({ page: getPageFromUrl(), size: pagination.value.size });
+});
 </script>
 
 <style scoped>
-.filters-card {
-  background: var(--bg-card);
-  padding: var(--spacing-md);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  margin-bottom: var(--spacing-lg);
-}
-
-.filters-content {
-  display: flex;
-  gap: var(--spacing-md);
-  align-items: center;
-}
-
-.search-input {
-  flex: 1;
-  min-width: 200px;
-  padding: var(--spacing-sm) var(--spacing-md);
-  border: 1px solid var(--color-gray-200);
-  border-radius: var(--radius-md);
-  font-size: 0.875rem;
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-}
-
-.results-count {
-  color: var(--color-gray-500);
-  font-size: 0.875rem;
-}
-
-.add-button {
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--color-success);
-  color: white;
-  border-radius: var(--radius-md);
-  font-size: 0.875rem;
-  font-weight: 500;
-  text-decoration: none;
-}
-
-.add-button:hover {
-  opacity: 0.9;
-}
 
 .icon {
   color: var(--color-primary);

@@ -3,11 +3,14 @@
     title="Reports"
     :columns="columns"
     :items="reports"
-    :item-count="reports.length"
+    :total-elements="totalElements"
+    :total-pages="totalPages"
+    :current-page="currentPage"
     item-label="reports"
     empty-text="No reports available"
     empty-icon="bi bi-inbox"
     @row-click="navigateToReport"
+    @page-change="handlePageChange"
   >
     <template #id="{ item }">
       <i class="bi bi-file-earmark-text icon"></i>
@@ -35,12 +38,30 @@ import BaseTable from '@/components/BaseTable.vue';
 
 const router = useRouter();
 
-const props = defineProps({
+defineProps({
   reports: {
     type: Array,
     default: () => [],
   },
+  totalElements: {
+    type: Number,
+    default: 0,
+  },
+  totalPages: {
+    type: Number,
+    default: 1,
+  },
+  currentPage: {
+    type: Number,
+    default: 0,
+  },
 });
+
+const emit = defineEmits(['page-change']);
+
+const handlePageChange = (page) => {
+  emit('page-change', page);
+};
 
 const columns = computed(() => [
   { key: 'id', label: 'Report ID' },

@@ -9,10 +9,10 @@
 
     <div class="page-content">
       <!-- Action Section -->
-      <div class="d-flex justify-content-between align-items-center mb-3 mb-md-4">
-        <div></div>
-        <GenerateReportButton
+      <div class="page-actions">
+        <ActionButton
           :loading="reportStore.isGenerating"
+          icon="bi bi-plus"
           text="Generate Report"
           @click="generateReport"
         />
@@ -21,7 +21,7 @@
       <!-- Stats Cards -->
       <div class="stats-grid mb-3 mb-md-4">
         <StatCard
-          :number="reportStore.reports.length"
+          :number="reportStore.pagination.totalElements"
           label="Total Reports"
           number-class="text-dark"
         />
@@ -39,19 +39,29 @@
       </div>
 
       <!-- Reports table -->
-      <ReportsTable v-else :reports="sortedReports" />
+      <ReportsTable
+        v-else
+        :reports="sortedReports"
+        :total-elements="reportStore.pagination.totalElements"
+        :total-pages="reportStore.pagination.totalPages"
+        :current-page="reportStore.pagination.page"
+        @page-change="handlePageChange"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
-  import { computed, onMounted } from 'vue';
+  import { computed, onMounted, watch } from 'vue';
+  import { useRoute, useRouter } from 'vue-router';
   import PageHeader from '@/components/PageHeader.vue';
   import ReportsTable from '@/components/ReportsTable.vue';
   import StatCard from '@/components/StatCard.vue';
-  import GenerateReportButton from '@/components/GenerateReportButton.vue';
+  import ActionButton from '@/components/ActionButton.vue';
   import { useReportStore } from '@/stores/reportStore.js';
 
+  const route = useRoute();
+  const router = useRouter();
   const reportStore = useReportStore();
 
   const sortedReports = computed(() => {
@@ -81,8 +91,25 @@
     await reportStore.generateReport();
   };
 
+  const getPageFromUrl = () => {
+    const pageParam = route.query.page;
+    const page = parseInt(pageParam, 10);
+    return isNaN(page) || page < 0 ? 0 : page;
+  };
+
+  const handlePageChange = (page) => {
+    router.replace({ query: { ...route.query, page: page.toString() } });
+  };
+
+  watch(
+    () => route.query.page,
+    () => {
+      reportStore.fetchReports({ page: getPageFromUrl(), size: reportStore.pagination.size });
+    }
+  );
+
   onMounted(() => {
-    reportStore.fetchReports();
+    reportStore.fetchReports({ page: getPageFromUrl(), size: reportStore.pagination.size });
   });
 </script>
 
@@ -94,6 +121,12 @@
 
   .page-content {
     width: 100%;
+  }
+
+  .page-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: var(--spacing-md);
   }
 
   .loading-state {

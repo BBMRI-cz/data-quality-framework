@@ -3,9 +3,19 @@ import { api } from '@/api';
 const BASE_URL = '/api/quality-checks';
 
 export const qualityCheckService = {
-  async getAll() {
-    const response = await api.get(BASE_URL);
-    return response.data._embedded?.['quality-checks'] || [];
+  /**
+   * Fetches paginated quality checks
+   * @param {object} options - Pagination options
+   * @param {number} options.page - Page number (0-based)
+   * @param {number} options.size - Page size (default: 10)
+   * @returns {Promise<{items: Array, page: object}>}
+   */
+  async getAll({ page = 0, size = 10 } = {}) {
+    const response = await api.get(BASE_URL, { params: { page, size } });
+    return {
+      items: response.data._embedded?.['quality-checks'] || [],
+      page: response.data.page || { number: 0, size, totalElements: 0, totalPages: 0 },
+    };
   },
 
   async get(id) {

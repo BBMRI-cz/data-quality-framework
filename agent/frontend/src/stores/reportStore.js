@@ -6,12 +6,25 @@ export const useReportStore = defineStore('report', {
     reports: [],
     currentReport: null,
     isGenerating: false,
+    pagination: {
+      page: 0,
+      size: 10,
+      totalElements: 0,
+      totalPages: 0,
+    },
   }),
 
   actions: {
-    async fetchReports() {
+    async fetchReports({ page = 0, size = 10 } = {}) {
       try {
-        this.reports = await reportService.getAll();
+        const result = await reportService.getAll({ page, size });
+        this.reports = result.items;
+        this.pagination = {
+          page: result.page.number ?? page,
+          size: result.page.size ?? size,
+          totalElements: result.page.totalElements ?? 0,
+          totalPages: result.page.totalPages ?? 0,
+        };
       } catch (err) {
         console.error(err);
         this.reports = [];
