@@ -1,19 +1,10 @@
--- Clear existing test data to avoid duplicates if run multiple times
-DELETE FROM result;
-DELETE FROM report;
 
--- Insert Test Reports
 INSERT INTO report (id, generated_at, epsilon_budget, number_of_entities, number_of_secondary_entities, status)
 VALUES
     (1001, '2023-10-25 10:00:00', 2.0, 1500, 3000, 'GENERATED'),
     (1002, '2023-10-26 14:30:00', 2.0, 1550, 3100, 'GENERATED'),
     (1003, '2023-10-27 09:15:00', 2.0, 1500, null, 'GENERATED');
 
-
--- Helper to insert results for a report
--- We will use a subquery to find check_id by name to be robust against ID changes
-
--- Report 1001 Results
 INSERT INTO result (check_name, check_id, raw_value, obfuscated_value, report_id, warning_threshold, error_threshold, epsilon, stratum)
 SELECT name, id, 5, 5.2, 1001, warning_threshold, error_threshold, epsilon_budget, NULL FROM quality_check WHERE name = 'Missing Gender attribute';
 

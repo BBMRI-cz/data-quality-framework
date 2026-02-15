@@ -35,9 +35,9 @@
         required
         maxlength="500"
       >
-        <template #default>
+        <template #default="{ id }">
           <input
-            id="serverUrl"
+            :id="id"
             v-model="formData.url"
             type="url"
             class="form-control"
