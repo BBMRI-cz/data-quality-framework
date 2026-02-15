@@ -5,6 +5,7 @@ export const useReportStore = defineStore('report', {
   state: () => ({
     reports: [],
     currentReport: null,
+    latestReport: null,
     isGenerating: false,
     pagination: {
       page: 0,
@@ -31,6 +32,16 @@ export const useReportStore = defineStore('report', {
       }
     },
 
+    async fetchLatestReport() {
+      try {
+        this.latestReport = await reportService.getLatest();
+        return this.latestReport;
+      } catch (err) {
+        console.error(err);
+        this.latestReport = null;
+      }
+    },
+
     async fetchReportById(id) {
       try {
         this.currentReport = await reportService.get(id);
@@ -49,7 +60,7 @@ export const useReportStore = defineStore('report', {
         const reportUrl = report._links.self.href;
 
         await reportService.pollUntilComplete(reportUrl);
-        await this.fetchReports();
+        await this.fetchLatestReport();
       } catch (err) {
         console.error(err);
       } finally {

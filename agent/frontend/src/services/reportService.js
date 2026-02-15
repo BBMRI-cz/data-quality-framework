@@ -22,6 +22,16 @@ export async function getAll({ page = 0, size = 10 } = {}) {
 }
 
 /**
+ * Fetches the latest report
+ * @returns {Promise<object|null>}
+ */
+export async function getLatest() {
+  const { data } = await api.get(BASE_URL, { params: { page: 0, size: 1 } });
+  const reports = data._embedded?.reports || [];
+  return reports.length > 0 ? reports[0] : null;
+}
+
+/**
  * Fetches a report by ID
  * @param {string|number} id
  * @returns {Promise<object>}
@@ -74,6 +84,7 @@ export async function pollUntilComplete(reportUrl) {
 
 export const reportService = {
   getAll,
+  getLatest,
   get,
   generate,
   pollUntilComplete,

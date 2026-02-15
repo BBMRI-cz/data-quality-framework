@@ -72,7 +72,7 @@
             </div>
             <div v-else class="results-container">
               <div
-                v-for="result in report.results"
+                v-for="result in sortedResults"
                 :id="getCheckIdKey(result)"
                 :key="getCheckIdKey(result)"
                 :class="['result-card', 'card', 'mb-3', getResultClass(result)]"
@@ -180,7 +180,7 @@
 </template>
 
 <script setup>
-  import { ref, onMounted, nextTick } from 'vue';
+  import { ref, computed, onMounted, nextTick } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import { api } from '@/api';
   import PageHeader from '@/components/PageHeader.vue';
@@ -298,6 +298,23 @@
     }
     return 'bg-success';
   };
+
+  const getResultPriority = (result) => {
+    const percentage = parseFloat(calculatePercentage(result.obfuscatedValue));
+    if (percentage >= result.errorThreshold || result.error) {
+      return 0; // Errors first
+    } else if (percentage >= result.warningThreshold) {
+      return 1; // Warnings second
+    }
+    return 2; // Passed last
+  };
+
+  const sortedResults = computed(() => {
+    if (!report.value?.results) return [];
+    return [...report.value.results].sort((a, b) => {
+      return getResultPriority(a) - getResultPriority(b);
+    });
+  });
 
   const scrollToCheck = async () => {
     if (route.hash) {

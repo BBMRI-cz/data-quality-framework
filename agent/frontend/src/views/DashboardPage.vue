@@ -141,7 +141,7 @@
   onMounted(async () => {
     isLoading.value = true;
     try {
-      await Promise.all([reportStore.fetchReports(), healthStore.checkHealth()]);
+      await Promise.all([reportStore.fetchLatestReport(), healthStore.checkHealth()]);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
     } finally {
@@ -150,12 +150,7 @@
   });
 
 
-  const latestReport = computed(() => {
-    if (!reportStore.reports.length) return null;
-    return [...reportStore.reports].sort(
-      (a, b) => new Date(b.generatedAt) - new Date(a.generatedAt)
-    )[0];
-  });
+  const latestReport = computed(() => reportStore.latestReport);
 
   const calculatePercentage = (result) => {
     const total = latestReport.value?.numberOfEntities || 1;
