@@ -3,6 +3,20 @@
  */
 
 /**
+ * Get CSS class for interaction type badge
+ * @param {string} type - Interaction type
+ * @returns {string} CSS class name
+ */
+export function getInteractionTypeClass(type) {
+  const classes = {
+    UPDATE: 'type-update',
+    COMMUNICATION: 'type-communication',
+    REGISTRATION: 'type-registration',
+  };
+  return classes[type] || '';
+}
+
+/**
  * Get Bootstrap badge class for interaction type
  * @param {string} type - Interaction type
  * @returns {string} Bootstrap badge class

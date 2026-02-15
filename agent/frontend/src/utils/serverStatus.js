@@ -58,6 +58,23 @@ export function formatStatus(status) {
 }
 
 /**
+ * Get text color class for server status
+ * @param {string} status - Server status
+ * @returns {string} CSS text color class
+ */
+export function getStatusTextClass(status) {
+  const classes = {
+    ACTIVE: 'text-success',
+    ONLINE: 'text-success',
+    INACTIVE: 'text-warning',
+    OFFLINE: 'text-danger',
+    ERROR: 'text-danger',
+    PENDING: 'text-warning',
+  };
+  return classes[status] || 'text-dark';
+}
+
+/**
  * Get tooltip text explaining the status
  * @param {string} status - Server status
  * @returns {string} Tooltip explanation text

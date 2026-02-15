@@ -9,10 +9,13 @@
 
     <div class="page-content">
       <!-- Back button -->
-      <div class="mb-3">
-        <button class="btn btn-outline-secondary btn-sm" @click="goBack">
-          <i class="bi bi-arrow-left me-2"></i>Back to Reports
-        </button>
+      <div class="page-actions">
+        <ActionButton
+          to="/reports"
+          icon="bi bi-arrow-left"
+          text="Back to Reports"
+          variant="secondary"
+        />
       </div>
 
       <!-- Loading state -->
@@ -184,6 +187,7 @@
   import PatientModal from '@/components/PatientModal.vue';
   import Pagination from '@/components/Pagination.vue';
   import StatCard from '@/components/StatCard.vue';
+  import ActionButton from '@/components/ActionButton.vue';
   import { useReportStore } from '@/stores/reportStore.js';
 
   const route = useRoute();
@@ -199,10 +203,6 @@
   const idPage = ref({});
   const patientModalRef = ref(null);
   const modalPatientId = ref('');
-
-  const goBack = () => {
-    router.push('/reports');
-  };
 
   const checkExists = (checkId) => {
     return qualityChecks.value.some((check) => check.id === checkId);
@@ -359,6 +359,12 @@
 
   .page-content {
     width: 100%;
+  }
+
+  .page-actions {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: var(--spacing-md);
   }
 
   .stats-grid {

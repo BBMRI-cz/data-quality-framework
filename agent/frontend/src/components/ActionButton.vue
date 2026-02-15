@@ -5,6 +5,7 @@
     :type="to ? undefined : type"
     :disabled="disabled || loading"
     class="action-button"
+    :class="[`action-button--${variant}`]"
     v-bind="$attrs"
   >
     <span
@@ -44,6 +45,11 @@ defineProps({
     type: String,
     default: '',
   },
+  variant: {
+    type: String,
+    default: 'primary',
+    validator: (value) => ['primary', 'secondary'].includes(value),
+  },
 });
 
 defineOptions({
@@ -58,28 +64,12 @@ defineOptions({
   justify-content: center;
   gap: var(--spacing-xs);
   padding: var(--spacing-sm) var(--spacing-lg);
-  background: var(--color-success);
-  color: white;
-  border: none;
   border-radius: var(--radius-sm);
   font-size: 0.875rem;
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
-  transition: all var(--transition-slow);
-  box-shadow: 0 2px 4px rgba(25, 135, 84, 0.2);
-}
-
-.action-button:hover:not(:disabled) {
-  background: var(--color-success);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(25, 135, 84, 0.25);
-  color: white;
-}
-
-.action-button:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: 0 2px 4px rgba(25, 135, 84, 0.2);
+  transition: all var(--transition-base);
 }
 
 .action-button:disabled {
@@ -87,8 +77,45 @@ defineOptions({
   cursor: not-allowed;
 }
 
-.action-button:focus {
+/* Primary variant (default) */
+.action-button--primary {
+  background: var(--color-success);
+  color: white;
+  border: none;
+  box-shadow: 0 2px 4px rgba(25, 135, 84, 0.2);
+}
+
+.action-button--primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(25, 135, 84, 0.25);
+  color: white;
+}
+
+.action-button--primary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(25, 135, 84, 0.2);
+}
+
+.action-button--primary:focus {
   outline: 2px solid rgba(25, 135, 84, 0.5);
+  outline-offset: 2px;
+}
+
+/* Secondary variant (outline) */
+.action-button--secondary {
+  background: transparent;
+  color: var(--color-gray-600);
+  border: 1px solid var(--color-gray-300);
+}
+
+.action-button--secondary:hover:not(:disabled) {
+  background: var(--color-gray-100);
+  border-color: var(--color-gray-400);
+  color: var(--color-gray-800);
+}
+
+.action-button--secondary:focus {
+  outline: 2px solid rgba(108, 117, 125, 0.5);
   outline-offset: 2px;
 }
 

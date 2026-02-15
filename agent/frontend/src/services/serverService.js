@@ -22,6 +22,16 @@ export async function getAll() {
 }
 
 /**
+ * Fetches a server by ID
+ * @param {string|number} id
+ * @returns {Promise<object>}
+ */
+export async function get(id) {
+  const response = await api.get(`${BASE_URL}/${id}`);
+  return response.data;
+}
+
+/**
  * Creates a new server
  * @param {{url: string, name: string}} serverData
  * @returns {Promise<object>}
@@ -59,6 +69,7 @@ export async function remove(id) {
 
 export const serverService = {
   getAll,
+  get,
   create,
   update,
   delete: remove,
