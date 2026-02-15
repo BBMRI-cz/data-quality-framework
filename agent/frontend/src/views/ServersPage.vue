@@ -41,7 +41,7 @@
         <ServerDetailsCard
           :server="firstServer"
           @delete="handleDelete"
-          @view-details="handleViewDetails"
+          @viewDetails="handleViewDetails"
         />
 
         <div v-if="servers.length > 1" class="additional-servers-notice">
