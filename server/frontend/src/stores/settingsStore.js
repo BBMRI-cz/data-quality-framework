@@ -8,7 +8,8 @@ const settings = ref({
   oidcPostLogoutRedirectUri: '',
   oidcScopes: '',
   oidcAuthorityName: '',
-  oidcAuthorityLogo: ''
+  oidcAuthorityLogo: '',
+  oidcSwaggerRedirectUrl: ''
 })
 const loading = ref(false)
 const error = ref(null)

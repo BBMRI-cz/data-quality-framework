@@ -124,7 +124,7 @@
                 <div class="form-text">Logo displayed alongside the authority name</div>
               </div>
 
-              <div class="mb-4">
+              <div class="mb-3">
                 <label for="oidcScopes" class="form-label">
                   Scopes
                   <span class="text-danger">*</span>
@@ -138,6 +138,20 @@
                   placeholder="openid profile email"
                 />
                 <div class="form-text">Space-separated list of scopes to request</div>
+              </div>
+
+              <div class="mb-4">
+                <label for="oidcSwaggerRedirectUrl" class="form-label">
+                  Swagger OAuth Redirect URL
+                </label>
+                <input
+                  type="url"
+                  class="form-control"
+                  id="oidcSwaggerRedirectUrl"
+                  v-model="settings.oidcSwaggerRedirectUrl"
+                  placeholder="http://localhost:8082/api/swagger-ui/oauth2-redirect.html"
+                />
+                <div class="form-text">OAuth2 redirect URL for Swagger UI documentation (e.g., http://localhost:8082/api/swagger-ui/oauth2-redirect.html for Docker, https://your-domain.com/api/swagger-ui/oauth2-redirect.html for production)</div>
               </div>
 
               <div v-if="error" class="alert alert-danger mb-3" role="alert">
@@ -229,6 +243,7 @@ async function removeOidcConfig() {
   settings.value.oidcAuthorityName = ''
   settings.value.oidcAuthorityLogo = ''
   settings.value.oidcScopes = ''
+  settings.value.oidcSwaggerRedirectUrl = ''
 
   await settingsStore.updateOidcSettings()
   showRemoveModal.value = false

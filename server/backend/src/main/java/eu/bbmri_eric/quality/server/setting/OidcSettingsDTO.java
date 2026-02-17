@@ -32,6 +32,12 @@ public class OidcSettingsDTO {
   @Schema(description = "OIDC authority logo URL", example = "https://example.test/logo.svg")
   private String oidcAuthorityLogo;
 
+  @Schema(
+      description = "Swagger UI OAuth redirect URL",
+      example = "http://localhost:8082/api/swagger-ui/oauth2-redirect.html")
+  @Pattern(regexp = "^$|^https?://.*", message = "Must be a valid HTTP(S) URL or blank")
+  private String oidcSwaggerRedirectUrl;
+
   public OidcSettingsDTO() {}
 
   public String getOidcAuthority() {
@@ -90,6 +96,14 @@ public class OidcSettingsDTO {
     this.oidcAuthorityLogo = oidcAuthorityLogo;
   }
 
+  public String getOidcSwaggerRedirectUrl() {
+    return oidcSwaggerRedirectUrl;
+  }
+
+  public void setOidcSwaggerRedirectUrl(String oidcSwaggerRedirectUrl) {
+    this.oidcSwaggerRedirectUrl = oidcSwaggerRedirectUrl;
+  }
+
   @Override
   public String toString() {
     return "OidcSettingsDTO{"
@@ -113,6 +127,9 @@ public class OidcSettingsDTO {
         + '\''
         + ", oidcAuthorityLogo='"
         + oidcAuthorityLogo
+        + '\''
+        + ", oidcSwaggerRedirectUrl='"
+        + oidcSwaggerRedirectUrl
         + '\''
         + '}';
   }

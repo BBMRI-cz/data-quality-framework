@@ -39,27 +39,37 @@ class SwaggerUiConfig {
     @Override
     public Object getProperty(String name) {
 
-      if (!name.startsWith("springdoc.swagger-ui.oauth.")) {
+      if (!name.startsWith("springdoc.swagger-ui.oauth")) {
         return null;
       }
 
       try {
         OidcSettingsDTO settings = settingService.getOidcSettings();
 
-        if ("springdoc.swagger-ui.oauth.client-id".equals(name)) {
-          String clientId = settings.getOidcClientId();
-          if (clientId != null && !clientId.isBlank()) {
-            return clientId;
+        switch (name) {
+          case "springdoc.swagger-ui.oauth.client-id" -> {
+            String clientId = settings.getOidcClientId();
+            if (clientId != null && !clientId.isBlank()) {
+              return clientId;
+            }
+            return null;
           }
-          return null;
-        }
-
-        if ("springdoc.swagger-ui.oauth.scopes".equals(name)) {
-          String scopes = settings.getOidcScopes();
-          if (scopes != null && !scopes.isBlank()) {
-            return scopes;
+          case "springdoc.swagger-ui.oauth.scopes" -> {
+            String scopes = settings.getOidcScopes();
+            if (scopes != null && !scopes.isBlank()) {
+              return scopes;
+            }
+            return null;
           }
-          return null;
+          case "springdoc.swagger-ui.oauth2-redirect-url" -> {
+            String redirectUrl = settings.getOidcSwaggerRedirectUrl();
+            log.info("SwaggerUiConfig: Returning oauth2-redirect-url: {}", redirectUrl);
+            if (redirectUrl != null && !redirectUrl.isBlank()) {
+              return redirectUrl;
+            }
+            log.info("SwaggerUiConfig: oauth2-redirect-url is null or blank, returning null");
+            return null;
+          }
         }
 
       } catch (Exception e) {
