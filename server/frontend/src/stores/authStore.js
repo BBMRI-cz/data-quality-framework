@@ -1,5 +1,6 @@
 import { reactive } from 'vue'
 import { apiService } from '../services/apiService'
+import { resetOidc } from '../utils/oidc'
 
 export const authStore = reactive({
   user: null,
@@ -50,6 +51,8 @@ export const authStore = reactive({
     localStorage.removeItem('authToken')
     localStorage.removeItem('authMode')
     localStorage.removeItem('rememberedUsername')
+
+    resetOidc()
   },
 
   setLoading(loading) {
