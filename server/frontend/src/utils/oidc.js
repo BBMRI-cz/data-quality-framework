@@ -83,6 +83,7 @@ export async function initializeOidc(forceReinit = false) {
             oidcInitialized = true
             return true
         } catch (error) {
+            console.error('OIDC initialization failed:', error)
             oidcInitializationPromise = null
             oidcInitialized = false
             throw new Error('Unable to connect to authentication server. Please check if the server is running.')
