@@ -2,13 +2,13 @@ package eu.bbmri_eric.quality.server.common.auth;
 
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.proc.DefaultJOSEObjectTypeVerifier;
+import eu.bbmri_eric.quality.server.setting.OidcIssuerProvider;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationManagerResolver;
 import org.springframework.security.authentication.AuthenticationServiceException;
@@ -39,18 +39,22 @@ class CustomAuthenticationManagerResolver
   private static final String INTERNAL_ISSUER = "quality-server";
 
   private final JwtUtil jwtUtil;
+  private final JwtAuthenticationConverter jwtAuthenticationConverter;
+  private final OidcIssuerProvider oidcIssuerProvider;
   private final Map<String, AuthenticationManager> authManagers;
   private final AuthenticationManager defaultAuthManager;
   private final BearerTokenResolver bearerTokenResolver;
+  private volatile boolean oidcInitializationAttempted = false;
 
   CustomAuthenticationManagerResolver(
       JwtUtil jwtUtil,
       JwtAuthenticationConverter jwtAuthenticationConverter,
       UserDetailsService userDetailsService,
-      @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri:#{null}}")
-          String oidcIssuerUri) {
+      OidcIssuerProvider oidcIssuerProvider) {
     this.jwtUtil = jwtUtil;
-    this.authManagers = new HashMap<>();
+    this.jwtAuthenticationConverter = jwtAuthenticationConverter;
+    this.oidcIssuerProvider = oidcIssuerProvider;
+    this.authManagers = new ConcurrentHashMap<>();
     this.bearerTokenResolver = new DefaultBearerTokenResolver();
 
     InternalTokenAuthenticationProvider internalProvider =
@@ -59,30 +63,46 @@ class CustomAuthenticationManagerResolver
     authManagers.put(INTERNAL_ISSUER, internalAuthManager);
     this.defaultAuthManager = internalAuthManager;
 
-    if (oidcIssuerUri != null && !oidcIssuerUri.isBlank()) {
+    logger.info(
+        "Internal authentication manager initialized. OIDC will be initialized on first use.");
+  }
+
+  private void initializeOidcAuthentication() {
+    if (oidcInitializationAttempted) {
+      return;
+    }
+
+    synchronized (this) {
+      if (oidcInitializationAttempted) {
+        return;
+      }
+      oidcInitializationAttempted = true;
+
       try {
-        NimbusJwtDecoder jwtDecoder =
-            NimbusJwtDecoder.withIssuerLocation(oidcIssuerUri)
-                .jwtProcessorCustomizer(
-                    processor -> {
-                      processor.setJWSTypeVerifier(
-                          new DefaultJOSEObjectTypeVerifier<>(
-                              new JOSEObjectType("at+jwt"), new JOSEObjectType("JWT"), null));
-                    })
-                .build();
-        JwtAuthenticationProvider oidcProvider = new JwtAuthenticationProvider(jwtDecoder);
-        oidcProvider.setJwtAuthenticationConverter(jwtAuthenticationConverter);
-        AuthenticationManager oidcAuthManager = new ProviderManager(oidcProvider);
-        authManagers.put(oidcIssuerUri, oidcAuthManager);
-        logger.debug("Registered OIDC authentication for issuer: {}", oidcIssuerUri);
+        String oidcIssuerUri = oidcIssuerProvider.getIssuerUri();
+
+        if (oidcIssuerUri != null && !oidcIssuerUri.isBlank()) {
+          NimbusJwtDecoder jwtDecoder =
+              NimbusJwtDecoder.withIssuerLocation(oidcIssuerUri)
+                  .jwtProcessorCustomizer(
+                      processor ->
+                          processor.setJWSTypeVerifier(
+                              new DefaultJOSEObjectTypeVerifier<>(
+                                  new JOSEObjectType("at+jwt"), new JOSEObjectType("JWT"), null)))
+                  .build();
+          JwtAuthenticationProvider oidcProvider = new JwtAuthenticationProvider(jwtDecoder);
+          oidcProvider.setJwtAuthenticationConverter(jwtAuthenticationConverter);
+          AuthenticationManager oidcAuthManager = new ProviderManager(oidcProvider);
+          authManagers.put(oidcIssuerUri, oidcAuthManager);
+          logger.info("Registered OIDC authentication for issuer: {}", oidcIssuerUri);
+        } else {
+          logger.info("OIDC authentication disabled (no issuer URI configured)");
+        }
       } catch (Exception e) {
         logger.error(
-            "Failed to initialize OIDC authentication for issuer '{}': {}. OIDC authentication will not be available.",
-            oidcIssuerUri,
+            "Failed to initialize OIDC authentication: {}. OIDC authentication will not be available.",
             e.getMessage());
       }
-    } else {
-      logger.info("OIDC authentication disabled (no issuer URI configured)");
     }
   }
 
@@ -98,6 +118,10 @@ class CustomAuthenticationManagerResolver
     try {
       String issuer = jwtUtil.extractIssuer(token);
       logger.debug("Extracted issuer from token: '{}'", issuer);
+
+      if (!INTERNAL_ISSUER.equals(issuer) && !oidcInitializationAttempted) {
+        initializeOidcAuthentication();
+      }
 
       AuthenticationManager authManager = authManagers.get(issuer);
       return authManager != null ? authManager : defaultAuthManager;

@@ -17,28 +17,38 @@ OIDC authentication works alongside the internal authentication system:
 #### OIDC Configuration Steps
 
 1. **Configure Your OIDC Provider (Authorization Server)**
-    - Ensure tokens include either `preferred_username` or `client_id`
+    - Ensure tokens include `client_id` for client credentials flow or `sub` for authorization code flow
     - Obtain the issuer URI from your OIDC provider (e.g., `https://your-oidc-provider.com`)
     - Verify the OIDC provider exposes a JWKS endpoint at `{issuer-uri}/.well-known/jwks.json` for token signature validation
 
-2. **Update Docker Compose Configuration**
-
-   Add the OIDC issuer URI to your server's environment variables in `compose.yaml`:
-
-   ```yaml
-   environment:
-     # Enable OIDC authentication
-     - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=https://your-oidc-provider.com
-   ```
+2. **Configure OIDC Settings via Frontend Settings Page**
+   
+   - Log in to the Data Quality Server as an administrator
+   - Navigate to **Settings → OIDC Settings**
+   - Configure the following settings:
+      - **OIDC Authority**: The OIDC provider's base URL (e.g., `https://your-oidc-provider.com`)
+      - **Client ID**: Your application's client identifier registered with the OIDC provider
+      - **Redirect URI**: The callback URL for frontend authentication (e.g., `http://localhost:5173/logged-in`)
+      - **Scopes**: Space-separated list of OAuth scopes (e.g., `openid profile email offline_access`)
+        - **Swagger Redirect URL**: The OAuth callback URL for Swagger UI (e.g., `http://localhost:5173/api/swagger-ui/oauth2-redirect.html`)
+   - **Important**: Restart the backend server for the changes to take effect
 
    ::: warning Important Configuration Notes
-   - The issuer URI must be accessible from the server (network connectivity required)
-   - The server will fetch OIDC provider metadata from `{issuer-uri}/.well-known/openid-configuration`
-   - Ensure the issuer URI does not end with a trailing slash
+   - The OIDC authority URL must be accessible from the server (network connectivity required)
+   - The server will fetch OIDC provider metadata from `{authority}/.well-known/openid-configuration`
+   - Ensure the authority URL does not end with a trailing slash
    :::
 
 3. **Restart the Server**
 
+   After updating OIDC settings, restart the backend server:
+
+   ```bash
+   docker compose restart quality-server
+   ```
+   
+   Or for a full restart:
+   
    ```bash
    docker compose down
    docker compose up -d
@@ -54,16 +64,19 @@ OIDC authentication works alongside the internal authentication system:
 #### Troubleshooting OIDC
 
 **OIDC authentication not working:**
-- Verify the issuer URI is correct and accessible: `curl {issuer-uri}/.well-known/openid-configuration`
+- Verify the OIDC authority URL is correct and accessible: `curl {authority}/.well-known/openid-configuration`
 - Check that the OIDC provider's discovery endpoint returns valid JSON
 - Ensure redirect URIs are properly configured in the OIDC provider
 - Verify network connectivity from server to OIDC provider
 - Review server logs for specific error messages: `docker compose logs quality-server`
 
-**Server fails to start with OIDC enabled:**
-- The server will start even if the OIDC provider is temporarily unavailable
-- Check for configuration syntax errors in the issuer URI
-- Verify environment variables are properly set
+**Settings changes not taking effect:**
+- OIDC configuration (including the issuer URI) is loaded from the database at application startup
+- After modifying settings through the frontend OIDC Settings page, you **must** restart the backend:
+  ```bash
+  docker compose restart quality-server
+  ```
+- Changes to OIDC settings require a full application restart to reinitialize the authentication system
 
 For general deployment information, see the [Deployment Guide](./deployment.md).
 

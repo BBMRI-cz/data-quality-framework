@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.modelmapper.ModelMapper;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,12 +17,17 @@ public class SettingServiceImpl implements SettingService {
   private final ModelMapper modelMapper;
   private final SettingRepository settingRepository;
   private final ObjectMapper objectMapper;
+  private final OidcIssuerProvider oidcIssuerProvider;
 
   public SettingServiceImpl(
-      SettingRepository settingRepository, ModelMapper modelMapper, ObjectMapper objectMapper) {
+      SettingRepository settingRepository,
+      ModelMapper modelMapper,
+      ObjectMapper objectMapper,
+      @Lazy OidcIssuerProvider oidcIssuerProvider) {
     this.settingRepository = settingRepository;
     this.modelMapper = modelMapper;
     this.objectMapper = objectMapper;
+    this.oidcIssuerProvider = oidcIssuerProvider;
   }
 
   @Override
@@ -45,6 +51,7 @@ public class SettingServiceImpl implements SettingService {
   @Override
   public OidcSettingsDTO updateOidcSettings(OidcSettingsDTO dto) {
     updateSettingsFromDto(dto);
+    oidcIssuerProvider.clearCache();
     return dto;
   }
 

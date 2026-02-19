@@ -8,7 +8,6 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -18,20 +17,16 @@ class OidcDiscoveryServiceImpl implements OidcDiscoveryService {
   private static final String WELL_KNOWN_PATH = "/.well-known/openid-configuration";
   private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
 
-  private final String issuerUri;
   private final ObjectMapper objectMapper;
   private final HttpClient httpClient;
 
-  OidcDiscoveryServiceImpl(
-      @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri:#{null}}") String issuerUri,
-      ObjectMapper objectMapper) {
-    this.issuerUri = issuerUri;
+  OidcDiscoveryServiceImpl(ObjectMapper objectMapper) {
     this.objectMapper = objectMapper;
     this.httpClient = HttpClient.newBuilder().connectTimeout(REQUEST_TIMEOUT).build();
   }
 
   @Override
-  public OidcDiscoveryDTO fetchDiscoveryDocument() {
+  public OidcDiscoveryDTO fetchDiscoveryDocument(String issuerUri) {
     if (issuerUri == null || issuerUri.isBlank()) {
       log.warn("OIDC issuer URI is not configured");
       return null;

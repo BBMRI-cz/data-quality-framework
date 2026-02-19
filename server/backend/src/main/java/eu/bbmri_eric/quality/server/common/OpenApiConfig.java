@@ -2,6 +2,7 @@ package eu.bbmri_eric.quality.server.common;
 
 import eu.bbmri_eric.quality.server.setting.OidcDiscoveryDTO;
 import eu.bbmri_eric.quality.server.setting.OidcDiscoveryService;
+import eu.bbmri_eric.quality.server.setting.OidcIssuerProvider;
 import eu.bbmri_eric.quality.server.setting.OidcSettingsDTO;
 import eu.bbmri_eric.quality.server.setting.SettingService;
 import io.swagger.v3.oas.models.Components;
@@ -33,10 +34,15 @@ class OpenApiConfig {
 
   private final OidcDiscoveryService oidcDiscoveryService;
   private final SettingService settingService;
+  private final OidcIssuerProvider oidcIssuerProvider;
 
-  public OpenApiConfig(OidcDiscoveryService oidcDiscoveryService, SettingService settingService) {
+  public OpenApiConfig(
+      OidcDiscoveryService oidcDiscoveryService,
+      SettingService settingService,
+      OidcIssuerProvider oidcIssuerProvider) {
     this.oidcDiscoveryService = oidcDiscoveryService;
     this.settingService = settingService;
+    this.oidcIssuerProvider = oidcIssuerProvider;
   }
 
   @Bean
@@ -81,12 +87,21 @@ class OpenApiConfig {
   }
 
   private void configureOAuth2Security(OpenAPI openApi) {
-    OidcDiscoveryDTO discovery = oidcDiscoveryService.fetchDiscoveryDocument();
+    String oidcIssuerUri = oidcIssuerProvider.getIssuerUri();
+
+    if (oidcIssuerUri == null || oidcIssuerUri.isBlank()) {
+      log.warn(
+          "OIDC issuer URI not configured, OAuth2 security scheme not configured for Swagger UI");
+      return;
+    }
+
+    OidcDiscoveryDTO discovery = oidcDiscoveryService.fetchDiscoveryDocument(oidcIssuerUri);
     OidcSettingsDTO oidcSettings = settingService.getOidcSettings();
 
     if (discovery != null
         && discovery.getAuthorizationEndpoint() != null
         && discovery.getTokenEndpoint() != null
+        && oidcSettings != null
         && oidcSettings.getOidcScopes() != null
         && !oidcSettings.getOidcScopes().isBlank()) {
 

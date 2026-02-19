@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import eu.bbmri_eric.quality.server.setting.OidcIssuerProvider;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -11,7 +12,6 @@ import java.time.Duration;
 import java.util.HexFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -30,33 +30,46 @@ class OidcUserInfoServiceImpl implements OidcUserInfoService {
 
   private final Cache<String, OidcUserInfo> cache;
   private final RestTemplate restTemplate;
-  private final String userInfoEndpoint;
-  private final String issuerUri;
+  private final OidcIssuerProvider oidcIssuerProvider;
+  private volatile String userInfoEndpoint;
+  private volatile boolean initialized = false;
 
-  public OidcUserInfoServiceImpl(
-      @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri:#{null}}") String issuerUri) {
+  public OidcUserInfoServiceImpl(OidcIssuerProvider oidcIssuerProvider) {
     this.restTemplate = new RestTemplate();
-    this.issuerUri = issuerUri;
+    this.oidcIssuerProvider = oidcIssuerProvider;
     this.cache =
         Caffeine.newBuilder().expireAfterWrite(CACHE_DURATION).maximumSize(MAX_CACHE_SIZE).build();
-    this.userInfoEndpoint = initializeUserInfoEndpoint();
   }
 
-  private String initializeUserInfoEndpoint() {
-    if (issuerUri == null || issuerUri.isBlank()) {
-      logger.info("OIDC issuer URI not configured, userinfo endpoint will not be available");
-      return null;
+  private void initializeUserInfoEndpointIfNeeded() {
+    if (initialized) {
+      return;
     }
-    try {
-      var discoveryUri = issuerUri + OIDC_DISCOVERY_PATH;
-      var discoveryResponse = fetchDiscoveryDocument(discoveryUri);
-      return extractUserInfoEndpoint(discoveryResponse, discoveryUri);
-    } catch (Exception e) {
-      logger.error(
-          "Failed to fetch OIDC discovery document from issuer: {}, userinfo endpoint will not be available",
-          issuerUri,
-          e);
-      return null;
+
+    synchronized (this) {
+      if (initialized) {
+        return;
+      }
+      initialized = true;
+
+      try {
+        String issuerUri = oidcIssuerProvider.getIssuerUri();
+        if (issuerUri == null || issuerUri.isBlank()) {
+          logger.info("OIDC issuer URI not configured, userinfo endpoint will not be available");
+          userInfoEndpoint = null;
+          return;
+        }
+
+        var discoveryUri = issuerUri + OIDC_DISCOVERY_PATH;
+        var discoveryResponse = fetchDiscoveryDocument(discoveryUri);
+        userInfoEndpoint = extractUserInfoEndpoint(discoveryResponse, discoveryUri);
+      } catch (Exception e) {
+        logger.error(
+            "Failed to fetch OIDC discovery document, userinfo endpoint will not be available: {}",
+            e.getMessage());
+        logger.debug("Full error details:", e);
+        userInfoEndpoint = null;
+      }
     }
   }
 
@@ -79,6 +92,8 @@ class OidcUserInfoServiceImpl implements OidcUserInfoService {
 
   @Override
   public OidcUserInfo fetchUserInfo(String accessToken) {
+    initializeUserInfoEndpointIfNeeded();
+
     if (!canFetchUserInfo(accessToken)) {
       return null;
     }
@@ -96,7 +111,7 @@ class OidcUserInfoServiceImpl implements OidcUserInfoService {
 
   private boolean canFetchUserInfo(String accessToken) {
     if (userInfoEndpoint == null) {
-      logger.warn("OIDC issuer URI not configured, skipping userinfo fetch");
+      logger.warn("OIDC userinfo endpoint not available, skipping userinfo fetch");
       return false;
     }
     if (accessToken == null || accessToken.isBlank()) {
