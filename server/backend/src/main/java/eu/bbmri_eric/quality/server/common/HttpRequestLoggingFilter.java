@@ -26,7 +26,7 @@ class HttpRequestLoggingFilter extends OncePerRequestFilter {
   @Override
   protected boolean shouldNotFilter(HttpServletRequest request) {
     String path = request.getRequestURI();
-    return path.contains("/api/health") || path.endsWith("/health");
+    return path.contains("/api/health");
   }
 
   @Override
