@@ -21,7 +21,7 @@ OIDC authentication works alongside the internal authentication system:
     - Obtain the issuer URI from your OIDC provider (e.g., `https://your-oidc-provider.com`)
     - Verify the OIDC provider exposes a JWKS endpoint at `{issuer-uri}/.well-known/jwks.json` for token signature validation
 
-2. **Configure OIDC Settings via Frontend Settings Page**
+2. **Configure OIDC Settings via Settings Page**
    
    - Log in to the Data Quality Server as an administrator
    - Navigate to **Settings → OIDC Settings**
@@ -29,9 +29,11 @@ OIDC authentication works alongside the internal authentication system:
       - **OIDC Authority**: The OIDC provider's base URL (e.g., `https://your-oidc-provider.com`)
       - **Client ID**: Your application's client identifier registered with the OIDC provider
       - **Redirect URI**: The callback URL for frontend authentication (e.g., `http://localhost:5173/logged-in`)
-      - **Scopes**: Space-separated list of OAuth scopes (e.g., `openid profile email offline_access`)
-        - **Swagger Redirect URL**: The OAuth callback URL for Swagger UI (e.g., `http://localhost:5173/api/swagger-ui/oauth2-redirect.html`)
-   - **Important**: Restart the backend server for the changes to take effect
+      - **Scopes**: Space-separated list of OAuth scopes
+        - **Required**: `openid profile offline_access`
+      - **Swagger Redirect URL**: The OAuth callback URL for Swagger UI (e.g., `http://localhost:5173/api/swagger-ui/oauth2-redirect.html`)
+   
+   **Note**: Changes to OIDC settings are applied immediately for the main application. A backend restart is **only required** if you want OIDC authentication to work on the Swagger API documentation page.
 
    ::: warning Important Configuration Notes
    - The OIDC authority URL must be accessible from the server (network connectivity required)
@@ -39,9 +41,9 @@ OIDC authentication works alongside the internal authentication system:
    - Ensure the authority URL does not end with a trailing slash
    :::
 
-3. **Restart the Server**
+3. **(Optional) Restart Server for Swagger UI OIDC Support**
 
-   After updating OIDC settings, restart the backend server:
+   If you want to use OIDC authentication on the Swagger API documentation page, restart the backend server after updating OIDC settings:
 
    ```bash
    docker compose restart quality-server
@@ -71,12 +73,12 @@ OIDC authentication works alongside the internal authentication system:
 - Review server logs for specific error messages: `docker compose logs quality-server`
 
 **Settings changes not taking effect:**
-- OIDC configuration (including the issuer URI) is loaded from the database at application startup
-- After modifying settings through the frontend OIDC Settings page, you **must** restart the backend:
+- OIDC configuration changes are applied immediately for the main application authentication
+- The frontend, user authentication, and API endpoints automatically use the updated OIDC settings without restart
+- A backend restart is only required for OIDC authentication to work on the Swagger API documentation page:
   ```bash
   docker compose restart quality-server
   ```
-- Changes to OIDC settings require a full application restart to reinitialize the authentication system
 
 For general deployment information, see the [Deployment Guide](./deployment.md).
 
