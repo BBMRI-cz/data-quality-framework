@@ -15,6 +15,7 @@ import io.swagger.v3.oas.models.security.OAuthFlows;
 import io.swagger.v3.oas.models.security.Scopes;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
 import java.util.Arrays;
 import java.util.List;
 import org.slf4j.Logger;
@@ -49,6 +50,7 @@ class OpenApiConfig {
   OpenAPI baseOpenAPI() {
     final String securitySchemeName = "bearerAuth";
     return new OpenAPI()
+        .addServersItem(new Server().url("/").description("Default Server URL"))
         .info(
             new Info()
                 .title("Data Quality Server REST API")

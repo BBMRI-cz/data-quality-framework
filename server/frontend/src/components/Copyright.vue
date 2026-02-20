@@ -75,7 +75,7 @@ import {apiService} from '../services/apiService'
 const buildInfo = ref(null)
 
 const swaggerUrl = computed(() => {
-  const { protocol, hostname, port } = window.location
+  const { protocol, hostname, port } = globalThis.location
   const baseUrl = `${protocol}//${hostname}${port ? ':' + port : ''}`
   return `${baseUrl}/api/swagger-ui/index.html`
 })
