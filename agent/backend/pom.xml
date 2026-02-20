@@ -20,7 +20,7 @@
         <spring-doc.version>2.8.14</spring-doc.version>
         <json.version>20251224</json.version>
         <hapi.fhir.version>8.6.0</hapi.fhir.version>
-        <hapi.fhir.structures.version>8.6.1</hapi.fhir.structures.version>
+        <hapi.fhir.structures.version>8.8.0</hapi.fhir.structures.version>
         <icd.validator.version>0.1.0</icd.validator.version>
         <commons.compress.version>1.26.1</commons.compress.version>
         <modelmapper.version>3.2.6</modelmapper.version>
