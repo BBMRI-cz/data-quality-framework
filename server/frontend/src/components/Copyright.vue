@@ -51,6 +51,17 @@
         View on GitHub
       </a>
     </p>
+    <p class="swagger-section">
+      <a
+        :href="swaggerUrl"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="swagger-link"
+      >
+        <i class="bi bi-file-code" aria-hidden="true"></i>
+        API Documentation
+      </a>
+    </p>
     <p v-if="buildInfo" class="build-info">
       {{ buildInfo.version }} • {{ buildInfo.gitCommit }}<span v-if="buildInfo.buildTime"> • {{ formatBuildTime(buildInfo.buildTime) }}</span>
     </p>
@@ -58,10 +69,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import {apiService} from '../services/apiService'
 
 const buildInfo = ref(null)
+
+const swaggerUrl = computed(() => {
+  const { protocol, hostname, port } = window.location
+  const baseUrl = `${protocol}//${hostname}${port ? ':' + port : ''}`
+  return `${baseUrl}/api/swagger-ui/index.html`
+})
 
 const formatBuildTime = (buildTime) => {
   if (!buildTime) return ''
@@ -157,6 +174,30 @@ onMounted(async () => {
 }
 
 .github-link:hover {
+  color: #764ba2;
+  text-decoration: underline;
+}
+
+.swagger-section {
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+}
+
+.swagger-link {
+  color: #667eea;
+  text-decoration: none;
+  transition: color 0.2s ease;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.swagger-link i {
+  font-size: 0.875rem;
+}
+
+.swagger-link:hover {
   color: #764ba2;
   text-decoration: underline;
 }
