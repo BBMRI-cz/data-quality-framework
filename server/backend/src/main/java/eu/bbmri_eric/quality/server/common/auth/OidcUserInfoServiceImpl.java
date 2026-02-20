@@ -82,8 +82,8 @@ class OidcUserInfoServiceImpl implements OidcUserInfoService {
    * Reinitializes the userinfo endpoint when OIDC settings are updated. This method is called
    * automatically when OIDC settings are updated in the database via event listener.
    */
-  @EventListener
-  public void reinitializeUserInfoEndpoint(OidcSettingsUpdatedEvent event) {
+  @EventListener(OidcSettingsUpdatedEvent.class)
+  public void reinitializeUserInfoEndpoint() {
     synchronized (this) {
       logger.info("Received OIDC settings update event, reinitializing userinfo endpoint");
 

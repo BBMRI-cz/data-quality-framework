@@ -5,4 +5,3 @@ package eu.bbmri_eric.quality.server.setting;
  * to refresh their OIDC-related caches and configurations.
  */
 public record OidcSettingsUpdatedEvent() {}
-

@@ -115,8 +115,8 @@ class CustomAuthenticationManagerResolver
    * Reinitializes OIDC authentication with the current issuer URI. This method is called
    * automatically when OIDC settings are updated in the database via event listener.
    */
-  @EventListener
-  public void reinitializeOidcAuthentication(OidcSettingsUpdatedEvent event) {
+  @EventListener(OidcSettingsUpdatedEvent.class)
+  public void reinitializeOidcAuthentication() {
     synchronized (this) {
       logger.info("Received OIDC settings update event, reinitializing authentication");
 
