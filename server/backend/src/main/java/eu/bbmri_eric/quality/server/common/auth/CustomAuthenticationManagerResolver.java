@@ -3,12 +3,14 @@ package eu.bbmri_eric.quality.server.common.auth;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.proc.DefaultJOSEObjectTypeVerifier;
 import eu.bbmri_eric.quality.server.setting.OidcIssuerProvider;
+import eu.bbmri_eric.quality.server.setting.OidcSettingsUpdatedEvent;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.event.EventListener;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationManagerResolver;
 import org.springframework.security.authentication.AuthenticationServiceException;
@@ -45,6 +47,7 @@ class CustomAuthenticationManagerResolver
   private final AuthenticationManager defaultAuthManager;
   private final BearerTokenResolver bearerTokenResolver;
   private volatile boolean oidcInitializationAttempted = false;
+  private volatile String currentOidcIssuer = null;
 
   CustomAuthenticationManagerResolver(
       JwtUtil jwtUtil,
@@ -76,7 +79,6 @@ class CustomAuthenticationManagerResolver
       if (oidcInitializationAttempted) {
         return;
       }
-      oidcInitializationAttempted = true;
 
       try {
         String oidcIssuerUri = oidcIssuerProvider.getIssuerUri();
@@ -94,15 +96,39 @@ class CustomAuthenticationManagerResolver
           oidcProvider.setJwtAuthenticationConverter(jwtAuthenticationConverter);
           AuthenticationManager oidcAuthManager = new ProviderManager(oidcProvider);
           authManagers.put(oidcIssuerUri, oidcAuthManager);
+          currentOidcIssuer = oidcIssuerUri;
+          oidcInitializationAttempted = true;
           logger.info("Registered OIDC authentication for issuer: {}", oidcIssuerUri);
         } else {
+          oidcInitializationAttempted = true;
           logger.info("OIDC authentication disabled (no issuer URI configured)");
         }
       } catch (Exception e) {
         logger.error(
-            "Failed to initialize OIDC authentication: {}. OIDC authentication will not be available.",
+            "Failed to initialize OIDC authentication: {}. Will retry on next request.",
             e.getMessage());
       }
+    }
+  }
+
+  /**
+   * Reinitializes OIDC authentication with the current issuer URI. This method is called
+   * automatically when OIDC settings are updated in the database via event listener.
+   */
+  @EventListener
+  public void reinitializeOidcAuthentication(OidcSettingsUpdatedEvent event) {
+    synchronized (this) {
+      logger.info("Received OIDC settings update event, reinitializing authentication");
+
+      if (currentOidcIssuer != null) {
+        authManagers.remove(currentOidcIssuer);
+        logger.info("Removed cached OIDC authentication manager for issuer: {}", currentOidcIssuer);
+      }
+
+      oidcInitializationAttempted = false;
+      currentOidcIssuer = null;
+
+      initializeOidcAuthentication();
     }
   }
 

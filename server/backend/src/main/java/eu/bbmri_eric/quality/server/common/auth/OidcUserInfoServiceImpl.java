@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import eu.bbmri_eric.quality.server.setting.OidcIssuerProvider;
+import eu.bbmri_eric.quality.server.setting.OidcSettingsUpdatedEvent;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -12,6 +13,7 @@ import java.time.Duration;
 import java.util.HexFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -41,7 +43,7 @@ class OidcUserInfoServiceImpl implements OidcUserInfoService {
         Caffeine.newBuilder().expireAfterWrite(CACHE_DURATION).maximumSize(MAX_CACHE_SIZE).build();
   }
 
-  private void initializeUserInfoEndpointIfNeeded() {
+  private void ensureInitialized() {
     if (initialized) {
       return;
     }
@@ -50,26 +52,46 @@ class OidcUserInfoServiceImpl implements OidcUserInfoService {
       if (initialized) {
         return;
       }
+      initializeUserInfoEndpoint();
       initialized = true;
+    }
+  }
 
-      try {
-        String issuerUri = oidcIssuerProvider.getIssuerUri();
-        if (issuerUri == null || issuerUri.isBlank()) {
-          logger.info("OIDC issuer URI not configured, userinfo endpoint will not be available");
-          userInfoEndpoint = null;
-          return;
-        }
-
-        var discoveryUri = issuerUri + OIDC_DISCOVERY_PATH;
-        var discoveryResponse = fetchDiscoveryDocument(discoveryUri);
-        userInfoEndpoint = extractUserInfoEndpoint(discoveryResponse, discoveryUri);
-      } catch (Exception e) {
-        logger.error(
-            "Failed to fetch OIDC discovery document, userinfo endpoint will not be available: {}",
-            e.getMessage());
-        logger.debug("Full error details:", e);
+  private void initializeUserInfoEndpoint() {
+    try {
+      String issuerUri = oidcIssuerProvider.getIssuerUri();
+      if (issuerUri == null || issuerUri.isBlank()) {
+        logger.info("OIDC issuer URI not configured, userinfo endpoint will not be available");
         userInfoEndpoint = null;
+        return;
       }
+
+      var discoveryUri = issuerUri + OIDC_DISCOVERY_PATH;
+      var discoveryResponse = fetchDiscoveryDocument(discoveryUri);
+      userInfoEndpoint = extractUserInfoEndpoint(discoveryResponse, discoveryUri);
+    } catch (Exception e) {
+      logger.error(
+          "Failed to fetch OIDC discovery document, userinfo endpoint will not be available: {}",
+          e.getMessage());
+      logger.debug("Full error details:", e);
+      userInfoEndpoint = null;
+    }
+  }
+
+  /**
+   * Reinitializes the userinfo endpoint when OIDC settings are updated. This method is called
+   * automatically when OIDC settings are updated in the database via event listener.
+   */
+  @EventListener
+  public void reinitializeUserInfoEndpoint(OidcSettingsUpdatedEvent event) {
+    synchronized (this) {
+      logger.info("Received OIDC settings update event, reinitializing userinfo endpoint");
+
+      initialized = false;
+      userInfoEndpoint = null;
+      cache.invalidateAll();
+
+      ensureInitialized();
     }
   }
 
@@ -92,7 +114,7 @@ class OidcUserInfoServiceImpl implements OidcUserInfoService {
 
   @Override
   public OidcUserInfo fetchUserInfo(String accessToken) {
-    initializeUserInfoEndpointIfNeeded();
+    ensureInitialized();
 
     if (!canFetchUserInfo(accessToken)) {
       return null;
