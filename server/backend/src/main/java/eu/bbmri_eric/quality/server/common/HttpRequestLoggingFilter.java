@@ -24,6 +24,12 @@ class HttpRequestLoggingFilter extends OncePerRequestFilter {
   private static final String ANSI_RED = "\u001B[31m";
 
   @Override
+  protected boolean shouldNotFilter(HttpServletRequest request) {
+    String path = request.getRequestURI();
+    return path.contains("/api/health");
+  }
+
+  @Override
   protected void doFilterInternal(
       HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
       throws ServletException, IOException {
