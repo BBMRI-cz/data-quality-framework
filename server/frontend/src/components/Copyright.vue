@@ -58,7 +58,7 @@
         rel="noopener noreferrer"
         class="swagger-link"
       >
-        <i class="bi bi-file-code" aria-hidden="true"></i>
+        <i class="bi bi-braces-asterisk" aria-hidden="true"></i>
         API Documentation
       </a>
     </p>
