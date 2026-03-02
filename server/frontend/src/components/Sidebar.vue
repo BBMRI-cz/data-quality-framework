@@ -321,6 +321,15 @@ const closeMobileMenu = () => {
   color: rgba(255, 255, 255, 0.9);
 }
 
+.sidebar-footer :deep(.swagger-link) {
+  color: white;
+  font-weight: 500;
+}
+
+.sidebar-footer :deep(.swagger-link:hover) {
+  color: rgba(255, 255, 255, 0.9);
+}
+
 .sidebar-footer :deep(.build-info) {
   color: rgba(255, 255, 255, 0.7);
 }

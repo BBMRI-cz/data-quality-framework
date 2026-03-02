@@ -155,20 +155,21 @@
 
 <script setup>
 import { reactive, computed, ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuth } from 'vue3-oidc'
+import { useRouter, useRoute } from 'vue-router'
 import { authStore } from '../stores/authStore.js'
 import { apiService } from '../services/apiService.js'
 import { notificationService } from '../services/notificationService.js'
-import { initializeOidc } from '../utils/oidc.js'
+import { initializeOidc, signinWithOidc } from '../utils/oidc.js'
 import settingsStore from '../stores/settingsStore.js'
 
 const router = useRouter()
+const route = useRoute()
 const agentCount = ref(0)
 const reportCount = ref(0)
 const displayAgentCount = ref(0)
 const displayReportCount = ref(0)
 const isOidcLoading = ref(false)
+const sessionExpiredHandled = ref(false)
 
 const { settings } = settingsStore
 
@@ -213,12 +214,24 @@ const animateCount = (displayRef, targetValue, duration = 1500) => {
 }
 
 onMounted(async () => {
+  if (route.query.sessionExpired === 'true') {
+    sessionExpiredHandled.value = true
+    router.replace({ name: 'Login', query: {} })
+  }
+
   try {
     await settingsStore.fetchOidcSettings()
+
+    if (settingsStore.settings.value?.oidcAuthority && sessionExpiredHandled.value) {
+      try {
+        await initializeOidc(true)
+      } catch (error) {
+        console.error('Failed to initialize OIDC on mount:', error)
+      }
+    }
   } catch (error) {
     console.error('Failed to fetch OIDC settings:', error)
   }
-
 
   try {
     const counts = await apiService.getCounts()
@@ -264,16 +277,26 @@ const validateForm = () => {
 
 const handleOidcLogin = async () => {
   isOidcLoading.value = true
+  authStore.clearError()
 
   try {
-    await initializeOidc()
+    if (!settingsStore.settings.value?.oidcAuthority) {
+      throw new Error('OIDC settings not configured. Please contact your administrator.')
+    }
 
-    const { signinRedirect } = useAuth()
-    await signinRedirect()
-  } catch (error) {
-    console.error('OIDC login failed:', error)
-    authStore.setError('OIDC login failed. Please try again.')
+    await initializeOidc(false)
+
+    if (sessionExpiredHandled.value) {
+      sessionExpiredHandled.value = false
+    }
+
+    await signinWithOidc()
+
     isOidcLoading.value = false
+    authStore.setError('OIDC login failed to redirect. Please try again.')
+  } catch (error) {
+    isOidcLoading.value = false
+    authStore.setError(error.message || 'OIDC login failed. Please try again.')
   }
 }
 
