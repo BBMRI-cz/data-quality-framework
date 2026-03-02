@@ -17,7 +17,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <spring-boot.version>3.5.7</spring-boot.version>
         <spring-modulith.version>1.4.4</spring-modulith.version>
-        <spring-doc.version>2.8.14</spring-doc.version>
+        <spring-doc.version>3.0.2</spring-doc.version>
         <json.version>20251224</json.version>
         <hapi.fhir.version>8.8.0</hapi.fhir.version>
         <hapi.fhir.structures.version>8.8.0</hapi.fhir.structures.version>
