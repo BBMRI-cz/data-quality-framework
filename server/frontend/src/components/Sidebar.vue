@@ -13,7 +13,7 @@
       </router-link>
 
       <!-- Navigation Menu -->
-      <nav class="sidebar-nav">
+      <nav class="sidebar-nav custom-scrollbar-dark">
         <router-link to="/dashboard" class="nav-link" :class="{ active: $route.name === 'Dashboard' }" @click="closeMobileMenu">
           <i class="bi bi-grid-3x3-gap-fill"></i>
           <span>Dashboard</span>
@@ -179,23 +179,6 @@ const closeMobileMenu = () => {
   overflow-x: hidden;
 }
 
-.sidebar-nav::-webkit-scrollbar {
-  width: 8px;
-}
-
-.sidebar-nav::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 4px;
-}
-
-.sidebar-nav::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 4px;
-}
-
-.sidebar-nav::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.4);
-}
 
 .nav-link {
   display: flex;

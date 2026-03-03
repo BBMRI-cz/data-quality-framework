@@ -88,7 +88,7 @@
           </div>
 
           <!-- Checks List -->
-          <div class="checks-container">
+          <div class="checks-container custom-scrollbar">
             <div class="checks-header px-4 py-3 bg-white border-bottom">
               <h6 class="mb-0 text-uppercase text-muted fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.5px;">
                 Quality Check Results
@@ -504,23 +504,6 @@ const getOverallStatusBadgeClass = () => {
   font-size: 1.1rem;
 }
 
-/* Scrollbar styling */
-.checks-container::-webkit-scrollbar {
-  width: 8px;
-}
-
-.checks-container::-webkit-scrollbar-track {
-  background: #f1f1f1;
-}
-
-.checks-container::-webkit-scrollbar-thumb {
-  background: #cbd5e0;
-  border-radius: 4px;
-}
-
-.checks-container::-webkit-scrollbar-thumb:hover {
-  background: #a0aec0;
-}
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
