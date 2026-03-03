@@ -6,7 +6,7 @@
         <PageHeader
           :title="isNew ? 'New Category' : (category?.name || 'Unnamed Category')"
           :subtitle="isNew ? 'Create a new category' : 'Category Details'"
-          icon="bi bi-tags-fill"
+          icon="bi bi-tags"
         />
 
         <!-- Back Button and Actions -->

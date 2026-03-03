@@ -7,7 +7,7 @@
           title="Users"
           mobile-title="Users"
           subtitle="Manage system users"
-          icon="bi bi-people-fill"
+          icon="bi bi-people"
         >
           <template #actions>
             <button

@@ -13,7 +13,7 @@
       <StatsCard
         label="Quality Checks"
         :value="`${totalChecks}`"
-        icon="bi bi-clipboard-check-fill"
+        icon="bi bi-check-square-fill"
         iconColor="#6f42c1"
         iconBgColor="#e2d9f3"
       />

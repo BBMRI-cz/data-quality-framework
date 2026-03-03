@@ -101,7 +101,7 @@ const headerSubtitle = computed(() =>
 )
 
 const headerIcon = computed(() =>
-  viewMode.value === 'site' ? 'bi bi-database-fill-gear' : 'bi bi-person-fill'
+  viewMode.value === 'site' ? 'bi bi-database-fill-gear' : 'bi bi-person'
 )
 
 const loadReportsData = async () => {

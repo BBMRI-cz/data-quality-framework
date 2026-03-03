@@ -7,7 +7,7 @@
           title="Categories"
           mobile-title="Categories"
           subtitle="Manage quality check categories"
-          icon="bi bi-tags-fill"
+          icon="bi bi-tags"
         >
           <template #actions>
             <button

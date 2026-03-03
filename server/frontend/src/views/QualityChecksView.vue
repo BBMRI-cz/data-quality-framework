@@ -7,7 +7,7 @@
           title="Quality Checks"
           mobile-title="Checks"
           subtitle="View and manage data quality check definitions"
-          icon="bi bi-clipboard-check-fill"
+          icon="bi bi-check-square"
         >
           <template #actions>
             <button
