@@ -6,7 +6,7 @@
         <PageHeader
           :title="isNew ? 'New User' : (user?.username || 'User Details')"
           :subtitle="isNew ? 'Create a new user' : 'User Details'"
-          icon="bi bi-person-fill"
+          icon="bi bi-person"
         />
 
         <!-- Back Button and Actions -->

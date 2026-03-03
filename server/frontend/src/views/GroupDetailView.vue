@@ -6,7 +6,7 @@
         <PageHeader
           :title="isNew ? 'New Group' : (group?.name || 'Unnamed Group')"
           :subtitle="isNew ? 'Create a new group' : 'Group Details'"
-          icon="bi bi-collection-fill"
+          icon="bi bi-collection"
         />
 
         <!-- Back Button and Actions -->

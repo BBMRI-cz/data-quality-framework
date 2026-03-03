@@ -24,11 +24,11 @@
             <span>Agents</span>
           </router-link>
           <router-link to="/reports" class="nav-link" :class="{ active: $route.name === 'Reports' }" @click="closeMobileMenu">
-            <i class="bi bi-bar-chart-fill"></i>
+            <i class="bi bi-file-earmark-text-fill"></i>
             <span>Reports</span>
           </router-link>
           <router-link to="/quality-checks" class="nav-link" :class="{ active: $route.name === 'QualityChecks' }" @click="closeMobileMenu">
-            <i class="bi bi-clipboard-check-fill"></i>
+            <i class="bi bi-check-square-fill"></i>
             <span>Quality Checks</span>
           </router-link>
           <router-link to="/categories" class="nav-link" :class="{ active: $route.name === 'Categories' }" @click="closeMobileMenu">

@@ -7,7 +7,7 @@
           title="Groups"
           mobile-title="Groups"
           subtitle="Manage agent groups"
-          icon="bi bi-collection-fill"
+          icon="bi bi-collection"
         >
           <template #actions>
             <button

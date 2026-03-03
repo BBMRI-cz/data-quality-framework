@@ -7,7 +7,7 @@
           title="Reports"
           mobile-title="Reports"
           subtitle="View and analyze data quality reports from all agents"
-          icon="bi bi-file-earmark-text-fill"
+          icon="bi bi-file-earmark-text"
         >
           <template #actions>
             <button
