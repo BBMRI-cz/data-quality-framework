@@ -29,7 +29,6 @@ if (version) {
 export default defineConfig({
     title: 'Data Quality Framework',
     description: 'Comprehensive framework for monitoring and ensuring data quality in biomedical research environments',
-    base: '/data-quality-framework/',
 
     sitemap: {
         hostname: 'https://bbmri-cz.github.io/data-quality-framework/'
