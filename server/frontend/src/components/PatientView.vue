@@ -12,7 +12,7 @@
       <StatsCard
         label="From Sites"
         :value="`${fromSites}`"
-        icon="bi bi-hospital-fill"
+        icon="bi bi-database-fill-gear"
         iconColor="#198754"
         iconBgColor="#d1e7dd"
       />
