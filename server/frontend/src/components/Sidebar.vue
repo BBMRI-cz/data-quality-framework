@@ -13,53 +13,58 @@
       </router-link>
 
       <!-- Navigation Menu -->
-      <nav class="sidebar-nav custom-scrollbar-dark">
-        <router-link to="/dashboard" class="nav-link" :class="{ active: $route.name === 'Dashboard' }" @click="closeMobileMenu">
-          <i class="bi bi-grid-3x3-gap-fill"></i>
-          <span>Dashboard</span>
-        </router-link>
-        <router-link to="/agents" class="nav-link" :class="{ active: $route.name === 'Agents' }" @click="closeMobileMenu">
-          <i class="bi bi-database-fill-gear"></i>
-          <span>Agents</span>
-        </router-link>
-        <router-link to="/reports" class="nav-link" :class="{ active: $route.name === 'Reports' }" @click="closeMobileMenu">
-          <i class="bi bi-bar-chart-fill"></i>
-          <span>Reports</span>
-        </router-link>
-        <router-link to="/quality-checks" class="nav-link" :class="{ active: $route.name === 'QualityChecks' }" @click="closeMobileMenu">
-          <i class="bi bi-clipboard-check-fill"></i>
-          <span>Quality Checks</span>
-        </router-link>
-        <router-link to="/categories" class="nav-link" :class="{ active: $route.name === 'Categories' }" @click="closeMobileMenu">
-          <i class="bi bi-tags-fill"></i>
-          <span>Categories</span>
-        </router-link>
-        <router-link to="/groups" class="nav-link" :class="{ active: $route.name === 'Groups' }" @click="closeMobileMenu">
-          <i class="bi bi-collection-fill"></i>
-          <span>Groups</span>
-        </router-link>
-        <router-link to="/users" class="nav-link" :class="{ active: $route.name === 'Users' }" @click="closeMobileMenu">
-          <i class="bi bi-people-fill"></i>
-          <span>Users</span>
-        </router-link>
-        <div class="nav-section">
-          <div class="nav-section-header">
-            <i class="bi bi-gear-fill"></i>
-            <span>Settings</span>
+      <div class="sidebar-nav-wrapper">
+        <nav ref="navRef" class="sidebar-nav custom-scrollbar-dark" @scroll="checkScroll">
+          <router-link to="/dashboard" class="nav-link" :class="{ active: $route.name === 'Dashboard' }" @click="closeMobileMenu">
+            <i class="bi bi-grid-3x3-gap-fill"></i>
+            <span>Dashboard</span>
+          </router-link>
+          <router-link to="/agents" class="nav-link" :class="{ active: $route.name === 'Agents' }" @click="closeMobileMenu">
+            <i class="bi bi-database-fill-gear"></i>
+            <span>Agents</span>
+          </router-link>
+          <router-link to="/reports" class="nav-link" :class="{ active: $route.name === 'Reports' }" @click="closeMobileMenu">
+            <i class="bi bi-bar-chart-fill"></i>
+            <span>Reports</span>
+          </router-link>
+          <router-link to="/quality-checks" class="nav-link" :class="{ active: $route.name === 'QualityChecks' }" @click="closeMobileMenu">
+            <i class="bi bi-clipboard-check-fill"></i>
+            <span>Quality Checks</span>
+          </router-link>
+          <router-link to="/categories" class="nav-link" :class="{ active: $route.name === 'Categories' }" @click="closeMobileMenu">
+            <i class="bi bi-tags-fill"></i>
+            <span>Categories</span>
+          </router-link>
+          <router-link to="/groups" class="nav-link" :class="{ active: $route.name === 'Groups' }" @click="closeMobileMenu">
+            <i class="bi bi-collection-fill"></i>
+            <span>Groups</span>
+          </router-link>
+          <router-link to="/users" class="nav-link" :class="{ active: $route.name === 'Users' }" @click="closeMobileMenu">
+            <i class="bi bi-people-fill"></i>
+            <span>Users</span>
+          </router-link>
+          <div class="nav-section">
+            <div class="nav-section-header">
+              <i class="bi bi-gear-fill"></i>
+              <span>Settings</span>
+            </div>
+            <router-link to="/profile" class="nav-link nav-subitem" :class="{ active: $route.name === 'Profile' }" @click="closeMobileMenu">
+              <i class="bi bi-person-fill"></i>
+              <span>Profile</span>
+            </router-link>
+            <router-link to="/oidc-settings" class="nav-link nav-subitem" :class="{ active: $route.name === 'OidcSettings' }" @click="closeMobileMenu">
+              <!-- OIDC icon from Font Awesome Free v7.1.0 - see https://fontawesome.com/license/free -->
+              <svg class="oidc-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+                <path d="M367.5 496L299.5 528C184.5 517.7 96 456.5 96 382.2C96 310.7 178.5 251.2 287.7 237.9L287.7 280.9C216.2 293.4 163.7 333.9 163.7 382.2C163.7 433.2 222.2 475.5 299.4 485.2L299.4 145.2L367.4 112L367.4 496L367.5 496zM544 355L412.7 326.5L449.5 305.8C430 294.3 406 285.8 379.5 281L379.5 238C425.7 243.5 467.2 257.5 499.8 277.3L534.8 257.5L544 355z"/>
+              </svg>
+              <span>OIDC</span>
+            </router-link>
           </div>
-          <router-link to="/profile" class="nav-link nav-subitem" :class="{ active: $route.name === 'Profile' }" @click="closeMobileMenu">
-            <i class="bi bi-person-fill"></i>
-            <span>Profile</span>
-          </router-link>
-          <router-link to="/oidc-settings" class="nav-link nav-subitem" :class="{ active: $route.name === 'OidcSettings' }" @click="closeMobileMenu">
-            <!-- OIDC icon from Font Awesome Free v7.1.0 - see https://fontawesome.com/license/free -->
-            <svg class="oidc-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
-              <path d="M367.5 496L299.5 528C184.5 517.7 96 456.5 96 382.2C96 310.7 178.5 251.2 287.7 237.9L287.7 280.9C216.2 293.4 163.7 333.9 163.7 382.2C163.7 433.2 222.2 475.5 299.4 485.2L299.4 145.2L367.4 112L367.4 496L367.5 496zM544 355L412.7 326.5L449.5 305.8C430 294.3 406 285.8 379.5 281L379.5 238C425.7 243.5 467.2 257.5 499.8 277.3L534.8 257.5L544 355z"/>
-            </svg>
-            <span>OIDC</span>
-          </router-link>
+        </nav>
+        <div v-show="canScrollDown" class="scroll-indicator" @click="scrollNavDown">
+          <i class="bi bi-chevron-down"></i>
         </div>
-      </nav>
+      </div>
 
       <!-- Copyright -->
       <div class="sidebar-footer">
@@ -78,10 +83,13 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import Copyright from './Copyright.vue'
 
 const showMobileMenu = ref(false)
+const canScrollDown = ref(false)
+const navRef = ref(null)
+let resizeObserver = null
 
 const toggleMobileMenu = () => {
   showMobileMenu.value = !showMobileMenu.value
@@ -90,6 +98,28 @@ const toggleMobileMenu = () => {
 const closeMobileMenu = () => {
   showMobileMenu.value = false
 }
+
+const checkScroll = () => {
+  if (!navRef.value) return
+  const { scrollTop, scrollHeight, clientHeight } = navRef.value
+  canScrollDown.value = scrollHeight - scrollTop - clientHeight > 10
+}
+
+const scrollNavDown = () => {
+  navRef.value?.scrollBy({ top: 100, behavior: 'smooth' })
+}
+
+onMounted(() => {
+  checkScroll()
+  if (navRef.value) {
+    resizeObserver = new ResizeObserver(checkScroll)
+    resizeObserver.observe(navRef.value)
+  }
+})
+
+onUnmounted(() => {
+  resizeObserver?.disconnect()
+})
 </script>
 
 <style scoped>
@@ -169,14 +199,35 @@ const closeMobileMenu = () => {
 }
 
 /* Navigation */
-.sidebar-nav {
+.sidebar-nav-wrapper {
   flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.sidebar-nav {
+  height: 100%;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   padding: 0 1rem;
   overflow-y: auto;
   overflow-x: hidden;
+}
+
+.scroll-indicator {
+  position: absolute;
+  bottom: 4px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.scroll-indicator i {
+  color: white;
+  font-size: 1rem;
 }
 
 
