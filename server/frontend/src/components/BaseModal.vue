@@ -226,6 +226,7 @@ const headerClasses = computed(() => [
 
 const bodyClasses = computed(() => [
   'modal-body',
+  'custom-scrollbar',
   {
     'modal-body--scrollable': props.scrollable
   }
@@ -501,23 +502,6 @@ onUnmounted(() => {
   transform: scale(0.95);
 }
 
-/* Scrollbar styling */
-.modal-body--scrollable::-webkit-scrollbar {
-  width: 8px;
-}
-
-.modal-body--scrollable::-webkit-scrollbar-track {
-  background: #f1f3f4;
-}
-
-.modal-body--scrollable::-webkit-scrollbar-thumb {
-  background: #c1c7cd;
-  border-radius: 4px;
-}
-
-.modal-body--scrollable::-webkit-scrollbar-thumb:hover {
-  background: #a8b0b8;
-}
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
