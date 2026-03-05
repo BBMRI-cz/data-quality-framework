@@ -6,7 +6,7 @@
         <PageHeader
           :title="qualityCheck?.name || 'Quality Check Details'"
           subtitle="Quality Check Details"
-          icon="bi bi-clipboard-check-fill"
+          icon="bi bi-check-square"
         />
 
         <!-- Back Button -->
