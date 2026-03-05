@@ -23,6 +23,8 @@ services:
   server-db:
     image: postgres:17
     container_name: server-db
+    restart: unless-stopped
+    shm_size: 256mb
     environment:
       POSTGRES_DB: quality_server
       POSTGRES_USER: quality
