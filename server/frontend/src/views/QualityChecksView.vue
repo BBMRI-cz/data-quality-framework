@@ -370,7 +370,7 @@
   }
 
   .font-monospace {
-    font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+    font-family: var(--font-mono), monospace;
     font-size: 0.875rem;
   }
 

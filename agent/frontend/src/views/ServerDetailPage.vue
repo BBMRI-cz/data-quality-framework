@@ -491,7 +491,7 @@
     border-radius: var(--radius-md);
     padding: var(--spacing-md);
     overflow-x: auto;
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-family: var(--font-mono), monospace;
     font-size: 0.875rem;
     line-height: 1.5;
     white-space: pre-wrap;

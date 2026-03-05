@@ -468,7 +468,7 @@
     border-radius: 0.25rem;
     font-size: 0.75rem;
     color: var(--color-gray-700);
-    font-family: 'Courier New', monospace;
+    font-family: var(--font-mono), monospace;
   }
 
   .filter-label {

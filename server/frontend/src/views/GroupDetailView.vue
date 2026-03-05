@@ -654,7 +654,7 @@
   .agent-id {
     font-size: 0.8rem;
     color: #6c757d;
-    font-family: 'Courier New', monospace;
+    font-family: var(--font-mono), monospace;
     word-break: break-all;
   }
 
