@@ -207,69 +207,69 @@
 </template>
 
 <script setup>
-  import { onMounted, ref } from 'vue';
-  import settingsStore from '../stores/settingsStore';
-  import { authStore } from '../stores/authStore';
-  import PageHeader from '../components/PageHeader.vue';
-  import DeleteConfirmModal from '../components/DeleteConfirmModal.vue';
+   import { onMounted, ref } from 'vue';
+   import settingsStore from '../stores/settingsStore';
+   import { authStore } from '../stores/authStore';
+   import PageHeader from '../components/PageHeader.vue';
+   import DeleteConfirmModal from '../components/DeleteConfirmModal.vue';
 
-  const reloadTimeout = 500;
-  const { settings, loading, error } = settingsStore;
-  const showRemoveModal = ref(false);
+   const reloadTimeout = 500;
+   const { settings, loading, error } = settingsStore;
+   const showRemoveModal = ref(false);
 
- async function saveSettings() {
-  settings.value.oidcAuthority = settings.value.oidcAuthority?.trim().replace(/\/+$/, '') || ''
-  settings.value.oidcRedirectUri = settings.value.oidcRedirectUri?.trim().replace(/\/+$/, '') || ''
-  settings.value.oidcPostLogoutRedirectUri = settings.value.oidcPostLogoutRedirectUri?.trim().replace(/\/+$/, '') || ''
-  settings.value.oidcSwaggerRedirectUrl = settings.value.oidcSwaggerRedirectUrl?.trim().replace(/\/+$/, '') || ''
-
-  await settingsStore.updateOidcSettings()
   async function saveSettings() {
+   settings.value.oidcAuthority = settings.value.oidcAuthority?.trim().replace(/\/+$/, '') || ''
+   settings.value.oidcRedirectUri = settings.value.oidcRedirectUri?.trim().replace(/\/+$/, '') || ''
+   settings.value.oidcPostLogoutRedirectUri = settings.value.oidcPostLogoutRedirectUri?.trim().replace(/\/+$/, '') || ''
+   settings.value.oidcSwaggerRedirectUrl = settings.value.oidcSwaggerRedirectUrl?.trim().replace(/\/+$/, '') || ''
 
-    if (!error.value) {
-      if (authStore.mode === 'oidc') {
-        authStore.logout();
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, reloadTimeout);
-      } else {
-        setTimeout(() => {
-          window.location.reload();
-        }, reloadTimeout);
-      }
-    }
-  }
+   await settingsStore.updateOidcSettings()
+   async function saveSettings() {
 
-  async function removeOidcConfig() {
-    settings.value.oidcAuthority = '';
-    settings.value.oidcClientId = '';
-    settings.value.oidcRedirectUri = '';
-    settings.value.oidcPostLogoutRedirectUri = '';
-    settings.value.oidcAuthorityName = '';
-    settings.value.oidcAuthorityLogo = '';
-    settings.value.oidcScopes = '';
-    settings.value.oidcSwaggerRedirectUrl = '';
+     if (!error.value) {
+       if (authStore.mode === 'oidc') {
+         authStore.logout();
+         setTimeout(() => {
+           window.location.href = '/login';
+         }, reloadTimeout);
+       } else {
+         setTimeout(() => {
+           window.location.reload();
+         }, reloadTimeout);
+       }
+     }
+   }
 
-    await settingsStore.updateOidcSettings();
-    showRemoveModal.value = false;
+   async function removeOidcConfig() {
+     settings.value.oidcAuthority = '';
+     settings.value.oidcClientId = '';
+     settings.value.oidcRedirectUri = '';
+     settings.value.oidcPostLogoutRedirectUri = '';
+     settings.value.oidcAuthorityName = '';
+     settings.value.oidcAuthorityLogo = '';
+     settings.value.oidcScopes = '';
+     settings.value.oidcSwaggerRedirectUrl = '';
 
-    if (!error.value) {
-      if (authStore.mode === 'oidc') {
-        authStore.logout();
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, reloadTimeout);
-      } else {
-        setTimeout(() => {
-          window.location.reload();
-        }, reloadTimeout);
-      }
-    }
-  }
+     await settingsStore.updateOidcSettings();
+     showRemoveModal.value = false;
 
-  onMounted(async () => {
-    await settingsStore.fetchOidcSettings();
-  });
+     if (!error.value) {
+       if (authStore.mode === 'oidc') {
+         authStore.logout();
+         setTimeout(() => {
+           window.location.href = '/login';
+         }, reloadTimeout);
+       } else {
+         setTimeout(() => {
+           window.location.reload();
+         }, reloadTimeout);
+       }
+     }
+   }
+
+   onMounted(async () => {
+     await settingsStore.fetchOidcSettings();
+   });
 </script>
 
 <style scoped>
