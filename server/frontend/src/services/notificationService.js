@@ -1,5 +1,3 @@
-import { ref } from 'vue';
-
 // Global notification service
 class NotificationService {
   constructor() {
