@@ -17,9 +17,6 @@ services:
     depends_on:
       server-db:
         condition: service_healthy
-    environment:
-      - DB_USERNAME=quality
-      - DB_PASSWORD=quality
   server-db:
     image: postgres:17
     container_name: server-db
