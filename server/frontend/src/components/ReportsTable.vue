@@ -54,12 +54,20 @@
                 <span class="text-muted">{{ getCheckCounts(report).total }}</span>
               </td>
               <td class="text-center">
-                <span :class="getCheckCounts(report).warnings > 0 ? 'text-warning fw-semibold' : 'text-muted'">
+                <span
+                  :class="
+                    getCheckCounts(report).warnings > 0 ? 'text-warning fw-semibold' : 'text-muted'
+                  "
+                >
                   {{ getCheckCounts(report).warnings }}
                 </span>
               </td>
               <td class="text-center">
-                <span :class="getCheckCounts(report).failed > 0 ? 'text-danger fw-semibold' : 'text-muted'">
+                <span
+                  :class="
+                    getCheckCounts(report).failed > 0 ? 'text-danger fw-semibold' : 'text-muted'
+                  "
+                >
                   {{ getCheckCounts(report).failed }}
                 </span>
               </td>
@@ -78,172 +86,172 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { countChecksByStatus, getReportStatus, CheckStatus } from '../utils/qualityCheckUtils.js'
+  import { computed } from 'vue';
+  import { useRouter } from 'vue-router';
+  import { countChecksByStatus, getReportStatus, CheckStatus } from '../utils/qualityCheckUtils.js';
 
-const router = useRouter()
+  const router = useRouter();
 
-const props = defineProps({
-  reports: {
-    type: Array,
-    required: true,
-    default: () => []
-  },
-  qualityCheckMap: {
-    type: Map,
-    required: true
-  },
-  agents: {
-    type: Array,
-    required: true,
-    default: () => []
-  },
-  selectedStatus: {
-    type: String,
-    default: null
-  }
-})
+  const props = defineProps({
+    reports: {
+      type: Array,
+      required: true,
+      default: () => [],
+    },
+    qualityCheckMap: {
+      type: Map,
+      required: true,
+    },
+    agents: {
+      type: Array,
+      required: true,
+      default: () => [],
+    },
+    selectedStatus: {
+      type: String,
+      default: null,
+    },
+  });
 
-const filteredReports = computed(() => {
-  if (!props.selectedStatus) {
-    return props.reports
-  }
+  const filteredReports = computed(() => {
+    if (!props.selectedStatus) {
+      return props.reports;
+    }
 
-  return props.reports.filter(report => {
-    const reportStatus = getReportStatus(report, props.qualityCheckMap)
-    return reportStatus === props.selectedStatus
-  })
-})
+    return props.reports.filter((report) => {
+      const reportStatus = getReportStatus(report, props.qualityCheckMap);
+      return reportStatus === props.selectedStatus;
+    });
+  });
 
-// Create a map for quick agent lookup by ID
-const agentMap = computed(() => {
-  return new Map(props.agents.map(agent => [agent.id, agent]))
-})
+  // Create a map for quick agent lookup by ID
+  const agentMap = computed(() => {
+    return new Map(props.agents.map((agent) => [agent.id, agent]));
+  });
 
-const getAgentName = (agentId) => {
-  const agent = agentMap.value.get(agentId)
-  return agent?.name || 'Unknown Agent'
-}
+  const getAgentName = (agentId) => {
+    const agent = agentMap.value.get(agentId);
+    return agent?.name || 'Unknown Agent';
+  };
 
-const navigateToReport = (reportId) => {
-  router.push(`/reports/${reportId}`)
-}
+  const navigateToReport = (reportId) => {
+    router.push(`/reports/${reportId}`);
+  };
 
-const formatDateShort = (dateString) => {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  })
-}
+  const formatDateShort = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
 
-const formatTime = (dateString) => {
-  const date = new Date(dateString)
-  return date.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
+  const formatTime = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
 
-const getCheckCounts = (report) => {
-  return countChecksByStatus(report, props.qualityCheckMap)
-}
+  const getCheckCounts = (report) => {
+    return countChecksByStatus(report, props.qualityCheckMap);
+  };
 
-const getReportStatusText = (report) => {
-  return getReportStatus(report, props.qualityCheckMap)
-}
+  const getReportStatusText = (report) => {
+    return getReportStatus(report, props.qualityCheckMap);
+  };
 
-const getReportStatusBadgeClass = (report) => {
-  const status = getReportStatus(report, props.qualityCheckMap)
+  const getReportStatusBadgeClass = (report) => {
+    const status = getReportStatus(report, props.qualityCheckMap);
 
-  switch (status) {
-    case CheckStatus.PASSED:
-      return 'bg-success'
-    case CheckStatus.WARNING:
-      return 'bg-warning text-dark'
-    case CheckStatus.FAILED:
-      return 'bg-danger'
-    default:
-      return 'bg-secondary'
-  }
-}
+    switch (status) {
+      case CheckStatus.PASSED:
+        return 'bg-success';
+      case CheckStatus.WARNING:
+        return 'bg-warning text-dark';
+      case CheckStatus.FAILED:
+        return 'bg-danger';
+      default:
+        return 'bg-secondary';
+    }
+  };
 </script>
 
 <style scoped>
-.table th {
-  font-weight: 600;
-  font-size: 0.813rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #6c757d;
-  padding: 1rem 0.75rem;
-  border-bottom: 2px solid #dee2e6;
-  white-space: nowrap;
-}
-
-.table td {
-  vertical-align: middle;
-  padding: 1rem 0.75rem;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.table-responsive {
-  overflow-x: visible;
-}
-
-.report-id {
-  max-width: 150px;
-  display: inline-block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.table-row-hover {
-  transition: all 0.2s ease-in-out;
-}
-
-.table-row-hover:hover {
-  background-color: #f8f9fa;
-  transform: translateX(2px);
-  box-shadow: inset 3px 0 0 #0d6efd;
-}
-
-.font-monospace {
-  font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
-  font-size: 0.875rem;
-}
-
-.cursor-pointer {
-  cursor: pointer;
-}
-
-.badge {
-  font-weight: 500;
-  padding: 0.35rem 0.65rem;
-  font-size: 0.75rem;
-  white-space: nowrap;
-}
-
-.badge.rounded-pill {
-  padding: 0.35rem 0.85rem;
-}
-
-/* Status indicator animation */
-.badge.bg-danger,
-.badge.bg-warning {
-  animation: pulse-subtle 2s ease-in-out infinite;
-}
-
-@keyframes pulse-subtle {
-  0%, 100% {
-    opacity: 1;
+  .table th {
+    font-weight: 600;
+    font-size: 0.813rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6c757d;
+    padding: 1rem 0.75rem;
+    border-bottom: 2px solid #dee2e6;
+    white-space: nowrap;
   }
-  50% {
-    opacity: 0.85;
+
+  .table td {
+    vertical-align: middle;
+    padding: 1rem 0.75rem;
+    border-bottom: 1px solid #f0f0f0;
   }
-}
+
+  .table-responsive {
+    overflow-x: visible;
+  }
+
+  .report-id {
+    max-width: 150px;
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .table-row-hover {
+    transition: all 0.2s ease-in-out;
+  }
+
+  .table-row-hover:hover {
+    background-color: #f8f9fa;
+    transform: translateX(2px);
+    box-shadow: inset 3px 0 0 #0d6efd;
+  }
+
+  .font-monospace {
+    font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+    font-size: 0.875rem;
+  }
+
+  .cursor-pointer {
+    cursor: pointer;
+  }
+
+  .badge {
+    font-weight: 500;
+    padding: 0.35rem 0.65rem;
+    font-size: 0.75rem;
+    white-space: nowrap;
+  }
+
+  .badge.rounded-pill {
+    padding: 0.35rem 0.85rem;
+  }
+
+  /* Status indicator animation */
+  .badge.bg-danger,
+  .badge.bg-warning {
+    animation: pulse-subtle 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-subtle {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.85;
+    }
+  }
 </style>
-

@@ -10,9 +10,9 @@
         >
           <template #actions>
             <button
-              @click="refreshInteractions"
               class="btn btn-outline-primary btn-sm"
               :disabled="loading"
+              @click="refreshInteractions"
             >
               <i class="bi bi-arrow-clockwise"></i>
               <span class="d-none d-md-inline ms-1">Refresh</span>
@@ -53,10 +53,10 @@
             label="Agent Version"
             :value="agentVersion || 'unknown'"
             icon="bi bi-code-square"
-            iconColor="#6f42c1"
-            iconBgColor="#e0cffc"
-            trendText="Current version"
-            trendType="neutral"
+            icon-color="#6f42c1"
+            icon-bg-color="#e0cffc"
+            trend-text="Current version"
+            trend-type="neutral"
           />
         </div>
         <div class="col-12 col-md-4 mb-3">
@@ -64,10 +64,10 @@
             label="Latest Ping"
             :value="latestPingTime || 'No pings recorded'"
             icon="bi bi-heart-pulse"
-            :iconColor="latestPingColor"
-            :iconBgColor="latestPingBgColor"
-            trendText="Health check"
-            trendType="neutral"
+            :icon-color="latestPingColor"
+            :icon-bg-color="latestPingBgColor"
+            trend-text="Health check"
+            trend-type="neutral"
           />
         </div>
         <div class="col-12 col-md-4 mb-3">
@@ -75,10 +75,10 @@
             label="First Registration"
             :value="firstRegistrationTime || 'Not registered'"
             icon="bi bi-person-plus"
-            iconColor="#0d6efd"
-            iconBgColor="#cfe2ff"
-            trendText="Agent joined"
-            trendType="neutral"
+            icon-color="#0d6efd"
+            icon-bg-color="#cfe2ff"
+            trend-text="Agent joined"
+            trend-type="neutral"
           />
         </div>
       </div>
@@ -105,18 +105,20 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr
-                      v-for="interaction in paginatedInteractions"
-                      :key="interaction.id"
-                    >
+                    <tr v-for="interaction in paginatedInteractions" :key="interaction.id">
                       <td class="ps-4">
                         <div class="d-flex flex-column">
                           <span class="fw-medium">{{ formatDateLong(interaction.timestamp) }}</span>
-                          <small class="text-muted">{{ formatTimeFull(interaction.timestamp) }}</small>
+                          <small class="text-muted">{{
+                            formatTimeFull(interaction.timestamp)
+                          }}</small>
                         </div>
                       </td>
                       <td>
-                        <span class="badge rounded-pill" :class="getInteractionTypeBadgeClass(interaction.type)">
+                        <span
+                          class="badge rounded-pill"
+                          :class="getInteractionTypeBadgeClass(interaction.type)"
+                        >
                           <i :class="getInteractionTypeIcon(interaction.type)" class="me-1"></i>
                           {{ interaction.type }}
                         </span>
@@ -137,20 +139,30 @@
             <div v-if="totalPages > 1" class="card-footer bg-white border-top py-3">
               <div class="d-flex justify-content-between align-items-center">
                 <div class="text-muted small">
-                  Showing {{ startIndex + 1 }} to {{ Math.min(endIndex, totalInteractions) }} of {{ totalInteractions }} interactions
+                  Showing {{ startIndex + 1 }} to {{ Math.min(endIndex, totalInteractions) }} of
+                  {{ totalInteractions }} interactions
                 </div>
                 <nav>
                   <ul class="pagination pagination-sm mb-0">
                     <li class="page-item" :class="{ disabled: currentPage === 1 }">
-                      <button class="page-link" @click="previousPage" :disabled="currentPage === 1">
+                      <button class="page-link" :disabled="currentPage === 1" @click="previousPage">
                         <i class="bi bi-chevron-left"></i>
                       </button>
                     </li>
-                    <li v-for="page in visiblePages" :key="page" class="page-item" :class="{ active: page === currentPage }">
+                    <li
+                      v-for="page in visiblePages"
+                      :key="page"
+                      class="page-item"
+                      :class="{ active: page === currentPage }"
+                    >
                       <button class="page-link" @click="goToPage(page)">{{ page }}</button>
                     </li>
                     <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-                      <button class="page-link" @click="nextPage" :disabled="currentPage === totalPages">
+                      <button
+                        class="page-link"
+                        :disabled="currentPage === totalPages"
+                        @click="nextPage"
+                      >
                         <i class="bi bi-chevron-right"></i>
                       </button>
                     </li>
@@ -166,210 +178,219 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import PageHeader from '../components/PageHeader.vue'
-import StatsCard from '../components/StatsCard.vue'
-import { apiService } from '../services/apiService.js'
+  import { ref, computed, onMounted } from 'vue';
+  import { useRoute, useRouter } from 'vue-router';
+  import PageHeader from '../components/PageHeader.vue';
+  import StatsCard from '../components/StatsCard.vue';
+  import { apiService } from '../services/apiService.js';
 
-const route = useRoute()
-const router = useRouter()
+  const route = useRoute();
+  const router = useRouter();
 
-const agentId = ref(route.params.uuid)
-const agentName = ref('Unknown Agent')
-const agentVersion = ref('Unknown version')
-const loading = ref(true)
-const error = ref(null)
-const interactions = ref([])
-const currentPage = ref(1)
-const itemsPerPage = 10
+  const agentId = ref(route.params.uuid);
+  const agentName = ref('Unknown Agent');
+  const agentVersion = ref('Unknown version');
+  const loading = ref(true);
+  const error = ref(null);
+  const interactions = ref([]);
+  const currentPage = ref(1);
+  const itemsPerPage = 10;
 
-const totalInteractions = computed(() => interactions.value.length)
-const totalPages = computed(() => Math.ceil(totalInteractions.value / itemsPerPage))
+  const totalInteractions = computed(() => interactions.value.length);
+  const totalPages = computed(() => Math.ceil(totalInteractions.value / itemsPerPage));
 
-const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage)
-const endIndex = computed(() => startIndex.value + itemsPerPage)
+  const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage);
+  const endIndex = computed(() => startIndex.value + itemsPerPage);
 
-const paginatedInteractions = computed(() => {
-  return interactions.value.slice(startIndex.value, endIndex.value)
-})
+  const paginatedInteractions = computed(() => {
+    return interactions.value.slice(startIndex.value, endIndex.value);
+  });
 
-const visiblePages = computed(() => {
-  const pages = []
-  const maxPagesToShow = 5
-  let startPage = Math.max(1, currentPage.value - Math.floor(maxPagesToShow / 2))
-  let endPage = Math.min(totalPages.value, startPage + maxPagesToShow - 1)
+  const visiblePages = computed(() => {
+    const pages = [];
+    const maxPagesToShow = 5;
+    let startPage = Math.max(1, currentPage.value - Math.floor(maxPagesToShow / 2));
+    let endPage = Math.min(totalPages.value, startPage + maxPagesToShow - 1);
 
-  if (endPage - startPage + 1 < maxPagesToShow) {
-    startPage = Math.max(1, endPage - maxPagesToShow + 1)
-  }
-
-  for (let i = startPage; i <= endPage; i++) {
-    pages.push(i)
-  }
-
-  return pages
-})
-
-const latestPingTime = computed(() => {
-  const latestPing = interactions.value.find(i => i.type === 'PING')
-  if (!latestPing) return null
-  const date = new Date(latestPing.timestamp)
-  const formattedDate = date.toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  })
-  const formattedTime = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-  return `${formattedDate} ${formattedTime}`
-})
-
-const latestPingColor = computed(() => {
-  const latestPing = interactions.value.find(i => i.type === 'PING')
-  if (!latestPing) return '#198754' // default green
-
-  const date = new Date(latestPing.timestamp)
-  const now = new Date()
-  const diffMs = now - date
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-
-  if (diffDays > 3) return '#dc3545' // red if more than 3 days old
-  return '#198754' // green otherwise
-})
-
-const latestPingBgColor = computed(() => {
-  const latestPing = interactions.value.find(i => i.type === 'PING')
-  if (!latestPing) return '#d1e7dd' // default light green
-
-  const date = new Date(latestPing.timestamp)
-  const now = new Date()
-  const diffMs = now - date
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-
-  if (diffDays > 3) return '#f8d7da' // light red if more than 3 days old
-  return '#d1e7dd' // light green otherwise
-})
-
-const firstRegistrationTime = computed(() => {
-  const registration = [...interactions.value].reverse().find(i => i.type === 'REGISTRATION')
-  if (!registration) return null
-  const date = new Date(registration.timestamp)
-  const formattedDate = date.toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  })
-  const formattedTime = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-  return `${formattedDate} ${formattedTime}`
-})
-
-const fetchAgentInteractions = async () => {
-  try {
-    loading.value = true
-    error.value = null
-
-    // Fetch agent details first to get the name
-    const agentsResponse = await apiService.getAgents()
-    const agents = agentsResponse._embedded?.agents || []
-    const agent = agents.find(a => a.id === agentId.value)
-
-    if (!agent) {
-      error.value = 'Agent not found'
-      return
+    if (endPage - startPage + 1 < maxPagesToShow) {
+      startPage = Math.max(1, endPage - maxPagesToShow + 1);
     }
 
-    agentName.value = agent.name || 'Unknown Agent'
-    agentVersion.value = agent.version || 'Unknown version'
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
 
-    // Fetch agent with interactions expanded
-    const agentResponse = await apiService.getAgent(agentId.value, true)
-    interactions.value = agentResponse.interactions || []
+    return pages;
+  });
 
-    // Sort by timestamp (newest first)
-    interactions.value.sort((a, b) =>
-      new Date(b.timestamp) - new Date(a.timestamp)
-    )
-  } catch (err) {
-    error.value = err.message || 'Failed to load agent interactions'
-    console.error('Error fetching agent interactions:', err)
-  } finally {
-    loading.value = false
-  }
-}
+  const latestPingTime = computed(() => {
+    const latestPing = interactions.value.find((i) => i.type === 'PING');
+    if (!latestPing) return null;
+    const date = new Date(latestPing.timestamp);
+    const formattedDate = date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+    const formattedTime = date.toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+    return `${formattedDate} ${formattedTime}`;
+  });
 
-const formatDateLong = (dateString) => {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  })
-}
+  const latestPingColor = computed(() => {
+    const latestPing = interactions.value.find((i) => i.type === 'PING');
+    if (!latestPing) return '#198754'; // default green
 
-const formatTimeFull = (dateString) => {
-  const date = new Date(dateString)
-  return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-}
+    const date = new Date(latestPing.timestamp);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-const refreshInteractions = () => {
-  fetchAgentInteractions()
-}
+    if (diffDays > 3) return '#dc3545'; // red if more than 3 days old
+    return '#198754'; // green otherwise
+  });
 
-const getInteractionTypeBadgeClass = (type) => {
-  switch (type) {
-    case 'REPORT':
-      return 'bg-info'
-    case 'PING':
-      return 'bg-success'
-    case 'REGISTRATION':
-      return 'bg-primary'
-    default:
-      return 'bg-secondary'
-  }
-}
+  const latestPingBgColor = computed(() => {
+    const latestPing = interactions.value.find((i) => i.type === 'PING');
+    if (!latestPing) return '#d1e7dd'; // default light green
 
-const getInteractionTypeIcon = (type) => {
-  switch (type) {
-    case 'REPORT':
-      return 'bi bi-file-earmark-text'
-    case 'PING':
-      return 'bi bi-heart-pulse'
-    case 'REGISTRATION':
-      return 'bi bi-person-plus'
-    default:
-      return 'bi bi-info-circle'
-  }
-}
+    const date = new Date(latestPing.timestamp);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-const goToPage = (page) => {
-  currentPage.value = page
-}
+    if (diffDays > 3) return '#f8d7da'; // light red if more than 3 days old
+    return '#d1e7dd'; // light green otherwise
+  });
 
-const previousPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--
-  }
-}
+  const firstRegistrationTime = computed(() => {
+    const registration = [...interactions.value].reverse().find((i) => i.type === 'REGISTRATION');
+    if (!registration) return null;
+    const date = new Date(registration.timestamp);
+    const formattedDate = date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+    const formattedTime = date.toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+    return `${formattedDate} ${formattedTime}`;
+  });
 
-const nextPage = () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++
-  }
-}
+  const fetchAgentInteractions = async () => {
+    try {
+      loading.value = true;
+      error.value = null;
 
-const goBack = () => {
-  router.back()
-}
+      // Fetch agent details first to get the name
+      const agentsResponse = await apiService.getAgents();
+      const agents = agentsResponse._embedded?.agents || [];
+      const agent = agents.find((a) => a.id === agentId.value);
 
-onMounted(() => {
-  fetchAgentInteractions()
-})
+      if (!agent) {
+        error.value = 'Agent not found';
+        return;
+      }
+
+      agentName.value = agent.name || 'Unknown Agent';
+      agentVersion.value = agent.version || 'Unknown version';
+
+      // Fetch agent with interactions expanded
+      const agentResponse = await apiService.getAgent(agentId.value, true);
+      interactions.value = agentResponse.interactions || [];
+
+      // Sort by timestamp (newest first)
+      interactions.value.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    } catch (err) {
+      error.value = err.message || 'Failed to load agent interactions';
+      console.error('Error fetching agent interactions:', err);
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const formatDateLong = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  };
+
+  const formatTimeFull = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+  };
+
+  const refreshInteractions = () => {
+    fetchAgentInteractions();
+  };
+
+  const getInteractionTypeBadgeClass = (type) => {
+    switch (type) {
+      case 'REPORT':
+        return 'bg-info';
+      case 'PING':
+        return 'bg-success';
+      case 'REGISTRATION':
+        return 'bg-primary';
+      default:
+        return 'bg-secondary';
+    }
+  };
+
+  const getInteractionTypeIcon = (type) => {
+    switch (type) {
+      case 'REPORT':
+        return 'bi bi-file-earmark-text';
+      case 'PING':
+        return 'bi bi-heart-pulse';
+      case 'REGISTRATION':
+        return 'bi bi-person-plus';
+      default:
+        return 'bi bi-info-circle';
+    }
+  };
+
+  const goToPage = (page) => {
+    currentPage.value = page;
+  };
+
+  const previousPage = () => {
+    if (currentPage.value > 1) {
+      currentPage.value--;
+    }
+  };
+
+  const nextPage = () => {
+    if (currentPage.value < totalPages.value) {
+      currentPage.value++;
+    }
+  };
+
+  const goBack = () => {
+    router.back();
+  };
+
+  onMounted(() => {
+    fetchAgentInteractions();
+  });
 </script>
 
 <style scoped>
-
-.pagination-sm .page-link {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.875rem;
-}
+  .pagination-sm .page-link {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+  }
 </style>

@@ -6,7 +6,7 @@
         <PageHeader
           :title="qualityCheck?.name || 'Quality Check Details'"
           subtitle="Quality Check Details"
-          icon="bi bi-clipboard-check-fill"
+          icon="bi bi-check-square"
         />
 
         <!-- Back Button -->
@@ -37,10 +37,10 @@
               label="Registered At"
               :value="formatDate(qualityCheck.registeredAt)"
               icon="bi bi-calendar-event"
-              iconColor="#0d6efd"
-              iconBgColor="#cfe2ff"
-              trendText="Quality check creation date"
-              trendType="neutral"
+              icon-color="#0d6efd"
+              icon-bg-color="#cfe2ff"
+              trend-text="Quality check creation date"
+              trend-type="neutral"
             />
           </div>
 
@@ -63,7 +63,7 @@
                     class="form-control"
                     :class="{ 'is-invalid': validationErrors.name }"
                     placeholder="Enter check name"
-                  >
+                  />
                   <div v-if="validationErrors.name" class="invalid-feedback">
                     {{ validationErrors.name }}
                   </div>
@@ -83,16 +83,9 @@
                 <!-- Category Field -->
                 <div class="col-12">
                   <label class="form-label fw-semibold">Category</label>
-                  <select
-                    v-model="editForm.categoryId"
-                    class="form-select"
-                  >
+                  <select v-model="editForm.categoryId" class="form-select">
                     <option :value="null">No Category</option>
-                    <option
-                      v-for="category in categories"
-                      :key="category.id"
-                      :value="category.id"
-                    >
+                    <option v-for="category in categories" :key="category.id" :value="category.id">
                       {{ category.name }}
                     </option>
                   </select>
@@ -113,7 +106,7 @@
                       max="100"
                       class="form-control"
                       :class="{ 'is-invalid': validationErrors.warningThreshold }"
-                    >
+                    />
                     <span class="input-group-text">%</span>
                   </div>
                   <div v-if="validationErrors.warningThreshold" class="invalid-feedback d-block">
@@ -139,7 +132,7 @@
                       max="100"
                       class="form-control"
                       :class="{ 'is-invalid': validationErrors.errorThreshold }"
-                    >
+                    />
                     <span class="input-group-text">%</span>
                   </div>
                   <div v-if="validationErrors.errorThreshold" class="invalid-feedback d-block">
@@ -159,12 +152,12 @@
                       type="text"
                       class="form-control font-monospace bg-light"
                       readonly
-                    >
+                    />
                     <button
                       class="btn btn-outline-secondary"
                       type="button"
-                      @click="copyHash"
                       title="Copy to clipboard"
+                      @click="copyHash"
                     >
                       <i class="bi bi-clipboard"></i>
                     </button>
@@ -180,18 +173,22 @@
           <!-- Action Buttons -->
           <div class="action-buttons d-flex gap-3 justify-content-center">
             <button
-              @click="saveCheck"
               class="btn btn-action btn-save"
               :disabled="saving || !hasChanges"
+              @click="saveCheck"
             >
-              <span v-if="saving" class="spinner-border spinner-border-sm me-2" role="status"></span>
+              <span
+                v-if="saving"
+                class="spinner-border spinner-border-sm me-2"
+                role="status"
+              ></span>
               <i v-else class="bi bi-check-lg me-2"></i>
               {{ saving ? 'Saving...' : 'Save Changes' }}
             </button>
             <button
-              @click="resetForm"
               class="btn btn-action btn-reset"
               :disabled="saving || !hasChanges"
+              @click="resetForm"
             >
               <i class="bi bi-x-circle me-2"></i>
               Reset
@@ -204,283 +201,295 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { apiService } from '../services/apiService.js'
-import { notificationService } from '../services/notificationService.js'
-import PageHeader from '../components/PageHeader.vue'
-import StatsCard from '../components/StatsCard.vue'
+  import { ref, reactive, computed, onMounted } from 'vue';
+  import { useRoute, useRouter } from 'vue-router';
+  import { apiService } from '../services/apiService.js';
+  import { notificationService } from '../services/notificationService.js';
+  import PageHeader from '../components/PageHeader.vue';
+  import StatsCard from '../components/StatsCard.vue';
 
-const route = useRoute()
-const router = useRouter()
+  const route = useRoute();
+  const router = useRouter();
 
-const hash = ref(route.params.hash)
-const qualityCheck = ref(null)
-const categories = ref([])
-const loading = ref(true)
-const saving = ref(false)
-const error = ref(null)
+  const hash = ref(route.params.hash);
+  const qualityCheck = ref(null);
+  const categories = ref([]);
+  const loading = ref(true);
+  const saving = ref(false);
+  const error = ref(null);
 
-const editForm = reactive({
-  name: '',
-  description: '',
-  categoryId: null,
-  warningThreshold: 0,
-  errorThreshold: 0
-})
+  const editForm = reactive({
+    name: '',
+    description: '',
+    categoryId: null,
+    warningThreshold: 0,
+    errorThreshold: 0,
+  });
 
-const validationErrors = reactive({
-  name: '',
-  warningThreshold: '',
-  errorThreshold: ''
-})
+  const validationErrors = reactive({
+    name: '',
+    warningThreshold: '',
+    errorThreshold: '',
+  });
 
-const hasChanges = computed(() => {
-  if (!qualityCheck.value) return false
-  return (
-    editForm.name !== qualityCheck.value.name ||
-    editForm.description !== (qualityCheck.value.description || '') ||
-    editForm.categoryId !== (qualityCheck.value.category?.id || null) ||
-    editForm.warningThreshold !== qualityCheck.value.warningThreshold ||
-    editForm.errorThreshold !== qualityCheck.value.errorThreshold
-  )
-})
+  const hasChanges = computed(() => {
+    if (!qualityCheck.value) return false;
+    return (
+      editForm.name !== qualityCheck.value.name ||
+      editForm.description !== (qualityCheck.value.description || '') ||
+      editForm.categoryId !== (qualityCheck.value.category?.id || null) ||
+      editForm.warningThreshold !== qualityCheck.value.warningThreshold ||
+      editForm.errorThreshold !== qualityCheck.value.errorThreshold
+    );
+  });
 
-const formatDate = (dateString) => {
-  if (!dateString) return 'N/A'
-  const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }
-  return new Date(dateString).toLocaleDateString(undefined, options)
-}
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const options = {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    };
+    return new Date(dateString).toLocaleDateString(undefined, options);
+  };
 
-const loadQualityCheck = async () => {
-  loading.value = true
-  error.value = null
+  const loadQualityCheck = async () => {
+    loading.value = true;
+    error.value = null;
 
-  try {
-    const [checksData, categoriesData] = await Promise.all([
-      apiService.getQualityChecks(),
-      apiService.getCategories()
-    ])
+    try {
+      const [checksData, categoriesData] = await Promise.all([
+        apiService.getQualityChecks(),
+        apiService.getCategories(),
+      ]);
 
-    const checks = checksData._embedded?.qualityChecks || (Array.isArray(checksData) ? checksData : [])
-    categories.value = categoriesData._embedded?.categories || (Array.isArray(categoriesData) ? categoriesData : [])
+      const checks =
+        checksData._embedded?.qualityChecks || (Array.isArray(checksData) ? checksData : []);
+      categories.value =
+        categoriesData._embedded?.categories ||
+        (Array.isArray(categoriesData) ? categoriesData : []);
 
-    qualityCheck.value = checks.find(check => check.hash === hash.value)
+      qualityCheck.value = checks.find((check) => check.hash === hash.value);
 
-    if (!qualityCheck.value) {
-      error.value = 'Quality check not found'
-      return
+      if (!qualityCheck.value) {
+        error.value = 'Quality check not found';
+        return;
+      }
+
+      // Initialize form
+      editForm.name = qualityCheck.value.name || '';
+      editForm.description = qualityCheck.value.description || '';
+      editForm.categoryId = qualityCheck.value.category?.id || null;
+      editForm.warningThreshold = qualityCheck.value.warningThreshold ?? 0;
+      editForm.errorThreshold = qualityCheck.value.errorThreshold ?? 0;
+    } catch (err) {
+      error.value = err.message || 'Failed to load quality check';
+      console.error('Error loading quality check:', err);
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const validate = () => {
+    validationErrors.name = '';
+    validationErrors.warningThreshold = '';
+    validationErrors.errorThreshold = '';
+
+    let isValid = true;
+
+    if (!editForm.name.trim()) {
+      validationErrors.name = 'Name is required';
+      isValid = false;
     }
 
-    // Initialize form
-    editForm.name = qualityCheck.value.name || ''
-    editForm.description = qualityCheck.value.description || ''
-    editForm.categoryId = qualityCheck.value.category?.id || null
-    editForm.warningThreshold = qualityCheck.value.warningThreshold ?? 0
-    editForm.errorThreshold = qualityCheck.value.errorThreshold ?? 0
-  } catch (err) {
-    error.value = err.message || 'Failed to load quality check'
-    console.error('Error loading quality check:', err)
-  } finally {
-    loading.value = false
-  }
-}
+    if (editForm.warningThreshold < 0 || editForm.warningThreshold > 100) {
+      validationErrors.warningThreshold = 'Must be between 0 and 100';
+      isValid = false;
+    }
 
-const validate = () => {
-  validationErrors.name = ''
-  validationErrors.warningThreshold = ''
-  validationErrors.errorThreshold = ''
+    if (editForm.errorThreshold < 0 || editForm.errorThreshold > 100) {
+      validationErrors.errorThreshold = 'Must be between 0 and 100';
+      isValid = false;
+    }
 
-  let isValid = true
+    if (editForm.warningThreshold > editForm.errorThreshold) {
+      validationErrors.warningThreshold = 'Warning threshold should be less than error threshold';
+      isValid = false;
+    }
 
-  if (!editForm.name.trim()) {
-    validationErrors.name = 'Name is required'
-    isValid = false
-  }
+    return isValid;
+  };
 
-  if (editForm.warningThreshold < 0 || editForm.warningThreshold > 100) {
-    validationErrors.warningThreshold = 'Must be between 0 and 100'
-    isValid = false
-  }
+  const saveCheck = async () => {
+    if (!validate()) return;
 
-  if (editForm.errorThreshold < 0 || editForm.errorThreshold > 100) {
-    validationErrors.errorThreshold = 'Must be between 0 and 100'
-    isValid = false
-  }
+    saving.value = true;
+    error.value = null;
 
-  if (editForm.warningThreshold > editForm.errorThreshold) {
-    validationErrors.warningThreshold = 'Warning threshold should be less than error threshold'
-    isValid = false
-  }
+    try {
+      await apiService.updateQualityCheck(hash.value, editForm);
 
-  return isValid
-}
+      notificationService.success(
+        'Quality Check Updated',
+        'Your changes have been saved successfully'
+      );
 
-const saveCheck = async () => {
-  if (!validate()) return
+      // Reload the data to show updated information
+      await loadQualityCheck();
+    } catch (err) {
+      error.value = err.message || 'Failed to update quality check';
+      console.error('Error updating quality check:', err);
+      notificationService.error('Update Failed', error.value);
+    } finally {
+      saving.value = false;
+    }
+  };
 
-  saving.value = true
-  error.value = null
+  const resetForm = () => {
+    editForm.name = qualityCheck.value.name || '';
+    editForm.description = qualityCheck.value.description || '';
+    editForm.categoryId = qualityCheck.value.category?.id || null;
+    editForm.warningThreshold = qualityCheck.value.warningThreshold ?? 0;
+    editForm.errorThreshold = qualityCheck.value.errorThreshold ?? 0;
 
-  try {
-    await apiService.updateQualityCheck(hash.value, editForm)
+    validationErrors.name = '';
+    validationErrors.warningThreshold = '';
+    validationErrors.errorThreshold = '';
 
-    notificationService.success('Quality Check Updated', 'Your changes have been saved successfully')
+    notificationService.info('Form Reset', 'Changes have been discarded');
+  };
 
-    // Reload the data to show updated information
-    await loadQualityCheck()
-  } catch (err) {
-    error.value = err.message || 'Failed to update quality check'
-    console.error('Error updating quality check:', err)
-    notificationService.error('Update Failed', error.value)
-  } finally {
-    saving.value = false
-  }
-}
+  const copyHash = () => {
+    navigator.clipboard.writeText(qualityCheck.value.hash);
+    notificationService.success('Copied', 'Hash copied to clipboard');
+  };
 
-const resetForm = () => {
-  editForm.name = qualityCheck.value.name || ''
-  editForm.description = qualityCheck.value.description || ''
-  editForm.categoryId = qualityCheck.value.category?.id || null
-  editForm.warningThreshold = qualityCheck.value.warningThreshold ?? 0
-  editForm.errorThreshold = qualityCheck.value.errorThreshold ?? 0
+  const goBack = () => {
+    router.push('/quality-checks');
+  };
 
-  validationErrors.name = ''
-  validationErrors.warningThreshold = ''
-  validationErrors.errorThreshold = ''
-
-  notificationService.info('Form Reset', 'Changes have been discarded')
-}
-
-const copyHash = () => {
-  navigator.clipboard.writeText(qualityCheck.value.hash)
-  notificationService.success('Copied', 'Hash copied to clipboard')
-}
-
-const goBack = () => {
-  router.push('/quality-checks')
-}
-
-onMounted(() => {
-  loadQualityCheck()
-})
+  onMounted(() => {
+    loadQualityCheck();
+  });
 </script>
 
 <style scoped>
-/* Loading State */
-.loading-state {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 4rem 0;
-}
-
-/* Cards */
-.card {
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.card-header {
-  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-}
-
-/* Form Controls */
-.form-control:focus {
-  border-color: #0d6efd;
-  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
-}
-
-.font-monospace {
-  font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
-  font-size: 0.875rem;
-}
-
-.bg-light {
-  background-color: #f8f9fa !important;
-}
-
-/* Action Buttons */
-.action-buttons {
-  padding: 1rem 0;
-}
-
-.btn-action {
-  border: none;
-  padding: 0.75rem 2rem;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  font-size: 0.95rem;
-  transition: all 0.3s ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 160px;
-}
-
-.btn-save {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-}
-
-.btn-save:hover:not(:disabled) {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-  color: white;
-}
-
-.btn-save:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
-}
-
-.btn-save:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-reset {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  color: #495057;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.btn-reset:hover:not(:disabled) {
-  background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  color: #495057;
-}
-
-.btn-reset:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.btn-reset:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-action i {
-  font-size: 1.1rem;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .card-body {
-    padding: 1.25rem;
+  /* Loading State */
+  .loading-state {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 4rem 0;
   }
 
+  /* Cards */
+  .card {
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .card-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  }
+
+  /* Form Controls */
+  .form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+  }
+
+  .font-monospace {
+    font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+    font-size: 0.875rem;
+  }
+
+  .bg-light {
+    background-color: #f8f9fa !important;
+  }
+
+  /* Action Buttons */
   .action-buttons {
-    flex-direction: column;
+    padding: 1rem 0;
   }
 
   .btn-action {
-    width: 100%;
-    min-width: auto;
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 160px;
   }
-}
+
+  .btn-save {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  }
+
+  .btn-save:hover:not(:disabled) {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    color: white;
+  }
+
+  .btn-save:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+  }
+
+  .btn-save:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-reset {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    color: #495057;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .btn-reset:hover:not(:disabled) {
+    background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    color: #495057;
+  }
+
+  .btn-reset:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .btn-reset:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-action i {
+    font-size: 1.1rem;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .card-body {
+      padding: 1.25rem;
+    }
+
+    .action-buttons {
+      flex-direction: column;
+    }
+
+    .btn-action {
+      width: 100%;
+      min-width: auto;
+    }
+  }
 </style>

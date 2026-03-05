@@ -4,7 +4,7 @@
       <div class="col-12">
         <!-- Page Header -->
         <PageHeader
-          :title="isNew ? 'New Category' : (category?.name || 'Unnamed Category')"
+          :title="isNew ? 'New Category' : category?.name || 'Unnamed Category'"
           :subtitle="isNew ? 'Create a new category' : 'Category Details'"
           icon="bi bi-tags"
         />
@@ -16,9 +16,9 @@
           </button>
           <button
             v-if="!isNew"
-            @click="showDeleteModal = true"
             class="btn btn-outline-danger btn-sm d-flex align-items-center"
             :disabled="saving"
+            @click="showDeleteModal = true"
           >
             <i class="bi bi-trash me-2"></i>
             Delete Category
@@ -59,7 +59,7 @@
                     class="form-control"
                     :class="{ 'is-invalid': validationErrors.name }"
                     placeholder="Enter category name"
-                  >
+                  />
                   <div v-if="validationErrors.name" class="invalid-feedback">
                     {{ validationErrors.name }}
                   </div>
@@ -74,15 +74,15 @@
                       type="color"
                       class="form-control form-control-color"
                       title="Choose your color"
-                    >
+                    />
                     <input
                       v-model="editForm.colorHex"
                       type="text"
                       class="form-control"
                       :class="{ 'is-invalid': validationErrors.colorHex }"
                       placeholder="#000000"
-                      style="max-width: 150px;"
-                    >
+                      style="max-width: 150px"
+                    />
                   </div>
                   <div v-if="validationErrors.colorHex" class="invalid-feedback d-block">
                     {{ validationErrors.colorHex }}
@@ -95,18 +95,22 @@
           <!-- Action Buttons -->
           <div class="action-buttons d-flex gap-3 justify-content-center">
             <button
-              @click="saveCategory"
               class="btn btn-action btn-save"
               :disabled="saving || (!isNew && !hasChanges)"
+              @click="saveCategory"
             >
-              <span v-if="saving" class="spinner-border spinner-border-sm me-2" role="status"></span>
+              <span
+                v-if="saving"
+                class="spinner-border spinner-border-sm me-2"
+                role="status"
+              ></span>
               <i v-else class="bi bi-check-lg me-2"></i>
-              {{ saving ? 'Saving...' : (isNew ? 'Create Category' : 'Save Changes') }}
+              {{ saving ? 'Saving...' : isNew ? 'Create Category' : 'Save Changes' }}
             </button>
             <button
-              @click="resetForm"
               class="btn btn-action btn-reset"
               :disabled="saving || (!isNew && !hasChanges)"
+              @click="resetForm"
             >
               <i class="bi bi-x-circle me-2"></i>
               Reset
@@ -131,263 +135,269 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { apiService } from '../services/apiService.js'
-import { notificationService } from '../services/notificationService.js'
-import PageHeader from '../components/PageHeader.vue'
-import DeleteConfirmModal from '../components/DeleteConfirmModal.vue'
+  import { ref, reactive, computed, onMounted } from 'vue';
+  import { useRoute, useRouter } from 'vue-router';
+  import { apiService } from '../services/apiService.js';
+  import { notificationService } from '../services/notificationService.js';
+  import PageHeader from '../components/PageHeader.vue';
+  import DeleteConfirmModal from '../components/DeleteConfirmModal.vue';
 
-const route = useRoute()
-const router = useRouter()
+  const route = useRoute();
+  const router = useRouter();
 
-const isNew = computed(() => route.path === '/categories/new')
-const categoryId = ref(route.params.id)
-const category = ref(null)
-const loading = ref(!isNew.value)
-const saving = ref(false)
-const deleting = ref(false)
-const error = ref(null)
-const showDeleteModal = ref(false)
+  const isNew = computed(() => route.path === '/categories/new');
+  const categoryId = ref(route.params.id);
+  const category = ref(null);
+  const loading = ref(!isNew.value);
+  const saving = ref(false);
+  const deleting = ref(false);
+  const error = ref(null);
+  const showDeleteModal = ref(false);
 
-const editForm = reactive({
-  name: '',
-  colorHex: '#000000'
-})
+  const editForm = reactive({
+    name: '',
+    colorHex: '#000000',
+  });
 
-const validationErrors = reactive({
-  name: '',
-  colorHex: ''
-})
+  const validationErrors = reactive({
+    name: '',
+    colorHex: '',
+  });
 
-const hasChanges = computed(() => {
-  if (isNew.value) return true
-  if (!category.value) return false
-  return (
-    editForm.name !== category.value.name ||
-    editForm.colorHex !== (category.value.colorHex || '#000000')
-  )
-})
+  const hasChanges = computed(() => {
+    if (isNew.value) return true;
+    if (!category.value) return false;
+    return (
+      editForm.name !== category.value.name ||
+      editForm.colorHex !== (category.value.colorHex || '#000000')
+    );
+  });
 
-const loadCategory = async () => {
-  if (isNew.value) {
-    loading.value = false
-    return
-  }
-
-  loading.value = true
-  error.value = null
-
-  try {
-    const data = await apiService.getCategory(categoryId.value)
-    category.value = data
-
-    // Initialize form
-    editForm.name = category.value.name || ''
-    editForm.colorHex = category.value.colorHex || '#000000'
-  } catch (err) {
-    error.value = err.message || 'Failed to load category'
-    console.error('Error loading category:', err)
-  } finally {
-    loading.value = false
-  }
-}
-
-const validate = () => {
-  validationErrors.name = ''
-  validationErrors.colorHex = ''
-
-  let isValid = true
-
-  if (!editForm.name.trim()) {
-    validationErrors.name = 'Name is required'
-    isValid = false
-  }
-
-  if (!/^#[0-9A-F]{6}$/i.test(editForm.colorHex)) {
-    validationErrors.colorHex = 'Invalid hex color format'
-    isValid = false
-  }
-
-  return isValid
-}
-
-const saveCategory = async () => {
-  if (!validate()) return
-
-  saving.value = true
-  error.value = null
-
-  try {
+  const loadCategory = async () => {
     if (isNew.value) {
-      await apiService.createCategory(editForm)
-      notificationService.success('Category Created', 'New category has been created successfully')
-      router.push('/categories')
-    } else {
-      await apiService.updateCategory(categoryId.value, editForm)
-      notificationService.success('Category Updated', 'Your changes have been saved successfully')
-      await loadCategory()
+      loading.value = false;
+      return;
     }
-  } catch (err) {
-    error.value = err.message || 'Failed to save category'
-    console.error('Error saving category:', err)
-    notificationService.error('Save Failed', error.value)
-  } finally {
-    saving.value = false
-  }
-}
 
-const deleteCategory = async () => {
-  deleting.value = true
-  try {
-    await apiService.deleteCategory(categoryId.value)
-    notificationService.success('Category Deleted', 'Category has been successfully deleted')
-    router.push('/categories')
-  } catch (err) {
-    console.error('Error deleting category:', err)
-    notificationService.error('Delete Failed', err.message || 'Failed to delete category')
-    showDeleteModal.value = false
-  } finally {
-    deleting.value = false
-  }
-}
+    loading.value = true;
+    error.value = null;
 
-const resetForm = () => {
-  if (isNew.value) {
-    editForm.name = ''
-    editForm.colorHex = '#000000'
-  } else {
-    editForm.name = category.value.name || ''
-    editForm.colorHex = category.value.colorHex || '#000000'
-  }
+    try {
+      const data = await apiService.getCategory(categoryId.value);
+      category.value = data;
 
-  validationErrors.name = ''
-  validationErrors.colorHex = ''
+      // Initialize form
+      editForm.name = category.value.name || '';
+      editForm.colorHex = category.value.colorHex || '#000000';
+    } catch (err) {
+      error.value = err.message || 'Failed to load category';
+      console.error('Error loading category:', err);
+    } finally {
+      loading.value = false;
+    }
+  };
 
-  notificationService.info('Form Reset', 'Changes have been discarded')
-}
+  const validate = () => {
+    validationErrors.name = '';
+    validationErrors.colorHex = '';
 
-const goBack = () => {
-  router.push('/categories')
-}
+    let isValid = true;
 
-onMounted(() => {
-  loadCategory()
-})
+    if (!editForm.name.trim()) {
+      validationErrors.name = 'Name is required';
+      isValid = false;
+    }
+
+    if (!/^#[0-9A-F]{6}$/i.test(editForm.colorHex)) {
+      validationErrors.colorHex = 'Invalid hex color format';
+      isValid = false;
+    }
+
+    return isValid;
+  };
+
+  const saveCategory = async () => {
+    if (!validate()) return;
+
+    saving.value = true;
+    error.value = null;
+
+    try {
+      if (isNew.value) {
+        await apiService.createCategory(editForm);
+        notificationService.success(
+          'Category Created',
+          'New category has been created successfully'
+        );
+        router.push('/categories');
+      } else {
+        await apiService.updateCategory(categoryId.value, editForm);
+        notificationService.success(
+          'Category Updated',
+          'Your changes have been saved successfully'
+        );
+        await loadCategory();
+      }
+    } catch (err) {
+      error.value = err.message || 'Failed to save category';
+      console.error('Error saving category:', err);
+      notificationService.error('Save Failed', error.value);
+    } finally {
+      saving.value = false;
+    }
+  };
+
+  const deleteCategory = async () => {
+    deleting.value = true;
+    try {
+      await apiService.deleteCategory(categoryId.value);
+      notificationService.success('Category Deleted', 'Category has been successfully deleted');
+      router.push('/categories');
+    } catch (err) {
+      console.error('Error deleting category:', err);
+      notificationService.error('Delete Failed', err.message || 'Failed to delete category');
+      showDeleteModal.value = false;
+    } finally {
+      deleting.value = false;
+    }
+  };
+
+  const resetForm = () => {
+    if (isNew.value) {
+      editForm.name = '';
+      editForm.colorHex = '#000000';
+    } else {
+      editForm.name = category.value.name || '';
+      editForm.colorHex = category.value.colorHex || '#000000';
+    }
+
+    validationErrors.name = '';
+    validationErrors.colorHex = '';
+
+    notificationService.info('Form Reset', 'Changes have been discarded');
+  };
+
+  const goBack = () => {
+    router.push('/categories');
+  };
+
+  onMounted(() => {
+    loadCategory();
+  });
 </script>
 
 <style scoped>
-/* Loading State */
-.loading-state {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 4rem 0;
-}
-
-/* Cards */
-.card {
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.card-header {
-  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-}
-
-/* Form Controls */
-.form-control:focus {
-  border-color: #0d6efd;
-  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
-}
-
-.form-control-color {
-  width: 50px;
-  height: 38px;
-  padding: 0.25rem;
-}
-
-/* Action Buttons */
-.action-buttons {
-  padding: 1rem 0;
-}
-
-.btn-action {
-  border: none;
-  padding: 0.75rem 2rem;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  font-size: 0.95rem;
-  transition: all 0.3s ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 160px;
-}
-
-.btn-save {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-}
-
-.btn-save:hover:not(:disabled) {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-  color: white;
-}
-
-.btn-save:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
-}
-
-.btn-save:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-reset {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  color: #495057;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.btn-reset:hover:not(:disabled) {
-  background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  color: #495057;
-}
-
-.btn-reset:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.btn-reset:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-action i {
-  font-size: 1.1rem;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .card-body {
-    padding: 1.25rem;
+  /* Loading State */
+  .loading-state {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 4rem 0;
   }
 
+  /* Cards */
+  .card {
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .card-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  }
+
+  /* Form Controls */
+  .form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+  }
+
+  .form-control-color {
+    width: 50px;
+    height: 38px;
+    padding: 0.25rem;
+  }
+
+  /* Action Buttons */
   .action-buttons {
-    flex-direction: column;
+    padding: 1rem 0;
   }
 
   .btn-action {
-    width: 100%;
-    min-width: auto;
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 160px;
   }
-}
+
+  .btn-save {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  }
+
+  .btn-save:hover:not(:disabled) {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    color: white;
+  }
+
+  .btn-save:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+  }
+
+  .btn-save:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-reset {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    color: #495057;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .btn-reset:hover:not(:disabled) {
+    background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    color: #495057;
+  }
+
+  .btn-reset:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .btn-reset:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-action i {
+    font-size: 1.1rem;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .card-body {
+      padding: 1.25rem;
+    }
+
+    .action-buttons {
+      flex-direction: column;
+    }
+
+    .btn-action {
+      width: 100%;
+      min-width: auto;
+    }
+  }
 </style>

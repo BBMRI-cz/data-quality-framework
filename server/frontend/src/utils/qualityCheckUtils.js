@@ -10,8 +10,8 @@ export const CheckStatus = {
   WARNING: 'WARNING',
   FAILED: 'FAILED',
   UNKNOWN: 'UNKNOWN',
-  NO_DATA: 'NO DATA'
-}
+  NO_DATA: 'NO DATA',
+};
 
 /**
  * Get the status of a quality check result
@@ -19,22 +19,22 @@ export const CheckStatus = {
  * Higher values indicate worse quality.
  */
 export function getCheckStatus(result, check) {
-  if (!check) return CheckStatus.UNKNOWN
-  if (result == null || typeof result.result !== 'number') return CheckStatus.UNKNOWN
+  if (!check) return CheckStatus.UNKNOWN;
+  if (result == null || typeof result.result !== 'number') return CheckStatus.UNKNOWN;
 
-  const errorThreshold = check.errorThreshold
-  const warningThreshold = check.warningThreshold
+  const errorThreshold = check.errorThreshold;
+  const warningThreshold = check.warningThreshold;
 
   // Normalize: if value looks like a fraction (<=1), convert to percentage.
-  const raw = result.result
-  const percentage = raw <= 1 ? raw * 100 : raw
+  const raw = result.result;
+  const percentage = raw <= 1 ? raw * 100 : raw;
 
   if (percentage > errorThreshold) {
-    return CheckStatus.FAILED
+    return CheckStatus.FAILED;
   } else if (percentage > warningThreshold) {
-    return CheckStatus.WARNING
+    return CheckStatus.WARNING;
   } else {
-    return CheckStatus.PASSED
+    return CheckStatus.PASSED;
   }
 }
 
@@ -46,13 +46,13 @@ export function getCheckStatus(result, check) {
 export function getStatusBadgeClass(status) {
   switch (status) {
     case CheckStatus.PASSED:
-      return 'bg-success'
+      return 'bg-success';
     case CheckStatus.FAILED:
-      return 'bg-danger'
+      return 'bg-danger';
     case CheckStatus.WARNING:
-      return 'bg-warning text-dark'
+      return 'bg-warning text-dark';
     default:
-      return 'bg-secondary'
+      return 'bg-secondary';
   }
 }
 
@@ -63,19 +63,19 @@ export function getStatusBadgeClass(status) {
  * @returns {string} CSS classes for progress color
  */
 export function getProgressColorClass(result, check) {
-  if (!check) return 'border-secondary bg-secondary'
+  if (!check) return 'border-secondary bg-secondary';
 
-  const status = getCheckStatus(result, check)
+  const status = getCheckStatus(result, check);
 
   switch (status) {
     case CheckStatus.FAILED:
-      return 'border-danger bg-danger'
+      return 'border-danger bg-danger';
     case CheckStatus.WARNING:
-      return 'border-warning bg-warning'
+      return 'border-warning bg-warning';
     case CheckStatus.PASSED:
-      return 'border-success bg-success'
+      return 'border-success bg-success';
     default:
-      return 'border-secondary bg-secondary'
+      return 'border-secondary bg-secondary';
   }
 }
 
@@ -90,35 +90,35 @@ export function countChecksByStatus(report, qualityCheckMap) {
     passed: 0,
     warnings: 0,
     failed: 0,
-    total: 0
-  }
+    total: 0,
+  };
 
   if (!report.results || !Array.isArray(report.results)) {
-    return counts
+    return counts;
   }
 
-  counts.total = report.results.length
+  counts.total = report.results.length;
 
-  report.results.forEach(result => {
-    const check = qualityCheckMap.get(result.hash)
-    if (!check) return
+  report.results.forEach((result) => {
+    const check = qualityCheckMap.get(result.hash);
+    if (!check) return;
 
-    const status = getCheckStatus(result, check)
+    const status = getCheckStatus(result, check);
 
     switch (status) {
       case CheckStatus.PASSED:
-        counts.passed++
-        break
+        counts.passed++;
+        break;
       case CheckStatus.WARNING:
-        counts.warnings++
-        break
+        counts.warnings++;
+        break;
       case CheckStatus.FAILED:
-        counts.failed++
-        break
+        counts.failed++;
+        break;
     }
-  })
+  });
 
-  return counts
+  return counts;
 }
 
 /**
@@ -129,28 +129,28 @@ export function countChecksByStatus(report, qualityCheckMap) {
  */
 export function getReportStatus(report, qualityCheckMap) {
   if (!report.results || report.results.length === 0) {
-    return CheckStatus.NO_DATA
+    return CheckStatus.NO_DATA;
   }
 
-  let hasError = false
-  let hasWarning = false
+  let hasError = false;
+  let hasWarning = false;
 
-  report.results.forEach(result => {
-    const check = qualityCheckMap.get(result.hash)
-    if (!check) return
+  report.results.forEach((result) => {
+    const check = qualityCheckMap.get(result.hash);
+    if (!check) return;
 
-    const status = getCheckStatus(result, check)
+    const status = getCheckStatus(result, check);
 
     if (status === CheckStatus.FAILED) {
-      hasError = true
+      hasError = true;
     } else if (status === CheckStatus.WARNING) {
-      hasWarning = true
+      hasWarning = true;
     }
-  })
+  });
 
-  if (hasError) return CheckStatus.FAILED
-  if (hasWarning) return CheckStatus.WARNING
-  return CheckStatus.PASSED
+  if (hasError) return CheckStatus.FAILED;
+  if (hasWarning) return CheckStatus.WARNING;
+  return CheckStatus.PASSED;
 }
 
 /**
@@ -159,7 +159,7 @@ export function getReportStatus(report, qualityCheckMap) {
  * @returns {string} Formatted percentage string
  */
 export function formatScore(score) {
-  return (score * 100).toFixed(1) + '%'
+  return (score * 100).toFixed(1) + '%';
 }
 
 /**
@@ -168,7 +168,7 @@ export function formatScore(score) {
  * @returns {number} Rounded percentage
  */
 export function formatScoreRounded(score) {
-  return Math.round(score * 100)
+  return Math.round(score * 100);
 }
 
 /**
@@ -178,20 +178,20 @@ export function formatScoreRounded(score) {
  * @returns {string} Bootstrap icon class name
  */
 export function getStatusIcon(status, filled = true) {
-  const suffix = filled ? '-fill' : ''
+  const suffix = filled ? '-fill' : '';
 
   switch (status) {
     case CheckStatus.PASSED:
-      return `bi bi-check-circle${suffix}`
+      return `bi bi-check-circle${suffix}`;
     case CheckStatus.WARNING:
-      return `bi bi-exclamation-circle${suffix}`
+      return `bi bi-exclamation-circle${suffix}`;
     case CheckStatus.FAILED:
-      return `bi bi-exclamation-triangle${suffix}`
+      return `bi bi-exclamation-triangle${suffix}`;
     case CheckStatus.NO_DATA:
-      return 'bi bi-question-circle'
+      return 'bi bi-question-circle';
     case CheckStatus.UNKNOWN:
     default:
-      return 'bi bi-question-circle'
+      return 'bi bi-question-circle';
   }
 }
 
@@ -203,15 +203,15 @@ export function getStatusIcon(status, filled = true) {
 export function getStatusColor(status) {
   switch (status) {
     case CheckStatus.PASSED:
-      return '#198754' // Bootstrap success
+      return '#198754'; // Bootstrap success
     case CheckStatus.WARNING:
-      return '#ffc107' // Bootstrap warning
+      return '#ffc107'; // Bootstrap warning
     case CheckStatus.FAILED:
-      return '#dc3545' // Bootstrap danger
+      return '#dc3545'; // Bootstrap danger
     case CheckStatus.NO_DATA:
     case CheckStatus.UNKNOWN:
     default:
-      return '#6c757d' // Bootstrap secondary
+      return '#6c757d'; // Bootstrap secondary
   }
 }
 
@@ -223,15 +223,15 @@ export function getStatusColor(status) {
 export function getStatusBgColor(status) {
   switch (status) {
     case CheckStatus.PASSED:
-      return '#d1e7dd' // Bootstrap success background
+      return '#d1e7dd'; // Bootstrap success background
     case CheckStatus.WARNING:
-      return '#fff3cd' // Bootstrap warning background
+      return '#fff3cd'; // Bootstrap warning background
     case CheckStatus.FAILED:
-      return '#f8d7da' // Bootstrap danger background
+      return '#f8d7da'; // Bootstrap danger background
     case CheckStatus.NO_DATA:
     case CheckStatus.UNKNOWN:
     default:
-      return '#e2e3e5' // Bootstrap secondary background
+      return '#e2e3e5'; // Bootstrap secondary background
   }
 }
 
@@ -243,15 +243,15 @@ export function getStatusBgColor(status) {
 export function getStatusTextClass(status) {
   switch (status) {
     case CheckStatus.PASSED:
-      return 'text-success'
+      return 'text-success';
     case CheckStatus.WARNING:
-      return 'text-warning'
+      return 'text-warning';
     case CheckStatus.FAILED:
-      return 'text-danger'
+      return 'text-danger';
     case CheckStatus.NO_DATA:
     case CheckStatus.UNKNOWN:
     default:
-      return 'text-secondary'
+      return 'text-secondary';
   }
 }
 
@@ -262,8 +262,7 @@ export function getStatusTextClass(status) {
  * @returns {string} Icon class with color class
  */
 export function getStatusIconWithColor(status, filled = true) {
-  const icon = getStatusIcon(status, filled)
-  const colorClass = getStatusTextClass(status)
-  return `${icon} ${colorClass}`
+  const icon = getStatusIcon(status, filled);
+  const colorClass = getStatusTextClass(status);
+  return `${icon} ${colorClass}`;
 }
-

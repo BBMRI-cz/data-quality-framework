@@ -67,6 +67,26 @@ jobs:
         working-directory: agent/frontend
         run: npm run lint
 
+  lint-server-frontend:
+    name: Code Format (Server Frontend)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'server/frontend/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: server/frontend
+        run: npm ci
+
+      - name: Run ESLint
+        working-directory: server/frontend
+        run: npm run lint
+
   lint-server:
     name: Code Format (Server)
     runs-on: ubuntu-latest
@@ -134,7 +154,9 @@ jobs:
   test-server:
     name: Unit & Integration Tests (Server)
     runs-on: ubuntu-latest
-    needs: lint-server
+    needs:
+      - lint-server
+      - lint-server-frontend
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
@@ -266,7 +288,9 @@ jobs:
   build-server-image:
     name: Docker Image Build (Server)
     runs-on: ubuntu-latest
-    needs: lint-server
+    needs:
+      - lint-server
+      - lint-server-frontend
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 

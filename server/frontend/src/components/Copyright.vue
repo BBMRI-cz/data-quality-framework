@@ -2,23 +2,11 @@
   <div class="copyright">
     <p class="mb-0">
       Developed by
-      <a
-        href="https://bbmri-eric.eu/"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="org-link"
-      >
+      <a href="https://bbmri-eric.eu/" target="_blank" rel="noopener noreferrer" class="org-link">
         BBMRI-ERIC<sup>®</sup>
       </a>
       &
-      <a
-        href="https://mou.cz"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="org-link"
-      >
-        MMCI
-      </a>
+      <a href="https://mou.cz" target="_blank" rel="noopener noreferrer" class="org-link"> MMCI </a>
       under
       <a
         href="https://www.gnu.org/licenses/gpl-3.0.html"
@@ -52,166 +40,161 @@
       </a>
     </p>
     <p class="swagger-section">
-      <a
-        :href="swaggerUrl"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="swagger-link"
-      >
+      <a :href="swaggerUrl" target="_blank" rel="noopener noreferrer" class="swagger-link">
         <i class="bi bi-braces-asterisk" aria-hidden="true"></i>
         API Documentation
       </a>
     </p>
     <p v-if="buildInfo" class="build-info">
-      {{ buildInfo.version }} • {{ buildInfo.gitCommit }}<span v-if="buildInfo.buildTime"> • {{ formatBuildTime(buildInfo.buildTime) }}</span>
+      {{ buildInfo.version }} • {{ buildInfo.gitCommit
+      }}<span v-if="buildInfo.buildTime"> • {{ formatBuildTime(buildInfo.buildTime) }}</span>
     </p>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import {apiService} from '../services/apiService'
+  import { ref, computed, onMounted } from 'vue';
+  import { apiService } from '../services/apiService';
 
-const buildInfo = ref(null)
+  const buildInfo = ref(null);
 
-const swaggerUrl = computed(() => {
-  const { protocol, hostname, port } = globalThis.location
-  const baseUrl = `${protocol}//${hostname}${port ? ':' + port : ''}`
-  return `${baseUrl}/api/swagger-ui/index.html`
-})
+  const swaggerUrl = computed(() => {
+    const { protocol, hostname, port } = globalThis.location;
+    const baseUrl = `${protocol}//${hostname}${port ? ':' + port : ''}`;
+    return `${baseUrl}/api/swagger-ui/index.html`;
+  });
 
-const formatBuildTime = (buildTime) => {
-  if (!buildTime) return ''
-  const date = new Date(buildTime)
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  })
-}
+  const formatBuildTime = (buildTime) => {
+    if (!buildTime) return '';
+    const date = new Date(buildTime);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
 
-onMounted(async () => {
-  try {
-    buildInfo.value = await apiService.getInfo()
-  } catch (error) {
-    console.error('Failed to fetch build info:', error)
-  }
-})
+  onMounted(async () => {
+    try {
+      buildInfo.value = await apiService.getInfo();
+    } catch (error) {
+      console.error('Failed to fetch build info:', error);
+    }
+  });
 </script>
 
 <style scoped>
-.copyright {
-  text-align: center;
-  padding: 1rem 0;
-  color: #6b7280;
-  font-size: 0.875rem;
-}
+  .copyright {
+    text-align: center;
+    padding: 1rem 0;
+    color: #6b7280;
+    font-size: 0.875rem;
+  }
 
-.org-link {
-  color: #667eea;
-  text-decoration: none;
-  transition: color 0.2s ease;
-  font-weight: 500;
-}
+  .org-link {
+    color: #667eea;
+    text-decoration: none;
+    transition: color 0.2s ease;
+    font-weight: 500;
+  }
 
-.org-link:hover {
-  color: #764ba2;
-  text-decoration: underline;
-}
+  .org-link:hover {
+    color: #764ba2;
+    text-decoration: underline;
+  }
 
-.license-link {
-  color: #667eea;
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
+  .license-link {
+    color: #667eea;
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
 
-.license-link:hover {
-  color: #764ba2;
-  text-decoration: underline;
-}
+  .license-link:hover {
+    color: #764ba2;
+    text-decoration: underline;
+  }
 
-.feedback-section {
-  margin-top: 0.5rem;
-  margin-bottom: 0;
-}
+  .feedback-section {
+    margin-top: 0.5rem;
+    margin-bottom: 0;
+  }
 
-.feedback-link {
-  color: #667eea;
-  text-decoration: none;
-  transition: color 0.2s ease;
-  font-weight: 500;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-}
+  .feedback-link {
+    color: #667eea;
+    text-decoration: none;
+    transition: color 0.2s ease;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+  }
 
-.feedback-link i {
-  font-size: 0.875rem;
-}
+  .feedback-link i {
+    font-size: 0.875rem;
+  }
 
-.feedback-link:hover {
-  color: #764ba2;
-  text-decoration: underline;
-}
+  .feedback-link:hover {
+    color: #764ba2;
+    text-decoration: underline;
+  }
 
-.github-section {
-  margin-top: 0.25rem;
-  margin-bottom: 0;
-}
+  .github-section {
+    margin-top: 0.25rem;
+    margin-bottom: 0;
+  }
 
-.github-link {
-  color: #667eea;
-  text-decoration: none;
-  transition: color 0.2s ease;
-  font-weight: 500;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-}
+  .github-link {
+    color: #667eea;
+    text-decoration: none;
+    transition: color 0.2s ease;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+  }
 
-.github-link i {
-  font-size: 0.875rem;
-}
+  .github-link i {
+    font-size: 0.875rem;
+  }
 
-.github-link:hover {
-  color: #764ba2;
-  text-decoration: underline;
-}
+  .github-link:hover {
+    color: #764ba2;
+    text-decoration: underline;
+  }
 
-.swagger-section {
-  margin-top: 0.25rem;
-  margin-bottom: 0;
-}
+  .swagger-section {
+    margin-top: 0.25rem;
+    margin-bottom: 0;
+  }
 
-.swagger-link {
-  color: #667eea;
-  text-decoration: none;
-  transition: color 0.2s ease;
-  font-weight: 500;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-}
+  .swagger-link {
+    color: #667eea;
+    text-decoration: none;
+    transition: color 0.2s ease;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+  }
 
-.swagger-link i {
-  font-size: 0.875rem;
-}
+  .swagger-link i {
+    font-size: 0.875rem;
+  }
 
-.swagger-link:hover {
-  color: #764ba2;
-  text-decoration: underline;
-}
+  .swagger-link:hover {
+    color: #764ba2;
+    text-decoration: underline;
+  }
 
-sup {
-  font-size: 0.7em;
-}
+  sup {
+    font-size: 0.7em;
+  }
 
-.build-info {
-  margin-top: 0.75rem;
-  margin-bottom: 0;
-  font-size: 0.7rem;
-  color: #9ca3af;
-  opacity: 0.85;
-}
+  .build-info {
+    margin-top: 0.75rem;
+    margin-bottom: 0;
+    font-size: 0.7rem;
+    color: #9ca3af;
+    opacity: 0.85;
+  }
 </style>
-
