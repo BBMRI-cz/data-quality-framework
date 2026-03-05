@@ -15,31 +15,66 @@
       <!-- Navigation Menu -->
       <div class="sidebar-nav-wrapper">
         <nav ref="navRef" class="sidebar-nav custom-scrollbar-dark" @scroll="checkScroll">
-          <router-link to="/dashboard" class="nav-link" :class="{ active: $route.name === 'Dashboard' }" @click="closeMobileMenu">
+          <router-link
+            to="/dashboard"
+            class="nav-link"
+            :class="{ active: $route.name === 'Dashboard' }"
+            @click="closeMobileMenu"
+          >
             <i class="bi bi-grid-3x3-gap-fill"></i>
             <span>Dashboard</span>
           </router-link>
-          <router-link to="/agents" class="nav-link" :class="{ active: $route.name === 'Agents' }" @click="closeMobileMenu">
+          <router-link
+            to="/agents"
+            class="nav-link"
+            :class="{ active: $route.name === 'Agents' }"
+            @click="closeMobileMenu"
+          >
             <i class="bi bi-database-fill-gear"></i>
             <span>Agents</span>
           </router-link>
-          <router-link to="/reports" class="nav-link" :class="{ active: $route.name === 'Reports' }" @click="closeMobileMenu">
+          <router-link
+            to="/reports"
+            class="nav-link"
+            :class="{ active: $route.name === 'Reports' }"
+            @click="closeMobileMenu"
+          >
             <i class="bi bi-file-earmark-text-fill"></i>
             <span>Reports</span>
           </router-link>
-          <router-link to="/quality-checks" class="nav-link" :class="{ active: $route.name === 'QualityChecks' }" @click="closeMobileMenu">
+          <router-link
+            to="/quality-checks"
+            class="nav-link"
+            :class="{ active: $route.name === 'QualityChecks' }"
+            @click="closeMobileMenu"
+          >
             <i class="bi bi-check-square-fill"></i>
             <span>Quality Checks</span>
           </router-link>
-          <router-link to="/categories" class="nav-link" :class="{ active: $route.name === 'Categories' }" @click="closeMobileMenu">
+          <router-link
+            to="/categories"
+            class="nav-link"
+            :class="{ active: $route.name === 'Categories' }"
+            @click="closeMobileMenu"
+          >
             <i class="bi bi-tags-fill"></i>
             <span>Categories</span>
           </router-link>
-          <router-link to="/groups" class="nav-link" :class="{ active: $route.name === 'Groups' }" @click="closeMobileMenu">
+          <router-link
+            to="/groups"
+            class="nav-link"
+            :class="{ active: $route.name === 'Groups' }"
+            @click="closeMobileMenu"
+          >
             <i class="bi bi-collection-fill"></i>
             <span>Groups</span>
           </router-link>
-          <router-link to="/users" class="nav-link" :class="{ active: $route.name === 'Users' }" @click="closeMobileMenu">
+          <router-link
+            to="/users"
+            class="nav-link"
+            :class="{ active: $route.name === 'Users' }"
+            @click="closeMobileMenu"
+          >
             <i class="bi bi-people-fill"></i>
             <span>Users</span>
           </router-link>
@@ -48,14 +83,26 @@
               <i class="bi bi-gear-fill"></i>
               <span>Settings</span>
             </div>
-            <router-link to="/profile" class="nav-link nav-subitem" :class="{ active: $route.name === 'Profile' }" @click="closeMobileMenu">
+            <router-link
+              to="/profile"
+              class="nav-link nav-subitem"
+              :class="{ active: $route.name === 'Profile' }"
+              @click="closeMobileMenu"
+            >
               <i class="bi bi-person-fill"></i>
               <span>Profile</span>
             </router-link>
-            <router-link to="/oidc-settings" class="nav-link nav-subitem" :class="{ active: $route.name === 'OidcSettings' }" @click="closeMobileMenu">
+            <router-link
+              to="/oidc-settings"
+              class="nav-link nav-subitem"
+              :class="{ active: $route.name === 'OidcSettings' }"
+              @click="closeMobileMenu"
+            >
               <!-- OIDC icon from Font Awesome Free v7.1.0 - see https://fontawesome.com/license/free -->
               <svg class="oidc-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
-                <path d="M367.5 496L299.5 528C184.5 517.7 96 456.5 96 382.2C96 310.7 178.5 251.2 287.7 237.9L287.7 280.9C216.2 293.4 163.7 333.9 163.7 382.2C163.7 433.2 222.2 475.5 299.4 485.2L299.4 145.2L367.4 112L367.4 496L367.5 496zM544 355L412.7 326.5L449.5 305.8C430 294.3 406 285.8 379.5 281L379.5 238C425.7 243.5 467.2 257.5 499.8 277.3L534.8 257.5L544 355z"/>
+                <path
+                  d="M367.5 496L299.5 528C184.5 517.7 96 456.5 96 382.2C96 310.7 178.5 251.2 287.7 237.9L287.7 280.9C216.2 293.4 163.7 333.9 163.7 382.2C163.7 433.2 222.2 475.5 299.4 485.2L299.4 145.2L367.4 112L367.4 496L367.5 496zM544 355L412.7 326.5L449.5 305.8C430 294.3 406 285.8 379.5 281L379.5 238C425.7 243.5 467.2 257.5 499.8 277.3L534.8 257.5L544 355z"
+                />
               </svg>
               <span>OIDC</span>
             </router-link>
@@ -83,375 +130,374 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import Copyright from './Copyright.vue'
+  import { ref, onMounted, onUnmounted } from 'vue';
+  import Copyright from './Copyright.vue';
 
-const showMobileMenu = ref(false)
-const canScrollDown = ref(false)
-const navRef = ref(null)
-let resizeObserver = null
+  const showMobileMenu = ref(false);
+  const canScrollDown = ref(false);
+  const navRef = ref(null);
+  let resizeObserver = null;
 
-const toggleMobileMenu = () => {
-  showMobileMenu.value = !showMobileMenu.value
-}
+  const toggleMobileMenu = () => {
+    showMobileMenu.value = !showMobileMenu.value;
+  };
 
-const closeMobileMenu = () => {
-  showMobileMenu.value = false
-}
+  const closeMobileMenu = () => {
+    showMobileMenu.value = false;
+  };
 
-const checkScroll = () => {
-  if (!navRef.value) return
-  const { scrollTop, scrollHeight, clientHeight } = navRef.value
-  canScrollDown.value = scrollHeight - scrollTop - clientHeight > 10
-}
+  const checkScroll = () => {
+    if (!navRef.value) return;
+    const { scrollTop, scrollHeight, clientHeight } = navRef.value;
+    canScrollDown.value = scrollHeight - scrollTop - clientHeight > 10;
+  };
 
-const scrollNavDown = () => {
-  navRef.value?.scrollBy({ top: 100, behavior: 'smooth' })
-}
+  const scrollNavDown = () => {
+    navRef.value?.scrollBy({ top: 100, behavior: 'smooth' });
+  };
 
-onMounted(() => {
-  checkScroll()
-  if (navRef.value) {
-    resizeObserver = new ResizeObserver(checkScroll)
-    resizeObserver.observe(navRef.value)
-  }
-})
+  onMounted(() => {
+    checkScroll();
+    if (navRef.value) {
+      resizeObserver = new ResizeObserver(checkScroll);
+      resizeObserver.observe(navRef.value);
+    }
+  });
 
-onUnmounted(() => {
-  resizeObserver?.disconnect()
-})
+  onUnmounted(() => {
+    resizeObserver?.disconnect();
+  });
 </script>
 
 <style scoped>
-/* Sidebar */
-.sidebar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 100vh;
-  width: 260px;
-  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-}
-
-.sidebar-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: 1.5rem 0;
-}
-
-/* Brand Section */
-.sidebar-brand {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0 1.5rem;
-  margin-bottom: 2rem;
-  color: white;
-  text-decoration: none;
-  transition: all 0.2s ease;
-}
-
-.sidebar-brand:hover {
-  transform: translateX(2px);
-}
-
-.brand-icon {
-  width: 48px;
-  height: 48px;
-  min-width: 48px;
-  background: white;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  transition: all 0.2s ease;
-  padding: 6px;
-}
-
-.brand-logo {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.sidebar-brand:hover .brand-icon {
-  background: rgba(255, 255, 255, 0.95);
-  transform: scale(1.05);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.brand-text h4 {
-  margin: 0;
-  font-weight: 600;
-  font-size: 1.25rem;
-  line-height: 1.2;
-}
-
-.brand-text small {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 0.875rem;
-}
-
-/* Navigation */
-.sidebar-nav-wrapper {
-  flex: 1;
-  position: relative;
-  overflow: hidden;
-}
-
-.sidebar-nav {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 0 1rem;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-.scroll-indicator {
-  position: absolute;
-  bottom: 4px;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.scroll-indicator i {
-  color: white;
-  font-size: 1rem;
-}
-
-
-.nav-link {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.875rem 1rem;
-  color: rgba(255, 255, 255, 0.85);
-  text-decoration: none;
-  border-radius: 12px;
-  font-weight: 500;
-  font-size: 0.95rem;
-  transition: all 0.2s ease;
-  position: relative;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.nav-link i {
-  font-size: 1.25rem;
-  min-width: 1.25rem;
-  transition: transform 0.2s ease;
-}
-
-.nav-link:hover {
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
-  transform: translateX(2px);
-}
-
-.nav-link:hover i {
-  transform: scale(1.1);
-}
-
-.nav-link.active {
-  background: rgba(255, 255, 255, 0.25);
-  color: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.nav-link.active::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 4px;
-  height: 60%;
-  background: white;
-  border-radius: 0 4px 4px 0;
-}
-
-/* Navigation Section */
-.nav-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  flex-shrink: 0;
-}
-
-.nav-section-header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.875rem 1rem;
-  color: rgba(255, 255, 255, 0.85);
-  font-weight: 600;
-  font-size: 0.95rem;
-  cursor: default;
-}
-
-.nav-section-header i {
-  font-size: 1.25rem;
-  min-width: 1.25rem;
-}
-
-.nav-subitem {
-  margin-left: 1rem;
-  padding-left: 2.25rem !important;
-  font-size: 0.9rem;
-}
-
-.nav-subitem i {
-  font-size: 1.125rem !important;
-}
-
-/* OIDC Icon */
-.oidc-icon {
-  width: 1.25rem;
-  height: 1.25rem;
-  min-width: 1.25rem;
-  fill: currentColor;
-  transition: transform 0.2s ease;
-}
-
-.nav-link:hover .oidc-icon {
-  transform: scale(1.1);
-}
-
-/* Sidebar Footer */
-.sidebar-footer {
-  padding: 1rem 1.5rem;
-  margin-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.sidebar-footer :deep(.copyright) {
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 0.75rem;
-  padding: 0;
-}
-
-.sidebar-footer :deep(.org-link) {
-  color: white;
-  font-weight: 500;
-}
-
-.sidebar-footer :deep(.org-link:hover) {
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.sidebar-footer :deep(.license-link) {
-  color: white;
-  font-weight: 500;
-}
-
-.sidebar-footer :deep(.license-link:hover) {
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.sidebar-footer :deep(.feedback-link) {
-  color: white;
-  font-weight: 500;
-}
-
-.sidebar-footer :deep(.feedback-link:hover) {
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.sidebar-footer :deep(.github-link) {
-  color: white;
-  font-weight: 500;
-}
-
-.sidebar-footer :deep(.github-link:hover) {
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.sidebar-footer :deep(.swagger-link) {
-  color: white;
-  font-weight: 500;
-}
-
-.sidebar-footer :deep(.swagger-link:hover) {
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.sidebar-footer :deep(.build-info) {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-/* Mobile Menu Toggle */
-.mobile-menu-toggle {
-  display: none;
-  position: fixed;
-  top: 1rem;
-  left: 1rem;
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
-  border-radius: 12px;
-  color: white;
-  font-size: 1.5rem;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-  z-index: 1001;
-  transition: all 0.2s ease;
-}
-
-.mobile-menu-toggle:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
-}
-
-.mobile-overlay {
-  display: none;
-}
-
-/* Mobile Responsive */
-@media (max-width: 768px) {
+  /* Sidebar */
   .sidebar {
-    transform: translateX(-100%);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .sidebar.show {
-    transform: translateX(0);
-  }
-
-  .mobile-menu-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .mobile-overlay {
-    display: block;
     position: fixed;
     top: 0;
     left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s ease;
-    z-index: 999;
+    height: 100vh;
+    width: 260px;
+    background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
   }
 
-  .mobile-overlay.show {
-    opacity: 1;
-    visibility: visible;
+  .sidebar-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 1.5rem 0;
   }
-}
+
+  /* Brand Section */
+  .sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0 1.5rem;
+    margin-bottom: 2rem;
+    color: white;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .sidebar-brand:hover {
+    transform: translateX(2px);
+  }
+
+  .brand-icon {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    background: white;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    transition: all 0.2s ease;
+    padding: 6px;
+  }
+
+  .brand-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .sidebar-brand:hover .brand-icon {
+    background: rgba(255, 255, 255, 0.95);
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .brand-text h4 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.25rem;
+    line-height: 1.2;
+  }
+
+  .brand-text small {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.875rem;
+  }
+
+  /* Navigation */
+  .sidebar-nav-wrapper {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .sidebar-nav {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0 1rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .scroll-indicator {
+    position: absolute;
+    bottom: 4px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .scroll-indicator i {
+    color: white;
+    font-size: 1rem;
+  }
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.875rem 1rem;
+    color: rgba(255, 255, 255, 0.85);
+    text-decoration: none;
+    border-radius: 12px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .nav-link i {
+    font-size: 1.25rem;
+    min-width: 1.25rem;
+    transition: transform 0.2s ease;
+  }
+
+  .nav-link:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    transform: translateX(2px);
+  }
+
+  .nav-link:hover i {
+    transform: scale(1.1);
+  }
+
+  .nav-link.active {
+    background: rgba(255, 255, 255, 0.25);
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .nav-link.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 60%;
+    background: white;
+    border-radius: 0 4px 4px 0;
+  }
+
+  /* Navigation Section */
+  .nav-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex-shrink: 0;
+  }
+
+  .nav-section-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.875rem 1rem;
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: default;
+  }
+
+  .nav-section-header i {
+    font-size: 1.25rem;
+    min-width: 1.25rem;
+  }
+
+  .nav-subitem {
+    margin-left: 1rem;
+    padding-left: 2.25rem !important;
+    font-size: 0.9rem;
+  }
+
+  .nav-subitem i {
+    font-size: 1.125rem !important;
+  }
+
+  /* OIDC Icon */
+  .oidc-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    min-width: 1.25rem;
+    fill: currentColor;
+    transition: transform 0.2s ease;
+  }
+
+  .nav-link:hover .oidc-icon {
+    transform: scale(1.1);
+  }
+
+  /* Sidebar Footer */
+  .sidebar-footer {
+    padding: 1rem 1.5rem;
+    margin-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .sidebar-footer :deep(.copyright) {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.75rem;
+    padding: 0;
+  }
+
+  .sidebar-footer :deep(.org-link) {
+    color: white;
+    font-weight: 500;
+  }
+
+  .sidebar-footer :deep(.org-link:hover) {
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .sidebar-footer :deep(.license-link) {
+    color: white;
+    font-weight: 500;
+  }
+
+  .sidebar-footer :deep(.license-link:hover) {
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .sidebar-footer :deep(.feedback-link) {
+    color: white;
+    font-weight: 500;
+  }
+
+  .sidebar-footer :deep(.feedback-link:hover) {
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .sidebar-footer :deep(.github-link) {
+    color: white;
+    font-weight: 500;
+  }
+
+  .sidebar-footer :deep(.github-link:hover) {
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .sidebar-footer :deep(.swagger-link) {
+    color: white;
+    font-weight: 500;
+  }
+
+  .sidebar-footer :deep(.swagger-link:hover) {
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .sidebar-footer :deep(.build-info) {
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  /* Mobile Menu Toggle */
+  .mobile-menu-toggle {
+    display: none;
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    z-index: 1001;
+    transition: all 0.2s ease;
+  }
+
+  .mobile-menu-toggle:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+  }
+
+  .mobile-overlay {
+    display: none;
+  }
+
+  /* Mobile Responsive */
+  @media (max-width: 768px) {
+    .sidebar {
+      transform: translateX(-100%);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .sidebar.show {
+      transform: translateX(0);
+    }
+
+    .mobile-menu-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mobile-overlay {
+      display: block;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      z-index: 999;
+    }
+
+    .mobile-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+  }
 </style>

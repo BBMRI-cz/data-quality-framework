@@ -8,33 +8,33 @@
 </template>
 
 <script setup>
-import LoginForm from '../components/LoginForm.vue'
-import Copyright from '../components/Copyright.vue'
+  import LoginForm from '../components/LoginForm.vue';
+  import Copyright from '../components/Copyright.vue';
 </script>
 
 <style scoped>
-.login-container {
-  width: 100%;
-  max-width: 900px;
-  padding: 0 1rem;
-}
-
-@media (min-width: 1400px) {
   .login-container {
-    max-width: 1000px;
+    width: 100%;
+    max-width: 900px;
+    padding: 0 1rem;
   }
-}
 
-@media (max-width: 992px) {
-  .login-container {
-    max-width: 700px;
+  @media (min-width: 1400px) {
+    .login-container {
+      max-width: 1000px;
+    }
   }
-}
 
-@media (max-width: 768px) {
-  .login-container {
-    max-width: 100%;
-    padding: 0 0.5rem;
+  @media (max-width: 992px) {
+    .login-container {
+      max-width: 700px;
+    }
   }
-}
+
+  @media (max-width: 768px) {
+    .login-container {
+      max-width: 100%;
+      padding: 0 0.5rem;
+    }
+  }
 </style>

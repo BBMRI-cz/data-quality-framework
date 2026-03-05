@@ -9,7 +9,11 @@
       </div>
       <div class="card-body p-0">
         <!-- Loading state -->
-        <div v-if="loading" class="d-flex justify-content-center align-items-center" style="min-height: 80px;">
+        <div
+          v-if="loading"
+          class="d-flex justify-content-center align-items-center"
+          style="min-height: 80px"
+        >
           <div class="spinner-border spinner-border-sm text-primary" role="status">
             <span class="visually-hidden">Loading agents...</span>
           </div>
@@ -34,7 +38,7 @@
                 <div
                   class="status-indicator rounded-circle me-3"
                   :class="getStatusIndicatorClass(agent.status)"
-                  style="min-width: 12px; width: 12px; height: 12px;"
+                  style="min-width: 12px; width: 12px; height: 12px"
                 ></div>
                 <div class="flex-grow-1">
                   <div class="agent-name fw-medium text-dark">
@@ -45,10 +49,7 @@
               </div>
               <div class="agent-actions d-flex align-items-center gap-2 ms-2">
                 <!-- Display status badge only -->
-                <span
-                  :class="getStatusClass(agent.status)"
-                  class="badge"
-                >
+                <span :class="getStatusClass(agent.status)" class="badge">
                   {{ getStatusDisplayText(agent.status) }}
                 </span>
               </div>
@@ -58,7 +59,7 @@
 
         <!-- No agents state -->
         <div v-else class="text-center text-muted py-4 px-4">
-          <i class="bi bi-database-fill-gear mb-2 opacity-50" style="font-size: 1.5rem;"></i>
+          <i class="bi bi-database-fill-gear mb-2 opacity-50" style="font-size: 1.5rem"></i>
           <p class="mb-0 small">No agents available</p>
         </div>
       </div>
@@ -67,194 +68,198 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { apiService } from '../services/apiService.js'
+  import { ref, onMounted, computed, watch } from 'vue';
+  import { useRouter } from 'vue-router';
+  import { apiService } from '../services/apiService.js';
 
-const router = useRouter()
-const emit = defineEmits(['agentsLoaded'])
+  const router = useRouter();
+  const emit = defineEmits(['agentsLoaded']);
 
-const loading = ref(true)
-const error = ref(null)
-const agents = ref([])
-const processingAgent = ref(null)
+  const loading = ref(true);
+  const error = ref(null);
+  const agents = ref([]);
+  const processingAgent = ref(null);
 
-const activeAgentsCount = computed(() => {
-  return agents.value.filter(agent => agent.status === 'ACTIVE').length
-})
+  const activeAgentsCount = computed(() => {
+    return agents.value.filter((agent) => agent.status === 'ACTIVE').length;
+  });
 
-// Emit active agents count whenever it changes
-watch(activeAgentsCount, (count) => {
-  emit('agentsLoaded', count)
-}, { immediate: true })
+  // Emit active agents count whenever it changes
+  watch(
+    activeAgentsCount,
+    (count) => {
+      emit('agentsLoaded', count);
+    },
+    { immediate: true }
+  );
 
-const fetchAgents = async () => {
-  try {
-    loading.value = true
-    error.value = null
-    const response = await apiService.getAgents()
-    const allAgents = response._embedded?.agents || []
-    // Sort agents so PENDING status appears first
-    agents.value = allAgents.sort((a, b) => {
-      if (a.status === 'PENDING' && b.status !== 'PENDING') return -1
-      if (a.status !== 'PENDING' && b.status === 'PENDING') return 1
-      return 0
-    })
-  } catch (err) {
-    error.value = err.message || 'Failed to load agents'
-    console.error('Error fetching agents:', err)
-  } finally {
-    loading.value = false
-  }
-}
-
-const getStatusClass = (status) => {
-  switch (status) {
-    case 'ACTIVE':
-      return 'bg-success'
-    case 'INACTIVE':
-      return 'bg-secondary'
-    case 'ERROR':
-      return 'bg-danger'
-    case 'PENDING':
-      return 'bg-warning'
-    default:
-      return 'bg-secondary'
-  }
-}
-
-const getStatusIndicatorClass = (status) => {
-  switch (status) {
-    case 'ACTIVE':
-      return 'bg-success'
-    case 'INACTIVE':
-      return 'bg-secondary'
-    case 'ERROR':
-      return 'bg-danger'
-    case 'PENDING':
-      return 'bg-warning'
-    default:
-      return 'bg-secondary'
-  }
-}
-
-const getStatusDisplayText = (status) => {
-  if (status === 'PENDING') {
-    return 'Requires Attention'
-  }
-  return status
-}
-
-const approveAgent = async (agent) => {
-  try {
-    processingAgent.value = agent.id
-    await apiService.approveAgent(agent.id)
-    // Update the agent status locally
-    const agentIndex = agents.value.findIndex(a => a.id === agent.id)
-    if (agentIndex !== -1) {
-      agents.value[agentIndex].status = 'ACTIVE'
+  const fetchAgents = async () => {
+    try {
+      loading.value = true;
+      error.value = null;
+      const response = await apiService.getAgents();
+      const allAgents = response._embedded?.agents || [];
+      // Sort agents so PENDING status appears first
+      agents.value = allAgents.sort((a, b) => {
+        if (a.status === 'PENDING' && b.status !== 'PENDING') return -1;
+        if (a.status !== 'PENDING' && b.status === 'PENDING') return 1;
+        return 0;
+      });
+    } catch (err) {
+      error.value = err.message || 'Failed to load agents';
+      console.error('Error fetching agents:', err);
+    } finally {
+      loading.value = false;
     }
-  } catch (err) {
-    console.error('Error approving agent:', err)
-    error.value = `Failed to approve agent: ${err.message}`
-  } finally {
-    processingAgent.value = null
-  }
-}
+  };
 
-const declineAgent = async (agent) => {
-  try {
-    processingAgent.value = agent.id
-    await apiService.declineAgent(agent.id)
-    // Update the agent status locally
-    const agentIndex = agents.value.findIndex(a => a.id === agent.id)
-    if (agentIndex !== -1) {
-      agents.value[agentIndex].status = 'INACTIVE'
+  const getStatusClass = (status) => {
+    switch (status) {
+      case 'ACTIVE':
+        return 'bg-success';
+      case 'INACTIVE':
+        return 'bg-secondary';
+      case 'ERROR':
+        return 'bg-danger';
+      case 'PENDING':
+        return 'bg-warning';
+      default:
+        return 'bg-secondary';
     }
-  } catch (err) {
-    console.error('Error declining agent:', err)
-    error.value = `Failed to decline agent: ${err.message}`
-  } finally {
-    processingAgent.value = null
-  }
-}
+  };
 
-const navigateToAgentReport = (agent) => {
-  router.push(`/agents/${agent.id}/reports`)
-}
+  const getStatusIndicatorClass = (status) => {
+    switch (status) {
+      case 'ACTIVE':
+        return 'bg-success';
+      case 'INACTIVE':
+        return 'bg-secondary';
+      case 'ERROR':
+        return 'bg-danger';
+      case 'PENDING':
+        return 'bg-warning';
+      default:
+        return 'bg-secondary';
+    }
+  };
 
-const truncateId = (id) => {
-  // Truncate the ID to a maximum of 8 characters for display
-  return id.length > 8 ? id.slice(0, 8) + '...' : id
-}
+  const getStatusDisplayText = (status) => {
+    if (status === 'PENDING') {
+      return 'Requires Attention';
+    }
+    return status;
+  };
 
-onMounted(() => {
-  fetchAgents()
-})
+  const approveAgent = async (agent) => {
+    try {
+      processingAgent.value = agent.id;
+      await apiService.approveAgent(agent.id);
+      // Update the agent status locally
+      const agentIndex = agents.value.findIndex((a) => a.id === agent.id);
+      if (agentIndex !== -1) {
+        agents.value[agentIndex].status = 'ACTIVE';
+      }
+    } catch (err) {
+      console.error('Error approving agent:', err);
+      error.value = `Failed to approve agent: ${err.message}`;
+    } finally {
+      processingAgent.value = null;
+    }
+  };
+
+  const declineAgent = async (agent) => {
+    try {
+      processingAgent.value = agent.id;
+      await apiService.declineAgent(agent.id);
+      // Update the agent status locally
+      const agentIndex = agents.value.findIndex((a) => a.id === agent.id);
+      if (agentIndex !== -1) {
+        agents.value[agentIndex].status = 'INACTIVE';
+      }
+    } catch (err) {
+      console.error('Error declining agent:', err);
+      error.value = `Failed to decline agent: ${err.message}`;
+    } finally {
+      processingAgent.value = null;
+    }
+  };
+
+  const navigateToAgentReport = (agent) => {
+    router.push(`/agents/${agent.id}/reports`);
+  };
+
+  const truncateId = (id) => {
+    // Truncate the ID to a maximum of 8 characters for display
+    return id.length > 8 ? id.slice(0, 8) + '...' : id;
+  };
+
+  onMounted(() => {
+    fetchAgents();
+  });
 </script>
 
 <style scoped>
-.agents-container {
-  min-height: 200px;
-}
+  .agents-container {
+    min-height: 200px;
+  }
 
-.agent-item {
-  transition: background-color 0.2s ease;
-  border-left: none !important;
-  border-right: none !important;
-  border-top: none !important;
-  position: relative;
-}
-
-.agent-item:last-child {
-  border-bottom: none !important;
-}
-
-.hover-bg-light:hover {
-  background-color: #f8f9fa !important;
-}
-
-.cursor-pointer {
-  cursor: pointer;
-}
-
-.agent-name {
-  font-size: 1rem;
-  line-height: 1.3;
-}
-
-.agent-id {
-  font-size: 0.875rem;
-  line-height: 1.2;
-}
-
-.badge {
-  font-size: 0.7rem;
-  padding: 0.25rem 0.5rem;
-}
-
-.pending-agent {
-  background-color: #fff3cd;
-}
-
-.status-indicator {
-  flex-shrink: 0;
-}
-
-/* Header gradient to match sidebar */
-.header-gradient {
-  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
-}
-
-@media (max-width: 768px) {
   .agent-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
+    transition: background-color 0.2s ease;
+    border-left: none !important;
+    border-right: none !important;
+    border-top: none !important;
+    position: relative;
+  }
+
+  .agent-item:last-child {
+    border-bottom: none !important;
+  }
+
+  .hover-bg-light:hover {
+    background-color: #f8f9fa !important;
+  }
+
+  .cursor-pointer {
+    cursor: pointer;
+  }
+
+  .agent-name {
+    font-size: 1rem;
+    line-height: 1.3;
+  }
+
+  .agent-id {
+    font-size: 0.875rem;
+    line-height: 1.2;
   }
 
   .badge {
-    align-self: flex-end;
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
   }
-}
+
+  .pending-agent {
+    background-color: #fff3cd;
+  }
+
+  .status-indicator {
+    flex-shrink: 0;
+  }
+
+  /* Header gradient to match sidebar */
+  .header-gradient {
+    background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+  }
+
+  @media (max-width: 768px) {
+    .agent-item {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    .badge {
+      align-self: flex-end;
+    }
+  }
 </style>

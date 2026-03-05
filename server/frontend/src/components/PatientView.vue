@@ -6,41 +6,35 @@
         label="Total Patients"
         :value="`${totalPatients.toLocaleString()}`"
         icon="bi bi-people-fill"
-        iconColor="#0d6efd"
-        iconBgColor="#cfe2ff"
+        icon-color="#0d6efd"
+        icon-bg-color="#cfe2ff"
       />
       <StatsCard
         label="From Sites"
         :value="`${fromSites}`"
         icon="bi bi-database-fill-gear"
-        iconColor="#198754"
-        iconBgColor="#d1e7dd"
+        icon-color="#198754"
+        icon-bg-color="#d1e7dd"
       />
       <StatsCard
         label="Total Samples"
         :value="`${totalSamples.toLocaleString()}`"
         icon="bi bi-eyedropper"
-        iconColor="#6610f2"
-        iconBgColor="#e0cffc"
+        icon-color="#6610f2"
+        icon-bg-color="#e0cffc"
       />
     </div>
 
     <!-- Category Filter -->
     <div class="mb-4">
       <div class="filter-label">Categories:</div>
-      <CategoryFilter
-        :categories="categories"
-        v-model="selectedCategory"
-      />
+      <CategoryFilter v-model="selectedCategory" :categories="categories" />
     </div>
 
     <!-- Group Filter -->
-    <div class="mb-4" v-if="groups.length > 0">
+    <div v-if="groups.length > 0" class="mb-4">
       <div class="filter-label">Groups:</div>
-      <CategoryFilter
-        :categories="groups"
-        v-model="selectedGroup"
-      />
+      <CategoryFilter v-model="selectedGroup" :categories="groups" />
     </div>
 
     <!-- Main Content Grid -->
@@ -73,116 +67,116 @@
 </template>
 
 <script setup>
-import { toRefs } from 'vue'
-import StatsCard from './StatsCard.vue'
-import CategoryFilter from './CategoryFilter.vue'
-import QualityCheckRow from './QualityCheckRow.vue'
-import { usePatientStats } from '../composables/usePatientStats'
+  import { toRefs } from 'vue';
+  import StatsCard from './StatsCard.vue';
+  import CategoryFilter from './CategoryFilter.vue';
+  import QualityCheckRow from './QualityCheckRow.vue';
+  import { usePatientStats } from '../composables/usePatientStats';
 
-const props = defineProps({
-  reports: {
-    type: Array,
-    required: true
-  },
-  qualityCheckMap: {
-    type: Map,
-    required: true
-  },
-  agents: {
-    type: Array,
-    required: true
-  }
-})
+  const props = defineProps({
+    reports: {
+      type: Array,
+      required: true,
+    },
+    qualityCheckMap: {
+      type: Map,
+      required: true,
+    },
+    agents: {
+      type: Array,
+      required: true,
+    },
+  });
 
-const { reports, qualityCheckMap, agents } = toRefs(props)
+  const { reports, qualityCheckMap, agents } = toRefs(props);
 
-const {
-  selectedCategory,
-  selectedGroup,
-  categories,
-  groups,
-  totalPatients,
-  totalSamples,
-  fromSites,
-  aggregatedCheckResults
-} = usePatientStats(reports, qualityCheckMap, agents)
+  const {
+    selectedCategory,
+    selectedGroup,
+    categories,
+    groups,
+    totalPatients,
+    totalSamples,
+    fromSites,
+    aggregatedCheckResults,
+  } = usePatientStats(reports, qualityCheckMap, agents);
 </script>
 
 <style scoped>
-/* Stats Row */
-.stats-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
-}
-
-/* Filter Labels */
-.filter-label {
-  font-size: 0.875rem;
-  color: #6c757d;
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-/* Main Content Grid */
-.content-grid {
-  display: grid;
-  gap: 1rem;
-  grid-template-columns: 1fr;
-}
-
-/* No Results State */
-.no-results {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-xl);
-  color: var(--color-gray-500);
-  font-style: italic;
-  font-size: 0.9rem;
-  background-color: var(--color-gray-50);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-gray-200);
-}
-
-.no-results i {
-  font-size: 1.2rem;
-}
-
-.checks-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-/* Tablet Layout */
-@media (min-width: 768px) and (max-width: 991px) {
+  /* Stats Row */
   .stats-row {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-/* Mobile Layout */
-@media (max-width: 767px) {
-  .stats-row {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
   }
 
+  /* Filter Labels */
+  .filter-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Main Content Grid */
   .content-grid {
-    gap: 0.75rem;
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+  }
+
+  /* No Results State */
+  .no-results {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-xl);
+    color: var(--color-gray-500);
+    font-style: italic;
+    font-size: 0.9rem;
+    background-color: var(--color-gray-50);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-gray-200);
+  }
+
+  .no-results i {
+    font-size: 1.2rem;
   }
 
   .checks-list {
+    display: flex;
+    flex-direction: column;
     gap: 0;
   }
 
-  .no-results {
-    padding: var(--spacing-lg);
-    font-size: 0.85rem;
+  /* Tablet Layout */
+  @media (min-width: 768px) and (max-width: 991px) {
+    .stats-row {
+      grid-template-columns: repeat(2, 1fr);
+    }
   }
-}
+
+  /* Mobile Layout */
+  @media (max-width: 767px) {
+    .stats-row {
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+    }
+
+    .content-grid {
+      gap: 0.75rem;
+    }
+
+    .checks-list {
+      gap: 0;
+    }
+
+    .no-results {
+      padding: var(--spacing-lg);
+      font-size: 0.85rem;
+    }
+  }
 </style>
