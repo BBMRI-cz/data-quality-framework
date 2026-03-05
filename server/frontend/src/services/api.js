@@ -84,11 +84,14 @@ api.interceptors.response.use(
       }
       notificationService.error(title, message, { duration: 5000, autoClose: true });
     } else if (error.request) {
-      notificationService.error('Network Error', 'Unable to connect to the server. Please check your internet connection.', { duration: 5000, autoClose: true });
+      notificationService.error(
+        'Network Error',
+        'Unable to connect to the server. Please check your internet connection.',
+        { duration: 5000, autoClose: true }
+      );
     }
     return Promise.reject(error);
   }
 );
 
 export default api;
-

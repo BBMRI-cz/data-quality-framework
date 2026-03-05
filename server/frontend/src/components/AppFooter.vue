@@ -13,7 +13,9 @@
             <span class="bbmri-brand">BBMRI-ERIC</span>
           </div>
           <div class="footer-details">
-            <span class="copyright">&copy; {{ currentYear }} Licensed under GNU General Public License</span>
+            <span class="copyright"
+              >&copy; {{ currentYear }} Licensed under GNU General Public License</span
+            >
           </div>
         </div>
       </div>
@@ -22,148 +24,148 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+  import { computed } from 'vue';
 
-const currentYear = computed(() => new Date().getFullYear())
+  const currentYear = computed(() => new Date().getFullYear());
 </script>
 
 <style scoped>
-.app-footer {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 2rem 0;
-  margin-top: auto;
-  width: 100%;
-  overflow: hidden;
-  z-index: 800;
-  position: relative;
-}
-
-.app-footer::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.05);
-  pointer-events: none;
-}
-
-.footer-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 2rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 2rem;
-  position: relative;
-  z-index: 1;
-}
-
-.footer-main {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 3rem;
-  flex: 1;
-  text-align: center;
-}
-
-.footer-brand {
-  min-width: 200px;
-}
-
-.brand-title {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.brand-subtitle {
-  margin: 0;
-  font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.8);
-  font-style: italic;
-}
-
-.footer-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.developed-by {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1rem;
-}
-
-.developed-text {
-  color: rgba(255, 255, 255, 0.9);
-  font-weight: 400;
-}
-
-.bbmri-brand {
-  color: rgba(255, 255, 255, 0.9);
-  font-weight: 400;
-  font-size: 1rem;
-}
-
-.footer-details {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-  font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.8);
-}
-
-/* Mobile responsive design */
-@media (max-width: 768px) {
   .app-footer {
-    padding: 1.5rem 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-top: auto;
+    width: 100%;
+    overflow: hidden;
+    z-index: 800;
+    position: relative;
+  }
+
+  .app-footer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.05);
+    pointer-events: none;
   }
 
   .footer-content {
-    flex-direction: column;
-    text-align: center;
-    gap: 1.5rem;
-    padding: 0 1rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 2rem;
+    position: relative;
+    z-index: 1;
   }
 
   .footer-main {
-    flex-direction: column;
-    gap: 1.5rem;
-    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3rem;
+    flex: 1;
+    text-align: center;
   }
 
   .footer-brand {
-    min-width: unset;
+    min-width: 200px;
   }
 
   .brand-title {
-    font-size: 1.1rem;
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+
+  .brand-subtitle {
+    margin: 0;
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-style: italic;
   }
 
   .footer-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .developed-by {
+    display: flex;
     align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+  }
+
+  .developed-text {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 400;
+  }
+
+  .bbmri-brand {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 400;
+    font-size: 1rem;
   }
 
   .footer-details {
-    flex-direction: column;
-    gap: 0.5rem;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.8);
   }
-}
 
-/* Tablet Responsive */
-@media (max-width: 1024px) and (min-width: 769px) {
-  .app-footer {
-    left: 0;
+  /* Mobile responsive design */
+  @media (max-width: 768px) {
+    .app-footer {
+      padding: 1.5rem 0;
+    }
+
+    .footer-content {
+      flex-direction: column;
+      text-align: center;
+      gap: 1.5rem;
+      padding: 0 1rem;
+    }
+
+    .footer-main {
+      flex-direction: column;
+      gap: 1.5rem;
+      width: 100%;
+    }
+
+    .footer-brand {
+      min-width: unset;
+    }
+
+    .brand-title {
+      font-size: 1.1rem;
+    }
+
+    .footer-info {
+      align-items: center;
+    }
+
+    .footer-details {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
   }
-}
+
+  /* Tablet Responsive */
+  @media (max-width: 1024px) and (min-width: 769px) {
+    .app-footer {
+      left: 0;
+    }
+  }
 </style>

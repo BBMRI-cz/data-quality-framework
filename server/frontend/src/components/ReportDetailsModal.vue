@@ -20,8 +20,8 @@
           <button
             type="button"
             class="btn-close btn-close-custom"
-            @click="$emit('close')"
             aria-label="Close"
+            @click="$emit('close')"
           ></button>
         </div>
 
@@ -90,7 +90,10 @@
           <!-- Checks List -->
           <div class="checks-container custom-scrollbar">
             <div class="checks-header px-4 py-3 bg-white border-bottom">
-              <h6 class="mb-0 text-uppercase text-muted fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.5px;">
+              <h6
+                class="mb-0 text-uppercase text-muted fw-semibold"
+                style="font-size: 0.75rem; letter-spacing: 0.5px"
+              >
                 Quality Check Results
               </h6>
             </div>
@@ -112,10 +115,7 @@
                 <div class="d-flex justify-content-between align-items-start gap-3">
                   <div class="flex-grow-1">
                     <div class="d-flex align-items-start gap-2 mb-2">
-                      <i
-                        class="bi fs-5 mt-1"
-                        :class="getCheckIcon(result)"
-                      ></i>
+                      <i class="bi fs-5 mt-1" :class="getCheckIcon(result)"></i>
                       <div class="flex-grow-1">
                         <h6 class="mb-1 fw-semibold">{{ getCheckName(result.hash) }}</h6>
                         <p class="mb-2 small text-muted">{{ getCheckDescription(result.hash) }}</p>
@@ -150,387 +150,392 @@
 </template>
 
 <script setup>
-import {
-  getCheckStatus,
-  getStatusBadgeClass,
-  formatScore,
-  countChecksByStatus,
-  getReportStatus,
-  CheckStatus
-} from '../utils/qualityCheckUtils.js'
+  import {
+    getCheckStatus,
+    getStatusBadgeClass,
+    formatScore,
+    countChecksByStatus,
+    getReportStatus,
+    CheckStatus,
+  } from '../utils/qualityCheckUtils.js';
 
-const props = defineProps({
-  report: {
-    type: Object,
-    default: null
-  },
-  qualityCheckMap: {
-    type: Map,
-    required: true
-  }
-})
+  const props = defineProps({
+    report: {
+      type: Object,
+      default: null,
+    },
+    qualityCheckMap: {
+      type: Map,
+      required: true,
+    },
+  });
 
-defineEmits(['close'])
+  defineEmits(['close']);
 
-const formatDateShort = (dateString) => {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  })
-}
+  const formatDateShort = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
 
-const formatTime = (dateString) => {
-  const date = new Date(dateString)
-  return date.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
+  const formatTime = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
 
-const getCheckName = (hash) => {
-  const check = props.qualityCheckMap.get(hash)
-  return check?.name || hash
-}
+  const getCheckName = (hash) => {
+    const check = props.qualityCheckMap.get(hash);
+    return check?.name || hash;
+  };
 
-const getCheckDescription = (hash) => {
-  const check = props.qualityCheckMap.get(hash)
-  return check?.description || 'No description available'
-}
+  const getCheckDescription = (hash) => {
+    const check = props.qualityCheckMap.get(hash);
+    return check?.description || 'No description available';
+  };
 
-const getCheckStatusText = (result) => {
-  const check = props.qualityCheckMap.get(result.hash)
-  return getCheckStatus(result, check)
-}
+  const getCheckStatusText = (result) => {
+    const check = props.qualityCheckMap.get(result.hash);
+    return getCheckStatus(result, check);
+  };
 
-const getCheckBadgeClass = (result) => {
-  const status = getCheckStatusText(result)
-  return getStatusBadgeClass(status)
-}
+  const getCheckBadgeClass = (result) => {
+    const status = getCheckStatusText(result);
+    return getStatusBadgeClass(status);
+  };
 
-const getCheckIcon = (result) => {
-  const status = getCheckStatusText(result)
-  switch (status) {
-    case CheckStatus.PASSED:
-      return 'bi-check-circle-fill text-success'
-    case CheckStatus.WARNING:
-      return 'bi-exclamation-triangle-fill text-warning'
-    case CheckStatus.FAILED:
-      return 'bi-x-circle-fill text-danger'
-    default:
-      return 'bi-question-circle text-secondary'
-  }
-}
+  const getCheckIcon = (result) => {
+    const status = getCheckStatusText(result);
+    switch (status) {
+      case CheckStatus.PASSED:
+        return 'bi-check-circle-fill text-success';
+      case CheckStatus.WARNING:
+        return 'bi-exclamation-triangle-fill text-warning';
+      case CheckStatus.FAILED:
+        return 'bi-x-circle-fill text-danger';
+      default:
+        return 'bi-question-circle text-secondary';
+    }
+  };
 
-const getScoreCircleClass = (result) => {
-  const status = getCheckStatusText(result)
-  switch (status) {
-    case CheckStatus.PASSED:
-      return 'score-success'
-    case CheckStatus.WARNING:
-      return 'score-warning'
-    case CheckStatus.FAILED:
-      return 'score-danger'
-    default:
-      return 'score-secondary'
-  }
-}
+  const getScoreCircleClass = (result) => {
+    const status = getCheckStatusText(result);
+    switch (status) {
+      case CheckStatus.PASSED:
+        return 'score-success';
+      case CheckStatus.WARNING:
+        return 'score-warning';
+      case CheckStatus.FAILED:
+        return 'score-danger';
+      default:
+        return 'score-secondary';
+    }
+  };
 
-const getCheckCounts = () => {
-  return countChecksByStatus(props.report, props.qualityCheckMap)
-}
+  const getCheckCounts = () => {
+    return countChecksByStatus(props.report, props.qualityCheckMap);
+  };
 
-const getOverallStatus = () => {
-  return getReportStatus(props.report, props.qualityCheckMap)
-}
+  const getOverallStatus = () => {
+    return getReportStatus(props.report, props.qualityCheckMap);
+  };
 
-const getOverallStatusBadgeClass = () => {
-  const status = getOverallStatus()
-  return getStatusBadgeClass(status)
-}
+  const getOverallStatusBadgeClass = () => {
+    const status = getOverallStatus();
+    return getStatusBadgeClass(status);
+  };
 </script>
 
 <style scoped>
-.modal-backdrop-custom {
-  background-color: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(2px);
-}
+  .modal-backdrop-custom {
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(2px);
+  }
 
-.modal-dialog-centered {
-  display: flex;
-  align-items: center;
-  min-height: calc(100% - 3.5rem);
-}
+  .modal-dialog-centered {
+    display: flex;
+    align-items: center;
+    min-height: calc(100% - 3.5rem);
+  }
 
-.modal-content {
-  border-radius: 0.75rem;
-  overflow: hidden;
-}
+  .modal-content {
+    border-radius: 0.75rem;
+    overflow: hidden;
+  }
 
-.bg-gradient-primary {
-  background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
-}
+  .bg-gradient-primary {
+    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+  }
 
-.bg-gradient-purple {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
+  .bg-gradient-purple {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
 
-.btn-close-custom {
-  background: transparent;
-  border: none;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 0.375rem;
-  transition: all 0.2s ease;
-  position: relative;
-  opacity: 1;
-}
+  .btn-close-custom {
+    background: transparent;
+    border: none;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
+    position: relative;
+    opacity: 1;
+  }
 
-.btn-close-custom::before,
-.btn-close-custom::after {
-  content: '';
-  position: absolute;
-  width: 18px;
-  height: 2px;
-  background-color: white;
-  border-radius: 1px;
-  transition: all 0.2s ease;
-}
+  .btn-close-custom::before,
+  .btn-close-custom::after {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 2px;
+    background-color: white;
+    border-radius: 1px;
+    transition: all 0.2s ease;
+  }
 
-.btn-close-custom::before {
-  transform: rotate(45deg);
-}
+  .btn-close-custom::before {
+    transform: rotate(45deg);
+  }
 
-.btn-close-custom::after {
-  transform: rotate(-45deg);
-}
+  .btn-close-custom::after {
+    transform: rotate(-45deg);
+  }
 
-.btn-close-custom:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: scale(1.1);
-}
+  .btn-close-custom:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+  }
 
-.btn-close-custom:hover::before,
-.btn-close-custom:hover::after {
-  background-color: white;
-  width: 20px;
-}
+  .btn-close-custom:hover::before,
+  .btn-close-custom:hover::after {
+    background-color: white;
+    width: 20px;
+  }
 
-.btn-close-custom:active {
-  transform: scale(0.95);
-}
+  .btn-close-custom:active {
+    transform: scale(0.95);
+  }
 
-.icon-wrapper {
-  width: 50px;
-  height: 50px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 0.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+  .icon-wrapper {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 
-.font-monospace {
-  font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
-  font-size: 0.875rem;
-}
-
-.report-summary {
-  background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);
-}
-
-.summary-card {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.summary-card i {
-  font-size: 1.5rem;
-}
-
-.stat-box {
-  text-align: center;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  background: white;
-  border: 1px solid #e9ecef;
-  transition: all 0.2s ease;
-}
-
-.stat-box:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.stat-box i {
-  font-size: 1.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.stat-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.stat-label {
-  font-size: 0.75rem;
-  color: #6c757d;
-  margin-top: 0.25rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.stat-success i { color: #198754; }
-.stat-warning i { color: #ffc107; }
-.stat-danger i { color: #dc3545; }
-
-.checks-container {
-  max-height: 500px;
-  overflow-y: auto;
-}
-
-.checks-header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.check-item {
-  padding: 1.25rem 1.5rem;
-  transition: background-color 0.2s ease;
-}
-
-.check-item:hover {
-  background-color: #f8f9fa;
-}
-
-.check-score {
-  flex-shrink: 0;
-}
-
-.score-circle {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  border: 3px solid;
-}
-
-.score-value {
-  font-size: 1.25rem;
-  line-height: 1;
-}
-
-.score-label {
-  font-size: 0.625rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  margin-top: 0.125rem;
-  opacity: 0.8;
-}
-
-.score-success {
-  background-color: #d1e7dd;
-  border-color: #198754;
-  color: #0f5132;
-}
-
-.score-warning {
-  background-color: #fff3cd;
-  border-color: #ffc107;
-  color: #664d03;
-}
-
-.score-danger {
-  background-color: #f8d7da;
-  border-color: #dc3545;
-  color: #842029;
-}
-
-.score-secondary {
-  background-color: #e9ecef;
-  border-color: #6c757d;
-  color: #495057;
-}
-
-.badge {
-  font-weight: 600;
-  padding: 0.35rem 0.75rem;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-/* Footer close button */
-.btn-close-footer {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  padding: 0.75rem 2rem;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  font-size: 0.95rem;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.btn-close-footer:hover {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-  color: white;
-}
-
-.btn-close-footer:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
-}
-
-.btn-close-footer i {
-  font-size: 1.1rem;
-}
-
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .modal-dialog {
-    margin: 0.5rem;
+  .font-monospace {
+    font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+    font-size: 0.875rem;
   }
 
   .report-summary {
-    padding: 1rem !important;
+    background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);
+  }
+
+  .summary-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .summary-card i {
+    font-size: 1.5rem;
   }
 
   .stat-box {
-    padding: 0.75rem;
+    text-align: center;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background: white;
+    border: 1px solid #e9ecef;
+    transition: all 0.2s ease;
+  }
+
+  .stat-box:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .stat-box i {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
   }
 
   .stat-value {
-    font-size: 1.25rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .stat-success i {
+    color: #198754;
+  }
+  .stat-warning i {
+    color: #ffc107;
+  }
+  .stat-danger i {
+    color: #dc3545;
+  }
+
+  .checks-container {
+    max-height: 500px;
+    overflow-y: auto;
+  }
+
+  .checks-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
   }
 
   .check-item {
-    padding: 1rem;
+    padding: 1.25rem 1.5rem;
+    transition: background-color 0.2s ease;
+  }
+
+  .check-item:hover {
+    background-color: #f8f9fa;
+  }
+
+  .check-score {
+    flex-shrink: 0;
   }
 
   .score-circle {
-    width: 50px;
-    height: 50px;
-    font-size: 0.75rem;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    border: 3px solid;
   }
-}
+
+  .score-value {
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+
+  .score-label {
+    font-size: 0.625rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-top: 0.125rem;
+    opacity: 0.8;
+  }
+
+  .score-success {
+    background-color: #d1e7dd;
+    border-color: #198754;
+    color: #0f5132;
+  }
+
+  .score-warning {
+    background-color: #fff3cd;
+    border-color: #ffc107;
+    color: #664d03;
+  }
+
+  .score-danger {
+    background-color: #f8d7da;
+    border-color: #dc3545;
+    color: #842029;
+  }
+
+  .score-secondary {
+    background-color: #e9ecef;
+    border-color: #6c757d;
+    color: #495057;
+  }
+
+  .badge {
+    font-weight: 600;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Footer close button */
+  .btn-close-footer {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-close-footer:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    color: white;
+  }
+
+  .btn-close-footer:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+  }
+
+  .btn-close-footer i {
+    font-size: 1.1rem;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .modal-dialog {
+      margin: 0.5rem;
+    }
+
+    .report-summary {
+      padding: 1rem !important;
+    }
+
+    .stat-box {
+      padding: 0.75rem;
+    }
+
+    .stat-value {
+      font-size: 1.25rem;
+    }
+
+    .check-item {
+      padding: 1rem;
+    }
+
+    .score-circle {
+      width: 50px;
+      height: 50px;
+      font-size: 0.75rem;
+    }
+  }
 </style>

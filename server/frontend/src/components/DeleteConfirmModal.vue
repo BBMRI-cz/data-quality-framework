@@ -20,21 +20,21 @@
 
     <template #footer>
       <div class="d-flex gap-2 justify-content-end w-100">
-        <button
-          type="button"
-          class="btn btn-light"
-          @click="handleCancel"
-          :disabled="loading"
-        >
+        <button type="button" class="btn btn-light" :disabled="loading" @click="handleCancel">
           Cancel
         </button>
         <button
           type="button"
           class="btn btn-danger d-flex align-items-center gap-2"
-          @click="handleConfirm"
           :disabled="loading"
+          @click="handleConfirm"
         >
-          <span v-if="loading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          <span
+            v-if="loading"
+            class="spinner-border spinner-border-sm"
+            role="status"
+            aria-hidden="true"
+          ></span>
           <i v-else class="bi bi-trash"></i>
           {{ confirmText }}
         </button>
@@ -44,49 +44,48 @@
 </template>
 
 <script setup>
-import BaseModal from './BaseModal.vue'
+  import BaseModal from './BaseModal.vue';
 
-const props = defineProps({
-  show: {
-    type: Boolean,
-    default: false
-  },
-  title: {
-    type: String,
-    default: 'Confirm Delete'
-  },
-  subtitle: {
-    type: String,
-    default: ''
-  },
-  message: {
-    type: String,
-    required: true
-  },
-  warning: {
-    type: String,
-    default: ''
-  },
-  confirmText: {
-    type: String,
-    default: 'Delete'
-  },
-  loading: {
-    type: Boolean,
-    default: false
-  }
-})
+  const props = defineProps({
+    show: {
+      type: Boolean,
+      default: false,
+    },
+    title: {
+      type: String,
+      default: 'Confirm Delete',
+    },
+    subtitle: {
+      type: String,
+      default: '',
+    },
+    message: {
+      type: String,
+      required: true,
+    },
+    warning: {
+      type: String,
+      default: '',
+    },
+    confirmText: {
+      type: String,
+      default: 'Delete',
+    },
+    loading: {
+      type: Boolean,
+      default: false,
+    },
+  });
 
-const emit = defineEmits(['close', 'confirm'])
+  const emit = defineEmits(['close', 'confirm']);
 
-const handleCancel = () => {
-  if (!props.loading) {
-    emit('close')
-  }
-}
+  const handleCancel = () => {
+    if (!props.loading) {
+      emit('close');
+    }
+  };
 
-const handleConfirm = () => {
-  emit('confirm')
-}
+  const handleConfirm = () => {
+    emit('confirm');
+  };
 </script>
-

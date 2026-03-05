@@ -20,43 +20,42 @@
 </template>
 
 <script setup>
-defineProps({
-  categories: {
-    type: Array,
-    required: true
-  },
-  modelValue: {
-    type: String,
-    default: null
-  }
-})
+  defineProps({
+    categories: {
+      type: Array,
+      required: true,
+    },
+    modelValue: {
+      type: String,
+      default: null,
+    },
+  });
 
-defineEmits(['update:modelValue'])
+  defineEmits(['update:modelValue']);
 </script>
 
 <style scoped>
-/* Custom Primary Button */
-.btn-custom-primary {
-  background-color: var(--color-primary);
-  border-color: var(--color-primary);
-  color: #fff;
-}
+  /* Custom Primary Button */
+  .btn-custom-primary {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: #fff;
+  }
 
-.btn-custom-primary:hover {
-  background-color: var(--color-primary-dark);
-  border-color: var(--color-primary-dark);
-  color: #fff;
-}
+  .btn-custom-primary:hover {
+    background-color: var(--color-primary-dark);
+    border-color: var(--color-primary-dark);
+    color: #fff;
+  }
 
-.btn-outline-custom-primary {
-  color: var(--color-primary);
-  border-color: var(--color-primary);
-  background-color: transparent;
-}
+  .btn-outline-custom-primary {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+    background-color: transparent;
+  }
 
-.btn-outline-custom-primary:hover {
-  background-color: var(--color-primary);
-  color: #fff;
-}
+  .btn-outline-custom-primary:hover {
+    background-color: var(--color-primary);
+    color: #fff;
+  }
 </style>
-
