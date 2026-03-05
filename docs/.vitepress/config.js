@@ -57,6 +57,7 @@ export default defineConfig({
                     text: 'Developer Guide',
                     items: [
                         {text: 'Overview', link: '/developer/'},
+                        {text: 'Frontend', link: '/developer/frontend'},
                         {text: 'Contributing', link: '/developer/CONTRIBUTING'},
                     ]
                 }

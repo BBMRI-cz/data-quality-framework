@@ -46,7 +46,7 @@
 
   .error-code {
     font-size: 8rem;
-    font-weight: 900;
+    font-weight: 700;
     color: #dc3545;
     margin-bottom: 1.5rem;
     text-shadow: 4px 4px 8px rgba(220, 53, 69, 0.3);
@@ -55,7 +55,7 @@
 
   .error-title {
     font-size: 3rem;
-    font-weight: 800;
+    font-weight: 700;
     color: #343a40;
     margin-bottom: 1.5rem;
     line-height: 1.2;
