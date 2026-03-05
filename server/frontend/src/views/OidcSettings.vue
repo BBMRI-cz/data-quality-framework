@@ -219,6 +219,11 @@ const { settings, loading, error } = settingsStore
 const showRemoveModal = ref(false)
 
 async function saveSettings() {
+  settings.value.oidcAuthority = settings.value.oidcAuthority?.trim().replace(/\/+$/, '') || ''
+  settings.value.oidcRedirectUri = settings.value.oidcRedirectUri?.trim().replace(/\/+$/, '') || ''
+  settings.value.oidcPostLogoutRedirectUri = settings.value.oidcPostLogoutRedirectUri?.trim().replace(/\/+$/, '') || ''
+  settings.value.oidcSwaggerRedirectUrl = settings.value.oidcSwaggerRedirectUrl?.trim().replace(/\/+$/, '') || ''
+
   await settingsStore.updateOidcSettings()
 
   if (!error.value) {
