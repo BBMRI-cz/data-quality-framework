@@ -25,7 +25,28 @@ export async function update(settingsData) {
   return response.data;
 }
 
+/**
+ * Fetches differential privacy settings
+ * @returns {Promise<object>}
+ */
+export async function getDiffPrivacySettings() {
+  const response = await api.get(`${BASE_URL}/diffprivacy`);
+  return response.data;
+}
+
+/**
+ * Updates differential privacy settings
+ * @param {object} privacyData
+ * @returns {Promise<object>}
+ */
+export async function updateDiffPrivacySettings(privacyData) {
+  const response = await api.put(`${BASE_URL}/diffprivacy`, privacyData);
+  return response.data;
+}
+
 export const settingsService = {
   get,
   update,
+  getDiffPrivacySettings,
+  updateDiffPrivacySettings,
 };

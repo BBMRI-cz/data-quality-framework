@@ -59,6 +59,15 @@
               <span>FHIR® Server</span>
             </router-link>
             <router-link
+              to="/privacy"
+              class="nav-link nav-sublink"
+              :class="{ active: $route.path === '/privacy' }"
+              @click="closeMobileMenu"
+            >
+              <i class="bi bi-person-fill-lock"></i>
+              <span>Differential Privacy</span>
+            </router-link>
+            <router-link
               to="/servers"
               class="nav-link nav-sublink"
               :class="{ active: $route.path === '/servers' }"

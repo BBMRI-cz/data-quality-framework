@@ -2,7 +2,9 @@ package eu.bbmri_eric.quality.agent.settings.impl;
 
 import eu.bbmri_eric.quality.agent.common.EventPublisher;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
+import eu.bbmri_eric.quality.agent.settings.dto.DiffPrivacySettingsDTO;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
+import eu.bbmri_eric.quality.agent.settings.event.DiffPrivacySettingsUpdateEvent;
 import eu.bbmri_eric.quality.agent.settings.event.SettingsUpdatedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,5 +30,8 @@ public class SettingsStartupPublisher {
     log.info("Application ready, publishing initial settings event");
     SettingsDTO settings = settingsService.getSettings();
     eventPublisher.publishEvent(new SettingsUpdatedEvent(settings));
+
+    DiffPrivacySettingsDTO diffPrivacySettings = settingsService.getDiffPrivacySettings();
+    eventPublisher.publishEvent(new DiffPrivacySettingsUpdateEvent(diffPrivacySettings));
   }
 }

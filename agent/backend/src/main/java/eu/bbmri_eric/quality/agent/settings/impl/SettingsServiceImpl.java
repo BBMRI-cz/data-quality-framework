@@ -1,10 +1,13 @@
 package eu.bbmri_eric.quality.agent.settings.impl;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.agent.common.EventPublisher;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import eu.bbmri_eric.quality.agent.settings.domain.Settings;
+import eu.bbmri_eric.quality.agent.settings.dto.DiffPrivacySettingsDTO;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
+import eu.bbmri_eric.quality.agent.settings.event.DiffPrivacySettingsUpdateEvent;
 import eu.bbmri_eric.quality.agent.settings.event.SettingsUpdatedEvent;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -37,8 +40,7 @@ public class SettingsServiceImpl implements SettingsService {
 
   @Override
   public SettingsDTO updateSettings(SettingsDTO dto) {
-    Map<String, Object> dtoMap = objectMapper.convertValue(dto, Map.class);
-    dtoMap.forEach((name, value) -> updateSetting(name, value != null ? value.toString() : null));
+    updateSettingsFromDto(dto);
     eventPublisher.publishEvent(new SettingsUpdatedEvent(dto));
     return dto;
   }
@@ -58,5 +60,28 @@ public class SettingsServiceImpl implements SettingsService {
   private Map<String, String> loadSettingsMap() {
     return StreamSupport.stream(settingsRepository.findAll().spliterator(), false)
         .collect(Collectors.toMap(Settings::getName, Settings::getValue));
+  }
+
+  @Override
+  public DiffPrivacySettingsDTO getDiffPrivacySettings() {
+    Map<String, String> values = loadSettingsMap();
+    return objectMapper.convertValue(values, DiffPrivacySettingsDTO.class);
+  }
+
+  @Override
+  public DiffPrivacySettingsDTO updateDiffPrivacySettings(DiffPrivacySettingsDTO dto) {
+    updateSettingsFromDto(dto);
+    eventPublisher.publishEvent(new DiffPrivacySettingsUpdateEvent(dto));
+    return dto;
+  }
+
+  private void updateSettingsFromDto(Object dto) {
+    Map<String, Object> dtoMap = objectMapper.convertValue(dto, new TypeReference<>() {});
+    dtoMap.forEach(
+        (name, value) -> {
+          if (value != null) {
+            updateSetting(name, value.toString());
+          }
+        });
   }
 }

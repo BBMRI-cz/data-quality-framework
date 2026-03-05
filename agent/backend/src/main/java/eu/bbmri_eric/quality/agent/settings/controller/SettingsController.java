@@ -1,6 +1,7 @@
 package eu.bbmri_eric.quality.agent.settings.controller;
 
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
+import eu.bbmri_eric.quality.agent.settings.dto.DiffPrivacySettingsDTO;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,5 +35,22 @@ class SettingsController {
       description = "Update FHIR server configuration")
   public SettingsDTO updateSettings(@Valid @RequestBody SettingsDTO settingsDto) {
     return settingsService.updateSettings(settingsDto);
+  }
+
+  @GetMapping("/diffprivacy")
+  @Operation(
+      summary = "Get differential privacy settings",
+      description = "Retrieve current differential privacy configuration")
+  public DiffPrivacySettingsDTO getDiffPrivacySettings() {
+    return settingsService.getDiffPrivacySettings();
+  }
+
+  @PutMapping("/diffprivacy")
+  @Operation(
+      summary = "Update differential privacy settings",
+      description = "Update differential privacy configuration")
+  public DiffPrivacySettingsDTO updateDiffPrivacySettings(
+      @Valid @RequestBody DiffPrivacySettingsDTO diffPrivacySettingsDto) {
+    return settingsService.updateDiffPrivacySettings(diffPrivacySettingsDto);
   }
 }
