@@ -14,10 +14,30 @@ services:
     container_name: quality-server
     ports:
       - "8082:8082"
+    depends_on:
+      server-db:
+        condition: service_healthy
+    environment:
+      - DB_USERNAME=quality
+      - DB_PASSWORD=quality
+  server-db:
+    image: postgres:17
+    container_name: server-db
+    environment:
+      POSTGRES_DB: quality_server
+      POSTGRES_USER: quality
+      POSTGRES_PASSWORD: quality
+    ports:
+      - "5432:5432"
     volumes:
-      - server-data:/app/data
+      - server-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quality -d quality_server"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 volumes:
   agent-data:
     driver: local
-  server-data:
+  server-db-data:
     driver: local
