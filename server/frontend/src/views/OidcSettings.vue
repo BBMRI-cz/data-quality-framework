@@ -218,52 +218,62 @@
   const showRemoveModal = ref(false);
 
   async function saveSettings() {
-    await settingsStore.updateOidcSettings();
-
-    if (!error.value) {
-      if (authStore.mode === 'oidc') {
-        authStore.logout();
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, reloadTimeout);
-      } else {
-        setTimeout(() => {
-          window.location.reload();
-        }, reloadTimeout);
-      }
-    }
-  }
-
-  async function removeOidcConfig() {
-    settings.value.oidcAuthority = '';
-    settings.value.oidcClientId = '';
-    settings.value.oidcRedirectUri = '';
-    settings.value.oidcPostLogoutRedirectUri = '';
-    settings.value.oidcAuthorityName = '';
-    settings.value.oidcAuthorityLogo = '';
-    settings.value.oidcScopes = '';
-    settings.value.oidcSwaggerRedirectUrl = '';
+    settings.value.oidcAuthority = settings.value.oidcAuthority?.trim().replace(/\/+$/, '') || '';
+    settings.value.oidcRedirectUri =
+      settings.value.oidcRedirectUri?.trim().replace(/\/+$/, '') || '';
+    settings.value.oidcPostLogoutRedirectUri =
+      settings.value.oidcPostLogoutRedirectUri?.trim().replace(/\/+$/, '') || '';
+    settings.value.oidcSwaggerRedirectUrl =
+      settings.value.oidcSwaggerRedirectUrl?.trim().replace(/\/+$/, '') || '';
 
     await settingsStore.updateOidcSettings();
-    showRemoveModal.value = false;
 
-    if (!error.value) {
-      if (authStore.mode === 'oidc') {
-        authStore.logout();
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, reloadTimeout);
-      } else {
-        setTimeout(() => {
-          window.location.reload();
-        }, reloadTimeout);
+    async function saveSettings() {
+      if (!error.value) {
+        if (authStore.mode === 'oidc') {
+          authStore.logout();
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, reloadTimeout);
+        } else {
+          setTimeout(() => {
+            window.location.reload();
+          }, reloadTimeout);
+        }
       }
     }
-  }
 
-  onMounted(async () => {
-    await settingsStore.fetchOidcSettings();
-  });
+    async function removeOidcConfig() {
+      settings.value.oidcAuthority = '';
+      settings.value.oidcClientId = '';
+      settings.value.oidcRedirectUri = '';
+      settings.value.oidcPostLogoutRedirectUri = '';
+      settings.value.oidcAuthorityName = '';
+      settings.value.oidcAuthorityLogo = '';
+      settings.value.oidcScopes = '';
+      settings.value.oidcSwaggerRedirectUrl = '';
+
+      await settingsStore.updateOidcSettings();
+      showRemoveModal.value = false;
+
+      if (!error.value) {
+        if (authStore.mode === 'oidc') {
+          authStore.logout();
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, reloadTimeout);
+        } else {
+          setTimeout(() => {
+            window.location.reload();
+          }, reloadTimeout);
+        }
+      }
+    }
+
+    onMounted(async () => {
+      await settingsStore.fetchOidcSettings();
+    });
+  }
 </script>
 
 <style scoped>

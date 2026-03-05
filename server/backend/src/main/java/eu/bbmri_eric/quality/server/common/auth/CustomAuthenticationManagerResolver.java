@@ -95,8 +95,8 @@ class CustomAuthenticationManagerResolver
           JwtAuthenticationProvider oidcProvider = new JwtAuthenticationProvider(jwtDecoder);
           oidcProvider.setJwtAuthenticationConverter(jwtAuthenticationConverter);
           AuthenticationManager oidcAuthManager = new ProviderManager(oidcProvider);
-          authManagers.put(oidcIssuerUri, oidcAuthManager);
-          currentOidcIssuer = oidcIssuerUri;
+          authManagers.put(oidcIssuerUri.replaceAll("/+$", ""), oidcAuthManager);
+          currentOidcIssuer = oidcIssuerUri.replaceAll("/+$", "");
           oidcInitializationAttempted = true;
           logger.info("Registered OIDC authentication for issuer: {}", oidcIssuerUri);
         } else {
