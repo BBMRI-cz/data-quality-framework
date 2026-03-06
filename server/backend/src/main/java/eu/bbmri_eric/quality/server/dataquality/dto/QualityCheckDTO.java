@@ -1,9 +1,7 @@
 package eu.bbmri_eric.quality.server.dataquality.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-
 import java.time.Instant;
-
 import org.springframework.hateoas.server.core.Relation;
 
 /** DTO for quality check data. */
@@ -54,12 +52,12 @@ public class QualityCheckDTO {
    * @param errorThreshold threshold value for errors
    */
   public QualityCheckDTO(
-          String hash,
-          String name,
-          String description,
-          Instant registeredAt,
-          double warningThreshold,
-          double errorThreshold) {
+      String hash,
+      String name,
+      String description,
+      Instant registeredAt,
+      double warningThreshold,
+      double errorThreshold) {
     this.hash = hash;
     this.name = name;
     this.description = description;
