@@ -5,9 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
-
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
 

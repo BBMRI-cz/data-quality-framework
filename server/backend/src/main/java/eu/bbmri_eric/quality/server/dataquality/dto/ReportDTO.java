@@ -2,9 +2,7 @@ package eu.bbmri_eric.quality.server.dataquality.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
-
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.hateoas.server.core.Relation;
 

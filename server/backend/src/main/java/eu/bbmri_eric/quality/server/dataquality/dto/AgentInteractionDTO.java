@@ -3,9 +3,7 @@ package eu.bbmri_eric.quality.server.dataquality.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import eu.bbmri_eric.quality.server.dataquality.domain.AgentInteractionType;
 import io.swagger.v3.oas.annotations.media.Schema;
-
 import java.time.Instant;
-
 import org.springframework.hateoas.server.core.Relation;
 
 @Schema(description = "Agent interaction data transfer object")
