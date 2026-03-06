@@ -1,5 +1,6 @@
 services:
   quality-server:
+    network_mode: host
     environment:
       - SPRING_FLYWAY_LOCATIONS=classpath:db/migration,classpath:db/dev/migration
     extra_hosts:
