@@ -26,7 +26,7 @@ public class QualityCheckDTO {
       example = "Validates that patient count is within expected range")
   private String description;
 
-  @Schema(description = "When this quality check was registered", example = "2023-10-13T10:30:00")
+  @Schema(description = "When this quality check was registered", example = "2023-10-13T10:30:00Z")
   private Instant registeredAt;
 
   @Schema(description = "Threshold value for warnings", example = "0.8")

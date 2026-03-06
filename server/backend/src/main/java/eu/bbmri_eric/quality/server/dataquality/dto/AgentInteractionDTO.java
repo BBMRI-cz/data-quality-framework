@@ -16,7 +16,7 @@ public class AgentInteractionDTO {
       example = "550e8400-e29b-41d4-a716-446655440000")
   private String id;
 
-  @Schema(description = "Timestamp of the interaction")
+  @Schema(description = "Timestamp of the interaction", example = "2025-10-12T13:30:00Z")
   private Instant timestamp;
 
   @Schema(description = "Type of the interaction", example = "REPORT")
