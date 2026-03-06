@@ -10,7 +10,7 @@ CREATE INDEX idx_agent_status ON agent (status);
 
 CREATE TABLE user_account
 (
-    id         SERIAL PRIMARY KEY,
+    id         BIGSERIAL PRIMARY KEY,
     username   TEXT NOT NULL UNIQUE,
     password   TEXT,
     agent_id   TEXT,
@@ -20,8 +20,8 @@ CREATE TABLE user_account
 
 CREATE TABLE user_roles
 (
-    user_id INTEGER NOT NULL,
-    role    TEXT    NOT NULL,
+    user_id BIGINT NOT NULL,
+    role    TEXT   NOT NULL,
     PRIMARY KEY (user_id, role),
     FOREIGN KEY (user_id) REFERENCES user_account (id) ON DELETE CASCADE
 );
@@ -31,8 +31,8 @@ CREATE INDEX idx_user_roles_user_id ON user_roles (user_id);
 CREATE TABLE report
 (
     id             TEXT PRIMARY KEY,
-    timestamp      TEXT NOT NULL,
-    agent_id       TEXT NOT NULL,
+    timestamp      timestamptz NOT NULL,
+    agent_id       TEXT        NOT NULL,
     total_patients INTEGER,
     total_samples  INTEGER,
     FOREIGN KEY (agent_id) REFERENCES agent (id)
@@ -49,7 +49,7 @@ CREATE TABLE quality_check
     registered_at     TEXT             NOT NULL,
     warning_threshold DOUBLE PRECISION NOT NULL DEFAULT 0.0,
     error_threshold   DOUBLE PRECISION NOT NULL DEFAULT 0.0,
-    category_id       INTEGER
+    category_id       BIGINT
 );
 
 CREATE INDEX idx_quality_check_name ON quality_check (name);
@@ -71,9 +71,9 @@ CREATE INDEX idx_result_quality_check_hash ON quality_check_result (quality_chec
 CREATE TABLE agent_interaction
 (
     id        TEXT PRIMARY KEY,
-    timestamp TEXT NOT NULL,
-    type      TEXT NOT NULL,
-    agent_id  TEXT NOT NULL,
+    timestamp timestamptz NOT NULL,
+    type      TEXT        NOT NULL,
+    agent_id  TEXT        NOT NULL,
     FOREIGN KEY (agent_id) REFERENCES agent (id) ON DELETE CASCADE
 );
 
@@ -89,7 +89,7 @@ CREATE TABLE setting
 
 CREATE TABLE category
 (
-    id        SERIAL PRIMARY KEY,
+    id        BIGSERIAL PRIMARY KEY,
     name      TEXT NOT NULL UNIQUE,
     color_hex TEXT
 );
@@ -102,7 +102,7 @@ ALTER TABLE quality_check
 
 CREATE TABLE agent_group
 (
-    id   SERIAL PRIMARY KEY,
+    id   BIGSERIAL PRIMARY KEY,
     name TEXT NOT NULL UNIQUE
 );
 
@@ -110,8 +110,8 @@ CREATE INDEX idx_agent_group_name ON agent_group (name);
 
 CREATE TABLE group_agent
 (
-    group_id INTEGER NOT NULL,
-    agent_id TEXT    NOT NULL,
+    group_id BIGINT NOT NULL,
+    agent_id TEXT   NOT NULL,
     PRIMARY KEY (group_id, agent_id),
     FOREIGN KEY (group_id) REFERENCES agent_group (id) ON DELETE CASCADE,
     FOREIGN KEY (agent_id) REFERENCES agent (id) ON DELETE CASCADE

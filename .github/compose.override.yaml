@@ -1,7 +1,3 @@
-# Docker Compose Override for OIDC Testing
-# This file extends compose.yaml to add OIDC server mock for local development and CI/CD testing
-# Usage: docker compose up -d (this file is automatically merged with compose.yaml)
-
 services:
   quality-server:
     environment:
