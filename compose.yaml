@@ -12,6 +12,8 @@ services:
   quality-server:
     image: ghcr.io/bbmri-cz/data-quality-server:latest
     container_name: quality-server
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://server-db:5432/quality_server
     ports:
       - "8082:8082"
     depends_on:
