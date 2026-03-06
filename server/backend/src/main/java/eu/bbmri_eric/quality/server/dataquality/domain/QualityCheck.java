@@ -5,7 +5,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.NotNull;
-import java.time.LocalDateTime;
+
+import java.time.Instant;
 import java.util.Objects;
 
 /**
@@ -16,7 +17,7 @@ import java.util.Objects;
 @Entity
 public class QualityCheck {
   @Id private String hash;
-  private final LocalDateTime registeredAt = LocalDateTime.now();
+  private final Instant registeredAt = Instant.now();
   @NotNull private String name;
   private String description;
   private double warningThreshold = 0.0;
@@ -130,7 +131,7 @@ public class QualityCheck {
    *
    * @return the registration timestamp
    */
-  public LocalDateTime getRegisteredAt() {
+  public Instant getRegisteredAt() {
     return registeredAt;
   }
 

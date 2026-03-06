@@ -142,6 +142,7 @@
   import CategoryFilter from '../components/CategoryFilter.vue';
   import CategoryBadge from '../components/CategoryBadge.vue';
   import { useRouter } from 'vue-router';
+  import { formatDateShort } from '../utils/dateUtils.js';
 
   const router = useRouter();
 
@@ -187,11 +188,7 @@
     );
   });
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
-    return new Date(dateString).toLocaleDateString(undefined, options);
-  };
+  const formatDate = formatDateShort;
 
   const loadQualityChecks = async () => {
     loading.value = true;

@@ -31,7 +31,7 @@ CREATE INDEX idx_user_roles_user_id ON user_roles (user_id);
 CREATE TABLE report
 (
     id             TEXT PRIMARY KEY,
-    timestamp      timestamptz NOT NULL,
+    timestamp      timestamptz NOT NULL DEFAULT NOW(),
     agent_id       TEXT        NOT NULL,
     total_patients INTEGER,
     total_samples  INTEGER,
@@ -46,7 +46,7 @@ CREATE TABLE quality_check
     hash              TEXT PRIMARY KEY,
     name              TEXT             NOT NULL,
     description       TEXT,
-    registered_at     TEXT             NOT NULL,
+    registered_at     timestamptz      NOT NULL DEFAULT NOW(),
     warning_threshold DOUBLE PRECISION NOT NULL DEFAULT 0.0,
     error_threshold   DOUBLE PRECISION NOT NULL DEFAULT 0.0,
     category_id       BIGINT
@@ -71,7 +71,7 @@ CREATE INDEX idx_result_quality_check_hash ON quality_check_result (quality_chec
 CREATE TABLE agent_interaction
 (
     id        TEXT PRIMARY KEY,
-    timestamp timestamptz NOT NULL,
+    timestamp timestamptz NOT NULL DEFAULT NOW(),
     type      TEXT        NOT NULL,
     agent_id  TEXT        NOT NULL,
     FOREIGN KEY (agent_id) REFERENCES agent (id) ON DELETE CASCADE

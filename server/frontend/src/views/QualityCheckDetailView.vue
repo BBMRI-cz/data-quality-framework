@@ -205,6 +205,7 @@
   import { useRoute, useRouter } from 'vue-router';
   import { apiService } from '../services/apiService.js';
   import { notificationService } from '../services/notificationService.js';
+  import { formatDateLong } from '../utils/dateUtils.js';
   import PageHeader from '../components/PageHeader.vue';
   import StatsCard from '../components/StatsCard.vue';
 
@@ -243,17 +244,7 @@
     );
   });
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    const options = {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    };
-    return new Date(dateString).toLocaleDateString(undefined, options);
-  };
+  const formatDate = formatDateLong;
 
   const loadQualityCheck = async () => {
     loading.value = true;

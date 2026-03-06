@@ -183,6 +183,7 @@
   import PageHeader from '../components/PageHeader.vue';
   import StatsCard from '../components/StatsCard.vue';
   import { apiService } from '../services/apiService.js';
+  import { formatDateLong, formatTimeFull } from '../utils/dateUtils.js';
 
   const route = useRoute();
   const router = useRouter();
@@ -313,24 +314,6 @@
     } finally {
       loading.value = false;
     }
-  };
-
-  const formatDateLong = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-  };
-
-  const formatTimeFull = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-GB', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
   };
 
   const refreshInteractions = () => {
