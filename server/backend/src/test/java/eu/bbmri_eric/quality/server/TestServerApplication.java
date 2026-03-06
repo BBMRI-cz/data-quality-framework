@@ -16,7 +16,10 @@ import org.testcontainers.utility.DockerImageName;
 public class TestServerApplication {
 
   public static void main(String[] args) {
-    SpringApplication.from(ServerApplication::main).with(DevContainersConfig.class).run(args);
+    SpringApplication.from(ServerApplication::main)
+        .with(DevContainersConfig.class)
+        .withAdditionalProfiles("dev")
+        .run(args);
   }
 
   @TestConfiguration(proxyBeanMethods = false)
