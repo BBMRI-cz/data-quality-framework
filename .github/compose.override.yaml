@@ -3,6 +3,7 @@ services:
     network_mode: host
     environment:
       - SPRING_FLYWAY_LOCATIONS=classpath:db/migration,classpath:db/dev/migration
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/quality_server
     extra_hosts:
       - "host.docker.internal:host-gateway"
   oidc-server-mock:
