@@ -1,6 +1,6 @@
 package eu.bbmri_eric.quality.agent.dataquality.impl;
 
-import eu.bbmri_eric.quality.agent.settings.domain.NoiseMechanism;
+import eu.bbmri_eric.quality.agent.settings.NoiseMechanism;
 import eu.bbmri_eric.quality.agent.settings.event.DiffPrivacySettingsUpdateEvent;
 import lombok.Getter;
 import org.springframework.context.event.EventListener;

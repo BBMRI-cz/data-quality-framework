@@ -1,6 +1,6 @@
 package eu.bbmri_eric.quality.agent.settings.dto;
 
-import eu.bbmri_eric.quality.agent.settings.domain.NoiseMechanism;
+import eu.bbmri_eric.quality.agent.settings.NoiseMechanism;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
