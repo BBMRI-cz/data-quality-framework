@@ -1,4 +1,4 @@
-package eu.bbmri_eric.quality.agent.settings.domain;
+package eu.bbmri_eric.quality.agent.settings;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
