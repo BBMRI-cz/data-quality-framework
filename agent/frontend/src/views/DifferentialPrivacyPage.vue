@@ -121,9 +121,20 @@
     isSaving.value = true;
 
     try {
+
+      const parsedDelta = Number(privacySettings.delta);
+      if (!Number.isFinite(parsedDelta) || parsedDelta <= 0) {
+        notificationService.error(
+            'Invalid Delta',
+            'Delta must be a positive number (e.g., 1e-8). Please correct the value and try again.'
+        );
+        isSaving.value = false;
+        return;
+      }
+
       const payload = {
         epsilon: privacySettings.epsilon,
-        delta: parseFloat(privacySettings.delta),
+        delta: parsedDelta,
         minThreshold: privacySettings.minThreshold,
         noiseMechanism: privacySettings.noiseMechanism,
       };
@@ -145,19 +156,31 @@
     try {
       const privacyData = await settingsStore.fetchDiffPrivacySettings();
       if (privacyData) {
-        privacySettings.epsilon = privacyData.epsilon || 1.0;
+        privacySettings.epsilon = privacyData.epsilon ?? 3.0;
         privacySettings.delta = privacyData.delta != null ? String(privacyData.delta) : '1e-8';
-        privacySettings.minThreshold = privacyData.minThreshold || 10;
-        privacySettings.noiseMechanism = privacyData.noiseMechanism || 'LAPLACE';
+        privacySettings.minThreshold = privacyData.minThreshold ?? 50;
+        privacySettings.noiseMechanism = privacyData.noiseMechanism ?? 'LAPLACE';
       }
+      return true;
     } catch (error) {
       console.error('Error loading privacy settings:', error);
+      return false;
     }
   }
 
   async function resetSettings() {
-    await loadSettings();
-    notificationService.info('Changes Discarded', 'Settings have been reset to the last saved values');
+    const success = await loadSettings();
+    if (success) {
+      notificationService.info(
+          'Changes Discarded',
+          'Settings have been reset to the last saved values'
+      );
+    } else {
+      notificationService.error(
+          'Reset Failed',
+          'Unable to reload privacy settings. Your local changes were not discarded.'
+      );
+    }
   }
 
   onMounted(() => {
@@ -214,54 +237,6 @@
 
   .settings-form {
     max-width: 600px;
-  }
-
-  .info-panel {
-    background: var(--color-gray-50);
-    border-left: 4px solid var(--color-primary);
-    border-radius: var(--radius-md);
-    padding: var(--spacing-lg);
-    margin: var(--spacing-xl) 0;
-  }
-
-  .info-panel-header {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-md);
-  }
-
-  .info-panel-header i {
-    color: var(--color-primary);
-    font-size: 1.25rem;
-  }
-
-  .info-panel-header h3 {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--color-gray-800);
-    margin: 0;
-  }
-
-  .info-panel p {
-    color: var(--color-gray-700);
-    margin-bottom: var(--spacing-md);
-    line-height: 1.6;
-  }
-
-  .info-panel ul {
-    margin: 0;
-    padding-left: var(--spacing-lg);
-    color: var(--color-gray-700);
-  }
-
-  .info-panel li {
-    margin-bottom: var(--spacing-sm);
-    line-height: 1.6;
-  }
-
-  .info-panel li strong {
-    color: var(--color-gray-900);
   }
 
   .form-actions-wrapper {
@@ -334,10 +309,6 @@
       max-width: 100%;
     }
 
-    .info-panel {
-      padding: var(--spacing-md);
-    }
-
     .form-actions-wrapper {
       flex-direction: column;
       align-items: stretch;
@@ -367,13 +338,6 @@
       gap: var(--spacing-sm);
     }
 
-    .info-panel {
-      padding: var(--spacing-sm);
-    }
-
-    .info-panel-header h3 {
-      font-size: 1rem;
-    }
   }
 </style>
 

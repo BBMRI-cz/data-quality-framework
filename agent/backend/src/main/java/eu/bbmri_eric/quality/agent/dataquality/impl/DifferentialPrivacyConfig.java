@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 public class DifferentialPrivacyConfig {
   private double epsilon;
   private double delta;
-  private double minThreshold;
+  private int minThreshold;
   private NoiseMechanism noiseMechanism;
 
   public DifferentialPrivacyConfig() {}
