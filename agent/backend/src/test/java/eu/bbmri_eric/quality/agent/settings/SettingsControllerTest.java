@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.bbmri_eric.quality.agent.settings.dto.DiffPrivacySettingsDTO;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
 import java.util.HashMap;
 import java.util.Map;
@@ -93,5 +94,41 @@ class SettingsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(settingsDTO)))
         .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  @WithMockUser(username = "admin")
+  void getDiffPrivacySettings_shouldReturn200() throws Exception {
+    mockMvc
+        .perform(get("/api/settings/diffprivacy"))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.epsilon").exists())
+        .andExpect(jsonPath("$.delta").exists())
+        .andExpect(jsonPath("$.minThreshold").exists())
+        .andExpect(jsonPath("$.noiseMechanism").exists());
+  }
+
+  @Test
+  void getDiffPrivacySettings_withoutAuthentication_shouldReturn401() throws Exception {
+    mockMvc.perform(get("/api/settings/diffprivacy")).andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  @WithMockUser(username = "admin")
+  void updateDiffPrivacySettings_withValidData_shouldReturn200() throws Exception {
+    DiffPrivacySettingsDTO dto =
+        new DiffPrivacySettingsDTO(2.0, 1.0E-8, 20, NoiseMechanism.GAUSSIAN);
+
+    mockMvc
+        .perform(
+            put("/api/settings/diffprivacy")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.epsilon").value(2.0))
+        .andExpect(jsonPath("$.delta").value(1.0E-8))
+        .andExpect(jsonPath("$.minThreshold").value(20))
+        .andExpect(jsonPath("$.noiseMechanism").value("GAUSSIAN"));
   }
 }
