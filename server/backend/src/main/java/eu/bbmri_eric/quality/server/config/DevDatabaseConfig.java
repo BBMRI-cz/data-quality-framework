@@ -16,25 +16,25 @@ import org.testcontainers.utility.DockerImageName;
 @Configuration(proxyBeanMethods = false)
 @Profile("dev")
 class DevDatabaseConfig {
-        private static final Logger log = LoggerFactory.getLogger(DevDatabaseConfig.class);
+  private static final Logger log = LoggerFactory.getLogger(DevDatabaseConfig.class);
 
-        @Bean
-        @ServiceConnection
-        PostgreSQLContainer<?> postgresContainer() {
-            var container =
-                    new PostgreSQLContainer<>(DockerImageName.parse("postgres:17"))
-                            .withDatabaseName("quality_server")
-                            .withUsername("quality")
-                            .withPassword("quality")
-                            .withCreateContainerCmdModifier(
-                                    cmd ->
-                                            cmd.withHostConfig(
-                                                    Objects.requireNonNull(cmd.getHostConfig())
-                                                            .withPortBindings(
-                                                                    new PortBinding(
-                                                                            Ports.Binding.bindPort(5432), new ExposedPort(5432)))));
-            log.info(
-                    "PostgreSQL dev container configured on localhost:5432 (db=quality_server, user=quality)");
-            return container;
-        }
+  @Bean
+  @ServiceConnection
+  PostgreSQLContainer<?> postgresContainer() {
+    var container =
+        new PostgreSQLContainer<>(DockerImageName.parse("postgres:17"))
+            .withDatabaseName("quality_server")
+            .withUsername("quality")
+            .withPassword("quality")
+            .withCreateContainerCmdModifier(
+                cmd ->
+                    cmd.withHostConfig(
+                        Objects.requireNonNull(cmd.getHostConfig())
+                            .withPortBindings(
+                                new PortBinding(
+                                    Ports.Binding.bindPort(5432), new ExposedPort(5432)))));
+    log.info(
+        "PostgreSQL dev container configured on localhost:5432 (db=quality_server, user=quality)");
+    return container;
+  }
 }
