@@ -15,8 +15,8 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <spring-boot.version>3.5.7</spring-boot.version>
-        <spring-modulith.version>1.4.0</spring-modulith.version>
+        <spring-boot.version>4.0.3</spring-boot.version>
+        <spring-modulith.version>2.0.3</spring-modulith.version>
         <spring-doc.version>2.8.14</spring-doc.version>
         <json.version>20251224</json.version>
         <commons-compress.version>1.26.1</commons-compress.version>
