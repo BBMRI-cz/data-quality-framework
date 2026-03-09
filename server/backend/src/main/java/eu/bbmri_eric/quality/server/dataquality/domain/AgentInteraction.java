@@ -5,7 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -19,7 +19,7 @@ import java.util.UUID;
 public class AgentInteraction {
   @Id private final String id = UUID.randomUUID().toString();
 
-  private final LocalDateTime timestamp = LocalDateTime.now();
+  private final Instant timestamp = Instant.now();
 
   @Enumerated(EnumType.STRING)
   private AgentInteractionType type;
@@ -52,7 +52,7 @@ public class AgentInteraction {
     return id;
   }
 
-  public LocalDateTime getTimestamp() {
+  public Instant getTimestamp() {
     return timestamp;
   }
 

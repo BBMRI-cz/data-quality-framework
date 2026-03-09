@@ -1,7 +1,7 @@
 package eu.bbmri_eric.quality.server.dataquality.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import org.springframework.hateoas.server.core.Relation;
 
 /** DTO for quality check data. */
@@ -26,8 +26,8 @@ public class QualityCheckDTO {
       example = "Validates that patient count is within expected range")
   private String description;
 
-  @Schema(description = "When this quality check was registered", example = "2023-10-13T10:30:00")
-  private LocalDateTime registeredAt;
+  @Schema(description = "When this quality check was registered", example = "2023-10-13T10:30:00Z")
+  private Instant registeredAt;
 
   @Schema(description = "Threshold value for warnings", example = "0.8")
   private double warningThreshold;
@@ -55,7 +55,7 @@ public class QualityCheckDTO {
       String hash,
       String name,
       String description,
-      LocalDateTime registeredAt,
+      Instant registeredAt,
       double warningThreshold,
       double errorThreshold) {
     this.hash = hash;
@@ -90,11 +90,11 @@ public class QualityCheckDTO {
     this.description = description;
   }
 
-  public LocalDateTime getRegisteredAt() {
+  public Instant getRegisteredAt() {
     return registeredAt;
   }
 
-  public void setRegisteredAt(LocalDateTime registeredAt) {
+  public void setRegisteredAt(Instant registeredAt) {
     this.registeredAt = registeredAt;
   }
 

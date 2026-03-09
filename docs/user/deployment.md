@@ -262,16 +262,46 @@ services:
     image: ghcr.io/bbmri-cz/data-quality-server:latest
     container_name: quality-server
     restart: unless-stopped
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://server-db:5432/quality_server
     ports:
       - "8082:8082"
+    depends_on:
+      server-db:
+        condition: service_healthy
+  
+  server-db:
+    image: postgres:17
+    container_name: server-db
+    restart: unless-stopped
+    shm_size: 256mb
+    environment:
+      POSTGRES_DB: quality_server
+      POSTGRES_USER: quality
+      POSTGRES_PASSWORD: quality
+    ports:
+      - "127.0.0.1:5432:5432"
     volumes:
-      - server-data:/app/data
-
+      - server-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quality -d quality_server"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
-  server-data:
+  server-db-data:
     driver: local
 ```
+
+::: warning Docker and Port Requirements
+Starting the server will launch a PostgreSQL database container on port 5432. Make sure you have:
+- **Docker Engine running**
+- **Port 5432 available** (not used by another PostgreSQL instance or service)
+- **Port 8082 available** for the server application
+
+If port 5432 is already in use, you can change the mapping in the compose file (e.g., `"5433:5432"` to use port 5433 on the host).
+:::
 
 ::: tip OIDC Authentication
 The Data Quality Server supports **dual authentication modes**:
@@ -420,9 +450,12 @@ sudo journalctl -u data-quality-server-updater.service
 ### Backup
 
 ```bash
-# Backup persistent data
+# Backup agent persistent data
 docker compose exec quality-agent tar czf /app/backup-$(date +%Y%m%d).tar.gz /app/data
 docker cp quality-agent:/app/backup-$(date +%Y%m%d).tar.gz ./backups/
+
+# Backup server database
+docker compose exec server-db pg_dump -U quality quality_server > ./backups/server-db-$(date +%Y%m%d).sql
 
 # Backup configuration
 cp compose.yaml ./backups/compose-$(date +%Y%m%d).yaml

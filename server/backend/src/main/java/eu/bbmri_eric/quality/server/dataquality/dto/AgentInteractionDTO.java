@@ -3,7 +3,7 @@ package eu.bbmri_eric.quality.server.dataquality.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import eu.bbmri_eric.quality.server.dataquality.domain.AgentInteractionType;
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import org.springframework.hateoas.server.core.Relation;
 
 @Schema(description = "Agent interaction data transfer object")
@@ -16,8 +16,8 @@ public class AgentInteractionDTO {
       example = "550e8400-e29b-41d4-a716-446655440000")
   private String id;
 
-  @Schema(description = "Timestamp of the interaction")
-  private LocalDateTime timestamp;
+  @Schema(description = "Timestamp of the interaction", example = "2025-10-12T13:30:00Z")
+  private Instant timestamp;
 
   @Schema(description = "Type of the interaction", example = "REPORT")
   private AgentInteractionType type;
@@ -32,11 +32,11 @@ public class AgentInteractionDTO {
     this.id = id;
   }
 
-  public LocalDateTime getTimestamp() {
+  public Instant getTimestamp() {
     return timestamp;
   }
 
-  public void setTimestamp(LocalDateTime timestamp) {
+  public void setTimestamp(Instant timestamp) {
     this.timestamp = timestamp;
   }
 

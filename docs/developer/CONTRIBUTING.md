@@ -53,6 +53,10 @@ Welcome! This guide covers everything you need to know to contribute to the Data
    - **Server Frontend**: http://localhost:5174
    - **Server Backend**: http://localhost:8082
 
+   ::: warning
+   Starting the server backend will launch a testcontainer on port 5432. Make sure you have Docker Engine running and that port 5432 is available.
+   :::
+
 ## Development Workflow
 
 We use **GitHub Flow** - a simple, branch-based workflow with only the `master` branch as the main branch.

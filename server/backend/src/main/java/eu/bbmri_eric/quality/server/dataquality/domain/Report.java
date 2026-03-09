@@ -6,7 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -23,7 +23,7 @@ import java.util.UUID;
 public class Report {
   @Id private final String id = UUID.randomUUID().toString();
 
-  private final LocalDateTime timestamp = LocalDateTime.now();
+  private final Instant timestamp = Instant.now();
 
   @Column(name = "agent_id", insertable = false, updatable = false)
   private String agentId;
@@ -58,7 +58,7 @@ public class Report {
    *
    * @return the creation timestamp
    */
-  public LocalDateTime getTimestamp() {
+  public Instant getTimestamp() {
     return timestamp;
   }
 

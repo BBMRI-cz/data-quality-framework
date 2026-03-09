@@ -12,12 +12,33 @@ services:
   quality-server:
     image: ghcr.io/bbmri-cz/data-quality-server:latest
     container_name: quality-server
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://server-db:5432/quality_server
     ports:
       - "8082:8082"
+    depends_on:
+      server-db:
+        condition: service_healthy
+  server-db:
+    image: postgres:17
+    container_name: server-db
+    restart: unless-stopped
+    shm_size: 256mb
+    environment:
+      POSTGRES_DB: quality_server
+      POSTGRES_USER: quality
+      POSTGRES_PASSWORD: quality
+    ports:
+      - "127.0.0.1:5432:5432"
     volumes:
-      - server-data:/app/data
+      - server-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quality -d quality_server"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 volumes:
   agent-data:
     driver: local
-  server-data:
+  server-db-data:
     driver: local

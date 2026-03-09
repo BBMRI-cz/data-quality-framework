@@ -158,6 +158,7 @@
     getReportStatus,
     CheckStatus,
   } from '../utils/qualityCheckUtils.js';
+  import { formatDateShort, formatTime } from '../utils/dateUtils.js';
 
   const props = defineProps({
     report: {
@@ -171,23 +172,6 @@
   });
 
   defineEmits(['close']);
-
-  const formatDateShort = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
-  const formatTime = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
 
   const getCheckName = (hash) => {
     const check = props.qualityCheckMap.get(hash);

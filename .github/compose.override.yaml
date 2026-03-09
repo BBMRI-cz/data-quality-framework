@@ -1,12 +1,11 @@
-# Docker Compose Override for OIDC Testing
-# This file extends compose.yaml to add OIDC server mock for local development and CI/CD testing
-# Usage: docker compose up -d (this file is automatically merged with compose.yaml)
-
 services:
   quality-server:
     network_mode: host
     environment:
       - SPRING_FLYWAY_LOCATIONS=classpath:db/migration,classpath:db/dev/migration
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/quality_server
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
   oidc-server-mock:
     container_name: oidc-server-mock
     image: ghcr.io/soluto/oidc-server-mock:0.9.2

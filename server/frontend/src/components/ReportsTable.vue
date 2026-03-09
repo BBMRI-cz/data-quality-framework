@@ -89,6 +89,7 @@
   import { computed } from 'vue';
   import { useRouter } from 'vue-router';
   import { countChecksByStatus, getReportStatus, CheckStatus } from '../utils/qualityCheckUtils.js';
+  import { formatDateShort, formatTime } from '../utils/dateUtils.js';
 
   const router = useRouter();
 
@@ -136,23 +137,6 @@
 
   const navigateToReport = (reportId) => {
     router.push(`/reports/${reportId}`);
-  };
-
-  const formatDateShort = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
-
-  const formatTime = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
   };
 
   const getCheckCounts = (report) => {
