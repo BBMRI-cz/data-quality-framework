@@ -128,7 +128,8 @@ class SettingsServiceTest {
 
   @Test
   void updateDiffPrivacySettings_shouldPublishEvent() {
-    DiffPrivacySettingsDTO dto = new DiffPrivacySettingsDTO(1.5, 1.0E-8, 15, NoiseMechanism.LAPLACE);
+    DiffPrivacySettingsDTO dto =
+        new DiffPrivacySettingsDTO(1.5, 1.0E-8, 15, NoiseMechanism.LAPLACE);
 
     assertDoesNotThrow(() -> settingsService.updateDiffPrivacySettings(dto));
   }
@@ -137,7 +138,8 @@ class SettingsServiceTest {
   void updateDiffPrivacySettings_shouldThrowException_whenSettingNotFound() {
     settingsRepository.deleteById("epsilon");
 
-    DiffPrivacySettingsDTO dto = new DiffPrivacySettingsDTO(2.0, 1.0E-8, 20, NoiseMechanism.LAPLACE);
+    DiffPrivacySettingsDTO dto =
+        new DiffPrivacySettingsDTO(2.0, 1.0E-8, 20, NoiseMechanism.LAPLACE);
 
     assertThrows(IllegalStateException.class, () -> settingsService.updateDiffPrivacySettings(dto));
   }
@@ -153,7 +155,6 @@ class SettingsServiceTest {
     assertEquals(NoiseMechanism.LAPLACE, result.getNoiseMechanism());
     assertEquals("LAPLACE", settingsRepository.findById("noiseMechanism").get().getValue());
   }
-
 
   @Test
   void updateDiffPrivacySettings_withZeroMinThreshold_shouldSucceed() {

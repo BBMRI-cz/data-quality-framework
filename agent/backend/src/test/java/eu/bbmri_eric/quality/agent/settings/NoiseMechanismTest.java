@@ -52,4 +52,3 @@ class NoiseMechanismTest {
     assertEquals(NoiseMechanism.LAPLACE, result);
   }
 }
-
