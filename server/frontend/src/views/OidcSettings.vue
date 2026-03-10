@@ -217,6 +217,19 @@
   const { settings, loading, error } = settingsStore;
   const showRemoveModal = ref(false);
 
+  function reloadAfterOidcChange() {
+    if (authStore.mode === 'oidc') {
+      authStore.logout();
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, reloadTimeout);
+    } else {
+      setTimeout(() => {
+        window.location.reload();
+      }, reloadTimeout);
+    }
+  }
+
   async function saveSettings() {
     settings.value.oidcAuthority =
       settings.value.oidcAuthority?.trim() || '';
@@ -230,16 +243,7 @@
     await settingsStore.updateOidcSettings();
 
     if (!error.value) {
-      if (authStore.mode === 'oidc') {
-        authStore.logout();
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, reloadTimeout);
-      } else {
-        setTimeout(() => {
-          window.location.reload();
-        }, reloadTimeout);
-      }
+      reloadAfterOidcChange();
     }
   }
 
@@ -257,16 +261,7 @@
     showRemoveModal.value = false;
 
     if (!error.value) {
-      if (authStore.mode === 'oidc') {
-        authStore.logout();
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, reloadTimeout);
-      } else {
-        setTimeout(() => {
-          window.location.reload();
-        }, reloadTimeout);
-      }
+      reloadAfterOidcChange();
     }
   }
 
