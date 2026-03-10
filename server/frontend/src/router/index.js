@@ -180,16 +180,11 @@ const router = createRouter({
 });
 
 router.beforeEach((to, _from) => {
-  // Redirect authenticated users away from login page
   if (to.name === 'Login' && authStore.isAuthenticated) {
     return '/dashboard';
   }
-
-  // Redirect unauthenticated users to login for protected routes
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    if (to.path !== '/dashboard') {
-      authStore.setRedirectPath(to.fullPath);
-    }
+    authStore.setRedirectPath(to.fullPath);
     return '/login';
   }
 });
