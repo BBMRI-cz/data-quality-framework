@@ -137,6 +137,7 @@
 <script setup>
   import { ref, reactive, computed, onMounted } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
+  import { useHead } from '@unhead/vue';
   import { apiService } from '../services/apiService.js';
   import { notificationService } from '../services/notificationService.js';
   import PageHeader from '../components/PageHeader.vue';
@@ -148,6 +149,13 @@
   const isNew = computed(() => route.path === '/categories/new');
   const categoryId = ref(route.params.id);
   const category = ref(null);
+
+  useHead({
+    title: computed(() => {
+      if (isNew.value) return 'New Category';
+      return category.value?.name ? category.value.name : 'Category Detail';
+    }),
+  });
   const loading = ref(!isNew.value);
   const saving = ref(false);
   const deleting = ref(false);

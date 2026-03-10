@@ -143,6 +143,7 @@
 <script setup>
   import { ref, onMounted, nextTick, computed } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
+  import { useHead } from '@unhead/vue';
   import PageHeader from '../components/PageHeader.vue';
   import StatsCard from '../components/StatsCard.vue';
   import AppCallout from '../components/AppCallout.vue';
@@ -162,6 +163,9 @@
   const loading = ref(true);
   const error = ref(null);
   const report = ref(null);
+  useHead({
+    title: computed(() => (report.value?.id ? `Report ${report.value.id}` : 'Report Detail')),
+  });
   const qualityCheckMap = ref(new Map());
   const selectedCategory = ref(null);
   const selectedStatus = ref(null);

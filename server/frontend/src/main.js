@@ -13,6 +13,7 @@ import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router';
 import { initializeOidc } from './utils/oidc';
+import { createHead } from '@unhead/vue/client';
 
 if (window.location.pathname === '/logged-in' || window.location.pathname === '/silent-renew') {
   initializeOidc().catch((error) => {
@@ -20,4 +21,9 @@ if (window.location.pathname === '/logged-in' || window.location.pathname === '/
   });
 }
 
-createApp(App).use(router).mount('#app');
+const app = createApp(App);
+const head = createHead();
+
+app.use(head);
+app.use(router);
+app.mount('#app');

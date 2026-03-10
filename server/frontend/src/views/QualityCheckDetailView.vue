@@ -203,6 +203,7 @@
 <script setup>
   import { ref, reactive, computed, onMounted } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
+  import { useHead } from '@unhead/vue';
   import { apiService } from '../services/apiService.js';
   import { notificationService } from '../services/notificationService.js';
   import { formatDateLong } from '../utils/dateUtils.js';
@@ -214,6 +215,10 @@
 
   const hash = ref(route.params.hash);
   const qualityCheck = ref(null);
+
+  useHead({
+    title: computed(() => qualityCheck.value?.name),
+  });
   const categories = ref([]);
   const loading = ref(true);
   const saving = ref(false);

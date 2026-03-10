@@ -1,9 +1,9 @@
 <script setup>
-  import { onMounted, ref } from 'vue';
-  import { useRouter } from 'vue-router';
+  import { computed, onMounted, ref } from 'vue';
+  import { useRoute, useRouter } from 'vue-router';
+  import { useHead } from '@unhead/vue';
   import Sidebar from './components/Sidebar.vue';
   import TopNavbar from './components/TopNavbar.vue';
-  import AppFooter from './components/AppFooter.vue';
   import NotificationContainer from './components/NotificationContainer.vue';
   import CookieConsent from './components/CookieConsent.vue';
   import { authStore } from './stores/authStore.js';
@@ -11,7 +11,24 @@
   import { initializeOidc } from './utils/oidc.js';
 
   const router = useRouter();
+  const route = useRoute();
   const notificationContainer = ref(null);
+
+  useHead({
+    title: computed(() => {
+      if (typeof route.meta.title === 'function') {
+        return route.meta.title(route);
+      }
+      return route.meta.title || 'Data Quality Server';
+    }),
+    titleTemplate: (title) => {
+      const baseTitle = 'Data Quality Server';
+      if (title === baseTitle) return title;
+      const maxLength = 20;
+      const truncated = title.length > maxLength ? `${title.slice(0, maxLength)}...` : title;
+      return `${truncated} | ${baseTitle}`;
+    },
+  });
 
   onMounted(async () => {
     if (notificationContainer.value) {

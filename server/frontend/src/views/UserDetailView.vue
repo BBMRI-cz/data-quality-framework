@@ -145,6 +145,7 @@
 <script setup>
   import { ref, computed, onMounted, reactive } from 'vue';
   import { useRouter, useRoute } from 'vue-router';
+  import { useHead } from '@unhead/vue';
   import { apiService } from '../services/apiService.js';
   import { notificationService } from '../services/notificationService.js';
   import PageHeader from '../components/PageHeader.vue';
@@ -158,6 +159,12 @@
   const saving = ref(false);
   const deleting = ref(false);
   const error = ref(null);
+  useHead({
+    title: computed(() => {
+      if (isNew.value) return 'New User';
+      return user.value?.username ? user.value.username : 'User Detail';
+    }),
+  });
   const showDeleteModal = ref(false);
 
   const form = reactive({
