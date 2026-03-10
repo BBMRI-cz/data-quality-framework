@@ -32,7 +32,8 @@ class OidcDiscoveryServiceImpl implements OidcDiscoveryService {
       return null;
     }
 
-    var wellKnownUrl = issuerUri + WELL_KNOWN_PATH;
+    String normalizedIssuer = issuerUri.replaceAll("/+$", "");
+    var wellKnownUrl = normalizedIssuer + WELL_KNOWN_PATH;
     log.debug("Fetching OIDC discovery document from: {}", wellKnownUrl);
 
     try {

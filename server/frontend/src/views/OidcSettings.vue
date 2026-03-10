@@ -218,7 +218,13 @@
   const showRemoveModal = ref(false);
 
   async function saveSettings() {
-    settings.value.oidcAuthority = settings.value.oidcAuthority?.trim().replace(/\/+$/, '') || '';
+    const authority = settings.value.oidcAuthority?.trim() || '';
+    if (authority) {
+      settings.value.oidcAuthority = authority.replace(/\/\/+$/, '/');
+    } else {
+      settings.value.oidcAuthority = '';
+    }
+
     settings.value.oidcRedirectUri =
       settings.value.oidcRedirectUri?.trim().replace(/\/+$/, '') || '';
     settings.value.oidcPostLogoutRedirectUri =
