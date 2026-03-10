@@ -219,7 +219,7 @@
 
   async function saveSettings() {
     settings.value.oidcAuthority =
-      settings.value.oidcAuthority?.trim().replace(/\/\/+$/, '/') || '';
+      settings.value.oidcAuthority?.trim() || '';
     settings.value.oidcRedirectUri =
       settings.value.oidcRedirectUri?.trim().replace(/\/+$/, '') || '';
     settings.value.oidcPostLogoutRedirectUri =
