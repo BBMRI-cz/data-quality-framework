@@ -23,9 +23,12 @@
     }),
     titleTemplate: (title) => {
       const baseTitle = 'Data Quality Server';
-      if (title === baseTitle) return title;
+      const safeTitle =
+        typeof title === 'string' && title.trim().length > 0 ? title : baseTitle;
+      if (safeTitle === baseTitle) return safeTitle;
       const maxLength = 20;
-      const truncated = title.length > maxLength ? `${title.slice(0, maxLength)}...` : title;
+      const truncated =
+        safeTitle.length > maxLength ? `${safeTitle.slice(0, maxLength)}...` : safeTitle;
       return `${truncated} | ${baseTitle}`;
     },
   });
