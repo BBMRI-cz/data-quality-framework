@@ -109,12 +109,15 @@ services:
       - REPORTING_SERVER_URL=https://quality-dashboard.bbmri-eric.eu
       - REPORTING_SERVER_NAME=Central Data Quality Server of BBMRI
 
-
-
 volumes:
   agent-data:
     driver: local
 ```
+
+::: tip Advanced Configuration
+For more details on configuring the agent using environment variables, including how to override any setting, see the [Configuration Guide](./configuration.md).
+:::
+
 ### Step 3: Start the Services
 
 ```bash
