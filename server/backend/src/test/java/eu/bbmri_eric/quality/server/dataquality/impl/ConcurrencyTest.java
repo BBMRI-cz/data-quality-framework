@@ -10,6 +10,8 @@ import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentRegistration;
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentRegistrationRequest;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckDTO;
+import eu.bbmri_eric.quality.server.util.CleanDatabaseAfter;
+import eu.bbmri_eric.quality.server.util.IntegrationTest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -23,15 +25,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.concurrent.DelegatingSecurityContextExecutorService;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
 
-@SpringBootTest
-@ActiveProfiles("test")
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@IntegrationTest
 class ConcurrencyTest {
 
   private static final int THREAD_COUNT = 10;
@@ -68,6 +65,7 @@ class ConcurrencyTest {
 
   @Test
   @WithMockUser(roles = "ADMIN")
+  @CleanDatabaseAfter
   void concurrentAgentRegistration_shouldCreateAllAgentsSuccessfully() throws InterruptedException {
     ExecutorService executorService = createSecureExecutorService(THREAD_COUNT);
     CountDownLatch startLatch = new CountDownLatch(1);
@@ -116,6 +114,7 @@ class ConcurrencyTest {
 
   @Test
   @WithMockUser(roles = "ADMIN")
+  @CleanDatabaseAfter
   void concurrentQualityCheckReads_shouldReturnConsistentData() throws InterruptedException {
     ExecutorService executorService = createSecureExecutorService(THREAD_COUNT);
     CountDownLatch startLatch = new CountDownLatch(1);
@@ -179,6 +178,7 @@ class ConcurrencyTest {
 
   @Test
   @WithMockUser(roles = "ADMIN")
+  @CleanDatabaseAfter
   void concurrentFindAllQualityChecks_shouldReturnCompleteListConsistently()
       throws InterruptedException {
     ExecutorService executorService = createSecureExecutorService(THREAD_COUNT);
@@ -228,6 +228,7 @@ class ConcurrencyTest {
 
   @Test
   @WithMockUser(roles = "ADMIN")
+  @CleanDatabaseAfter
   void mixedConcurrentOperations_agentRegistrationAndQualityCheckReads_shouldNotInterfere()
       throws InterruptedException {
     ExecutorService executorService = createSecureExecutorService(THREAD_COUNT * 2);
