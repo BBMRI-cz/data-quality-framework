@@ -23,8 +23,7 @@
     }),
     titleTemplate: (title) => {
       const baseTitle = 'Data Quality Server';
-      const safeTitle =
-        typeof title === 'string' && title.trim().length > 0 ? title : baseTitle;
+      const safeTitle = typeof title === 'string' && title.trim().length > 0 ? title : baseTitle;
       if (safeTitle === baseTitle) return safeTitle;
       const maxLength = 20;
       const truncated =

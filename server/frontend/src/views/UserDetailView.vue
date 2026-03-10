@@ -154,6 +154,9 @@
   const router = useRouter();
   const route = useRoute();
 
+  const isNew = computed(() => route.path === '/users/new');
+  const userId = ref(route.params.id);
+
   const user = ref(null);
   const loading = ref(false);
   const saving = ref(false);
@@ -176,8 +179,6 @@
     username: '',
   });
 
-  const isNew = computed(() => route.path === '/users/new');
-  const userId = ref(route.params.id);
   const isEditMode = computed(() => !isNew.value);
 
   const hasChanges = computed(() => {
