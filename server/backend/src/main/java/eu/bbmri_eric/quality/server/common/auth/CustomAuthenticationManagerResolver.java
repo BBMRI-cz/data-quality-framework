@@ -7,7 +7,6 @@ import eu.bbmri_eric.quality.server.setting.OidcSettingsUpdatedEvent;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
@@ -16,11 +15,6 @@ import org.springframework.security.authentication.AuthenticationManagerResolver
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.oauth2.core.OAuth2Error;
-import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
-import org.springframework.security.oauth2.core.OAuth2TokenValidator;
-import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
@@ -95,8 +89,9 @@ class CustomAuthenticationManagerResolver
           JwtAuthenticationProvider oidcProvider = new JwtAuthenticationProvider(jwtDecoder);
           oidcProvider.setJwtAuthenticationConverter(jwtAuthenticationConverter);
           AuthenticationManager oidcAuthManager = new ProviderManager(oidcProvider);
-          authManagers.put(oidcIssuerUri.replaceAll("/+$", ""), oidcAuthManager);
-          currentOidcIssuer = oidcIssuerUri.replaceAll("/+$", "");
+
+          authManagers.put(oidcIssuerUri, oidcAuthManager);
+          currentOidcIssuer = oidcIssuerUri;
           oidcInitializationAttempted = true;
           logger.info("Registered OIDC authentication for issuer: {}", oidcIssuerUri);
         } else {
@@ -159,20 +154,5 @@ class CustomAuthenticationManagerResolver
       throw new IllegalStateException(
           "Failed to resolve AuthenticationManager: " + e.getMessage(), e);
     }
-  }
-
-  private static @NonNull OAuth2TokenValidator<Jwt> getJwtOAuth2TokenValidator() {
-    return jwt -> {
-      Object typObj = jwt.getHeaders().get("typ");
-      if (typObj == null) {
-        return OAuth2TokenValidatorResult.success();
-      }
-      String typ = typObj.toString();
-      if ("JWT".equalsIgnoreCase(typ) || "at+jwt".equalsIgnoreCase(typ)) {
-        return OAuth2TokenValidatorResult.success();
-      }
-      return OAuth2TokenValidatorResult.failure(
-          new OAuth2Error(OAuth2ErrorCodes.INVALID_TOKEN, "Unsupported JOSE typ: " + typ, null));
-    };
   }
 }

@@ -125,7 +125,6 @@ public class JwtUtil {
     if (issuer == null || issuer.isBlank()) {
       throw new IllegalArgumentException("JWT token missing or empty 'iss' (issuer) claim");
     }
-    issuer = issuer.replaceAll("/+$", "");
 
     logger.debug("Extracted issuer from token: '{}'", issuer);
     return issuer;
