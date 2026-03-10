@@ -158,7 +158,7 @@
                 {{ error }}
               </div>
 
-              <div class="d-flex gap-2 flex-wrap">
+              <div class="d-flex flex-wrap button-group">
                 <button type="submit" class="btn btn-primary" :disabled="loading">
                   <span
                     v-if="loading"
@@ -217,6 +217,19 @@
   const { settings, loading, error } = settingsStore;
   const showRemoveModal = ref(false);
 
+  function reloadAfterOidcChange() {
+    if (authStore.mode === 'oidc') {
+      authStore.logout();
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, reloadTimeout);
+    } else {
+      setTimeout(() => {
+        window.location.reload();
+      }, reloadTimeout);
+    }
+  }
+
   async function saveSettings() {
     settings.value.oidcAuthority =
       settings.value.oidcAuthority?.trim() || '';
@@ -229,52 +242,32 @@
 
     await settingsStore.updateOidcSettings();
 
-    async function saveSettings() {
-      if (!error.value) {
-        if (authStore.mode === 'oidc') {
-          authStore.logout();
-          setTimeout(() => {
-            window.location.href = '/login';
-          }, reloadTimeout);
-        } else {
-          setTimeout(() => {
-            window.location.reload();
-          }, reloadTimeout);
-        }
-      }
+    if (!error.value) {
+      reloadAfterOidcChange();
     }
-
-    async function removeOidcConfig() {
-      settings.value.oidcAuthority = '';
-      settings.value.oidcClientId = '';
-      settings.value.oidcRedirectUri = '';
-      settings.value.oidcPostLogoutRedirectUri = '';
-      settings.value.oidcAuthorityName = '';
-      settings.value.oidcAuthorityLogo = '';
-      settings.value.oidcScopes = '';
-      settings.value.oidcSwaggerRedirectUrl = '';
-
-      await settingsStore.updateOidcSettings();
-      showRemoveModal.value = false;
-
-      if (!error.value) {
-        if (authStore.mode === 'oidc') {
-          authStore.logout();
-          setTimeout(() => {
-            window.location.href = '/login';
-          }, reloadTimeout);
-        } else {
-          setTimeout(() => {
-            window.location.reload();
-          }, reloadTimeout);
-        }
-      }
-    }
-
-    onMounted(async () => {
-      await settingsStore.fetchOidcSettings();
-    });
   }
+
+  async function removeOidcConfig() {
+    settings.value.oidcAuthority = '';
+    settings.value.oidcClientId = '';
+    settings.value.oidcRedirectUri = '';
+    settings.value.oidcPostLogoutRedirectUri = '';
+    settings.value.oidcAuthorityName = '';
+    settings.value.oidcAuthorityLogo = '';
+    settings.value.oidcScopes = '';
+    settings.value.oidcSwaggerRedirectUrl = '';
+
+    await settingsStore.updateOidcSettings();
+    showRemoveModal.value = false;
+
+    if (!error.value) {
+      reloadAfterOidcChange();
+    }
+  }
+
+  onMounted(async () => {
+    await settingsStore.fetchOidcSettings();
+  });
 </script>
 
 <style scoped>
@@ -291,6 +284,14 @@
 
   .card {
     border-radius: 12px;
+  }
+
+  .button-group {
+    gap: 0.5rem;
+  }
+
+  .button-group > * {
+    margin-bottom: 0.5rem;
   }
 
   @media (max-width: 768px) {

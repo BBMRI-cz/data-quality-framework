@@ -139,6 +139,10 @@
       type: Boolean,
       default: true,
     },
+    headerClass: {
+      type: [String, Array, Object],
+      default: '',
+    },
 
     // Footer options
     showFooter: {
@@ -207,6 +211,7 @@
     {
       'modal-header--with-icon': props.icon,
     },
+    props.headerClass,
   ]);
 
   const bodyClasses = computed(() => [
