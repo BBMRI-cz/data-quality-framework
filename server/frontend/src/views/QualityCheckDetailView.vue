@@ -217,7 +217,7 @@
   const qualityCheck = ref(null);
 
   useHead({
-    title: computed(() => qualityCheck.value?.name),
+    title: computed(() => qualityCheck.value?.name || 'Quality Check Details'),
   });
   const categories = ref([]);
   const loading = ref(true);
