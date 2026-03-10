@@ -49,11 +49,20 @@ class SettingsEnvironmentOverrider implements ApplicationRunner {
 
   private Map<String, String> getNormalizedOverrides() {
     Map<String, String> normalized = new HashMap<>();
-    getSystemEnv()
+    getSystemEnv().entrySet().stream()
+        .filter(entry -> entry.getKey().toUpperCase().startsWith(ENV_PREFIX))
+        .sorted(Map.Entry.comparingByKey())
         .forEach(
-            (k, v) -> {
-              if (k.toUpperCase().startsWith(ENV_PREFIX)) {
-                normalized.put(normalize(k.substring(ENV_PREFIX.length())), v);
+            entry -> {
+              String key = entry.getKey();
+              String normalizedKey = normalize(key.substring(ENV_PREFIX.length()));
+              if (normalized.containsKey(normalizedKey)) {
+                log.warn(
+                    "Duplicate environment variable override for setting '{}'. Variable '{}' is ignored because a higher precedence variable (lexicographically earlier) was already processed.",
+                    normalizedKey,
+                    key);
+              } else {
+                normalized.put(normalizedKey, entry.getValue());
               }
             });
     return normalized;

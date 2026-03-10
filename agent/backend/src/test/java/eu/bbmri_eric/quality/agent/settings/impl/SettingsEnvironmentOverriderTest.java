@@ -98,4 +98,17 @@ class SettingsEnvironmentOverriderTest {
     verify(settingsService).updateSettings(captor.capture());
     assertEquals("http://new-url.com", captor.getValue().getFhirUrl());
   }
+
+  @Test
+  void run_shouldHandleDuplicateNormalizedKeysDeterministically() {
+    SettingsDTO initialSettings = new SettingsDTO();
+    initialSettings.setFhirUrl("http://old-url.com");
+    when(settingsService.getSettings()).thenReturn(initialSettings);
+    testEnv.put("APP_SETTING_FHIRURL", "http://winner.com");
+    testEnv.put("APP_SETTING_FHIR_URL", "http://loser.com");
+    overrider.run(args);
+    ArgumentCaptor<SettingsDTO> captor = ArgumentCaptor.forClass(SettingsDTO.class);
+    verify(settingsService).updateSettings(captor.capture());
+    assertEquals("http://winner.com", captor.getValue().getFhirUrl());
+  }
 }
