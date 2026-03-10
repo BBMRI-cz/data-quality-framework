@@ -242,6 +242,7 @@
 <script setup>
   import { ref, reactive, computed, onMounted, watch } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
+  import { useHead } from '@unhead/vue';
   import { apiService } from '../services/apiService.js';
   import { notificationService } from '../services/notificationService.js';
   import PageHeader from '../components/PageHeader.vue';
@@ -253,6 +254,13 @@
   const isNew = computed(() => route.path === '/groups/new');
   const groupId = ref(route.params.id);
   const group = ref(null);
+
+  useHead({
+    title: computed(() => {
+      if (isNew.value) return 'New Group';
+      return group.value?.name ? group.value.name : 'Group Detail';
+    }),
+  });
   const loading = ref(!isNew.value);
   const saving = ref(false);
   const deleting = ref(false);
