@@ -188,7 +188,7 @@ router.beforeEach((to, _from) => {
   // Redirect unauthenticated users to login for protected routes
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     if (to.path !== '/dashboard') {
-      authStore.setRedirectPath(to.path);
+      authStore.setRedirectPath(to.fullPath);
     }
     return '/login';
   }
