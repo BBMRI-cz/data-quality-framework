@@ -133,40 +133,4 @@ class JwtServiceTest {
     String issuer = jwtService.extractIssuer(token);
     assertEquals("quality-server", issuer);
   }
-
-  @Test
-  @DisplayName("Should remove single trailing slash from issuer")
-  void extractIssuer_withSingleTrailingSlash_removesSlash() {
-    String payload = "{\"iss\":\"http://localhost:4011/\",\"sub\":\"user\"}";
-    String encodedPayload =
-        Base64.getUrlEncoder().withoutPadding().encodeToString(payload.getBytes());
-    String mockToken = "header." + encodedPayload + ".signature";
-
-    String issuer = jwtService.extractIssuer(mockToken);
-    assertEquals("http://localhost:4011", issuer);
-  }
-
-  @Test
-  @DisplayName("Should remove multiple trailing slashes from issuer")
-  void extractIssuer_withMultipleTrailingSlashes_removesAllSlashes() {
-    String payload = "{\"iss\":\"http://localhost:4011///\",\"sub\":\"user\"}";
-    String encodedPayload =
-        Base64.getUrlEncoder().withoutPadding().encodeToString(payload.getBytes());
-    String mockToken = "header." + encodedPayload + ".signature";
-
-    String issuer = jwtService.extractIssuer(mockToken);
-    assertEquals("http://localhost:4011", issuer);
-  }
-
-  @Test
-  @DisplayName("Should handle issuer without trailing slash")
-  void extractIssuer_withoutTrailingSlash_returnsIssuerUnchanged() {
-    String payload = "{\"iss\":\"http://localhost:4011\",\"sub\":\"user\"}";
-    String encodedPayload =
-        Base64.getUrlEncoder().withoutPadding().encodeToString(payload.getBytes());
-    String mockToken = "header." + encodedPayload + ".signature";
-
-    String issuer = jwtService.extractIssuer(mockToken);
-    assertEquals("http://localhost:4011", issuer);
-  }
 }

@@ -54,7 +54,8 @@ export async function initializeOidc(forceReinit = false) {
     try {
       const oidcSettings = await fetchOidcSettings(forceReinit);
 
-      const discoveryUrl = `${oidcSettings.authority}/.well-known/openid-configuration`;
+      const normalizedAuthority = oidcSettings.authority.replace(/\/+$/, '');
+      const discoveryUrl = `${normalizedAuthority}/.well-known/openid-configuration`;
       const response = await fetch(discoveryUrl, {
         method: 'GET',
         mode: 'cors',

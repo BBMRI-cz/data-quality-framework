@@ -66,7 +66,8 @@ class OidcUserInfoServiceImpl implements OidcUserInfoService {
         return;
       }
 
-      var discoveryUri = issuerUri + OIDC_DISCOVERY_PATH;
+      String normalizedIssuer = issuerUri.replaceAll("/+$", "");
+      var discoveryUri = normalizedIssuer + OIDC_DISCOVERY_PATH;
       var discoveryResponse = fetchDiscoveryDocument(discoveryUri);
       userInfoEndpoint = extractUserInfoEndpoint(discoveryResponse, discoveryUri);
     } catch (Exception e) {
