@@ -32,11 +32,11 @@ const routes = [
   {
     path: '/',
     name: 'Home',
-    beforeEnter: (to, from, next) => {
+    beforeEnter: (_to, _from) => {
       if (authStore.isAuthenticated) {
-        next('/dashboard');
+        return '/dashboard';
       } else {
-        next('/login');
+        return '/login';
       }
     },
   },
@@ -179,11 +179,10 @@ const router = createRouter({
   routes,
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from) => {
   // Redirect authenticated users away from login page
   if (to.name === 'Login' && authStore.isAuthenticated) {
-    next('/dashboard');
-    return;
+    return '/dashboard';
   }
 
   // Redirect unauthenticated users to login for protected routes
@@ -191,9 +190,7 @@ router.beforeEach((to, from, next) => {
     if (to.path !== '/dashboard') {
       authStore.setRedirectPath(to.path);
     }
-    next('/login');
-  } else {
-    next();
+    return '/login';
   }
 });
 
