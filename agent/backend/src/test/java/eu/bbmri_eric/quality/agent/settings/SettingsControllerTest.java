@@ -6,7 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.agent.settings.dto.DiffPrivacySettingsDTO;
-import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
+import eu.bbmri_eric.quality.agent.settings.dto.FhirSettingsDTO;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -45,7 +45,7 @@ class SettingsControllerTest {
   @Test
   @WithMockUser(username = "admin")
   void updateSettings_withInvalidUrl_shouldReturn400() throws Exception {
-    SettingsDTO settingsDTO = new SettingsDTO("", "testuser", "dGVzdHBhc3M=");
+    FhirSettingsDTO settingsDTO = new FhirSettingsDTO("", "testuser", "dGVzdHBhc3M=");
 
     mockMvc
         .perform(
@@ -58,8 +58,8 @@ class SettingsControllerTest {
   @Test
   @WithMockUser(username = "admin")
   void updateSettings_withNonHttpUrl_shouldReturn400() throws Exception {
-    SettingsDTO settingsDTO =
-        new SettingsDTO("ftp://localhost:8080/fhir", "testuser", "dGVzdHBhc3M=");
+    FhirSettingsDTO settingsDTO =
+        new FhirSettingsDTO("ftp://localhost:8080/fhir", "testuser", "dGVzdHBhc3M=");
 
     mockMvc
         .perform(
@@ -85,8 +85,8 @@ class SettingsControllerTest {
 
   @Test
   void updateSettings_withoutAuthentication_shouldReturn401() throws Exception {
-    SettingsDTO settingsDTO =
-        new SettingsDTO("http://localhost:8080/fhir", "testuser", "dGVzdHBhc3M=");
+    FhirSettingsDTO settingsDTO =
+        new FhirSettingsDTO("http://localhost:8080/fhir", "testuser", "dGVzdHBhc3M=");
 
     mockMvc
         .perform(
@@ -100,7 +100,7 @@ class SettingsControllerTest {
   @WithMockUser(username = "admin")
   void getDiffPrivacySettings_shouldReturn200() throws Exception {
     mockMvc
-        .perform(get("/api/settings/diffprivacy"))
+        .perform(get("/api/settings/differential-privacy"))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.epsilon").exists())
@@ -111,7 +111,7 @@ class SettingsControllerTest {
 
   @Test
   void getDiffPrivacySettings_withoutAuthentication_shouldReturn401() throws Exception {
-    mockMvc.perform(get("/api/settings/diffprivacy")).andExpect(status().isUnauthorized());
+    mockMvc.perform(get("/api/settings/differential-privacy")).andExpect(status().isUnauthorized());
   }
 
   @Test
@@ -122,7 +122,7 @@ class SettingsControllerTest {
 
     mockMvc
         .perform(
-            put("/api/settings/diffprivacy")
+            put("/api/settings/differential-privacy")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dto)))
         .andExpect(status().isOk())

@@ -5,9 +5,9 @@ import static org.mockito.Mockito.*;
 
 import eu.bbmri_eric.quality.agent.common.EventPublisher;
 import eu.bbmri_eric.quality.agent.settings.dto.DiffPrivacySettingsDTO;
-import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
+import eu.bbmri_eric.quality.agent.settings.dto.FhirSettingsDTO;
 import eu.bbmri_eric.quality.agent.settings.event.DiffPrivacySettingsUpdateEvent;
-import eu.bbmri_eric.quality.agent.settings.event.SettingsUpdatedEvent;
+import eu.bbmri_eric.quality.agent.settings.event.FhirSettingsUpdateEvent;
 import eu.bbmri_eric.quality.agent.settings.impl.SettingsStartupPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,53 +32,53 @@ class SettingsStartupPublisherTest {
 
   @Test
   void publishSettingsOnStartup_shouldPublishSettingsUpdatedEvent() {
-    SettingsDTO mockSettings =
-        new SettingsDTO("http://localhost:8080/fhir", "testuser", "dGVzdHBhc3M=");
-    when(settingsService.getSettings()).thenReturn(mockSettings);
+    FhirSettingsDTO mockSettings =
+        new FhirSettingsDTO("http://localhost:8080/fhir", "testuser", "dGVzdHBhc3M=");
+    when(settingsService.getFhirSettings()).thenReturn(mockSettings);
 
     settingsStartupPublisher.publishSettingsOnStartup();
 
-    ArgumentCaptor<SettingsUpdatedEvent> eventCaptor =
-        ArgumentCaptor.forClass(SettingsUpdatedEvent.class);
+    ArgumentCaptor<FhirSettingsUpdateEvent> eventCaptor =
+        ArgumentCaptor.forClass(FhirSettingsUpdateEvent.class);
     verify(eventPublisher).publishEvent(eventCaptor.capture());
 
-    SettingsUpdatedEvent capturedEvent = eventCaptor.getValue();
+    FhirSettingsUpdateEvent capturedEvent = eventCaptor.getValue();
     assertNotNull(capturedEvent);
     assertEquals(mockSettings, capturedEvent.getSettings());
   }
 
   @Test
   void publishSettingsOnStartup_shouldCallSettingsService() {
-    SettingsDTO mockSettings =
-        new SettingsDTO("http://localhost:8080/fhir", "testuser", "dGVzdHBhc3M=");
-    when(settingsService.getSettings()).thenReturn(mockSettings);
+    FhirSettingsDTO mockSettings =
+        new FhirSettingsDTO("http://localhost:8080/fhir", "testuser", "dGVzdHBhc3M=");
+    when(settingsService.getFhirSettings()).thenReturn(mockSettings);
 
     settingsStartupPublisher.publishSettingsOnStartup();
 
-    verify(settingsService, times(1)).getSettings();
+    verify(settingsService, times(1)).getFhirSettings();
   }
 
   @Test
   void publishSettingsOnStartup_shouldPublishEventWithCorrectSource() {
-    SettingsDTO mockSettings =
-        new SettingsDTO("http://localhost:8080/fhir", "testuser", "dGVzdHBhc3M=");
-    when(settingsService.getSettings()).thenReturn(mockSettings);
+    FhirSettingsDTO mockSettings =
+        new FhirSettingsDTO("http://localhost:8080/fhir", "testuser", "dGVzdHBhc3M=");
+    when(settingsService.getFhirSettings()).thenReturn(mockSettings);
 
     settingsStartupPublisher.publishSettingsOnStartup();
 
-    ArgumentCaptor<SettingsUpdatedEvent> eventCaptor =
-        ArgumentCaptor.forClass(SettingsUpdatedEvent.class);
+    ArgumentCaptor<FhirSettingsUpdateEvent> eventCaptor =
+        ArgumentCaptor.forClass(FhirSettingsUpdateEvent.class);
     verify(eventPublisher).publishEvent(eventCaptor.capture());
   }
 
   @Test
   void publishSettingsOnStartup_shouldCallGetDiffPrivacySettings() {
-    SettingsDTO mockSettings =
-        new SettingsDTO("http://localhost:8080/fhir", "testuser", "dGVzdHBhc3M=");
+    FhirSettingsDTO mockSettings =
+        new FhirSettingsDTO("http://localhost:8080/fhir", "testuser", "dGVzdHBhc3M=");
     DiffPrivacySettingsDTO mockDiffPrivacySettings =
         new DiffPrivacySettingsDTO(1.0, 1.0E-8, 10, NoiseMechanism.LAPLACE);
 
-    when(settingsService.getSettings()).thenReturn(mockSettings);
+    when(settingsService.getFhirSettings()).thenReturn(mockSettings);
     when(settingsService.getDiffPrivacySettings()).thenReturn(mockDiffPrivacySettings);
 
     settingsStartupPublisher.publishSettingsOnStartup();
@@ -88,12 +88,12 @@ class SettingsStartupPublisherTest {
 
   @Test
   void publishSettingsOnStartup_shouldPublishDiffPrivacySettingsUpdateEvent() {
-    SettingsDTO mockSettings =
-        new SettingsDTO("http://localhost:8080/fhir", "testuser", "dGVzdHBhc3M=");
+    FhirSettingsDTO mockSettings =
+        new FhirSettingsDTO("http://localhost:8080/fhir", "testuser", "dGVzdHBhc3M=");
     DiffPrivacySettingsDTO mockDiffPrivacySettings =
         new DiffPrivacySettingsDTO(2.0, 1.0E-9, 20, NoiseMechanism.GAUSSIAN);
 
-    when(settingsService.getSettings()).thenReturn(mockSettings);
+    when(settingsService.getFhirSettings()).thenReturn(mockSettings);
     when(settingsService.getDiffPrivacySettings()).thenReturn(mockDiffPrivacySettings);
 
     settingsStartupPublisher.publishSettingsOnStartup();
@@ -111,12 +111,12 @@ class SettingsStartupPublisherTest {
 
   @Test
   void publishSettingsOnStartup_shouldPublishDiffPrivacyEventWithCorrectParameters() {
-    SettingsDTO mockSettings =
-        new SettingsDTO("http://localhost:8080/fhir", "testuser", "dGVzdHBhc3M=");
+    FhirSettingsDTO mockSettings =
+        new FhirSettingsDTO("http://localhost:8080/fhir", "testuser", "dGVzdHBhc3M=");
     DiffPrivacySettingsDTO mockDiffPrivacySettings =
         new DiffPrivacySettingsDTO(3.0, 1.0E-7, 50, NoiseMechanism.GAUSSIAN);
 
-    when(settingsService.getSettings()).thenReturn(mockSettings);
+    when(settingsService.getFhirSettings()).thenReturn(mockSettings);
     when(settingsService.getDiffPrivacySettings()).thenReturn(mockDiffPrivacySettings);
 
     settingsStartupPublisher.publishSettingsOnStartup();

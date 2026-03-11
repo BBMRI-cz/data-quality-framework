@@ -30,7 +30,7 @@ export async function update(settingsData) {
  * @returns {Promise<object>}
  */
 export async function getDiffPrivacySettings() {
-  const response = await api.get(`${BASE_URL}/diffprivacy`);
+  const response = await api.get(`${BASE_URL}/differential-privacy`);
   return response.data;
 }
 
@@ -40,7 +40,7 @@ export async function getDiffPrivacySettings() {
  * @returns {Promise<object>}
  */
 export async function updateDiffPrivacySettings(privacyData) {
-  const response = await api.put(`${BASE_URL}/diffprivacy`, privacyData);
+  const response = await api.put(`${BASE_URL}/differential-privacy`, privacyData);
   return response.data;
 }
 
