@@ -23,7 +23,8 @@ class SettingsController {
   @GetMapping
   @Operation(
       summary = "Get application settings",
-      description = "Retrieve current application configuration including FHIR server and differential privacy settings")
+      description =
+          "Retrieve current application configuration including FHIR server and differential privacy settings")
   public SettingsDTO getSettings() {
     return settingsService.getSettings();
   }
@@ -31,7 +32,8 @@ class SettingsController {
   @PutMapping
   @Operation(
       summary = "Update application settings",
-      description = "Update application configuration including FHIR server and differential privacy settings")
+      description =
+          "Update application configuration including FHIR server and differential privacy settings")
   public SettingsDTO updateSettings(@Valid @RequestBody SettingsDTO settingsDTO) {
     return settingsService.updateSettings(settingsDTO);
   }

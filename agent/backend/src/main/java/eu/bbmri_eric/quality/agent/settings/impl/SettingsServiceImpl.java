@@ -15,8 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Service implementation for managing application settings. Persists settings to the database and
- * publishes events so other components (e.g. FHIR client, differential privacy engine) can react
- * to changes without tight coupling.
+ * publishes events so other components (e.g. FHIR client, differential privacy engine) can react to
+ * changes without tight coupling.
  */
 @Service
 @Transactional

@@ -2,9 +2,7 @@ package eu.bbmri_eric.quality.agent.settings;
 
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
 
-/**
- * Service interface for managing application settings.
- */
+/** Service interface for managing application settings. */
 public interface SettingsService {
 
   /**

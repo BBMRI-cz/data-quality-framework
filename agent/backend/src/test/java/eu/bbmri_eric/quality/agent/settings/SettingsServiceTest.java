@@ -67,9 +67,15 @@ class SettingsServiceTest {
   @Test
   void updateSettings_shouldPersistAllFields() {
     String base64Password = Base64.getEncoder().encodeToString("newpass".getBytes());
-    SettingsDTO dto = createSettingsDTO(
-        "http://production:8080/fhir", "produser", base64Password,
-        3.0, 1.0E-10, 50, NoiseMechanism.GAUSSIAN);
+    SettingsDTO dto =
+        createSettingsDTO(
+            "http://production:8080/fhir",
+            "produser",
+            base64Password,
+            3.0,
+            1.0E-10,
+            50,
+            NoiseMechanism.GAUSSIAN);
 
     settingsService.updateSettings(dto);
     SettingsDTO result = settingsService.getSettings();
@@ -85,10 +91,15 @@ class SettingsServiceTest {
 
   @Test
   void updateSettings_shouldPublishEvents_withoutThrowing() {
-    SettingsDTO dto = createSettingsDTO(
-        "http://localhost:8080/fhir", "eventuser",
-        Base64.getEncoder().encodeToString("eventpass".getBytes()),
-        1.5, 1.0E-8, 15, NoiseMechanism.LAPLACE);
+    SettingsDTO dto =
+        createSettingsDTO(
+            "http://localhost:8080/fhir",
+            "eventuser",
+            Base64.getEncoder().encodeToString("eventpass".getBytes()),
+            1.5,
+            1.0E-8,
+            15,
+            NoiseMechanism.LAPLACE);
 
     assertDoesNotThrow(() -> settingsService.updateSettings(dto));
   }
@@ -97,10 +108,15 @@ class SettingsServiceTest {
   void updateSettings_shouldThrowException_whenSettingNotFound() {
     settingsRepository.deleteById("fhirUrl");
 
-    SettingsDTO dto = createSettingsDTO(
-        "http://localhost:8080/fhir", "user",
-        Base64.getEncoder().encodeToString("password".getBytes()),
-        1.0, 1.0E-8, 10, NoiseMechanism.LAPLACE);
+    SettingsDTO dto =
+        createSettingsDTO(
+            "http://localhost:8080/fhir",
+            "user",
+            Base64.getEncoder().encodeToString("password".getBytes()),
+            1.0,
+            1.0E-8,
+            10,
+            NoiseMechanism.LAPLACE);
 
     assertThrows(IllegalStateException.class, () -> settingsService.updateSettings(dto));
   }
@@ -109,10 +125,15 @@ class SettingsServiceTest {
   void updateSettings_shouldThrowException_withMessageContainingMissingKey() {
     settingsRepository.deleteById("fhirUsername");
 
-    SettingsDTO dto = createSettingsDTO(
-        "http://localhost:8080/fhir", "user",
-        Base64.getEncoder().encodeToString("password".getBytes()),
-        1.0, 1.0E-8, 10, NoiseMechanism.LAPLACE);
+    SettingsDTO dto =
+        createSettingsDTO(
+            "http://localhost:8080/fhir",
+            "user",
+            Base64.getEncoder().encodeToString("password".getBytes()),
+            1.0,
+            1.0E-8,
+            10,
+            NoiseMechanism.LAPLACE);
 
     IllegalStateException exception =
         assertThrows(IllegalStateException.class, () -> settingsService.updateSettings(dto));
@@ -122,9 +143,15 @@ class SettingsServiceTest {
 
   @Test
   void updateSettings_withLaplaceNoiseMechanism_shouldPersist() {
-    SettingsDTO dto = createSettingsDTO(
-        "http://localhost:8080/fhir", "testuser", "dGVzdHBhc3M=",
-        1.0, 1.0E-8, 10, NoiseMechanism.LAPLACE);
+    SettingsDTO dto =
+        createSettingsDTO(
+            "http://localhost:8080/fhir",
+            "testuser",
+            "dGVzdHBhc3M=",
+            1.0,
+            1.0E-8,
+            10,
+            NoiseMechanism.LAPLACE);
 
     settingsService.updateSettings(dto);
 
@@ -133,9 +160,15 @@ class SettingsServiceTest {
 
   @Test
   void updateSettings_withZeroMinThreshold_shouldSucceed() {
-    SettingsDTO dto = createSettingsDTO(
-        "http://localhost:8080/fhir", "testuser", "dGVzdHBhc3M=",
-        1.0, 1.0E-8, 0, NoiseMechanism.LAPLACE);
+    SettingsDTO dto =
+        createSettingsDTO(
+            "http://localhost:8080/fhir",
+            "testuser",
+            "dGVzdHBhc3M=",
+            1.0,
+            1.0E-8,
+            0,
+            NoiseMechanism.LAPLACE);
 
     SettingsDTO result = settingsService.updateSettings(dto);
 
@@ -144,9 +177,15 @@ class SettingsServiceTest {
 
   @Test
   void updateSettings_withVerySmallDelta_shouldSucceed() {
-    SettingsDTO dto = createSettingsDTO(
-        "http://localhost:8080/fhir", "testuser", "dGVzdHBhc3M=",
-        1.0, 1.0E-15, 10, NoiseMechanism.GAUSSIAN);
+    SettingsDTO dto =
+        createSettingsDTO(
+            "http://localhost:8080/fhir",
+            "testuser",
+            "dGVzdHBhc3M=",
+            1.0,
+            1.0E-15,
+            10,
+            NoiseMechanism.GAUSSIAN);
 
     SettingsDTO result = settingsService.updateSettings(dto);
 
@@ -157,9 +196,15 @@ class SettingsServiceTest {
   void updateSettings_shouldThrowException_whenEpsilonSettingNotFound() {
     settingsRepository.deleteById("epsilon");
 
-    SettingsDTO dto = createSettingsDTO(
-        "http://localhost:8080/fhir", "testuser", "dGVzdHBhc3M=",
-        2.0, 1.0E-8, 20, NoiseMechanism.LAPLACE);
+    SettingsDTO dto =
+        createSettingsDTO(
+            "http://localhost:8080/fhir",
+            "testuser",
+            "dGVzdHBhc3M=",
+            2.0,
+            1.0E-8,
+            20,
+            NoiseMechanism.LAPLACE);
 
     assertThrows(IllegalStateException.class, () -> settingsService.updateSettings(dto));
   }

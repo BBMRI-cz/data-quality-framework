@@ -3,7 +3,6 @@ package eu.bbmri_eric.quality.agent.settings.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;

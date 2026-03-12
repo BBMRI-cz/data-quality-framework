@@ -10,6 +10,4 @@ public class SettingsUpdatedEvent {
   public SettingsUpdatedEvent(SettingsDTO settings) {
     this.settings = settings;
   }
-
 }
-
