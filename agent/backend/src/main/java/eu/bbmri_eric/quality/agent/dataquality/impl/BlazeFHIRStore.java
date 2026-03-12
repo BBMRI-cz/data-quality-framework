@@ -7,8 +7,8 @@ import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.api.ServerValidationModeEnum;
 import ca.uhn.fhir.rest.client.interceptor.BasicAuthInterceptor;
 import eu.bbmri_eric.quality.agent.dataquality.FHIRStore;
-import eu.bbmri_eric.quality.agent.settings.dto.FhirSettingsDTO;
-import eu.bbmri_eric.quality.agent.settings.event.FhirSettingsUpdateEvent;
+import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
+import eu.bbmri_eric.quality.agent.settings.event.SettingsUpdatedEvent;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -78,12 +78,12 @@ class BlazeFHIRStore implements FHIRStore {
   }
 
   @EventListener
-  public void onSettingsUpdated(FhirSettingsUpdateEvent event) {
+  public void onSettingsUpdated(SettingsUpdatedEvent event) {
     log.info("Settings updated, reinitializing FHIR clients");
     initializeClients(event.getSettings());
   }
 
-  private synchronized void initializeClients(FhirSettingsDTO settings) {
+  private synchronized void initializeClients(SettingsDTO settings) {
 
     String decodedPassword = new String(Base64.getDecoder().decode(settings.getFhirPassword()));
 

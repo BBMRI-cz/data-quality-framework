@@ -117,6 +117,7 @@
 
     try {
       const payload = {
+        ...settingsStore.settings,
         fhirUrl: fhirSettings.url,
         fhirUsername: fhirSettings.username,
         fhirPassword: encodeBase64(fhirSettings.password),

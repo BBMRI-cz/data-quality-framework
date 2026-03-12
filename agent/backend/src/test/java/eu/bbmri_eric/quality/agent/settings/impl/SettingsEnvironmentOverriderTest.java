@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.bbmri_eric.quality.agent.settings.NoiseMechanism;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
 import java.util.HashMap;
@@ -40,48 +41,59 @@ class SettingsEnvironmentOverriderTest {
         };
   }
 
+  private SettingsDTO defaultSettingsDTO() {
+    SettingsDTO dto = new SettingsDTO();
+    dto.setAgentId("agent-123");
+    dto.setFhirUrl("http://url.com");
+    dto.setFhirUsername("user");
+    dto.setFhirPassword("cGFzcw==");
+    dto.setEpsilon(1.0);
+    dto.setDelta(1e-8);
+    dto.setMinThreshold(10);
+    dto.setNoiseMechanism(NoiseMechanism.LAPLACE);
+    return dto;
+  }
+
   @Test
-  void run_shouldOverrideSettings_whenEnvironmentVariableExists() {
-    SettingsDTO initialSettings = new SettingsDTO();
-    initialSettings.setFhirUrl("http://old-url.com");
-    initialSettings.setFhirUsername("oldUser");
-    when(settingsService.getSettings()).thenReturn(initialSettings);
+  void run_shouldOverrideFhirSettings_whenEnvironmentVariableExists() {
+    SettingsDTO initial = defaultSettingsDTO();
+    initial.setFhirUrl("http://old-url.com");
+    initial.setFhirUsername("oldUser");
+    when(settingsService.getSettings()).thenReturn(initial);
+
     testEnv.put("APP_SETTING_FHIR_URL", "http://new-url.com");
     overrider.run(args);
+
     ArgumentCaptor<SettingsDTO> captor = ArgumentCaptor.forClass(SettingsDTO.class);
     verify(settingsService).updateSettings(captor.capture());
-    SettingsDTO updatedSettings = captor.getValue();
-    assertEquals("http://new-url.com", updatedSettings.getFhirUrl());
-    assertEquals("oldUser", updatedSettings.getFhirUsername());
+    assertEquals("http://new-url.com", captor.getValue().getFhirUrl());
+    assertEquals("oldUser", captor.getValue().getFhirUsername());
   }
 
   @Test
   void run_shouldNotUpdateSettings_whenValueIsSame() {
-    SettingsDTO initialSettings = new SettingsDTO();
-    initialSettings.setFhirUrl("http://same-url.com");
-    when(settingsService.getSettings()).thenReturn(initialSettings);
-    testEnv.put("APP_SETTING_FHIR_URL", "http://same-url.com");
+    when(settingsService.getSettings()).thenReturn(defaultSettingsDTO());
+    testEnv.put("APP_SETTING_FHIR_URL", "http://url.com");
     overrider.run(args);
     verify(settingsService, never()).updateSettings(any());
   }
 
   @Test
   void run_shouldIgnoreEnvironmentVariablesWithoutPrefix() {
-    SettingsDTO initialSettings = new SettingsDTO();
-    initialSettings.setFhirUrl("http://old-url.com");
-    when(settingsService.getSettings()).thenReturn(initialSettings);
     testEnv.put("FHIR_URL", "http://ignored-url.com");
     overrider.run(args);
     verify(settingsService, never()).updateSettings(any());
   }
 
   @Test
-  void run_shouldHandleCaseIsensitiveMatching() {
-    SettingsDTO initialSettings = new SettingsDTO();
-    initialSettings.setFhirUsername("oldUser");
-    when(settingsService.getSettings()).thenReturn(initialSettings);
+  void run_shouldHandleCaseInsensitiveMatching() {
+    SettingsDTO initial = defaultSettingsDTO();
+    initial.setFhirUsername("oldUser");
+    when(settingsService.getSettings()).thenReturn(initial);
+
     testEnv.put("APP_SETTING_FHIRUSERNAME", "newUser");
     overrider.run(args);
+
     ArgumentCaptor<SettingsDTO> captor = ArgumentCaptor.forClass(SettingsDTO.class);
     verify(settingsService).updateSettings(captor.capture());
     assertEquals("newUser", captor.getValue().getFhirUsername());
@@ -89,11 +101,13 @@ class SettingsEnvironmentOverriderTest {
 
   @Test
   void run_shouldNormalizeUnderscoresAndDots() {
-    SettingsDTO initialSettings = new SettingsDTO();
-    initialSettings.setFhirUrl("http://old-url.com");
-    when(settingsService.getSettings()).thenReturn(initialSettings);
+    SettingsDTO initial = defaultSettingsDTO();
+    initial.setFhirUrl("http://old-url.com");
+    when(settingsService.getSettings()).thenReturn(initial);
+
     testEnv.put("APP_SETTING_FHIR.URL", "http://new-url.com");
     overrider.run(args);
+
     ArgumentCaptor<SettingsDTO> captor = ArgumentCaptor.forClass(SettingsDTO.class);
     verify(settingsService).updateSettings(captor.capture());
     assertEquals("http://new-url.com", captor.getValue().getFhirUrl());
@@ -101,14 +115,29 @@ class SettingsEnvironmentOverriderTest {
 
   @Test
   void run_shouldHandleDuplicateNormalizedKeysDeterministically() {
-    SettingsDTO initialSettings = new SettingsDTO();
-    initialSettings.setFhirUrl("http://old-url.com");
-    when(settingsService.getSettings()).thenReturn(initialSettings);
+    SettingsDTO initial = defaultSettingsDTO();
+    initial.setFhirUrl("http://old-url.com");
+    when(settingsService.getSettings()).thenReturn(initial);
+
     testEnv.put("APP_SETTING_FHIRURL", "http://winner.com");
     testEnv.put("APP_SETTING_FHIR_URL", "http://loser.com");
     overrider.run(args);
+
     ArgumentCaptor<SettingsDTO> captor = ArgumentCaptor.forClass(SettingsDTO.class);
     verify(settingsService).updateSettings(captor.capture());
     assertEquals("http://winner.com", captor.getValue().getFhirUrl());
+  }
+
+  @Test
+  void run_shouldOverrideDiffPrivacySettings_whenEnvironmentVariableExists() {
+    SettingsDTO initial = defaultSettingsDTO();
+    when(settingsService.getSettings()).thenReturn(initial);
+
+    testEnv.put("APP_SETTING_EPSILON", "5.0");
+    overrider.run(args);
+
+    ArgumentCaptor<SettingsDTO> captor = ArgumentCaptor.forClass(SettingsDTO.class);
+    verify(settingsService).updateSettings(captor.capture());
+    assertEquals("5.0", captor.getValue().getEpsilon().toString());
   }
 }

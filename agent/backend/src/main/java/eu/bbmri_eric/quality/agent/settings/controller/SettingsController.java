@@ -1,8 +1,7 @@
 package eu.bbmri_eric.quality.agent.settings.controller;
 
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
-import eu.bbmri_eric.quality.agent.settings.dto.DiffPrivacySettingsDTO;
-import eu.bbmri_eric.quality.agent.settings.dto.FhirSettingsDTO;
+import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -11,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/settings")
-@Tag(name = "Settings", description = "FHIR server settings management")
+@Tag(name = "Settings", description = "Application settings management")
 class SettingsController {
 
   private final SettingsService settingsService;
@@ -23,34 +22,17 @@ class SettingsController {
 
   @GetMapping
   @Operation(
-      summary = "Get FHIR server settings",
-      description = "Retrieve current FHIR server configuration")
-  public FhirSettingsDTO getFhirSettings() {
-    return settingsService.getFhirSettings();
+      summary = "Get application settings",
+      description = "Retrieve current application configuration including FHIR server and differential privacy settings")
+  public SettingsDTO getSettings() {
+    return settingsService.getSettings();
   }
 
   @PutMapping
   @Operation(
-      summary = "Update FHIR server settings",
-      description = "Update FHIR server configuration")
-  public FhirSettingsDTO updateSettings(@Valid @RequestBody FhirSettingsDTO fhirSettingsDTO) {
-    return settingsService.updateFhirSettings(fhirSettingsDTO);
-  }
-
-  @GetMapping("/differential-privacy")
-  @Operation(
-      summary = "Get differential privacy settings",
-      description = "Retrieve current differential privacy configuration")
-  public DiffPrivacySettingsDTO getDiffPrivacySettings() {
-    return settingsService.getDiffPrivacySettings();
-  }
-
-  @PutMapping("/differential-privacy")
-  @Operation(
-      summary = "Update differential privacy settings",
-      description = "Update differential privacy configuration")
-  public DiffPrivacySettingsDTO updateDiffPrivacySettings(
-      @Valid @RequestBody DiffPrivacySettingsDTO diffPrivacySettingsDto) {
-    return settingsService.updateDiffPrivacySettings(diffPrivacySettingsDto);
+      summary = "Update application settings",
+      description = "Update application configuration including FHIR server and differential privacy settings")
+  public SettingsDTO updateSettings(@Valid @RequestBody SettingsDTO settingsDTO) {
+    return settingsService.updateSettings(settingsDTO);
   }
 }

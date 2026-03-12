@@ -1,7 +1,7 @@
 package eu.bbmri_eric.quality.agent.dataquality.impl;
 
 import eu.bbmri_eric.quality.agent.settings.NoiseMechanism;
-import eu.bbmri_eric.quality.agent.settings.event.DiffPrivacySettingsUpdateEvent;
+import eu.bbmri_eric.quality.agent.settings.event.SettingsUpdatedEvent;
 import lombok.Getter;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -17,10 +17,10 @@ public class DifferentialPrivacyConfig {
   public DifferentialPrivacyConfig() {}
 
   @EventListener
-  private void updateConfig(DiffPrivacySettingsUpdateEvent event) {
-    this.epsilon = event.getUpdatedDiffPrivacySettings().getEpsilon();
-    this.delta = event.getUpdatedDiffPrivacySettings().getDelta();
-    this.minThreshold = event.getUpdatedDiffPrivacySettings().getMinThreshold();
-    this.noiseMechanism = event.getUpdatedDiffPrivacySettings().getNoiseMechanism();
+  private void updateConfig(SettingsUpdatedEvent event) {
+    this.epsilon = event.getSettings().getEpsilon();
+    this.delta = event.getSettings().getDelta();
+    this.minThreshold = event.getSettings().getMinThreshold();
+    this.noiseMechanism = event.getSettings().getNoiseMechanism();
   }
 }

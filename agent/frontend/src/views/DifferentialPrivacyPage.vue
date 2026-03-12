@@ -132,14 +132,18 @@
         return;
       }
 
+      const current = await settingsStore.fetchSettings();
       const payload = {
+        fhirUrl: current.fhirUrl,
+        fhirUsername: current.fhirUsername,
+        fhirPassword: current.fhirPassword,
         epsilon: privacySettings.epsilon,
         delta: parsedDelta,
         minThreshold: privacySettings.minThreshold,
         noiseMechanism: privacySettings.noiseMechanism,
       };
 
-      await settingsStore.updateDiffPrivacySettings(payload);
+      await settingsStore.updateSettings(payload);
       notificationService.success(
         'Privacy Settings Saved',
         'Your differential privacy settings have been updated successfully'
@@ -154,12 +158,12 @@
 
   async function loadSettings() {
     try {
-      const privacyData = await settingsStore.fetchDiffPrivacySettings();
-      if (privacyData) {
-        privacySettings.epsilon = privacyData.epsilon ?? 3.0;
-        privacySettings.delta = privacyData.delta != null ? String(privacyData.delta) : '1e-8';
-        privacySettings.minThreshold = privacyData.minThreshold ?? 50;
-        privacySettings.noiseMechanism = privacyData.noiseMechanism ?? 'LAPLACE';
+      const data = await settingsStore.fetchSettings();
+      if (data) {
+        privacySettings.epsilon = data.epsilon ?? 3.0;
+        privacySettings.delta = data.delta != null ? String(data.delta) : '1e-8';
+        privacySettings.minThreshold = data.minThreshold ?? 50;
+        privacySettings.noiseMechanism = data.noiseMechanism ?? 'LAPLACE';
       }
       return true;
     } catch (error) {

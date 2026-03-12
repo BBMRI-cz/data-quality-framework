@@ -2,10 +2,8 @@ package eu.bbmri_eric.quality.agent.settings.impl;
 
 import eu.bbmri_eric.quality.agent.common.EventPublisher;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
-import eu.bbmri_eric.quality.agent.settings.dto.DiffPrivacySettingsDTO;
-import eu.bbmri_eric.quality.agent.settings.dto.FhirSettingsDTO;
-import eu.bbmri_eric.quality.agent.settings.event.DiffPrivacySettingsUpdateEvent;
-import eu.bbmri_eric.quality.agent.settings.event.FhirSettingsUpdateEvent;
+import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
+import eu.bbmri_eric.quality.agent.settings.event.SettingsUpdatedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -28,10 +26,7 @@ public class SettingsStartupPublisher {
   @EventListener(ApplicationReadyEvent.class)
   public void publishSettingsOnStartup() {
     log.info("Application ready, publishing initial settings event");
-    FhirSettingsDTO fhirSettings = settingsService.getFhirSettings();
-    eventPublisher.publishEvent(new FhirSettingsUpdateEvent(fhirSettings));
-
-    DiffPrivacySettingsDTO diffPrivacySettings = settingsService.getDiffPrivacySettings();
-    eventPublisher.publishEvent(new DiffPrivacySettingsUpdateEvent(diffPrivacySettings));
+    SettingsDTO settings = settingsService.getSettings();
+    eventPublisher.publishEvent(new SettingsUpdatedEvent(settings));
   }
 }

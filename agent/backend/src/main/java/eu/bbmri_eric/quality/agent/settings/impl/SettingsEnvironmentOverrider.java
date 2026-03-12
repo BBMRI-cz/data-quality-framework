@@ -3,6 +3,7 @@ package eu.bbmri_eric.quality.agent.settings.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -41,6 +42,9 @@ class SettingsEnvironmentOverrider implements ApplicationRunner {
   @Transactional
   public void run(ApplicationArguments args) {
     Map<String, String> overrides = getNormalizedOverrides();
+    if (overrides.isEmpty()) {
+      return;
+    }
     Map<String, Object> settings = getSettingsMap();
     if (applyOverrides(settings, overrides)) {
       saveSettings(settings);

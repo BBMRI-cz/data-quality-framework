@@ -4,10 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import eu.bbmri_eric.quality.agent.common.EventPublisher;
-import eu.bbmri_eric.quality.agent.settings.dto.DiffPrivacySettingsDTO;
-import eu.bbmri_eric.quality.agent.settings.dto.FhirSettingsDTO;
-import eu.bbmri_eric.quality.agent.settings.event.DiffPrivacySettingsUpdateEvent;
-import eu.bbmri_eric.quality.agent.settings.event.FhirSettingsUpdateEvent;
+import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
+import eu.bbmri_eric.quality.agent.settings.event.SettingsUpdatedEvent;
 import eu.bbmri_eric.quality.agent.settings.impl.SettingsStartupPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,7 +18,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class SettingsStartupPublisherTest {
 
   @Mock private SettingsService settingsService;
-
   @Mock private EventPublisher eventPublisher;
 
   private SettingsStartupPublisher settingsStartupPublisher;
@@ -30,107 +27,67 @@ class SettingsStartupPublisherTest {
     settingsStartupPublisher = new SettingsStartupPublisher(settingsService, eventPublisher);
   }
 
+  private SettingsDTO mockSettings() {
+    SettingsDTO dto = new SettingsDTO();
+    dto.setFhirUrl("http://localhost:8080/fhir");
+    dto.setFhirUsername("testuser");
+    dto.setFhirPassword("dGVzdHBhc3M=");
+    dto.setEpsilon(2.0);
+    dto.setDelta(1.0E-9);
+    dto.setMinThreshold(20);
+    dto.setNoiseMechanism(NoiseMechanism.GAUSSIAN);
+    return dto;
+  }
+
+  @Test
+  void publishSettingsOnStartup_shouldCallGetSettingsOnce() {
+    when(settingsService.getSettings()).thenReturn(mockSettings());
+
+    settingsStartupPublisher.publishSettingsOnStartup();
+
+    verify(settingsService, times(1)).getSettings();
+  }
+
   @Test
   void publishSettingsOnStartup_shouldPublishSettingsUpdatedEvent() {
-    FhirSettingsDTO mockSettings =
-        new FhirSettingsDTO("http://localhost:8080/fhir", "testuser", "dGVzdHBhc3M=");
-    when(settingsService.getFhirSettings()).thenReturn(mockSettings);
+    SettingsDTO settings = mockSettings();
+    when(settingsService.getSettings()).thenReturn(settings);
 
     settingsStartupPublisher.publishSettingsOnStartup();
 
-    ArgumentCaptor<FhirSettingsUpdateEvent> eventCaptor =
-        ArgumentCaptor.forClass(FhirSettingsUpdateEvent.class);
-    verify(eventPublisher).publishEvent(eventCaptor.capture());
-
-    FhirSettingsUpdateEvent capturedEvent = eventCaptor.getValue();
-    assertNotNull(capturedEvent);
-    assertEquals(mockSettings, capturedEvent.getSettings());
+    ArgumentCaptor<SettingsUpdatedEvent> captor =
+        ArgumentCaptor.forClass(SettingsUpdatedEvent.class);
+    verify(eventPublisher).publishEvent(captor.capture());
+    assertNotNull(captor.getValue());
+    assertEquals(settings, captor.getValue().getSettings());
   }
 
   @Test
-  void publishSettingsOnStartup_shouldCallSettingsService() {
-    FhirSettingsDTO mockSettings =
-        new FhirSettingsDTO("http://localhost:8080/fhir", "testuser", "dGVzdHBhc3M=");
-    when(settingsService.getFhirSettings()).thenReturn(mockSettings);
+  void publishSettingsOnStartup_shouldPublishOneEvent() {
+    when(settingsService.getSettings()).thenReturn(mockSettings());
 
     settingsStartupPublisher.publishSettingsOnStartup();
 
-    verify(settingsService, times(1)).getFhirSettings();
+    verify(eventPublisher, times(1)).publishEvent(any());
   }
 
   @Test
-  void publishSettingsOnStartup_shouldPublishEventWithCorrectSource() {
-    FhirSettingsDTO mockSettings =
-        new FhirSettingsDTO("http://localhost:8080/fhir", "testuser", "dGVzdHBhc3M=");
-    when(settingsService.getFhirSettings()).thenReturn(mockSettings);
+  void publishSettingsOnStartup_shouldPublishEventWithCorrectParameters() {
+    SettingsDTO settings = mockSettings();
+    when(settingsService.getSettings()).thenReturn(settings);
 
     settingsStartupPublisher.publishSettingsOnStartup();
 
-    ArgumentCaptor<FhirSettingsUpdateEvent> eventCaptor =
-        ArgumentCaptor.forClass(FhirSettingsUpdateEvent.class);
-    verify(eventPublisher).publishEvent(eventCaptor.capture());
-  }
+    ArgumentCaptor<SettingsUpdatedEvent> captor =
+        ArgumentCaptor.forClass(SettingsUpdatedEvent.class);
+    verify(eventPublisher).publishEvent(captor.capture());
 
-  @Test
-  void publishSettingsOnStartup_shouldCallGetDiffPrivacySettings() {
-    FhirSettingsDTO mockSettings =
-        new FhirSettingsDTO("http://localhost:8080/fhir", "testuser", "dGVzdHBhc3M=");
-    DiffPrivacySettingsDTO mockDiffPrivacySettings =
-        new DiffPrivacySettingsDTO(1.0, 1.0E-8, 10, NoiseMechanism.LAPLACE);
-
-    when(settingsService.getFhirSettings()).thenReturn(mockSettings);
-    when(settingsService.getDiffPrivacySettings()).thenReturn(mockDiffPrivacySettings);
-
-    settingsStartupPublisher.publishSettingsOnStartup();
-
-    verify(settingsService, times(1)).getDiffPrivacySettings();
-  }
-
-  @Test
-  void publishSettingsOnStartup_shouldPublishDiffPrivacySettingsUpdateEvent() {
-    FhirSettingsDTO mockSettings =
-        new FhirSettingsDTO("http://localhost:8080/fhir", "testuser", "dGVzdHBhc3M=");
-    DiffPrivacySettingsDTO mockDiffPrivacySettings =
-        new DiffPrivacySettingsDTO(2.0, 1.0E-9, 20, NoiseMechanism.GAUSSIAN);
-
-    when(settingsService.getFhirSettings()).thenReturn(mockSettings);
-    when(settingsService.getDiffPrivacySettings()).thenReturn(mockDiffPrivacySettings);
-
-    settingsStartupPublisher.publishSettingsOnStartup();
-
-    ArgumentCaptor<DiffPrivacySettingsUpdateEvent> eventCaptor =
-        ArgumentCaptor.forClass(DiffPrivacySettingsUpdateEvent.class);
-    verify(eventPublisher, times(2)).publishEvent(any());
-    verify(eventPublisher).publishEvent(eventCaptor.capture());
-
-    DiffPrivacySettingsUpdateEvent capturedEvent = eventCaptor.getValue();
-    assertNotNull(capturedEvent);
-    assertNotNull(capturedEvent.getUpdatedDiffPrivacySettings());
-    assertEquals(mockDiffPrivacySettings, capturedEvent.getUpdatedDiffPrivacySettings());
-  }
-
-  @Test
-  void publishSettingsOnStartup_shouldPublishDiffPrivacyEventWithCorrectParameters() {
-    FhirSettingsDTO mockSettings =
-        new FhirSettingsDTO("http://localhost:8080/fhir", "testuser", "dGVzdHBhc3M=");
-    DiffPrivacySettingsDTO mockDiffPrivacySettings =
-        new DiffPrivacySettingsDTO(3.0, 1.0E-7, 50, NoiseMechanism.GAUSSIAN);
-
-    when(settingsService.getFhirSettings()).thenReturn(mockSettings);
-    when(settingsService.getDiffPrivacySettings()).thenReturn(mockDiffPrivacySettings);
-
-    settingsStartupPublisher.publishSettingsOnStartup();
-
-    ArgumentCaptor<DiffPrivacySettingsUpdateEvent> eventCaptor =
-        ArgumentCaptor.forClass(DiffPrivacySettingsUpdateEvent.class);
-    verify(eventPublisher).publishEvent(eventCaptor.capture());
-
-    DiffPrivacySettingsUpdateEvent capturedEvent = eventCaptor.getValue();
-    DiffPrivacySettingsDTO capturedSettings = capturedEvent.getUpdatedDiffPrivacySettings();
-
-    assertEquals(3.0, capturedSettings.getEpsilon());
-    assertEquals(1.0E-7, capturedSettings.getDelta());
-    assertEquals(50, capturedSettings.getMinThreshold());
-    assertEquals(NoiseMechanism.GAUSSIAN, capturedSettings.getNoiseMechanism());
+    SettingsDTO captured = captor.getValue().getSettings();
+    assertEquals("http://localhost:8080/fhir", captured.getFhirUrl());
+    assertEquals("testuser", captured.getFhirUsername());
+    assertEquals(2.0, captured.getEpsilon());
+    assertEquals(1.0E-9, captured.getDelta());
+    assertEquals(20, captured.getMinThreshold());
+    assertEquals(NoiseMechanism.GAUSSIAN, captured.getNoiseMechanism());
   }
 }

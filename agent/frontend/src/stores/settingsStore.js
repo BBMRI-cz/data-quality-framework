@@ -38,35 +38,5 @@ export const useSettingsStore = defineStore('settings', {
         this.loading = false;
       }
     },
-
-    async fetchDiffPrivacySettings() {
-      this.loading = true;
-      this.error = null;
-      try {
-        const privacySettings = await settingsService.getDiffPrivacySettings();
-        return privacySettings;
-      } catch (err) {
-        console.error('Failed to fetch differential privacy settings', err);
-        this.error = err.response?.data?.message || 'Failed to fetch privacy settings';
-        throw err;
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    async updateDiffPrivacySettings(privacyData) {
-      this.loading = true;
-      this.error = null;
-      try {
-        const updatedSettings = await settingsService.updateDiffPrivacySettings(privacyData);
-        return updatedSettings;
-      } catch (err) {
-        console.error('Failed to update differential privacy settings', err);
-        this.error = err.response?.data?.message || 'Failed to update privacy settings';
-        throw err;
-      } finally {
-        this.loading = false;
-      }
-    },
   },
 });
