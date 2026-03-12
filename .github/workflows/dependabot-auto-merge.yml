@@ -6,14 +6,17 @@ on:
     types: [opened, reopened, synchronize, ready_for_review]
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   dependabot-automerge:
     # Only run for Dependabot PRs
     if: ${{ github.actor == 'dependabot[bot]' }}
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
 
     steps:
       - name: Dependabot metadata
