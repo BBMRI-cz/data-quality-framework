@@ -1,12 +1,16 @@
 package eu.bbmri_eric.quality.server.dataquality.domain;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Entity representing a quality check definition.
@@ -26,6 +30,13 @@ public class QualityCheck {
   @ManyToOne
   @JoinColumn(name = "category_id")
   private Category category;
+
+  @OneToMany(
+      mappedBy = "qualityCheckHash",
+      cascade = CascadeType.ALL,
+      orphanRemoval = true,
+      fetch = jakarta.persistence.FetchType.LAZY)
+  private final Set<QualityCheckKeyword> keywords = new HashSet<>();
 
   /** Default constructor for JPA. */
   protected QualityCheck() {}
@@ -186,6 +197,34 @@ public class QualityCheck {
    */
   public void setCategory(Category category) {
     this.category = category;
+  }
+
+  /**
+   * Gets the keywords associated with this quality check.
+   *
+   * @return the set of keywords (lazy-loaded)
+   */
+  public Set<QualityCheckKeyword> getKeywords() {
+    return keywords;
+  }
+
+  /**
+   * Adds a keyword to this quality check.
+   *
+   * @param keyword the keyword to add (max 250 characters)
+   */
+  public void addKeyword(String keyword) {
+    QualityCheckKeyword qualityCheckKeyword = new QualityCheckKeyword(this.hash, keyword);
+    keywords.add(qualityCheckKeyword);
+  }
+
+  /**
+   * Removes a keyword from this quality check.
+   *
+   * @param keyword the keyword to remove
+   */
+  public void removeKeyword(String keyword) {
+    keywords.removeIf(k -> k.getKeyword().equals(keyword));
   }
 
   @Override

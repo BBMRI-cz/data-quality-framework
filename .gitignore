@@ -9,8 +9,14 @@
 /target
 /agent/backend/target
 /agent/frontend/node_modules
+/agent/frontend/dist
+/server/backend/target
+/server/backend/server.iml
+/server/frontend/node_modules
+/server/frontend/dist
 /docs/node_modules
 /agent/frontend/frontend.iml
+/build
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 

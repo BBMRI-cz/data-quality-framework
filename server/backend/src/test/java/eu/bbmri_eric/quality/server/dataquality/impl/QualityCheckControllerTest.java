@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.server.dataquality.impl;
 
+import static org.hamcrest.Matchers.hasItems;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -51,8 +52,12 @@ class QualityCheckControllerTest {
             "A test quality check for unit tests",
             0.8,
             0.5);
-    qualityCheckRepository.save(testQualityCheck);
+    testQualityCheck = qualityCheckRepository.save(testQualityCheck);
 
+    testQualityCheck.addKeyword("gender");
+    testQualityCheck.addKeyword("sex");
+    testQualityCheck.addKeyword("male");
+    qualityCheckRepository.save(testQualityCheck);
     testCategory = new Category("Data Completeness", "#FF5733");
     categoryRepository.save(testCategory);
   }
@@ -343,5 +348,37 @@ class QualityCheckControllerTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.hash").value(testQualityCheckHash))
         .andExpect(jsonPath("$.category").doesNotExist());
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void findById_shouldReturnKeywordsWhenAdded() throws Exception {
+    mockMvc
+        .perform(get(API_V1_QUALITY_CHECKS_ID, testQualityCheckHash))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.keywords").isArray())
+        .andExpect(jsonPath("$.keywords.length()").value(3))
+        .andExpect(jsonPath("$.keywords", hasItems("gender", "sex", "male")));
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void findAll_shouldReturnKeywordsForAllQualityChecks() throws Exception {
+    QualityCheck secondQualityCheck =
+        new QualityCheck(
+            "second-hash", "Second Quality Check", "Another test quality check", 0.9, 0.6);
+    secondQualityCheck.addKeyword("diagnosis");
+    secondQualityCheck.addKeyword("C50");
+    qualityCheckRepository.save(testQualityCheck);
+    qualityCheckRepository.save(secondQualityCheck);
+
+    mockMvc
+        .perform(get(API_V1_QUALITY_CHECKS))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$._embedded.qualityChecks").isArray())
+        .andExpect(jsonPath("$._embedded.qualityChecks.length()").value(2))
+        .andExpect(jsonPath("$._embedded.qualityChecks[1].keywords", hasItems("C50", "diagnosis")))
+        .andExpect(
+            jsonPath("$._embedded.qualityChecks[0].keywords", hasItems("gender", "sex", "male")));
   }
 }

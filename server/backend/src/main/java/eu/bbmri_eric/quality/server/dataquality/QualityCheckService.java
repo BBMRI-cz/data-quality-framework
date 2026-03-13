@@ -30,4 +30,22 @@ public interface QualityCheckService {
    * @return the updated quality check DTO
    */
   QualityCheckDTO update(String id, QualityCheckUpdateDTO updateDTO);
+
+  /**
+   * Adds a keyword to a quality check.
+   *
+   * @param id the quality check ID (hash)
+   * @param keyword the keyword to add (max 250 characters)
+   * @return the updated quality check DTO
+   */
+  QualityCheckDTO addKeyword(String id, String keyword);
+
+  /**
+   * Removes a keyword from a quality check.
+   *
+   * @param id the quality check ID (hash)
+   * @param keyword the keyword to remove
+   * @return the updated quality check DTO
+   */
+  QualityCheckDTO removeKeyword(String id, String keyword);
 }

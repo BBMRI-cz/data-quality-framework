@@ -166,6 +166,28 @@
                     Unique identifier for this quality check
                   </small>
                 </div>
+
+                <!-- Keywords Section -->
+                <div class="col-12">
+                  <label class="form-label fw-semibold">
+                    Keywords
+                  </label>
+                  <div class="keywords-container">
+                    <span
+                      v-for="keyword in qualityCheck.keywords"
+                      :key="keyword"
+                      class="keyword-badge"
+                    >
+                      {{ keyword }}
+                    </span>
+                  </div>
+                  <div v-if="!qualityCheck.keywords || qualityCheck.keywords.length === 0" class="text-muted">
+                    <i class="bi bi-inbox me-1"></i>No keywords added yet
+                  </div>
+                  <small class="form-text text-muted">
+                    Keywords help with NLP-based search and filtering
+                  </small>
+                </div>
               </div>
             </div>
           </div>
@@ -471,6 +493,25 @@
 
   .btn-action i {
     font-size: 1.1rem;
+  }
+
+  /* Keywords */
+  .keywords-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .keyword-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
   }
 
   /* Responsive */

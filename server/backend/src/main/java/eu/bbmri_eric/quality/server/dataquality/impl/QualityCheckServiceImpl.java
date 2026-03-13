@@ -77,4 +77,28 @@ class QualityCheckServiceImpl implements QualityCheckService {
       qualityCheck.setCategory(null);
     }
   }
+
+  @Override
+  public QualityCheckDTO addKeyword(String id, String keyword) {
+    QualityCheck qualityCheck =
+        qualityCheckRepository
+            .findById(id)
+            .orElseThrow(
+                () -> new EntityNotFoundException("Quality check not found with ID: " + id));
+
+    qualityCheck.addKeyword(keyword);
+    return modelMapper.map(qualityCheckRepository.save(qualityCheck), QualityCheckDTO.class);
+  }
+
+  @Override
+  public QualityCheckDTO removeKeyword(String id, String keyword) {
+    QualityCheck qualityCheck =
+        qualityCheckRepository
+            .findById(id)
+            .orElseThrow(
+                () -> new EntityNotFoundException("Quality check not found with ID: " + id));
+
+    qualityCheck.removeKeyword(keyword);
+    return modelMapper.map(qualityCheckRepository.save(qualityCheck), QualityCheckDTO.class);
+  }
 }

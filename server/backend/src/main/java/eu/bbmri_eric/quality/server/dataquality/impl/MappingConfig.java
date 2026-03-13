@@ -1,10 +1,16 @@
 package eu.bbmri_eric.quality.server.dataquality.impl;
 
+import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheck;
+import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheckKeyword;
 import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheckResult;
 import eu.bbmri_eric.quality.server.dataquality.domain.Report;
+import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckResultDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.ReportDTO;
 import jakarta.annotation.PostConstruct;
+import java.util.List;
+import java.util.Set;
+import org.modelmapper.Converter;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.PropertyMap;
 import org.springframework.stereotype.Component;
@@ -19,6 +25,23 @@ public class MappingConfig {
 
   @PostConstruct
   private void addMappings() {
+    Converter<Set<QualityCheckKeyword>, List<String>> qualityCheckKeywordsConverter =
+        context ->
+            context.getSource() == null
+                ? List.of()
+                : context.getSource().stream()
+                    .map(QualityCheckKeyword::getKeyword)
+                    .sorted()
+                    .toList();
+
+    modelMapper.addMappings(
+        new PropertyMap<QualityCheck, QualityCheckDTO>() {
+          @Override
+          protected void configure() {
+            using(qualityCheckKeywordsConverter)
+                .map(source.getKeywords(), destination.getKeywords());
+          }
+        });
     modelMapper.addMappings(
         new PropertyMap<QualityCheckResult, QualityCheckResultDTO>() {
           @Override
