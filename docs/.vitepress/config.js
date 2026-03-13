@@ -7,7 +7,16 @@ const version = getLatestVersionSync();
 const navItems = [
     {text: 'Home', link: '/'},
     {text: 'User Guide', link: '/user/'},
-    {text: 'Developer Guide', link: '/developer/'}
+    {text: 'Developer Guide', link: '/developer/'},
+    {
+        text: 'Publications',
+        items: [
+            {
+                text: 'Privacy-preserving data quality assessment for federated health data networks',
+                link: 'https://doi.org/10.1186/s12911-025-03328-6'
+            }
+        ]
+    }
 ];
 
 if (version) {
@@ -75,7 +84,7 @@ export default defineConfig({
         },
 
         footer: {
-            message: 'Licensed under the GNU GPL v3.0',
+            message: 'Licensed under the GNU GPL v3.0 | Please cite <a href="https://doi.org/10.1186/s12911-025-03328-6" target="_blank" rel="noopener noreferrer">Tomášik et al. (2026)</a>',
             copyright: 'Copyright © 2026 BBMRI-ERIC® & Masaryk Memorial Cancer Institute'
         },
 
