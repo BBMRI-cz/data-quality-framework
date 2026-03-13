@@ -169,9 +169,7 @@
 
                 <!-- Keywords Section -->
                 <div class="col-12">
-                  <label class="form-label fw-semibold">
-                    Keywords
-                  </label>
+                  <label class="form-label fw-semibold"> Keywords </label>
                   <div class="keywords-container">
                     <span
                       v-for="keyword in qualityCheck.keywords"
@@ -181,7 +179,10 @@
                       {{ keyword }}
                     </span>
                   </div>
-                  <div v-if="!qualityCheck.keywords || qualityCheck.keywords.length === 0" class="text-muted">
+                  <div
+                    v-if="!qualityCheck.keywords || qualityCheck.keywords.length === 0"
+                    class="text-muted"
+                  >
                     <i class="bi bi-inbox me-1"></i>No keywords added yet
                   </div>
                   <small class="form-text text-muted">
