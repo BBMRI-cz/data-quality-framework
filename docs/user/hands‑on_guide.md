@@ -1,4 +1,4 @@
-# Getting Started
+# Hands‑On Guide
 
 ::: tip Production Deployment
 This page is dedicated to local deployments and experimentation. If you would like to deploy the tooling to production,
