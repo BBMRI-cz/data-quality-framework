@@ -209,23 +209,16 @@ public class QualityCheck {
   }
 
   /**
-   * Adds a keyword to this quality check.
+   * Sets the keywords for this quality check, replacing all existing keywords.
    *
-   * @param keyword the keyword to add (max 250 characters)
+   * @param newKeywords the new set of keywords to assign
    */
-  public void addKeyword(String keyword) {
-    QualityCheckKeyword qualityCheckKeyword = new QualityCheckKeyword(this.hash, keyword);
-    keywords.add(qualityCheckKeyword);
-  }
-
-  /**
-   * Removes a keyword from this quality check.
-   *
-   * @param keyword the keyword to remove
-   * @return true if the keyword was removed, false if it didn't exist
-   */
-  public boolean removeKeyword(String keyword) {
-    return keywords.removeIf(k -> k.getKeyword().equals(keyword));
+  public void setKeywords(Set<String> newKeywords) {
+    keywords.clear();
+    for (String keyword : newKeywords) {
+      QualityCheckKeyword qualityCheckKeyword = new QualityCheckKeyword(this.hash, keyword);
+      keywords.add(qualityCheckKeyword);
+    }
   }
 
   @Override

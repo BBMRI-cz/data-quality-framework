@@ -1,9 +1,9 @@
 package eu.bbmri_eric.quality.server.dataquality;
 
-import eu.bbmri_eric.quality.server.common.EntityNotFoundException;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckUpdateDTO;
 import java.util.List;
+import java.util.Set;
 
 /** Service interface for managing quality checks. */
 public interface QualityCheckService {
@@ -33,22 +33,13 @@ public interface QualityCheckService {
   QualityCheckDTO update(String id, QualityCheckUpdateDTO updateDTO);
 
   /**
-   * Adds a keyword to a quality check.
+   * Sets the keywords for a quality check, replacing all existing keywords.
    *
    * @param id the quality check ID (hash)
-   * @param keyword the keyword to add (max 250 characters)
-   * @return the updated quality check DTO
-   */
-  QualityCheckDTO addKeyword(String id, String keyword);
-
-  /**
-   * Removes a keyword from a quality check.
-   *
-   * @param id the quality check ID (hash)
-   * @param keyword the keyword to remove
+   * @param keywords the new set of keywords to assign
    * @return the updated quality check DTO
    * @throws eu.bbmri_eric.quality.server.common.EntityNotFoundException if the keyword is not
    *     associated with the quality check
    */
-  QualityCheckDTO removeKeyword(String id, String keyword) throws EntityNotFoundException;
+  QualityCheckDTO setKeywords(String id, Set<String> keywords);
 }
