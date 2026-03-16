@@ -5,7 +5,7 @@ RUN npm install --silent
 COPY agent/frontend/ .
 RUN npm run build --silent
 
-FROM maven:3.9.13-eclipse-temurin-25@sha256:ade3c87e3cdfbe04932afa16b31814cbf60b0122d21d78a76530684a1eeb7cc2 AS backend-builder
+FROM maven:3.9.9-eclipse-temurin-21@sha256:3a4ab3276a087bf276f79cae96b1af04f53731bec53fb2e651aca79e4b10211e AS backend-builder
 ARG ARTIFACT_VERSION=unknown
 WORKDIR /app
 COPY .git ./.git
