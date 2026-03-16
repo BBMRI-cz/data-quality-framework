@@ -98,7 +98,12 @@ class QualityCheckServiceImpl implements QualityCheckService {
             .orElseThrow(
                 () -> new EntityNotFoundException("Quality check not found with ID: " + id));
 
-    qualityCheck.removeKeyword(keyword);
+    boolean removed = qualityCheck.removeKeyword(keyword);
+    if (!removed) {
+      throw new EntityNotFoundException(
+          "Keyword '" + keyword + "' not found in quality check with ID: " + id);
+    }
+
     return modelMapper.map(qualityCheckRepository.save(qualityCheck), QualityCheckDTO.class);
   }
 }

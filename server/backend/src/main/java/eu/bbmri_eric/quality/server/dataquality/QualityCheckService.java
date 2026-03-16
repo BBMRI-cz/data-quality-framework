@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.server.dataquality;
 
+import eu.bbmri_eric.quality.server.common.EntityNotFoundException;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckUpdateDTO;
 import java.util.List;
@@ -46,6 +47,8 @@ public interface QualityCheckService {
    * @param id the quality check ID (hash)
    * @param keyword the keyword to remove
    * @return the updated quality check DTO
+   * @throws eu.bbmri_eric.quality.server.common.EntityNotFoundException if the keyword is not
+   *     associated with the quality check
    */
-  QualityCheckDTO removeKeyword(String id, String keyword);
+  QualityCheckDTO removeKeyword(String id, String keyword) throws EntityNotFoundException;
 }

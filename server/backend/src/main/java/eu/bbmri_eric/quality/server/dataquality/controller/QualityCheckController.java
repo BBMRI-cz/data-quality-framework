@@ -1,6 +1,7 @@
 package eu.bbmri_eric.quality.server.dataquality.controller;
 
 import eu.bbmri_eric.quality.server.dataquality.QualityCheckService;
+import eu.bbmri_eric.quality.server.dataquality.dto.KeywordDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckUpdateDTO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -59,6 +60,32 @@ class QualityCheckController {
   public ResponseEntity<EntityModel<QualityCheckDTO>> update(
       @PathVariable String id, @Valid @RequestBody QualityCheckUpdateDTO updateDTO) {
     QualityCheckDTO updatedQualityCheck = qualityCheckService.update(id, updateDTO);
+    EntityModel<QualityCheckDTO> qualityCheckModel = linkBuilder.toModel(updatedQualityCheck);
+    return ResponseEntity.ok(qualityCheckModel);
+  }
+
+  @PostMapping("/quality-checks/{id}/keywords")
+  @Operation(
+      summary = "Add keyword to quality check",
+      description = "Adds a keyword to an existing quality check")
+  @SecurityRequirement(name = "bearerAuth")
+  public ResponseEntity<EntityModel<QualityCheckDTO>> addKeyword(
+      @PathVariable String id, @Valid @RequestBody KeywordDTO keywordDTO) {
+    QualityCheckDTO updatedQualityCheck =
+        qualityCheckService.addKeyword(id, keywordDTO.getKeyword());
+    EntityModel<QualityCheckDTO> qualityCheckModel = linkBuilder.toModel(updatedQualityCheck);
+    return ResponseEntity.ok(qualityCheckModel);
+  }
+
+  @DeleteMapping("/quality-checks/{id}/keywords")
+  @Operation(
+      summary = "Remove keyword from quality check",
+      description = "Removes a keyword from an existing quality check")
+  @SecurityRequirement(name = "bearerAuth")
+  public ResponseEntity<EntityModel<QualityCheckDTO>> removeKeyword(
+      @PathVariable String id, @Valid @RequestBody KeywordDTO keywordDTO) {
+    QualityCheckDTO updatedQualityCheck =
+        qualityCheckService.removeKeyword(id, keywordDTO.getKeyword());
     EntityModel<QualityCheckDTO> qualityCheckModel = linkBuilder.toModel(updatedQualityCheck);
     return ResponseEntity.ok(qualityCheckModel);
   }

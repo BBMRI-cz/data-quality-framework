@@ -222,9 +222,10 @@ public class QualityCheck {
    * Removes a keyword from this quality check.
    *
    * @param keyword the keyword to remove
+   * @return true if the keyword was removed, false if it didn't exist
    */
-  public void removeKeyword(String keyword) {
-    keywords.removeIf(k -> k.getKeyword().equals(keyword));
+  public boolean removeKeyword(String keyword) {
+    return keywords.removeIf(k -> k.getKeyword().equals(keyword));
   }
 
   @Override
