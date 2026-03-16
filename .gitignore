@@ -16,7 +16,6 @@
 /server/frontend/dist
 /docs/node_modules
 /agent/frontend/frontend.iml
-/build
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 
