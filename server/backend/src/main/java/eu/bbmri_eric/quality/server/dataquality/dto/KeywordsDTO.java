@@ -10,13 +10,13 @@ import java.util.Set;
 public class KeywordsDTO {
 
   @NotNull(message = "Keywords cannot be null")
-
   @Schema(
       description =
           "Set of keywords to assign to the quality check (replaces all existing keywords)",
       example = "[\"patient data\", \"gender\", \"diagnosis\"]",
       requiredMode = Schema.RequiredMode.REQUIRED)
-  private Set<@Size(max = 250, message = "Each keyword must be at most 250 characters") String> keywords;
+  private Set<@Size(max = 250, message = "Each keyword must be at most 250 characters") String>
+      keywords;
 
   public KeywordsDTO() {}
 
