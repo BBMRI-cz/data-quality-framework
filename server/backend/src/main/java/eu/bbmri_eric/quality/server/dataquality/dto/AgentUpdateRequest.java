@@ -16,6 +16,9 @@ public class AgentUpdateRequest {
   @Schema(description = "Version of the agent software", example = "1.0.0")
   private String version;
 
+  @Schema(description = "External identifier for the agent", example = "BIOBANK-001")
+  private String externalIdentifier;
+
   public AgentUpdateRequest() {
     // For model mapper
   }
@@ -47,5 +50,13 @@ public class AgentUpdateRequest {
 
   public void setVersion(String version) {
     this.version = version;
+  }
+
+  public String getExternalIdentifier() {
+    return externalIdentifier;
+  }
+
+  public void setExternalIdentifier(String externalIdentifier) {
+    this.externalIdentifier = externalIdentifier;
   }
 }

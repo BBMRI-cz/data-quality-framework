@@ -12,22 +12,18 @@ import eu.bbmri_eric.quality.server.dataquality.domain.AgentStatus;
 import eu.bbmri_eric.quality.server.dataquality.domain.Report;
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentRegistrationRequest;
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentUpdateRequest;
+import eu.bbmri_eric.quality.server.util.IntegrationTest;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.test.context.support.WithUserDetails;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@ActiveProfiles("test")
+@IntegrationTest
 @Transactional
 class AgentControllerIntegrationTest {
   public static final String API_V_1_AGENTS = "/api/v1/agents";
@@ -274,6 +270,42 @@ class AgentControllerIntegrationTest {
                 .content(objectMapper.writeValueAsString(updateRequest)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.id").value(agentId));
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void update_shouldUpdateExternalIdentifier() throws Exception {
+    String agentId = UUID.randomUUID().toString();
+    Agent agent = new Agent(agentId);
+    agent.setExternalIdentifier("BIOBANK-001");
+    agentRepository.save(agent);
+
+    AgentUpdateRequest updateRequest = new AgentUpdateRequest(null, null);
+    updateRequest.setExternalIdentifier("BIOBANK-002");
+
+    mockMvc
+        .perform(
+            patch(API_V_1_AGENTS_ID, agentId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateRequest)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(agentId))
+        .andExpect(jsonPath("$.externalIdentifier").value("BIOBANK-002"));
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void findById_shouldIncludeExternalIdentifier() throws Exception {
+    String agentId = UUID.randomUUID().toString();
+    Agent agent = new Agent(agentId);
+    agent.setExternalIdentifier("BIOBANK-001");
+    agentRepository.save(agent);
+
+    mockMvc
+        .perform(get(API_V_1_AGENTS_ID, agentId))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(agentId))
+        .andExpect(jsonPath("$.externalIdentifier").value("BIOBANK-001"));
   }
 
   @Test

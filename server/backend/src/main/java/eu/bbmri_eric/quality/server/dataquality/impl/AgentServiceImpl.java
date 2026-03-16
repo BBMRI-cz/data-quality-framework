@@ -75,6 +75,9 @@ class AgentServiceImpl implements AgentService {
       agent.setVersion(updateAgentDto.getVersion());
       agent.addInteraction(AgentInteractionType.VERSION_UPDATE);
     }
+    if (!Objects.isNull(updateAgentDto.getExternalIdentifier())) {
+      agent.setExternalIdentifier(updateAgentDto.getExternalIdentifier());
+    }
     return modelMapper.map(agent, AgentDTO.class);
   }
 

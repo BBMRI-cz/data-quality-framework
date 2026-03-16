@@ -32,6 +32,8 @@ public class Agent {
   @JoinColumn(name = "agent_id", nullable = false)
   private List<Report> reports = new ArrayList<>();
 
+  private String externalIdentifier;
+
   @ManyToMany(mappedBy = "agents", fetch = FetchType.EAGER)
   private List<Group> groups = new ArrayList<>();
 
@@ -102,6 +104,14 @@ public class Agent {
     this.groups = groups;
   }
 
+  public String getExternalIdentifier() {
+    return externalIdentifier;
+  }
+
+  public void setExternalIdentifier(String externalIdentifier) {
+    this.externalIdentifier = externalIdentifier;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
@@ -110,11 +120,12 @@ public class Agent {
         && status == agent.status
         && Objects.equals(name, agent.name)
         && Objects.equals(version, agent.version)
+        && Objects.equals(externalIdentifier, agent.externalIdentifier)
         && Objects.equals(interactions, agent.interactions);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, status, name, version, interactions);
+    return Objects.hash(id, status, name, version, externalIdentifier, interactions);
   }
 }

@@ -28,6 +28,9 @@ public class AgentDTO {
   @Schema(description = "Version of the agent software", example = "1.0.0")
   private String version;
 
+  @Schema(description = "External identifier for the agent", example = "BIOBANK-001")
+  private String externalIdentifier;
+
   @Schema(description = "List of agent interactions (only included when expand=interactions)")
   private List<AgentInteractionDTO> interactions;
 
@@ -74,6 +77,14 @@ public class AgentDTO {
 
   public void setVersion(String version) {
     this.version = version;
+  }
+
+  public String getExternalIdentifier() {
+    return externalIdentifier;
+  }
+
+  public void setExternalIdentifier(String externalIdentifier) {
+    this.externalIdentifier = externalIdentifier;
   }
 
   public List<AgentInteractionDTO> getInteractions() {
