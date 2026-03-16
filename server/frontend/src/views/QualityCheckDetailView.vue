@@ -166,6 +166,53 @@
                     Unique identifier for this quality check
                   </small>
                 </div>
+
+                <!-- Keywords Section -->
+                <div class="col-12">
+                  <label class="form-label fw-semibold"> Keywords </label>
+                  <div class="keywords-container">
+                    <Badge
+                      v-for="keyword in keywords"
+                      :key="keyword"
+                      :text="keyword"
+                      variant="primary"
+                      closable
+                      @remove="removeKeyword"
+                    />
+                  </div>
+                  <div class="keyword-input-container mt-2">
+                    <div class="input-group">
+                      <input
+                        v-model="newKeyword"
+                        type="text"
+                        class="form-control"
+                        placeholder="Add new keyword..."
+                        @keyup.enter="addKeyword"
+                        :disabled="saving"
+                      />
+                      <button
+                        class="btn btn-primary"
+                        type="button"
+                        @click="addKeyword"
+                        :disabled="!newKeyword.trim() || saving"
+                      >
+                        <i class="bi bi-plus-lg"></i>
+                      </button>
+                    </div>
+                    <small class="form-text text-muted">
+                      Press Enter or click + to add keywords. Changes are saved when you click Save Changes.
+                    </small>
+                  </div>
+                  <div
+                    v-if="keywords.length === 0"
+                    class="text-muted mt-2"
+                  >
+                    <i class="bi bi-inbox me-1"></i>No keywords added yet
+                  </div>
+                  <small class="form-text text-muted">
+                    Keywords help with NLP-based search and filtering
+                  </small>
+                </div>
               </div>
             </div>
           </div>
@@ -209,6 +256,7 @@
   import { formatDateLong } from '../utils/dateUtils.js';
   import PageHeader from '../components/PageHeader.vue';
   import StatsCard from '../components/StatsCard.vue';
+  import Badge from '../components/Badge.vue';
 
   const route = useRoute();
   const router = useRouter();
@@ -238,14 +286,26 @@
     errorThreshold: '',
   });
 
+  const keywords = ref([]);
+  const newKeyword = ref('');
+
   const hasChanges = computed(() => {
     if (!qualityCheck.value) return false;
+    const originalKeywords = qualityCheck.value.keywords || [];
+    const currentKeywords = keywords.value || [];
+
+    // Compare keyword arrays
+    const keywordsChanged =
+      originalKeywords.length !== currentKeywords.length ||
+      !originalKeywords.every(k => currentKeywords.includes(k));
+
     return (
       editForm.name !== qualityCheck.value.name ||
       editForm.description !== (qualityCheck.value.description || '') ||
       editForm.categoryId !== (qualityCheck.value.category?.id || null) ||
       editForm.warningThreshold !== qualityCheck.value.warningThreshold ||
-      editForm.errorThreshold !== qualityCheck.value.errorThreshold
+      editForm.errorThreshold !== qualityCheck.value.errorThreshold ||
+      keywordsChanged
     );
   });
 
@@ -280,6 +340,9 @@
       editForm.categoryId = qualityCheck.value.category?.id || null;
       editForm.warningThreshold = qualityCheck.value.warningThreshold ?? 0;
       editForm.errorThreshold = qualityCheck.value.errorThreshold ?? 0;
+
+      // Initialize keywords
+      keywords.value = qualityCheck.value.keywords ? [...qualityCheck.value.keywords] : [];
     } catch (err) {
       error.value = err.message || 'Failed to load quality check';
       console.error('Error loading quality check:', err);
@@ -327,6 +390,9 @@
     try {
       await apiService.updateQualityCheck(hash.value, editForm);
 
+      // Save keywords
+      await apiService.setKeywords(hash.value, keywords.value);
+
       notificationService.success(
         'Quality Check Updated',
         'Your changes have been saved successfully'
@@ -343,12 +409,31 @@
     }
   };
 
+  const addKeyword = () => {
+    const keyword = newKeyword.value.trim();
+    if (keyword && !keywords.value.includes(keyword)) {
+      keywords.value.push(keyword);
+      newKeyword.value = '';
+    }
+  };
+
+  const removeKeyword = (keyword) => {
+    const index = keywords.value.indexOf(keyword);
+    if (index > -1) {
+      keywords.value.splice(index, 1);
+    }
+  };
+
   const resetForm = () => {
     editForm.name = qualityCheck.value.name || '';
     editForm.description = qualityCheck.value.description || '';
     editForm.categoryId = qualityCheck.value.category?.id || null;
     editForm.warningThreshold = qualityCheck.value.warningThreshold ?? 0;
     editForm.errorThreshold = qualityCheck.value.errorThreshold ?? 0;
+
+    // Reset keywords
+    keywords.value = qualityCheck.value.keywords ? [...qualityCheck.value.keywords] : [];
+    newKeyword.value = '';
 
     validationErrors.name = '';
     validationErrors.warningThreshold = '';
@@ -471,6 +556,13 @@
 
   .btn-action i {
     font-size: 1.1rem;
+  }
+
+  /* Keywords */
+  .keywords-container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
   }
 
   /* Responsive */

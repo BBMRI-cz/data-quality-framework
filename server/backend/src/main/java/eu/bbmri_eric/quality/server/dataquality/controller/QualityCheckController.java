@@ -1,6 +1,7 @@
 package eu.bbmri_eric.quality.server.dataquality.controller;
 
 import eu.bbmri_eric.quality.server.dataquality.QualityCheckService;
+import eu.bbmri_eric.quality.server.dataquality.dto.KeywordsDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckUpdateDTO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -59,6 +60,19 @@ class QualityCheckController {
   public ResponseEntity<EntityModel<QualityCheckDTO>> update(
       @PathVariable String id, @Valid @RequestBody QualityCheckUpdateDTO updateDTO) {
     QualityCheckDTO updatedQualityCheck = qualityCheckService.update(id, updateDTO);
+    EntityModel<QualityCheckDTO> qualityCheckModel = linkBuilder.toModel(updatedQualityCheck);
+    return ResponseEntity.ok(qualityCheckModel);
+  }
+
+  @PutMapping("/quality-checks/{id}/keywords")
+  @Operation(
+      summary = "Set keywords for quality check",
+      description = "Sets the keywords for a quality check, replacing all existing keywords")
+  @SecurityRequirement(name = "bearerAuth")
+  public ResponseEntity<EntityModel<QualityCheckDTO>> setKeywords(
+      @PathVariable String id, @Valid @RequestBody KeywordsDTO keywordsDTO) {
+    QualityCheckDTO updatedQualityCheck =
+        qualityCheckService.setKeywords(id, keywordsDTO.getKeywords());
     EntityModel<QualityCheckDTO> qualityCheckModel = linkBuilder.toModel(updatedQualityCheck);
     return ResponseEntity.ok(qualityCheckModel);
   }
