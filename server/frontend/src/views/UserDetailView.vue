@@ -96,12 +96,7 @@
               <div v-if="user?.roles && user.roles.length > 0" class="col-12">
                 <label class="form-label fw-semibold">Roles</label>
                 <div>
-                  <Badge
-                    v-for="role in user.roles"
-                    :key="role"
-                    :text="role"
-                    variant="primary"
-                  />
+                  <Badge v-for="role in user.roles" :key="role" :text="role" variant="primary" />
                 </div>
               </div>
             </div>

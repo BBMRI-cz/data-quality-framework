@@ -188,7 +188,7 @@
   const route = useRoute();
   const router = useRouter();
 
-  const agentId = ref(route.params.uuid);
+  const agentId = ref(route.params.agentId || route.params.uuid);
   const agentName = ref('Unknown Agent');
   const agentVersion = ref('Unknown version');
   const loading = ref(true);

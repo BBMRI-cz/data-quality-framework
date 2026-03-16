@@ -21,6 +21,7 @@ import GroupsView from '../views/GroupsView.vue';
 import GroupDetailView from '../views/GroupDetailView.vue';
 import UsersView from '../views/UsersView.vue';
 import UserDetailView from '../views/UserDetailView.vue';
+import AgentDetailView from '../views/AgentDetailView.vue';
 
 const routes = [
   {
@@ -155,7 +156,13 @@ const routes = [
     meta: { requiresAuth: true, title: 'Agents' },
   },
   {
-    path: '/agents/:uuid/reports',
+    path: '/agents/:id',
+    name: 'AgentDetail',
+    component: AgentDetailView,
+    meta: { requiresAuth: true, title: 'Agent Detail' },
+  },
+  {
+    path: '/agents/:agentId/reports',
     name: 'AgentReport',
     component: AgentReportView,
     meta: { requiresAuth: true, title: 'Agent Reports' },

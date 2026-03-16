@@ -6,7 +6,7 @@
         <PageHeader
           :title="agentName"
           :subtitle="`Agent ID: ${agentId}`"
-          icon="bi bi-file-earmark-text-fill"
+          icon="bi bi-file-earmark-text"
           :editable="true"
           @update:title="handleUpdateAgentName"
         />
@@ -30,6 +30,13 @@
           >
             <i class="bi bi-clock-history me-2"></i>
             View Logs
+          </button>
+          <button
+            class="btn btn-outline-primary btn-sm d-flex align-items-center"
+            @click="goToAgentDetail"
+          >
+            <i class="bi bi-pencil me-2"></i>
+            Edit Agent
           </button>
           <button
             class="btn btn-outline-danger btn-sm d-flex align-items-center"
@@ -209,7 +216,7 @@
   const route = useRoute();
   const router = useRouter();
 
-  const agentId = ref(route.params.uuid);
+  const agentId = ref(route.params.agentId || route.params.uuid);
   const loading = ref(true);
   const error = ref(null);
   const agent = ref(null);
@@ -357,7 +364,11 @@
   };
 
   const goBack = () => {
-    router.go(-1);
+    router.push(`/agents`);
+  };
+
+  const goToAgentDetail = () => {
+    router.push(`/agents/${agentId.value}`);
   };
 
   const handleUpdateAgentName = async (newName) => {
