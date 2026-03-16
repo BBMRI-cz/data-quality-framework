@@ -28,9 +28,7 @@
               <div v-if="user?.roles && user.roles.length > 0" class="col-md-6">
                 <label class="form-label text-muted small">Roles</label>
                 <p class="fw-semibold mb-0">
-                  <span v-for="role in user.roles" :key="role" class="badge bg-primary me-1">
-                    {{ role }}
-                  </span>
+                  <Badge v-for="role in user.roles" :key="role" :text="role" variant="primary" />
                 </p>
               </div>
             </div>
@@ -123,6 +121,7 @@
   import { apiService } from '../services/apiService.js';
   import { notificationService } from '../services/notificationService.js';
   import PageHeader from '../components/PageHeader.vue';
+  import Badge from '../components/Badge.vue';
 
   const user = computed(() => authStore.user);
 
@@ -227,11 +226,6 @@
 </script>
 
 <style scoped>
-  .badge {
-    font-weight: 500;
-    font-size: 0.85rem;
-  }
-
   .form-label {
     font-weight: 500;
     margin-bottom: 0.5rem;

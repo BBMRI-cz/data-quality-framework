@@ -96,9 +96,12 @@
               <div v-if="user?.roles && user.roles.length > 0" class="col-12">
                 <label class="form-label fw-semibold">Roles</label>
                 <div>
-                  <span v-for="role in user.roles" :key="role" class="badge bg-primary me-2 mb-2">
-                    {{ role }}
-                  </span>
+                  <Badge
+                    v-for="role in user.roles"
+                    :key="role"
+                    :text="role"
+                    variant="primary"
+                  />
                 </div>
               </div>
             </div>
@@ -150,6 +153,7 @@
   import { notificationService } from '../services/notificationService.js';
   import PageHeader from '../components/PageHeader.vue';
   import DeleteConfirmModal from '../components/DeleteConfirmModal.vue';
+  import Badge from '../components/Badge.vue';
 
   const router = useRouter();
   const route = useRoute();
