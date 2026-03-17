@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.server.dataquality.impl;
 
+import static org.hamcrest.Matchers.hasItems;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -7,23 +8,21 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.server.dataquality.domain.Category;
 import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheck;
+import eu.bbmri_eric.quality.server.dataquality.dto.KeywordsDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckUpdateDTO;
+import eu.bbmri_eric.quality.server.util.IntegrationTest;
 import jakarta.persistence.EntityManager;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@ActiveProfiles("test")
+@IntegrationTest
 @Transactional
 class QualityCheckControllerTest {
 
@@ -51,8 +50,10 @@ class QualityCheckControllerTest {
             "A test quality check for unit tests",
             0.8,
             0.5);
-    qualityCheckRepository.save(testQualityCheck);
+    testQualityCheck = qualityCheckRepository.save(testQualityCheck);
 
+    testQualityCheck.setKeywords(Set.of("gender", "sex", "male"));
+    qualityCheckRepository.save(testQualityCheck);
     testCategory = new Category("Data Completeness", "#FF5733");
     categoryRepository.save(testCategory);
   }
@@ -343,5 +344,135 @@ class QualityCheckControllerTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.hash").value(testQualityCheckHash))
         .andExpect(jsonPath("$.category").doesNotExist());
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void findById_shouldReturnKeywordsWhenAdded() throws Exception {
+    mockMvc
+        .perform(get(API_V1_QUALITY_CHECKS_ID, testQualityCheckHash))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.keywords").isArray())
+        .andExpect(jsonPath("$.keywords.length()").value(3))
+        .andExpect(jsonPath("$.keywords", hasItems("gender", "sex", "male")));
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void findAll_shouldReturnKeywordsForAllQualityChecks() throws Exception {
+    QualityCheck secondQualityCheck =
+        new QualityCheck(
+            "second-hash", "Second Quality Check", "Another test quality check", 0.9, 0.6);
+    secondQualityCheck.setKeywords(Set.of("diagnosis", "C50"));
+    qualityCheckRepository.save(testQualityCheck);
+    qualityCheckRepository.save(secondQualityCheck);
+
+    mockMvc
+        .perform(get(API_V1_QUALITY_CHECKS))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$._embedded.qualityChecks").isArray())
+        .andExpect(jsonPath("$._embedded.qualityChecks.length()").value(2))
+        .andExpect(jsonPath("$._embedded.qualityChecks[1].keywords", hasItems("C50", "diagnosis")))
+        .andExpect(
+            jsonPath("$._embedded.qualityChecks[0].keywords", hasItems("gender", "sex", "male")));
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void setKeywords_shouldReplaceAllKeywordsAndReturnHateoasResponse() throws Exception {
+    Set<String> newKeywords = Set.of("patient data", "diagnosis", "treatment");
+    KeywordsDTO keywordsDTO = new KeywordsDTO(newKeywords);
+    String keywordsEndpoint = API_V1_QUALITY_CHECKS_ID + "/keywords";
+
+    mockMvc
+        .perform(
+            put(keywordsEndpoint, testQualityCheckHash)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(keywordsDTO)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.hash").value(testQualityCheckHash))
+        .andExpect(jsonPath("$.keywords").isArray())
+        .andExpect(jsonPath("$.keywords.length()").value(3))
+        .andExpect(jsonPath("$.keywords", hasItems("patient data", "diagnosis", "treatment")))
+        .andExpect(
+            jsonPath("$._links.self.href")
+                .value("http://localhost/api/v1/quality-checks/" + testQualityCheckHash))
+        .andExpect(
+            jsonPath("$._links.quality-checks.href")
+                .value("http://localhost/api/v1/quality-checks"));
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void setKeywords_shouldClearAllKeywordsWhenEmptySetProvided() throws Exception {
+    KeywordsDTO keywordsDTO = new KeywordsDTO(Set.of());
+    String keywordsEndpoint = API_V1_QUALITY_CHECKS_ID + "/keywords";
+
+    mockMvc
+        .perform(
+            put(keywordsEndpoint, testQualityCheckHash)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(keywordsDTO)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.hash").value(testQualityCheckHash))
+        .andExpect(jsonPath("$.keywords").isArray())
+        .andExpect(jsonPath("$.keywords.length()").value(0));
+  }
+
+  @Test
+  @WithMockUser(roles = "HUMAN_USER")
+  void setKeywords_shouldReturnForbiddenForNonAdminUser() throws Exception {
+    KeywordsDTO keywordsDTO = new KeywordsDTO(Set.of("test keyword"));
+    String keywordsEndpoint = API_V1_QUALITY_CHECKS_ID + "/keywords";
+
+    mockMvc
+        .perform(
+            put(keywordsEndpoint, testQualityCheckHash)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(keywordsDTO)))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void setKeywords_shouldReturnNotFoundWhenQualityCheckDoesNotExist() throws Exception {
+    String nonExistentHash = "non-existent-hash";
+    KeywordsDTO keywordsDTO = new KeywordsDTO(Set.of("test keyword"));
+    String keywordsEndpoint = API_V1_QUALITY_CHECKS_ID + "/keywords";
+
+    mockMvc
+        .perform(
+            put(keywordsEndpoint, nonExistentHash)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(keywordsDTO)))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void setKeywords_shouldReturnBadRequestForInvalidData() throws Exception {
+    KeywordsDTO keywordsDTO =
+        new KeywordsDTO(null); // null keywords should trigger validation error
+    String keywordsEndpoint = API_V1_QUALITY_CHECKS_ID + "/keywords";
+
+    mockMvc
+        .perform(
+            put(keywordsEndpoint, testQualityCheckHash)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(keywordsDTO)))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void setKeywords_shouldReturnUnauthorizedWhenNotAuthenticated() throws Exception {
+    KeywordsDTO keywordsDTO = new KeywordsDTO(Set.of("test keyword"));
+    String keywordsEndpoint = API_V1_QUALITY_CHECKS_ID + "/keywords";
+
+    mockMvc
+        .perform(
+            put(keywordsEndpoint, testQualityCheckHash)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(keywordsDTO)))
+        .andExpect(status().isUnauthorized());
   }
 }

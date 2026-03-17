@@ -7,6 +7,7 @@ import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckUpdateDTO;
 import java.util.List;
+import java.util.Set;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -76,5 +77,17 @@ class QualityCheckServiceImpl implements QualityCheckService {
     } else {
       qualityCheck.setCategory(null);
     }
+  }
+
+  @Override
+  public QualityCheckDTO setKeywords(String id, Set<String> keywords) {
+    QualityCheck qualityCheck =
+        qualityCheckRepository
+            .findById(id)
+            .orElseThrow(
+                () -> new EntityNotFoundException("Quality check not found with ID: " + id));
+
+    qualityCheck.setKeywords(keywords);
+    return modelMapper.map(qualityCheckRepository.save(qualityCheck), QualityCheckDTO.class);
   }
 }

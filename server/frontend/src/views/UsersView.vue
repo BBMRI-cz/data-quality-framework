@@ -111,9 +111,13 @@
                     <span v-else class="text-muted fst-italic">N/A</span>
                   </td>
                   <td>
-                    <span v-for="role in user.roles" :key="role" class="badge bg-primary me-1">
-                      {{ role }}
-                    </span>
+                    <Badge
+                      v-for="role in user.roles"
+                      :key="role"
+                      :text="role"
+                      variant="primary"
+                      size="small"
+                    />
                   </td>
                 </tr>
               </tbody>
@@ -130,6 +134,7 @@
   import { useRouter } from 'vue-router';
   import { apiService } from '../services/apiService.js';
   import PageHeader from '../components/PageHeader.vue';
+  import Badge from '../components/Badge.vue';
 
   const router = useRouter();
   const users = ref([]);

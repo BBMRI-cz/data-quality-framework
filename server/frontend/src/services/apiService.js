@@ -78,6 +78,11 @@ class ApiService {
     return response.data;
   }
 
+  async setKeywords(hash, keywords) {
+    const response = await api.put(`/v1/quality-checks/${hash}/keywords`, { keywords });
+    return response.data;
+  }
+
   async changePassword(userId, currentPassword, newPassword, confirmPassword) {
     await api.put(`/users/${userId}/password`, {
       currentPassword,

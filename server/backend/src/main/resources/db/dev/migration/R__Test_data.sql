@@ -49,6 +49,78 @@ INSERT INTO quality_check (hash, name, description, registered_at, warning_thres
     ('outlier-value-check', 'Statistical Outlier Values', 'Percentage of numerical values that are statistical outliers (e.g., age > 150, negative measurements)', '2024-01-15T11:30:00+00:00', 10.0, 25.0, NULL),
     ('invalid-coding-check', 'Invalid Medical Codes', 'Percentage of records with invalid or non-standard medical codes (ICD-10, SNOMED CT)', '2024-01-15T11:45:00+00:00', 3.0, 10.0, 2);
 
+-- Insert keywords for NLP-based search and filtering
+-- Keywords help match user queries to relevant quality checks
+-- Format: quality_check_hash, keyword (max 250 chars)
+INSERT INTO quality_check_keyword (quality_check_hash, keyword) VALUES
+    -- Gender-related checks - for queries about gender, sex, female, male
+    ('unsupported-gender-check', 'gender'),
+    ('unsupported-gender-check', 'sex'),
+    ('unsupported-gender-check', 'female'),
+    ('unsupported-gender-check', 'male'),
+    ('unsupported-gender-check', 'gender identity'),
+    ('unsupported-gender-check', 'patient demographics'),
+    ('unsupported-gender-check', 'C12.9'),
+
+    -- Birth date / age-related checks
+    ('missing-birthdate-check', 'birth date'),
+    ('missing-birthdate-check', 'birthdate'),
+    ('missing-birthdate-check', 'age'),
+    ('missing-birthdate-check', 'date of birth'),
+    ('missing-birthdate-check', 'missing data'),
+    ('missing-birthdate-check', 'completeness'),
+
+    -- Date-related checks
+    ('invalid-date-check', 'date'),
+    ('invalid-date-check', 'time'),
+    ('invalid-date-check', 'future date'),
+    ('invalid-date-check', 'past date'),
+    ('invalid-date-check', 'invalid date'),
+    ('invalid-date-check', 'logically invalid'),
+
+    -- Patient duplicate checks
+    ('duplicate-patient-check', 'duplicate'),
+    ('duplicate-patient-check', 'patient'),
+    ('duplicate-patient-check', 'same patient'),
+    ('duplicate-patient-check', 'merge'),
+    ('duplicate-patient-check', 'de duplication'),
+
+    -- Format validation checks
+    ('invalid-format-check', 'format'),
+    ('invalid-format-check', 'postal code'),
+    ('invalid-format-check', 'zip code'),
+    ('invalid-format-check', 'phone'),
+    ('invalid-format-check', 'email'),
+    ('invalid-format-check', 'ID format'),
+    ('invalid-format-check', 'pattern'),
+
+    -- Reference integrity checks
+    ('broken-reference-check', 'reference'),
+    ('broken-reference-check', 'foreign key'),
+    ('broken-reference-check', 'link'),
+    ('broken-reference-check', 'relationship'),
+    ('broken-reference-check', 'orphan'),
+    ('broken-reference-check', 'integrity'),
+
+    -- Outlier/value checks
+    ('outlier-value-check', 'outlier'),
+    ('outlier-value-check', 'statistical'),
+    ('outlier-value-check', 'value'),
+    ('outlier-value-check', 'age > 150'),
+    ('outlier-value-check', 'negative value'),
+    ('outlier-value-check', 'abnormal value'),
+    ('outlier-value-check', 'extreme value'),
+
+    -- Medical coding checks
+    ('invalid-coding-check', 'coding'),
+    ('invalid-coding-check', 'ICD-10'),
+    ('invalid-coding-check', 'SNOMED'),
+    ('invalid-coding-check', 'SNOMED CT'),
+    ('invalid-coding-check', 'medical code'),
+    ('invalid-coding-check', 'diagnosis'),
+    ('invalid-coding-check', 'C50'),
+    ('invalid-coding-check', 'condition');
+
 -- Insert dummy reports for the past 30 days
 -- Some reports include total_patients and total_samples, others are NULL for backwards compatibility testing
 INSERT INTO report (id, timestamp, agent_id, total_patients, total_samples) VALUES

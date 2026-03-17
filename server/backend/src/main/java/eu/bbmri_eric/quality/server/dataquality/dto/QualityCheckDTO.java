@@ -2,6 +2,7 @@ package eu.bbmri_eric.quality.server.dataquality.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
+import java.util.List;
 import org.springframework.hateoas.server.core.Relation;
 
 /** DTO for quality check data. */
@@ -38,6 +39,9 @@ public class QualityCheckDTO {
   @Schema(description = "Category for grouping quality checks")
   private CategoryDTO category;
 
+  @Schema(description = "List of keywords associated with this quality check")
+  private List<String> keywords;
+
   /** Default constructor for serialization frameworks. */
   public QualityCheckDTO() {}
 
@@ -50,6 +54,7 @@ public class QualityCheckDTO {
    * @param registeredAt when this quality check was registered
    * @param warningThreshold threshold value for warnings
    * @param errorThreshold threshold value for errors
+   * @param keywords list of keywords associated with the quality check
    */
   public QualityCheckDTO(
       String hash,
@@ -57,13 +62,15 @@ public class QualityCheckDTO {
       String description,
       Instant registeredAt,
       double warningThreshold,
-      double errorThreshold) {
+      double errorThreshold,
+      List<String> keywords) {
     this.hash = hash;
     this.name = name;
     this.description = description;
     this.registeredAt = registeredAt;
     this.warningThreshold = warningThreshold;
     this.errorThreshold = errorThreshold;
+    this.keywords = keywords;
   }
 
   public String getHash() {
@@ -120,5 +127,13 @@ public class QualityCheckDTO {
 
   public void setCategory(CategoryDTO category) {
     this.category = category;
+  }
+
+  public List<String> getKeywords() {
+    return keywords;
+  }
+
+  public void setKeywords(List<String> keywords) {
+    this.keywords = keywords;
   }
 }
