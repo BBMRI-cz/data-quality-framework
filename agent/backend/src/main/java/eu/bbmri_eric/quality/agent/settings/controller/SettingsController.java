@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/settings")
-@Tag(name = "Settings", description = "FHIR server settings management")
+@Tag(name = "Settings", description = "Application settings management")
 class SettingsController {
 
   private final SettingsService settingsService;
@@ -22,17 +22,19 @@ class SettingsController {
 
   @GetMapping
   @Operation(
-      summary = "Get FHIR server settings",
-      description = "Retrieve current FHIR server configuration")
+      summary = "Get application settings",
+      description =
+          "Retrieve current application configuration including FHIR server and differential privacy settings")
   public SettingsDTO getSettings() {
     return settingsService.getSettings();
   }
 
   @PutMapping
   @Operation(
-      summary = "Update FHIR server settings",
-      description = "Update FHIR server configuration")
-  public SettingsDTO updateSettings(@Valid @RequestBody SettingsDTO settingsDto) {
-    return settingsService.updateSettings(settingsDto);
+      summary = "Update application settings",
+      description =
+          "Update application configuration including FHIR server and differential privacy settings")
+  public SettingsDTO updateSettings(@Valid @RequestBody SettingsDTO settingsDTO) {
+    return settingsService.updateSettings(settingsDTO);
   }
 }

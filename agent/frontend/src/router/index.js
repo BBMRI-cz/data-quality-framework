@@ -52,6 +52,11 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/privacy',
+      component: () => import('@/views/DifferentialPrivacyPage.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/:pathMatch(.*)*',
       component: () => import('@/views/NotFound.vue'),
       meta: { requiresAuth: true },

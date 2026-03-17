@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 class SettingsServiceTest {
 
   @Autowired private SettingsService settingsService;
-
   @Autowired private SettingsRepository settingsRepository;
 
   @BeforeEach
@@ -27,12 +26,80 @@ class SettingsServiceTest {
     settingsRepository.save(new Settings("fhirUsername", "testuser"));
     settingsRepository.save(new Settings("fhirPassword", "dGVzdHBhc3M="));
     settingsRepository.save(new Settings("agentId", "sdfsdf-sdgsfgdfg-dfgdfg"));
+    settingsRepository.save(new Settings("epsilon", "1.0"));
+    settingsRepository.save(new Settings("delta", "1.0E-8"));
+    settingsRepository.save(new Settings("minThreshold", "10"));
+    settingsRepository.save(new Settings("noiseMechanism", "LAPLACE"));
+  }
+
+  private SettingsDTO createSettingsDTO(
+      String fhirUrl,
+      String fhirUsername,
+      String fhirPassword,
+      double epsilon,
+      double delta,
+      int minThreshold,
+      NoiseMechanism noiseMechanism) {
+    SettingsDTO dto = new SettingsDTO();
+    dto.setFhirUrl(fhirUrl);
+    dto.setFhirUsername(fhirUsername);
+    dto.setFhirPassword(fhirPassword);
+    dto.setEpsilon(epsilon);
+    dto.setDelta(delta);
+    dto.setMinThreshold(minThreshold);
+    dto.setNoiseMechanism(noiseMechanism);
+    return dto;
   }
 
   @Test
-  void updateSettings_shouldPublishEvent() {
-    String base64Password = Base64.getEncoder().encodeToString("eventpass".getBytes());
-    SettingsDTO dto = new SettingsDTO("http://localhost:8080/fhir", "eventuser", base64Password);
+  void getSettings_shouldReturnAllFields() {
+    SettingsDTO result = settingsService.getSettings();
+
+    assertNotNull(result);
+    assertEquals("http://localhost:8080/fhir", result.getFhirUrl());
+    assertEquals("testuser", result.getFhirUsername());
+    assertEquals(1.0, result.getEpsilon());
+    assertEquals(1.0E-8, result.getDelta());
+    assertEquals(10, result.getMinThreshold());
+    assertEquals(NoiseMechanism.LAPLACE, result.getNoiseMechanism());
+  }
+
+  @Test
+  void updateSettings_shouldPersistAllFields() {
+    String base64Password = Base64.getEncoder().encodeToString("newpass".getBytes());
+    SettingsDTO dto =
+        createSettingsDTO(
+            "http://production:8080/fhir",
+            "produser",
+            base64Password,
+            3.0,
+            1.0E-10,
+            50,
+            NoiseMechanism.GAUSSIAN);
+
+    settingsService.updateSettings(dto);
+    SettingsDTO result = settingsService.getSettings();
+
+    assertEquals("http://production:8080/fhir", result.getFhirUrl());
+    assertEquals("produser", result.getFhirUsername());
+    assertEquals(base64Password, result.getFhirPassword());
+    assertEquals(3.0, result.getEpsilon());
+    assertEquals(1.0E-10, result.getDelta());
+    assertEquals(50, result.getMinThreshold());
+    assertEquals(NoiseMechanism.GAUSSIAN, result.getNoiseMechanism());
+  }
+
+  @Test
+  void updateSettings_shouldPublishEvents_withoutThrowing() {
+    SettingsDTO dto =
+        createSettingsDTO(
+            "http://localhost:8080/fhir",
+            "eventuser",
+            Base64.getEncoder().encodeToString("eventpass".getBytes()),
+            1.5,
+            1.0E-8,
+            15,
+            NoiseMechanism.LAPLACE);
 
     assertDoesNotThrow(() -> settingsService.updateSettings(dto));
   }
@@ -41,43 +108,104 @@ class SettingsServiceTest {
   void updateSettings_shouldThrowException_whenSettingNotFound() {
     settingsRepository.deleteById("fhirUrl");
 
-    String base64Password = Base64.getEncoder().encodeToString("password".getBytes());
-    SettingsDTO dto = new SettingsDTO("http://localhost:8080/fhir", "user", base64Password);
+    SettingsDTO dto =
+        createSettingsDTO(
+            "http://localhost:8080/fhir",
+            "user",
+            Base64.getEncoder().encodeToString("password".getBytes()),
+            1.0,
+            1.0E-8,
+            10,
+            NoiseMechanism.LAPLACE);
 
     assertThrows(IllegalStateException.class, () -> settingsService.updateSettings(dto));
   }
 
   @Test
-  void getSettings_afterUpdate_shouldReturnUpdatedValues() {
-    String newUrl = "http://production:8080/fhir";
-    String newUsername = "produser";
-    String newPassword = "prodpass123";
-    String base64Password = Base64.getEncoder().encodeToString(newPassword.getBytes());
-
-    SettingsDTO updateDto = new SettingsDTO(newUrl, newUsername, base64Password);
-    settingsService.updateSettings(updateDto);
-
-    SettingsDTO result = settingsService.getSettings();
-
-    assertEquals(newUrl, result.getFhirUrl());
-    assertEquals(newUsername, result.getFhirUsername());
-
-    assertEquals(base64Password, result.getFhirPassword());
-
-    String decodedPassword = new String(Base64.getDecoder().decode(result.getFhirPassword()));
-    assertEquals(newPassword, decodedPassword);
-  }
-
-  @Test
-  void updateSettings_shouldThrowException_whenInvalidSettingNameProvided() {
+  void updateSettings_shouldThrowException_withMessageContainingMissingKey() {
     settingsRepository.deleteById("fhirUsername");
 
-    String base64Password = Base64.getEncoder().encodeToString("password".getBytes());
-    SettingsDTO dto = new SettingsDTO("http://localhost:8080/fhir", "user", base64Password);
+    SettingsDTO dto =
+        createSettingsDTO(
+            "http://localhost:8080/fhir",
+            "user",
+            Base64.getEncoder().encodeToString("password".getBytes()),
+            1.0,
+            1.0E-8,
+            10,
+            NoiseMechanism.LAPLACE);
 
     IllegalStateException exception =
         assertThrows(IllegalStateException.class, () -> settingsService.updateSettings(dto));
     assertTrue(exception.getMessage().contains("Setting not found"));
     assertTrue(exception.getMessage().contains("fhirUsername"));
+  }
+
+  @Test
+  void updateSettings_withLaplaceNoiseMechanism_shouldPersist() {
+    SettingsDTO dto =
+        createSettingsDTO(
+            "http://localhost:8080/fhir",
+            "testuser",
+            "dGVzdHBhc3M=",
+            1.0,
+            1.0E-8,
+            10,
+            NoiseMechanism.LAPLACE);
+
+    settingsService.updateSettings(dto);
+
+    assertEquals("LAPLACE", settingsRepository.findById("noiseMechanism").get().getValue());
+  }
+
+  @Test
+  void updateSettings_withZeroMinThreshold_shouldSucceed() {
+    SettingsDTO dto =
+        createSettingsDTO(
+            "http://localhost:8080/fhir",
+            "testuser",
+            "dGVzdHBhc3M=",
+            1.0,
+            1.0E-8,
+            0,
+            NoiseMechanism.LAPLACE);
+
+    SettingsDTO result = settingsService.updateSettings(dto);
+
+    assertEquals(0, result.getMinThreshold());
+  }
+
+  @Test
+  void updateSettings_withVerySmallDelta_shouldSucceed() {
+    SettingsDTO dto =
+        createSettingsDTO(
+            "http://localhost:8080/fhir",
+            "testuser",
+            "dGVzdHBhc3M=",
+            1.0,
+            1.0E-15,
+            10,
+            NoiseMechanism.GAUSSIAN);
+
+    SettingsDTO result = settingsService.updateSettings(dto);
+
+    assertEquals(1.0E-15, result.getDelta());
+  }
+
+  @Test
+  void updateSettings_shouldThrowException_whenEpsilonSettingNotFound() {
+    settingsRepository.deleteById("epsilon");
+
+    SettingsDTO dto =
+        createSettingsDTO(
+            "http://localhost:8080/fhir",
+            "testuser",
+            "dGVzdHBhc3M=",
+            2.0,
+            1.0E-8,
+            20,
+            NoiseMechanism.LAPLACE);
+
+    assertThrows(IllegalStateException.class, () -> settingsService.updateSettings(dto));
   }
 }

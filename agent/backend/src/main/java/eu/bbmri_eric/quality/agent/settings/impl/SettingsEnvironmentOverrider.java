@@ -41,6 +41,9 @@ class SettingsEnvironmentOverrider implements ApplicationRunner {
   @Transactional
   public void run(ApplicationArguments args) {
     Map<String, String> overrides = getNormalizedOverrides();
+    if (overrides.isEmpty()) {
+      return;
+    }
     Map<String, Object> settings = getSettingsMap();
     if (applyOverrides(settings, overrides)) {
       saveSettings(settings);

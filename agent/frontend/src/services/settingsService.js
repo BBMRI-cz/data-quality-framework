@@ -7,7 +7,7 @@ import { api } from '@/api';
 const BASE_URL = '/api/settings';
 
 /**
- * Fetches application settings
+ * Fetches all application settings (FHIR + differential privacy).
  * @returns {Promise<object>}
  */
 export async function get() {
@@ -16,7 +16,7 @@ export async function get() {
 }
 
 /**
- * Updates application settings
+ * Updates all application settings (FHIR + differential privacy) in one call.
  * @param {object} settingsData
  * @returns {Promise<object>}
  */

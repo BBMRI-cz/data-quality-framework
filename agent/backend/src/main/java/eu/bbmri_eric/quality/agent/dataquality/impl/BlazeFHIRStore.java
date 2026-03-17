@@ -391,8 +391,4 @@ class BlazeFHIRStore implements FHIRStore {
     }
     return healthStatus;
   }
-
-  protected IGenericClient getClient() {
-    return client;
-  }
 }
