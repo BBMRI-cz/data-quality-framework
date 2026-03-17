@@ -40,4 +40,3 @@ class DifferentialPrivacyConfigTest {
     assertEquals(NoiseMechanism.GAUSSIAN, config.getNoiseMechanism());
   }
 }
-

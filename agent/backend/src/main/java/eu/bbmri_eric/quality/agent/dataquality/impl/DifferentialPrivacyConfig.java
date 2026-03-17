@@ -28,9 +28,7 @@ class DifferentialPrivacyConfig {
     this.epsilon = settings.getEpsilon() != null ? settings.getEpsilon() : DEFAULT_EPSILON;
     this.delta = settings.getDelta() != null ? settings.getDelta() : DEFAULT_DELTA;
     this.minThreshold =
-        settings.getMinThreshold() != null
-            ? settings.getMinThreshold()
-            : DEFAULT_MIN_THRESHOLD;
+        settings.getMinThreshold() != null ? settings.getMinThreshold() : DEFAULT_MIN_THRESHOLD;
     this.noiseMechanism =
         settings.getNoiseMechanism() != null
             ? settings.getNoiseMechanism()
