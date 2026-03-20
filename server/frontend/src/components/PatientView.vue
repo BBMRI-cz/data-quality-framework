@@ -71,7 +71,7 @@
   import StatsCard from './StatsCard.vue';
   import CategoryFilter from './CategoryFilter.vue';
   import QualityCheckRow from './QualityCheckRow.vue';
-  import { usePatientStats } from '../composables/usePatientStats';
+  import { usePatientStats } from '@/composables/usePatientStats';
 
   const props = defineProps({
     reports: {

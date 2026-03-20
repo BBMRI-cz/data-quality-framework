@@ -70,7 +70,7 @@
 <script setup>
   import { ref, onMounted, computed, watch } from 'vue';
   import { useRouter } from 'vue-router';
-  import { apiService } from '../services/apiService.js';
+  import { apiService } from '@/services/apiService.js';
 
   const router = useRouter();
   const emit = defineEmits(['agentsLoaded']);

@@ -8,8 +8,8 @@
 </template>
 
 <script setup>
-  import LoginForm from '../components/LoginForm.vue';
-  import Copyright from '../components/Copyright.vue';
+  import LoginForm from '@/components/LoginForm.vue';
+  import Copyright from '@/components/layout/Copyright.vue';
 </script>
 
 <style scoped>

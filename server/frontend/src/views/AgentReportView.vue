@@ -197,14 +197,14 @@
 <script setup>
   import { ref, onMounted, computed } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
-  import StatsCard from '../components/StatsCard.vue';
-  import ReportsTable from '../components/ReportsTable.vue';
-  import ReportDetailsModal from '../components/ReportDetailsModal.vue';
-  import PageHeader from '../components/PageHeader.vue';
-  import BaseModal from '../components/BaseModal.vue';
-  import { apiService } from '../services/apiService.js';
-  import { notificationService } from '../services/notificationService.js';
-  import { countChecksByStatus } from '../utils/qualityCheckUtils.js';
+  import StatsCard from '@/components/StatsCard.vue';
+  import ReportsTable from '@/components/ReportsTable.vue';
+  import ReportDetailsModal from '@/components/ReportDetailsModal.vue';
+  import PageHeader from '@/components/PageHeader.vue';
+  import BaseModal from '@/components/BaseModal.vue';
+  import { apiService } from '@/services/apiService.js';
+  import { notificationService } from '@/services/notificationService.js';
+  import { countChecksByStatus } from '@/utils/qualityCheckUtils.js';
 
   const route = useRoute();
   const router = useRouter();

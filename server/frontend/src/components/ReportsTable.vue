@@ -88,8 +88,8 @@
 <script setup>
   import { computed } from 'vue';
   import { useRouter } from 'vue-router';
-  import { countChecksByStatus, getReportStatus, CheckStatus } from '../utils/qualityCheckUtils.js';
-  import { formatDateShort, formatTime } from '../utils/dateUtils.js';
+  import { countChecksByStatus, getReportStatus, CheckStatus } from '@/utils/qualityCheckUtils.js';
+  import { formatDateShort, formatTime } from '@/utils/dateUtils.js';
 
   const router = useRouter();
 

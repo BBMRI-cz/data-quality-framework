@@ -187,26 +187,24 @@
                         type="text"
                         class="form-control"
                         placeholder="Add new keyword..."
-                        @keyup.enter="addKeyword"
                         :disabled="saving"
+                        @keyup.enter="addKeyword"
                       />
                       <button
                         class="btn btn-primary"
                         type="button"
-                        @click="addKeyword"
                         :disabled="!newKeyword.trim() || saving"
+                        @click="addKeyword"
                       >
                         <i class="bi bi-plus-lg"></i>
                       </button>
                     </div>
                     <small class="form-text text-muted">
-                      Press Enter or click + to add keywords. Changes are saved when you click Save Changes.
+                      Press Enter or click + to add keywords. Changes are saved when you click Save
+                      Changes.
                     </small>
                   </div>
-                  <div
-                    v-if="keywords.length === 0"
-                    class="text-muted mt-2"
-                  >
+                  <div v-if="keywords.length === 0" class="text-muted mt-2">
                     <i class="bi bi-inbox me-1"></i>No keywords added yet
                   </div>
                   <small class="form-text text-muted">
@@ -251,12 +249,12 @@
   import { ref, reactive, computed, onMounted } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import { useHead } from '@unhead/vue';
-  import { apiService } from '../services/apiService.js';
-  import { notificationService } from '../services/notificationService.js';
-  import { formatDateLong } from '../utils/dateUtils.js';
-  import PageHeader from '../components/PageHeader.vue';
-  import StatsCard from '../components/StatsCard.vue';
-  import Badge from '../components/Badge.vue';
+  import { apiService } from '@/services/apiService.js';
+  import { notificationService } from '@/services/notificationService.js';
+  import { formatDateLong } from '@/utils/dateUtils.js';
+  import PageHeader from '@/components/PageHeader.vue';
+  import StatsCard from '@/components/StatsCard.vue';
+  import Badge from '@/components/Badge.vue';
 
   const route = useRoute();
   const router = useRouter();
@@ -297,7 +295,7 @@
     // Compare keyword arrays
     const keywordsChanged =
       originalKeywords.length !== currentKeywords.length ||
-      !originalKeywords.every(k => currentKeywords.includes(k));
+      !originalKeywords.every((k) => currentKeywords.includes(k));
 
     return (
       editForm.name !== qualityCheck.value.name ||

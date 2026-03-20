@@ -70,11 +70,11 @@
 
 <script setup>
   import { ref, onMounted, computed } from 'vue';
-  import ReportsTable from '../components/ReportsTable.vue';
-  import PageHeader from '../components/PageHeader.vue';
-  import CategoryFilter from '../components/CategoryFilter.vue';
-  import { apiService } from '../services/apiService.js';
-  import { getReportStatus, CheckStatus } from '../utils/qualityCheckUtils.js';
+  import ReportsTable from '@/components/ReportsTable.vue';
+  import PageHeader from '@/components/PageHeader.vue';
+  import CategoryFilter from '@/components/CategoryFilter.vue';
+  import { apiService } from '@/services/apiService.js';
+  import { getReportStatus, CheckStatus } from '@/utils/qualityCheckUtils.js';
 
   const reports = ref([]);
   const qualityCheckMap = ref(new Map());

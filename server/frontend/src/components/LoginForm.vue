@@ -179,11 +179,11 @@
 <script setup>
   import { reactive, computed, ref, onMounted } from 'vue';
   import { useRouter, useRoute } from 'vue-router';
-  import { authStore } from '../stores/authStore.js';
-  import { apiService } from '../services/apiService.js';
-  import { notificationService } from '../services/notificationService.js';
-  import { initializeOidc, signinWithOidc } from '../utils/oidc.js';
-  import settingsStore from '../stores/settingsStore.js';
+  import { authStore } from '@/stores/authStore.js';
+  import { apiService } from '@/services/apiService.js';
+  import { notificationService } from '@/services/notificationService.js';
+  import { initializeOidc, signinWithOidc } from '@/utils/oidc.js';
+  import settingsStore from '@/stores/settingsStore.js';
 
   const router = useRouter();
   const route = useRoute();

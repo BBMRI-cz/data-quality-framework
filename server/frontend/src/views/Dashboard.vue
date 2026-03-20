@@ -60,10 +60,10 @@
 <script setup>
   import { ref, onMounted, computed, watch } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
-  import PageHeader from '../components/PageHeader.vue';
-  import SiteView from '../components/SiteView.vue';
-  import PatientView from '../components/PatientView.vue';
-  import { apiService } from '../services/apiService.js';
+  import PageHeader from '@/components/PageHeader.vue';
+  import SiteView from '@/components/SiteView.vue';
+  import PatientView from '@/components/PatientView.vue';
+  import { apiService } from '@/services/apiService.js';
 
   const route = useRoute();
   const router = useRouter();

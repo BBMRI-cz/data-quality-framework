@@ -144,18 +144,18 @@
   import { ref, onMounted, nextTick, computed } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import { useHead } from '@unhead/vue';
-  import PageHeader from '../components/PageHeader.vue';
-  import StatsCard from '../components/StatsCard.vue';
-  import AppCallout from '../components/AppCallout.vue';
-  import CategoryFilter from '../components/CategoryFilter.vue';
-  import { apiService } from '../services/apiService.js';
+  import PageHeader from '@/components/PageHeader.vue';
+  import StatsCard from '@/components/StatsCard.vue';
+  import AppCallout from '@/components/AppCallout.vue';
+  import CategoryFilter from '@/components/CategoryFilter.vue';
+  import { apiService } from '@/services/apiService.js';
   import {
     getCheckStatus,
     CheckStatus,
     getStatusIcon,
     getStatusColor,
     getStatusBgColor,
-  } from '../utils/qualityCheckUtils.js';
+  } from '@/utils/qualityCheckUtils.js';
 
   const route = useRoute();
   const router = useRouter();

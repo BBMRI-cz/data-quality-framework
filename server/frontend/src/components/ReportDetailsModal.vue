@@ -157,8 +157,8 @@
     countChecksByStatus,
     getReportStatus,
     CheckStatus,
-  } from '../utils/qualityCheckUtils.js';
-  import { formatDateShort, formatTime } from '../utils/dateUtils.js';
+  } from '@/utils/qualityCheckUtils.js';
+  import { formatDateShort, formatTime } from '@/utils/dateUtils.js';
 
   const props = defineProps({
     report: {

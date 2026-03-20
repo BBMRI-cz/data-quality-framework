@@ -137,12 +137,12 @@
 
 <script setup>
   import { ref, computed, onMounted } from 'vue';
-  import { apiService } from '../services/apiService.js';
-  import PageHeader from '../components/PageHeader.vue';
-  import CategoryFilter from '../components/CategoryFilter.vue';
-  import CategoryBadge from '../components/CategoryBadge.vue';
+  import { apiService } from '@/services/apiService.js';
+  import PageHeader from '@/components/PageHeader.vue';
+  import CategoryFilter from '@/components/CategoryFilter.vue';
+  import CategoryBadge from '@/components/CategoryBadge.vue';
   import { useRouter } from 'vue-router';
-  import { formatDateShort } from '../utils/dateUtils.js';
+  import { formatDateShort } from '@/utils/dateUtils.js';
 
   const router = useRouter();
 

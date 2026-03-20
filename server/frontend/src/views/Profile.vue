@@ -117,11 +117,11 @@
 
 <script setup>
   import { reactive, computed, ref } from 'vue';
-  import { authStore } from '../stores/authStore.js';
-  import { apiService } from '../services/apiService.js';
-  import { notificationService } from '../services/notificationService.js';
-  import PageHeader from '../components/PageHeader.vue';
-  import Badge from '../components/Badge.vue';
+  import { authStore } from '@/stores/authStore.js';
+  import { apiService } from '@/services/apiService.js';
+  import { notificationService } from '@/services/notificationService.js';
+  import PageHeader from '@/components/PageHeader.vue';
+  import Badge from '@/components/Badge.vue';
 
   const user = computed(() => authStore.user);
 

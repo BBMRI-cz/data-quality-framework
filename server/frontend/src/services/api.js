@@ -1,6 +1,6 @@
 import axios from 'axios';
-import router from '../router';
-import { authStore } from '../stores/authStore';
+import router from '@/router';
+import { authStore } from '@/stores/authStore';
 import { notificationService } from './notificationService';
 
 const api = axios.create({

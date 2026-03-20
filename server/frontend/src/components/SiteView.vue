@@ -68,7 +68,7 @@
   import StatsCard from './StatsCard.vue';
   import AgentCard from './AgentCard.vue';
   import CategoryFilter from './CategoryFilter.vue';
-  import { useSiteStats } from '../composables/useSiteStats';
+  import { useSiteStats } from '@/composables/useSiteStats';
 
   const props = defineProps({
     reports: {

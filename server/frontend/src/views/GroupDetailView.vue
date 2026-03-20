@@ -243,10 +243,10 @@
   import { ref, reactive, computed, onMounted, watch } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import { useHead } from '@unhead/vue';
-  import { apiService } from '../services/apiService.js';
-  import { notificationService } from '../services/notificationService.js';
-  import PageHeader from '../components/PageHeader.vue';
-  import DeleteConfirmModal from '../components/DeleteConfirmModal.vue';
+  import { apiService } from '@/services/apiService.js';
+  import { notificationService } from '@/services/notificationService.js';
+  import PageHeader from '@/components/PageHeader.vue';
+  import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue';
 
   const route = useRoute();
   const router = useRouter();
