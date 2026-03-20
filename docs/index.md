@@ -10,17 +10,11 @@ hero:
     alt: Data Quality Framework
   actions:
     - theme: brand
-      text: Overview
-      link: /user/
-    - theme: alt
       text: Get Started
-      link: /user/getting-started
-    - theme: alt
-      text: Installation
       link: /user/deployment
     - theme: alt
-      text: Developer Documentation
-      link: /developer/
+      text: Learn more
+      link: /user
 
 features:
   - icon: <i class="bi bi-code-slash"></i>
@@ -31,7 +25,7 @@ features:
 
   - icon: <i class="bi bi-shield-lock"></i>
     title: Secure
-    details: Implements advanced privacy-preserving techniques to ensure sensitive health data remains secure while maintaining data quality monitoring capabilities.
+    details: State‑of‑the‑art differential privacy (powered by mathematically proven noise injection) keeps your health data private. We can’t trace any metric back to an individual—privacy isn’t optional, it’s built into every quality assessment.
     link: /user/privacy
     linkText: Learn More
 
@@ -49,6 +43,7 @@ features:
 ---
 
 <div class="institution-logos-home">
+  <p class="logos-heading">FDQF is developed thanks to our partners:</p>
   <div class="logos-container">
     <img src="/bbmri_eric.svg" alt="BBMRI-ERIC" class="institution-logo logo-light" />
     <img src="/bbmri_eric-white.svg" alt="BBMRI-ERIC" class="institution-logo logo-dark" />
@@ -62,8 +57,22 @@ features:
 
 <style>
 .institution-logos-home {
-  padding: 3rem 1.5rem 2.5rem;
+  padding: 3rem 1.5rem 0.1rem;
   margin-top: 2rem;
+  margin-bottom: -6.1rem;
+}
+
+.logos-heading {
+  margin: 0 auto 1.5rem;
+  padding: 0 1.5rem;
+  font-size: clamp(1.05rem, 2vw, 1.3rem);
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+  display: block;
+  width: 100%;
+  text-align: center;
+  color: var(--vp-c-text-2);
 }
 
 .logos-container {
@@ -106,19 +115,25 @@ features:
 
 @media (max-width: 768px) {
   .institution-logos-home {
-    padding: 2.5rem 1rem 2rem;
+    padding: 2.5rem 1rem 0.4rem;
+    margin-bottom: -0.7rem;
   }
-  
+
+  .logos-heading {
+    margin-bottom: 1.2rem;
+    font-size: 1.15rem;
+  }
+
   .logos-container {
     flex-wrap: wrap;
     gap: 1.5rem;
   }
-  
+
   .institution-logo {
     max-height: 70px;
     max-width: 120px;
   }
-  
+
   .institution-logo[alt="BBMRI-ERIC"] {
     max-height: 90px;
     max-width: 155px;
@@ -126,15 +141,25 @@ features:
 }
 
 @media (max-width: 480px) {
+  .institution-logos-home {
+    padding-bottom: 0.25rem;
+    margin-bottom: -0.45rem;
+  }
+
+  .logos-heading {
+    margin-bottom: 1rem;
+    font-size: 1.05rem;
+  }
+
   .logos-container {
     gap: 1rem;
   }
-  
+
   .institution-logo {
     max-height: 60px;
     max-width: 100px;
   }
-  
+
   .institution-logo[alt="BBMRI-ERIC"] {
     max-height: 78px;
     max-width: 130px;

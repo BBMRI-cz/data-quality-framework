@@ -3,11 +3,10 @@ import {getLatestVersionSync} from './version.js'
 
 const version = getLatestVersionSync();
 
-// Build navigation array, conditionally including version if available
 const navItems = [
     {text: 'Home', link: '/'},
-    {text: 'User Guide', link: '/user/'},
-    {text: 'Developer Guide', link: '/developer/'},
+    {text: 'Docs', link: '/user/'},
+    {text: 'Developers', link: '/developer/'},
     {
         text: 'Publications',
         items: [
@@ -29,14 +28,14 @@ if (version) {
             },
             {
                 text: 'Releases',
-                link: `https://github.com/bbmri-cz/data-quality-framework/releases/tag/${version}`
+                link: `https://github.com/bbmri-cz/data-quality-framework/releases`
             }
         ]
     });
 }
 
 export default defineConfig({
-    title: 'Data Quality Framework',
+    title: 'FDQF',
     description: 'Comprehensive framework for monitoring and ensuring data quality in biomedical research environments',
 
     sitemap: {
@@ -54,7 +53,7 @@ export default defineConfig({
                     text: 'User Guide',
                     items: [
                         {text: 'Overview', link: '/user/'},
-                        {text: 'Getting Started', link: '/user/getting-started'},
+                        {text: 'Hands‑On Guide', link: '/user/hands‑on_guide'},
                         {text: 'Privacy and Security', link: '/user/privacy'},
                         {text: 'Deployment', link: '/user/deployment'},
                         {text: 'Configuration', link: '/user/configuration'},
@@ -84,7 +83,7 @@ export default defineConfig({
         },
 
         footer: {
-            message: 'Licensed under the GNU GPL v3.0 | Please cite <a href="https://doi.org/10.1186/s12911-025-03328-6" target="_blank" rel="noopener noreferrer">Tomášik et al. (2026)</a>',
+            message: 'Licensed under the GNU GPL v3.0 | Built with <a href="https://vitepress.dev/" target="_blank" rel="noopener noreferrer">VitePress</a> | Please cite <a href="https://doi.org/10.1186/s12911-025-03328-6" target="_blank" rel="noopener noreferrer">Tomášik et al. (2026)</a>',
             copyright: 'Copyright © 2026 BBMRI-ERIC® & Masaryk Memorial Cancer Institute'
         },
 

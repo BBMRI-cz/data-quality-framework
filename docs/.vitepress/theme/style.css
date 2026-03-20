@@ -9,6 +9,9 @@
   --vp-c-brand-3: #5a3d8a;
   --vp-c-brand-soft: rgba(102, 126, 234, 0.14);
 
+  /* Slightly larger branding in the top-left navbar */
+  --vp-nav-logo-height: 38px;
+
   --vp-home-hero-name-color: transparent;
   --vp-home-hero-name-background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 
@@ -32,6 +35,10 @@
   transition: color 0.3s ease;
 }
 
+.VPNavBarTitle .title {
+  font-size: 1.1rem;
+}
+
 /* Style Bootstrap Icons in documentation lists */
 .vp-doc li i.bi {
   color: var(--vp-c-brand-1);
@@ -46,3 +53,4 @@
   width: 400px !important;
   height: auto !important;
 }
+
