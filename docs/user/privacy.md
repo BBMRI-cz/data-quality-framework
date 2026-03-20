@@ -127,7 +127,7 @@ If you have security concerns or questions about our privacy implementation:
 
 - **Security Issues**: Report security vulnerabilities through [GitHub Security Advisories](https://github.com/BBMRI-cz/data-quality-framework/security/advisories)
 - **Privacy Questions**: Contact the development team for clarification on privacy practices
-- **Implementation Support**: Consult the [getting started guide](/user/getting-started) for secure deployment practices
+- **Implementation Support**: Consult the [getting started guide](/user/hands‑on_guide) for secure deployment practices
 
 ::: warning Security Best Practices
 When deploying the Data Quality Framework:

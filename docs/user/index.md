@@ -96,5 +96,5 @@ The FDQF ensures **trust, privacy, and transparency** in multi-institution data 
 computation** with **centralized insight**.
 
 ::: tip See for yourself
-If you would like to experiment with the tooling please go to the [Getting Started page](/user/getting-started).
+If you would like to experiment with the tooling please go to the [Getting Started page](/user/hands‑on_guide.md).
 :::

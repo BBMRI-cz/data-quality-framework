@@ -507,5 +507,5 @@ docker pull ghcr.io/bbmri-cz/data-quality-agent:latest
 - Check container logs: `docker compose logs <service-name>`
 - Verify network connectivity: `docker network ls` and `docker network inspect <network-name>`
 - Review health status: `docker compose ps`
-- Consult the [getting started guide](/user/getting-started) for basic setup issues
+- Consult the [getting started guide](/user/hands‑on_guide) for basic setup issues
 
