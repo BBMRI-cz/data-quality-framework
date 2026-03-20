@@ -70,7 +70,7 @@
 
 <script setup>
   import { ref, onMounted, computed } from 'vue';
-  import ReportsTable from '@/components/ReportsTable.vue';
+  import ReportsTable from '@/components/report/ReportsTable.vue';
   import PageHeader from '@/components/ui/PageHeader.vue';
   import CategoryFilter from '@/components/CategoryFilter.vue';
   import { apiService } from '@/services/apiService.js';

@@ -65,10 +65,10 @@
 
 <script setup>
   import { toRefs } from 'vue';
-  import StatsCard from './ui/StatsCard.vue';
-  import AgentCard from './agent/AgentCard.vue';
-  import CategoryFilter from './CategoryFilter.vue';
-  import { useSiteStats } from '@/composables/useSiteStats';
+  import StatsCard from '../ui/StatsCard.vue';
+  import AgentCard from '../agent/AgentCard.vue';
+  import CategoryFilter from '../CategoryFilter.vue';
+  import { useSiteStats } from '@/composables/useSiteStats.js';
 
   const props = defineProps({
     reports: {

@@ -198,8 +198,8 @@
   import { ref, onMounted, computed } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import StatsCard from '@/components/ui/StatsCard.vue';
-  import ReportsTable from '@/components/ReportsTable.vue';
-  import ReportDetailsModal from '@/components/ReportDetailsModal.vue';
+  import ReportsTable from '@/components/report/ReportsTable.vue';
+  import ReportDetailsModal from '@/components/report/ReportDetailsModal.vue';
   import PageHeader from '@/components/ui/PageHeader.vue';
   import BaseModal from '@/components/BaseModal.vue';
   import { apiService } from '@/services/apiService.js';
