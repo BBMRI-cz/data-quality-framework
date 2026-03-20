@@ -252,9 +252,9 @@
   import { apiService } from '@/services/apiService.js';
   import { notificationService } from '@/services/notificationService.js';
   import { formatDateLong } from '@/utils/dateUtils.js';
-  import PageHeader from '@/components/PageHeader.vue';
-  import StatsCard from '@/components/StatsCard.vue';
-  import Badge from '@/components/Badge.vue';
+  import PageHeader from '@/components/ui/PageHeader.vue';
+  import StatsCard from '@/components/ui/StatsCard.vue';
+  import Badge from '@/components/ui/Badge.vue';
 
   const route = useRoute();
   const router = useRouter();

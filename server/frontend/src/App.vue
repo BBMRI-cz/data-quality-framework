@@ -4,8 +4,8 @@
   import { useHead } from '@unhead/vue';
   import Sidebar from '@/components/layout/Sidebar.vue';
   import TopNavbar from '@/components/layout/TopNavbar.vue';
-  import NotificationContainer from '@/components/NotificationContainer.vue';
-  import CookieConsent from '@/components/CookieConsent.vue';
+  import NotificationContainer from '@/components/notification/NotificationContainer.vue';
+  import CookieConsent from '@/components/login/CookieConsent.vue';
   import { authStore } from '@/stores/authStore.js';
   import { notificationService } from '@/services/notificationService.js';
   import { initializeOidc } from '@/utils/oidc.js';

@@ -60,7 +60,7 @@
 <script setup>
   import { ref, onMounted, computed, watch } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
-  import PageHeader from '@/components/PageHeader.vue';
+  import PageHeader from '@/components/ui/PageHeader.vue';
   import SiteView from '@/components/SiteView.vue';
   import PatientView from '@/components/PatientView.vue';
   import { apiService } from '@/services/apiService.js';

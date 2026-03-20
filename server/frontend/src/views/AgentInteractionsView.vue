@@ -180,8 +180,8 @@
 <script setup>
   import { ref, computed, onMounted } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
-  import PageHeader from '@/components/PageHeader.vue';
-  import StatsCard from '@/components/StatsCard.vue';
+  import PageHeader from '@/components/ui/PageHeader.vue';
+  import StatsCard from '@/components/ui/StatsCard.vue';
   import { apiService } from '@/services/apiService.js';
   import { formatDateLong, formatTimeFull } from '@/utils/dateUtils.js';
 

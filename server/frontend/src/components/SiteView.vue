@@ -65,8 +65,8 @@
 
 <script setup>
   import { toRefs } from 'vue';
-  import StatsCard from './StatsCard.vue';
-  import AgentCard from './AgentCard.vue';
+  import StatsCard from './ui/StatsCard.vue';
+  import AgentCard from './agent/AgentCard.vue';
   import CategoryFilter from './CategoryFilter.vue';
   import { useSiteStats } from '@/composables/useSiteStats';
 

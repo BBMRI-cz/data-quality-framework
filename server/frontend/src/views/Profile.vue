@@ -120,8 +120,8 @@
   import { authStore } from '@/stores/authStore.js';
   import { apiService } from '@/services/apiService.js';
   import { notificationService } from '@/services/notificationService.js';
-  import PageHeader from '@/components/PageHeader.vue';
-  import Badge from '@/components/Badge.vue';
+  import PageHeader from '@/components/ui/PageHeader.vue';
+  import Badge from '@/components/ui/Badge.vue';
 
   const user = computed(() => authStore.user);
 

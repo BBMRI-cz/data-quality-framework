@@ -119,7 +119,7 @@
   import { ref, computed, onMounted } from 'vue';
   import { useRouter } from 'vue-router';
   import { apiService } from '@/services/apiService.js';
-  import PageHeader from '@/components/PageHeader.vue';
+  import PageHeader from '@/components/ui/PageHeader.vue';
 
   const router = useRouter();
   const groups = ref([]);

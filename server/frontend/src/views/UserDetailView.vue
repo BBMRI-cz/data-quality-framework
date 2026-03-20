@@ -146,9 +146,9 @@
   import { useHead } from '@unhead/vue';
   import { apiService } from '@/services/apiService.js';
   import { notificationService } from '@/services/notificationService.js';
-  import PageHeader from '@/components/PageHeader.vue';
+  import PageHeader from '@/components/ui/PageHeader.vue';
   import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue';
-  import Badge from '@/components/Badge.vue';
+  import Badge from '@/components/ui/Badge.vue';
 
   const router = useRouter();
   const route = useRoute();

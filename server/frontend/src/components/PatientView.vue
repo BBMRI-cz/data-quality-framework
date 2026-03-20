@@ -68,7 +68,7 @@
 
 <script setup>
   import { toRefs } from 'vue';
-  import StatsCard from './StatsCard.vue';
+  import StatsCard from './ui/StatsCard.vue';
   import CategoryFilter from './CategoryFilter.vue';
   import QualityCheckRow from './QualityCheckRow.vue';
   import { usePatientStats } from '@/composables/usePatientStats';

@@ -71,7 +71,7 @@
 <script setup>
   import { ref, onMounted, computed } from 'vue';
   import ReportsTable from '@/components/ReportsTable.vue';
-  import PageHeader from '@/components/PageHeader.vue';
+  import PageHeader from '@/components/ui/PageHeader.vue';
   import CategoryFilter from '@/components/CategoryFilter.vue';
   import { apiService } from '@/services/apiService.js';
   import { getReportStatus, CheckStatus } from '@/utils/qualityCheckUtils.js';

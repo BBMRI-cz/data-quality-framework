@@ -133,8 +133,8 @@
   import { ref, computed, onMounted } from 'vue';
   import { useRouter } from 'vue-router';
   import { apiService } from '@/services/apiService.js';
-  import PageHeader from '@/components/PageHeader.vue';
-  import Badge from '@/components/Badge.vue';
+  import PageHeader from '@/components/ui/PageHeader.vue';
+  import Badge from '@/components/ui/Badge.vue';
 
   const router = useRouter();
   const users = ref([]);

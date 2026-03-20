@@ -138,7 +138,7 @@
 <script setup>
   import { ref, computed, onMounted } from 'vue';
   import { apiService } from '@/services/apiService.js';
-  import PageHeader from '@/components/PageHeader.vue';
+  import PageHeader from '@/components/ui/PageHeader.vue';
   import CategoryFilter from '@/components/CategoryFilter.vue';
   import CategoryBadge from '@/components/CategoryBadge.vue';
   import { useRouter } from 'vue-router';

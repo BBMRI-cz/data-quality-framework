@@ -8,7 +8,7 @@
 </template>
 
 <script setup>
-  import LoginForm from '@/components/LoginForm.vue';
+  import LoginForm from '@/components/login/LoginForm.vue';
   import Copyright from '@/components/layout/Copyright.vue';
 </script>
 
