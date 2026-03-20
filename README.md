@@ -42,7 +42,7 @@ docker compose up -d
 
 ## Documentation
 
-📖 **[Complete Documentation](https://bbmri-cz.github.io/data-quality-framework/)**
+📖 **[Complete Documentation](https://fdqf.bbmri-eric.eu/)**
 
 ## Support
 
