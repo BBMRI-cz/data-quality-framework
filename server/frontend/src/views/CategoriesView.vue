@@ -106,7 +106,7 @@
                       <div class="fw-medium">{{ category.name }}</div>
                     </td>
                     <td>
-                      <CategoryBadge :category="category" />
+                      <ValuesFilterBadge :category="category" />
                     </td>
                   </tr>
                 </tbody>
@@ -124,7 +124,7 @@
   import { useRouter } from 'vue-router';
   import { apiService } from '@/services/apiService.js';
   import PageHeader from '@/components/ui/PageHeader.vue';
-  import CategoryBadge from '@/components/CategoryBadge.vue';
+  import ValuesFilterBadge from '@/components/ui/ValuesFilterBadge.vue';
 
   const router = useRouter();
   const categories = ref([]);

@@ -88,12 +88,12 @@
         <!-- Category Filter -->
         <div class="mb-4">
           <div class="filter-label">Category:</div>
-          <CategoryFilter v-model="selectedCategory" :categories="categories" />
+          <ValuesFilter v-model="selectedCategory" :categories="categories" />
         </div>
 
         <div class="mb-4">
           <div class="filter-label">Status:</div>
-          <CategoryFilter v-model="selectedStatus" :categories="statuses" />
+          <ValuesFilter v-model="selectedStatus" :categories="statuses" />
         </div>
 
         <!-- Results Section -->
@@ -147,7 +147,7 @@
   import PageHeader from '@/components/ui/PageHeader.vue';
   import StatsCard from '@/components/ui/StatsCard.vue';
   import AppCallout from '@/components/AppCallout.vue';
-  import CategoryFilter from '@/components/CategoryFilter.vue';
+  import ValuesFilter from '@/components/ui/ValuesFilter.vue';
   import { apiService } from '@/services/apiService.js';
   import {
     getCheckStatus,

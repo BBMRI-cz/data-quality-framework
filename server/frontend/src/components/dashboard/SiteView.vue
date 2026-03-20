@@ -36,13 +36,13 @@
     <!-- Category Filter -->
     <div class="mb-4">
       <div class="filter-label">Categories:</div>
-      <CategoryFilter v-model="selectedCategory" :categories="categories" />
+      <ValuesFilter v-model="selectedCategory" :categories="categories" />
     </div>
 
     <!-- Group Filter -->
     <div v-if="groups.length > 0" class="mb-4">
       <div class="filter-label">Groups:</div>
-      <CategoryFilter v-model="selectedGroup" :categories="groups" />
+      <ValuesFilter v-model="selectedGroup" :categories="groups" />
     </div>
 
     <!-- Main Content Grid -->
@@ -67,7 +67,7 @@
   import { toRefs } from 'vue';
   import StatsCard from '../ui/StatsCard.vue';
   import AgentCard from '../agent/AgentCard.vue';
-  import CategoryFilter from '../CategoryFilter.vue';
+  import ValuesFilter from '../ui/ValuesFilter.vue';
   import { useSiteStats } from '@/composables/useSiteStats.js';
 
   const props = defineProps({

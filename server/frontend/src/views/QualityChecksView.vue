@@ -41,7 +41,7 @@
               />
             </div>
             <div class="category-filter-container">
-              <CategoryFilter v-model="selectedCategory" :categories="categories" />
+              <ValuesFilter v-model="selectedCategory" :categories="categories" />
             </div>
             <div class="results-count">
               <span class="text-muted small">{{ filteredChecks.length }} checks</span>
@@ -139,8 +139,8 @@
   import { ref, computed, onMounted } from 'vue';
   import { apiService } from '@/services/apiService.js';
   import PageHeader from '@/components/ui/PageHeader.vue';
-  import CategoryFilter from '@/components/CategoryFilter.vue';
-  import CategoryBadge from '@/components/CategoryBadge.vue';
+  import ValuesFilter from '@/components/ui/ValuesFilter.vue';
+  import ValuesFilterBadge from '@/components/ui/ValuesFilterBadge.vue';
   import { useRouter } from 'vue-router';
   import { formatDateShort } from '@/utils/dateUtils.js';
 

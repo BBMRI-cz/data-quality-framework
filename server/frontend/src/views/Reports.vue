@@ -54,7 +54,7 @@
         <div v-else>
           <div class="mb-4">
             <div class="filter-label">Status:</div>
-            <CategoryFilter v-model="selectedStatus" :categories="statuses" />
+            <ValuesFilter v-model="selectedStatus" :categories="statuses" />
           </div>
           <ReportsTable
             :reports="reports"
@@ -72,7 +72,7 @@
   import { ref, onMounted, computed } from 'vue';
   import ReportsTable from '@/components/report/ReportsTable.vue';
   import PageHeader from '@/components/ui/PageHeader.vue';
-  import CategoryFilter from '@/components/CategoryFilter.vue';
+  import ValuesFilter from '@/components/ui/ValuesFilter.vue';
   import { apiService } from '@/services/apiService.js';
   import { getReportStatus, CheckStatus } from '@/utils/qualityCheckUtils.js';
 
