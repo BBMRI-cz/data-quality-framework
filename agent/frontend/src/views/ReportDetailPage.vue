@@ -59,20 +59,22 @@
           }}) exceeds budget ({{ report.epsilonBudget.toFixed(2) }})
         </div>
 
+        <div class="mb-4">
+          <div class="filter-label">Status:</div>
+          <FilterComponent v-model="selectedStatus" :elements="statuses" />
+        </div>
+
         <!-- Results Section -->
         <div class="card border-0 shadow-sm">
           <div class="card-header bg-white border-bottom" style="padding: 0; border: none"></div>
           <div class="card-body">
-            <div
-              v-if="!report.results || report.results.length === 0"
-              class="text-center py-4 text-muted"
-            >
+            <div v-if="filteredResults.length === 0" class="text-center py-4 text-muted">
               <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
               <p class="mb-0">No results available</p>
             </div>
             <div v-else class="results-container">
               <div
-                v-for="result in sortedResults"
+                v-for="result in filteredResults"
                 :id="getCheckIdKey(result)"
                 :key="getCheckIdKey(result)"
                 :class="['result-card', 'card', 'mb-3', getResultClass(result)]"
@@ -95,9 +97,7 @@
                       <div class="result-details">
                         <div class="detail-row">
                           <span class="detail-label">Occurrence Rate:</span>
-                          <span class="detail-value"
-                            >{{ calculatePercentage(result.rawValue) }}%</span
-                          >
+                          <span class="detail-value">{{ calculatePercentage(result) }}%</span>
                         </div>
                         <div v-if="result.error" class="detail-row">
                           <span class="detail-label text-danger">Error:</span>
@@ -188,6 +188,7 @@
   import Pagination from '@/components/Pagination.vue';
   import StatCard from '@/components/StatCard.vue';
   import ActionButton from '@/components/ActionButton.vue';
+  import FilterComponent from '@/components/FilterComponent.vue';
   import { useReportStore } from '@/stores/reportStore.js';
 
   const route = useRoute();
@@ -203,6 +204,15 @@
   const idPage = ref({});
   const patientModalRef = ref(null);
   const modalPatientId = ref('');
+  const selectedStatus = ref(null);
+
+  const CHECK_STATUS = {
+    PASSED: 'PASSED',
+    WARNING: 'WARNING',
+    FAILED: 'FAILED',
+  };
+
+  const statuses = [CHECK_STATUS.PASSED, CHECK_STATUS.WARNING, CHECK_STATUS.FAILED];
 
   const checkExists = (checkId) => {
     return qualityChecks.value.some((check) => check.id === checkId);
@@ -249,9 +259,42 @@
     return result.checkId + '_' + (result.stratum || 'all');
   }
 
-  const calculatePercentage = (value) => {
-    const total = report.value?.numberOfEntities || 1;
-    return ((value / total) * 100).toFixed(2);
+  const getOccurrenceValue = (result) => {
+    const rawValue = Number(result?.rawValue);
+    if (Number.isFinite(rawValue)) {
+      return rawValue;
+    }
+
+    const obfuscatedValue = Number(result?.obfuscatedValue);
+    if (Number.isFinite(obfuscatedValue)) {
+      return obfuscatedValue;
+    }
+
+    return 0;
+  };
+
+  const calculatePercentage = (result) => {
+    const total = Number(report.value?.numberOfEntities);
+    if (!Number.isFinite(total) || total <= 0) {
+      return '0.00';
+    }
+
+    return ((getOccurrenceValue(result) / total) * 100).toFixed(2);
+  };
+
+  const getResultPercentage = (result) => {
+    return parseFloat(calculatePercentage(result));
+  };
+
+  const getResultStatus = (result) => {
+    const percentage = getResultPercentage(result);
+    if (percentage >= result.errorThreshold || result.error) {
+      return CHECK_STATUS.FAILED;
+    }
+    if (percentage >= result.warningThreshold) {
+      return CHECK_STATUS.WARNING;
+    }
+    return CHECK_STATUS.PASSED;
   };
 
   const calculateEpsilonUsed = () => {
@@ -265,53 +308,55 @@
 
   const countErrors = () => {
     if (!report.value?.results) return 0;
-    return report.value.results.filter((result) => {
-      const percentage = parseFloat(calculatePercentage(result.obfuscatedValue));
-      return percentage >= result.errorThreshold || result.error;
-    }).length;
+    return report.value.results.filter((result) => getResultStatus(result) === CHECK_STATUS.FAILED)
+      .length;
   };
 
   const countWarnings = () => {
     if (!report.value?.results) return 0;
-    return report.value.results.filter((result) => {
-      const percentage = parseFloat(calculatePercentage(result.obfuscatedValue));
-      return (
-        percentage >= result.warningThreshold && percentage < result.errorThreshold && !result.error
-      );
-    }).length;
+    return report.value.results.filter((result) => getResultStatus(result) === CHECK_STATUS.WARNING)
+      .length;
   };
 
   const countPassed = () => {
     if (!report.value?.results) return 0;
-    return report.value.results.filter((result) => {
-      const percentage = parseFloat(calculatePercentage(result.obfuscatedValue));
-      return percentage < result.warningThreshold && !result.error;
-    }).length;
+    return report.value.results.filter((result) => getResultStatus(result) === CHECK_STATUS.PASSED)
+      .length;
   };
 
   const getResultClass = (result) => {
-    const percentage = parseFloat(calculatePercentage(result.obfuscatedValue));
-    if (percentage >= result.errorThreshold || result.error) {
+    const status = getResultStatus(result);
+    if (status === CHECK_STATUS.FAILED) {
       return 'bg-danger';
-    } else if (percentage >= result.warningThreshold) {
+    }
+    if (status === CHECK_STATUS.WARNING) {
       return 'bg-warning';
     }
     return 'bg-success';
   };
 
   const getResultPriority = (result) => {
-    const percentage = parseFloat(calculatePercentage(result.obfuscatedValue));
-    if (percentage >= result.errorThreshold || result.error) {
+    const status = getResultStatus(result);
+    if (status === CHECK_STATUS.FAILED) {
       return 0; // Errors first
-    } else if (percentage >= result.warningThreshold) {
+    }
+    if (status === CHECK_STATUS.WARNING) {
       return 1; // Warnings second
     }
     return 2; // Passed last
   };
 
-  const sortedResults = computed(() => {
+  const filteredResults = computed(() => {
     if (!report.value?.results) return [];
-    return [...report.value.results].sort((a, b) => {
+
+    const statusFiltered = report.value.results.filter((result) => {
+      if (!selectedStatus.value) {
+        return true;
+      }
+      return getResultStatus(result) === selectedStatus.value;
+    });
+
+    return [...statusFiltered].sort((a, b) => {
       return getResultPriority(a) - getResultPriority(b);
     });
   });
@@ -394,6 +439,16 @@
     display: flex;
     flex-direction: column;
   }
+
+  .filter-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
 
   .result-card {
     transition:
