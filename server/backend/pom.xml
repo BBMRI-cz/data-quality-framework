@@ -23,7 +23,7 @@
         <bouncycastle.version>1.83</bouncycastle.version>
         <jjwt.version>0.12.6</jjwt.version>
         <modelmapper.version>3.2.6</modelmapper.version>
-        <testcontainers.version>2.0.2</testcontainers.version>
+        <testcontainers.version>2.0.4</testcontainers.version>
         <fmt.plugin.version>2.25</fmt.plugin.version>
         <git-commit-id.plugin.version>9.0.2</git-commit-id.plugin.version>
     </properties>
