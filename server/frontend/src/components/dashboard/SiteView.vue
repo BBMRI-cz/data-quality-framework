@@ -6,30 +6,18 @@
         label="Agents"
         :value="`${filteredAgents.length}`"
         icon="bi bi-database-fill-gear"
-        icon-color="#0d6efd"
-        icon-bg-color="#cfe2ff"
         :tooltip-text="filteredAgents.map((a) => a.name).join(', ')"
       />
-      <StatsCard
-        label="Quality Checks"
-        :value="`${totalChecks}`"
-        icon="bi bi-check-square-fill"
-        icon-color="#6f42c1"
-        icon-bg-color="#e2d9f3"
-      />
+      <StatsCard label="Quality Checks" :value="`${totalChecks}`" icon="bi bi-check-square-fill" />
       <StatsCard
         label="Agents with Errors"
         :value="`${sitesWithErrors}`"
         icon="bi bi-exclamation-triangle-fill"
-        icon-color="#dc3545"
-        icon-bg-color="#f8d7da"
       />
       <StatsCard
         label="Agents with Warnings"
         :value="`${sitesWithWarnings}`"
         icon="bi bi-exclamation-circle-fill"
-        icon-color="#ffc107"
-        icon-bg-color="#fff3cd"
       />
     </div>
 

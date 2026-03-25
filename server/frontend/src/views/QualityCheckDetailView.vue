@@ -37,8 +37,6 @@
               label="Registered At"
               :value="formatDate(qualityCheck.registeredAt)"
               icon="bi bi-calendar-event"
-              icon-color="#0d6efd"
-              icon-bg-color="#cfe2ff"
               trend-text="Quality check creation date"
               trend-type="neutral"
             />

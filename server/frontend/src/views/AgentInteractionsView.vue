@@ -53,8 +53,6 @@
             label="Agent Version"
             :value="agentVersion || 'unknown'"
             icon="bi bi-code-square"
-            icon-color="#6f42c1"
-            icon-bg-color="#e0cffc"
             trend-text="Current version"
             trend-type="neutral"
           />
@@ -64,8 +62,6 @@
             label="Latest Ping"
             :value="latestPingTime || 'No pings recorded'"
             icon="bi bi-heart-pulse"
-            :icon-color="latestPingColor"
-            :icon-bg-color="latestPingBgColor"
             trend-text="Health check"
             trend-type="neutral"
           />
@@ -75,8 +71,6 @@
             label="First Registration"
             :value="firstRegistrationTime || 'Not registered'"
             icon="bi bi-person-plus"
-            icon-color="#0d6efd"
-            icon-bg-color="#cfe2ff"
             trend-text="Agent joined"
             trend-type="neutral"
           />

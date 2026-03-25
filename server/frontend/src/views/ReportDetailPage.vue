@@ -37,36 +37,26 @@
             :label="'Total Checks'"
             :value="report.results?.length || 0"
             icon="bi bi-list-check"
-            icon-color="#6c757d"
-            icon-bg-color="#e7e7e7"
           />
           <StatsCard
             :label="'Received Date'"
             :value="formatTimestamp(report.timestamp)"
             icon="bi bi-clock-history"
-            icon-color="#0dcaf0"
-            icon-bg-color="#cff4fc"
           />
           <StatsCard
             :label="'Passed'"
             :value="countPassed()"
             :icon="getStatusIcon(CheckStatus.PASSED)"
-            :icon-color="getStatusColor(CheckStatus.PASSED)"
-            :icon-bg-color="getStatusBgColor(CheckStatus.PASSED)"
           />
           <StatsCard
             :label="'Warnings'"
             :value="countWarnings()"
             :icon="getStatusIcon(CheckStatus.WARNING)"
-            :icon-color="getStatusColor(CheckStatus.WARNING)"
-            :icon-bg-color="getStatusBgColor(CheckStatus.WARNING)"
           />
           <StatsCard
             :label="'Errors'"
             :value="countErrors()"
             :icon="getStatusIcon(CheckStatus.FAILED)"
-            :icon-color="getStatusColor(CheckStatus.FAILED)"
-            :icon-bg-color="getStatusBgColor(CheckStatus.FAILED)"
           />
         </div>
 

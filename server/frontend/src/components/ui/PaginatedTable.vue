@@ -187,4 +187,3 @@
     cursor: pointer;
   }
 </style>
-

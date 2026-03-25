@@ -101,8 +101,6 @@
             label="Total Reports"
             :value="reportStats.total"
             icon="bi bi-file-text"
-            icon-color="#0d6efd"
-            icon-bg-color="#cfe2ff"
             trend-text="All time"
             trend-type="neutral"
           />
@@ -112,8 +110,6 @@
             label="Failed Checks"
             :value="reportStats.failed"
             icon="bi bi-x-circle"
-            icon-color="#dc3545"
-            icon-bg-color="#f8d7da"
             trend-text="Needs attention"
           />
         </div>
@@ -122,8 +118,6 @@
             label="Warnings"
             :value="reportStats.warnings"
             icon="bi bi-exclamation-triangle"
-            icon-color="#ffc107"
-            icon-bg-color="#fff3cd"
             trend-text="Review recommended"
             trend-type="neutral"
           />
@@ -133,8 +127,6 @@
             label="Last Report"
             :value="reportStats.lastReportTime"
             icon="bi bi-clock"
-            icon-color="#0dcaf0"
-            icon-bg-color="#cff4fc"
             trend-text="Timestamp"
             trend-type="neutral"
           />

@@ -6,8 +6,11 @@
           <p class="text-muted mb-1">{{ label }}</p>
           <p class="display-6 fw-bold text-dark mb-0" :title="tooltipText">{{ displayValue }}</p>
         </div>
-        <div class="icon-container p-3 rounded" :style="{ backgroundColor: iconBgColor }">
-          <i :class="iconClass" :style="{ color: iconColor }" style="font-size: 1.25rem"></i>
+        <div
+          v-if="icon"
+          class="d-inline-flex align-items-center justify-content-center p-2 rounded bg-light"
+        >
+          <i :class="iconClass"></i>
         </div>
       </div>
       <div v-if="trendText" class="mt-3">
@@ -38,16 +41,7 @@
     },
     icon: {
       type: String,
-      required: true,
-      default: 'bi bi-graph-up',
-    },
-    iconColor: {
-      type: String,
-      default: '#0d6efd', // Bootstrap primary color
-    },
-    iconBgColor: {
-      type: String,
-      default: '#cfe2ff', // Bootstrap primary light
+      default: '',
     },
     trendText: {
       type: String,
@@ -139,24 +133,3 @@
     }
   });
 </script>
-
-<style scoped>
-  .icon-container {
-    min-width: 48px;
-    min-height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .card {
-    transition:
-      transform 0.2s ease-in-out,
-      box-shadow 0.2s ease-in-out;
-  }
-
-  .card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
-  }
-</style>

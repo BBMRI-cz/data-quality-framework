@@ -23,10 +23,7 @@
 
         <!-- Stats Cards -->
         <div class="stats-grid mb-3 mb-md-4">
-          <div class="stat-card">
-            <div class="stat-number text-dark">{{ qualityChecks.length }}</div>
-            <div class="stat-label">Total Checks</div>
-          </div>
+          <StatsCard label="Total Checks" :value="qualityChecks.length" :animation-duration="600" />
         </div>
 
         <!-- Filters -->
@@ -109,6 +106,7 @@
   import { ref, computed, onMounted, watch } from 'vue';
   import { apiService } from '@/services/apiService.js';
   import Badge from '@/components/ui/Badge.vue';
+  import StatsCard from '@/components/ui/StatsCard.vue';
   import PaginatedTable from '@/components/ui/PaginatedTable.vue';
   import PageHeader from '@/components/ui/PageHeader.vue';
   import ValuesFilter from '@/components/ui/ValuesFilter.vue';
@@ -252,26 +250,6 @@
     gap: 1rem;
   }
 
-  .stat-card {
-    background: white;
-    padding: 1.25rem;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    text-align: center;
-  }
-
-  .stat-number {
-    font-size: 2rem;
-    font-weight: 700;
-    margin-bottom: 0.25rem;
-  }
-
-  .stat-label {
-    font-size: 0.875rem;
-    color: #6c757d;
-    font-weight: 500;
-  }
-
   /* Filters */
   .filters-card {
     background: white;
@@ -336,14 +314,6 @@
       grid-template-columns: repeat(3, 1fr);
     }
 
-    .stat-number {
-      font-size: 1.5rem;
-    }
-
-    .stat-label {
-      font-size: 0.75rem;
-    }
-
     .filters-content {
       flex-direction: column;
       align-items: stretch;
@@ -353,7 +323,6 @@
       margin-left: 0;
       text-align: center;
     }
-
   }
 
   @media (max-width: 576px) {
@@ -362,14 +331,9 @@
       gap: 0.5rem;
     }
 
-    .stat-card {
-      padding: 0.875rem 0.5rem;
-    }
-
     .container-fluid {
       padding-left: 0.75rem;
       padding-right: 0.75rem;
     }
-
   }
 </style>
