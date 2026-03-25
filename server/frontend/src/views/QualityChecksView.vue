@@ -30,15 +30,7 @@
         <div class="filters-card mb-3 mb-md-4">
           <div class="filters-top-row">
             <div class="search-filter">
-              <input
-                v-model="searchQuery"
-                type="text"
-                class="form-control"
-                placeholder="Search quality checks..."
-              />
-            </div>
-            <div class="results-count">
-              <span class="text-muted small">{{ filteredChecks.length }} checks</span>
+              <SearchBar v-model="searchQuery" placeholder="Search quality checks..." />
             </div>
           </div>
         </div>
@@ -87,6 +79,7 @@
   import PaginatedTable from '@/components/ui/PaginatedTable.vue';
   import PageHeader from '@/components/ui/PageHeader.vue';
   import LabeledValuesFilter from '@/components/ui/LabeledValuesFilter.vue';
+  import SearchBar from '@/components/ui/SearchBar.vue';
   import ValuesFilterBadge from '@/components/ui/ValuesFilterBadge.vue';
   import { useRouter } from 'vue-router';
   import { formatDateShort } from '@/utils/dateUtils.js';
