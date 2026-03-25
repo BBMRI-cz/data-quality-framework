@@ -78,67 +78,38 @@
         </div>
 
         <!-- Quality Checks Table -->
-        <div v-else class="card border-0 shadow-sm">
-          <div class="card-header bg-white border-bottom py-3">
-            <div class="d-flex justify-content-between align-items-center">
-              <h5 class="mb-0 fw-semibold">Quality Check Definitions</h5>
-              <Badge :text="`${filteredChecks.length} checks`" variant="secondary" size="small" />
-            </div>
-          </div>
-          <div class="card-body p-0">
-            <div class="table-responsive">
-              <table class="table table-hover mb-0 align-middle">
-                <thead class="table-light">
-                  <tr>
-                    <th class="ps-4 d-none d-lg-table-cell">Hash</th>
-                    <th>Name</th>
-                    <th>Category</th>
-                    <th class="d-none d-md-table-cell">Description</th>
-                    <th class="d-none d-xl-table-cell">Registered At</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="check in filteredChecks"
-                    :key="check.hash || check.name"
-                    class="table-row-hover cursor-pointer"
-                    @click="viewCheckDetail(check)"
-                  >
-                    <td class="ps-4 d-none d-lg-table-cell">
-                      <code class="font-monospace small text-muted hash-code">{{
-                        check.hash
-                      }}</code>
-                    </td>
-                    <td>
-                      <div class="fw-medium">{{ check.name }}</div>
-                      <div class="d-md-none small text-muted mt-1">{{ check.description }}</div>
-                    </td>
-                    <td>
-                      <ValuesFilterBadge :category="check.category" />
-                    </td>
-                    <td class="d-none d-md-table-cell">
-                      <div class="text-muted small">
-                        {{ check.description || 'No description' }}
-                      </div>
-                    </td>
-                    <td class="d-none d-xl-table-cell">
-                      <span class="text-muted small">{{ formatDate(check.registeredAt) }}</span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+        <PaginatedTable
+          v-else
+          title="Quality Check Definitions"
+          :columns="tableColumns"
+          :items="tableRows"
+          :page="currentPage"
+          :page-size="pageSize"
+          :total-items="tableRows.length"
+          item-key="hash"
+          item-label="checks"
+          empty-text="No quality checks are configured yet"
+          @row-click="viewCheckDetail"
+          @page-change="onPageChange"
+        >
+          <template #header-meta>
+            <Badge :text="`${filteredChecks.length} checks`" variant="secondary" size="small" />
+          </template>
+
+          <template #cell-category="{ item }">
+            <ValuesFilterBadge :category="item.category" />
+          </template>
+        </PaginatedTable>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-  import { ref, computed, onMounted } from 'vue';
+  import { ref, computed, onMounted, watch } from 'vue';
   import { apiService } from '@/services/apiService.js';
   import Badge from '@/components/ui/Badge.vue';
+  import PaginatedTable from '@/components/ui/PaginatedTable.vue';
   import PageHeader from '@/components/ui/PageHeader.vue';
   import ValuesFilter from '@/components/ui/ValuesFilter.vue';
   import ValuesFilterBadge from '@/components/ui/ValuesFilterBadge.vue';
@@ -152,6 +123,33 @@
   const error = ref(null);
   const searchQuery = ref('');
   const selectedCategory = ref(null);
+  const currentPage = ref(0);
+  const pageSize = 10;
+
+  const tableColumns = [
+    {
+      key: 'hash',
+      label: 'Hash',
+      headerClass: 'ps-4 d-none d-lg-table-cell',
+      cellClass: 'ps-4 d-none d-lg-table-cell',
+    },
+    { key: 'name', label: 'Name' },
+    { key: 'category', label: 'Category' },
+    {
+      key: 'description',
+      label: 'Description',
+      headerClass: 'd-none d-md-table-cell',
+      cellClass: 'd-none d-md-table-cell',
+      fallback: 'No description',
+    },
+    {
+      key: 'registeredAtText',
+      label: 'Registered At',
+      headerClass: 'd-none d-xl-table-cell',
+      cellClass: 'd-none d-xl-table-cell',
+      fallback: 'N/A',
+    },
+  ];
 
   const categories = computed(() => {
     const cats = new Set();
@@ -189,7 +187,16 @@
     );
   });
 
-  const formatDate = formatDateShort;
+  const tableRows = computed(() => {
+    return filteredChecks.value.map((check) => ({
+      ...check,
+      registeredAtText: check.registeredAt ? formatDateShort(check.registeredAt) : null,
+    }));
+  });
+
+  const onPageChange = (page) => {
+    currentPage.value = page;
+  };
 
   const loadQualityChecks = async () => {
     loading.value = true;
@@ -220,6 +227,17 @@
   const viewCheckDetail = (check) => {
     router.push(`/quality-checks/${check.hash}`);
   };
+
+  watch([searchQuery, selectedCategory], () => {
+    currentPage.value = 0;
+  });
+
+  watch(tableRows, (rows) => {
+    const maxPage = Math.max(Math.ceil(rows.length / pageSize) - 1, 0);
+    if (currentPage.value > maxPage) {
+      currentPage.value = maxPage;
+    }
+  });
 
   onMounted(() => {
     loadQualityChecks();
@@ -312,78 +330,7 @@
     margin-bottom: 0;
   }
 
-  /* Table Styling */
-  .card {
-    border-radius: 12px;
-    overflow: hidden;
-  }
-
-  .table {
-    font-size: 0.875rem;
-  }
-
-  .table th {
-    font-weight: 600;
-    font-size: 0.813rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #6c757d;
-    padding: 1rem 0.75rem;
-    border-bottom: 2px solid #dee2e6;
-    white-space: nowrap;
-  }
-
-  .table td {
-    vertical-align: middle;
-    padding: 1rem 0.75rem;
-    border-bottom: 1px solid #f0f0f0;
-    font-size: 0.875rem;
-  }
-
-  .table-responsive {
-    overflow-x: visible;
-  }
-
-  .hash-code {
-    max-width: 150px;
-    display: inline-block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .table-row-hover {
-    transition: all 0.2s ease-in-out;
-    cursor: pointer;
-  }
-
-  .table-row-hover:hover {
-    background-color: #f8f9fa;
-    transform: translateX(2px);
-    box-shadow: inset 3px 0 0 #0d6efd;
-  }
-
-  .cursor-pointer {
-    cursor: pointer;
-  }
-
-  .font-monospace {
-    font-family: var(--font-mono), monospace;
-    font-size: 0.875rem;
-  }
-
   /* Responsive */
-  @media (max-width: 992px) {
-    .table th,
-    .table td {
-      padding: 0.75rem 0.5rem;
-    }
-
-    .hash-code {
-      max-width: 120px;
-    }
-  }
-
   @media (max-width: 768px) {
     .stats-grid {
       grid-template-columns: repeat(3, 1fr);
@@ -407,18 +354,6 @@
       text-align: center;
     }
 
-    .table {
-      font-size: 0.75rem;
-    }
-
-    .table th,
-    .table td {
-      padding: 0.5rem 0.35rem;
-    }
-
-    .hash-code {
-      max-width: 100px;
-    }
   }
 
   @media (max-width: 576px) {
@@ -436,8 +371,5 @@
       padding-right: 0.75rem;
     }
 
-    .table-responsive {
-      overflow-x: auto;
-    }
   }
 </style>
