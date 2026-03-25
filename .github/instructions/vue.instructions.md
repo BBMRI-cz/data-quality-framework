@@ -38,6 +38,7 @@ Instructions for building high-quality VueJS 3 applications with the Composition
 - Use `<script setup>` syntax for brevity and performance
 - Validate props with TypeScript; use runtime checks only when necessary
 - Favor slots and scoped slots for flexible composition
+- use only colors and style defined in base.css
 
 ### State Management
 - Use Pinia for global state: define stores with `defineStore`

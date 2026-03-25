@@ -21,8 +21,8 @@
           </thead>
           <tbody>
             <tr
-              v-for="item in paginatedItems"
-              :key="resolveItemKey(item)"
+              v-for="(item, index) in paginatedItems"
+              :key="resolveItemKey(item, index)"
               :class="{ 'table-row-hover cursor-pointer': rowClickable }"
               @click="handleRowClick(item)"
             >
@@ -120,43 +120,37 @@
 
   const emit = defineEmits(['row-click', 'page-change']);
 
-  const totalItems = computed(() => {
-    return typeof props.totalItems === 'number' ? props.totalItems : props.items.length;
-  });
+  const totalItems = computed(() =>
+    typeof props.totalItems === 'number' ? props.totalItems : props.items.length
+  );
 
   const totalPages = computed(() => {
-    const pages = Math.ceil(totalItems.value / props.pageSize);
+    const size = Math.max(props.pageSize, 1);
+    const pages = Math.ceil(totalItems.value / size);
     return pages > 0 ? pages : 1;
   });
 
-  const showPagination = computed(() => totalPages.value > 1);
+  const showPagination = computed(() => props.paginate && totalPages.value > 1);
 
   const paginatedItems = computed(() => {
     if (!props.paginate) {
       return props.items;
     }
 
-    const start = props.page * props.pageSize;
-    return props.items.slice(start, start + props.pageSize);
+    const size = Math.max(props.pageSize, 1);
+    const start = Math.max(props.page, 0) * size;
+    return props.items.slice(start, start + size);
   });
 
-  const resolveItemKey = (item) => {
+  const resolveItemKey = (item, index) => {
     if (typeof props.itemKey === 'function') {
       return props.itemKey(item);
     }
-    return item[props.itemKey];
+    return item?.[props.itemKey] ?? index;
   };
 
   const formatCellValue = (value, column) => {
-    if (value == null) {
-      return column.fallback || 'N/A';
-    }
-
-    if (column.format === 'date' && value) {
-      return new Date(value).toLocaleString();
-    }
-
-    return value;
+    return value == null ? column.fallback || 'N/A' : value;
   };
 
   const handleRowClick = (item) => {
@@ -175,6 +169,12 @@
 </script>
 
 <style scoped>
+  .table td,
+  .table th {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+
   .table-row-hover {
     transition: all 0.2s ease-in-out;
   }
