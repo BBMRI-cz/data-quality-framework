@@ -92,7 +92,11 @@
                 <h5 class="mb-0 fw-semibold">
                   <i class="bi bi-clock-history text-primary me-2"></i>Agent Activity Log
                 </h5>
-                <span class="badge bg-secondary">{{ totalInteractions }} interactions</span>
+                <Badge
+                  :text="`${totalInteractions} interactions`"
+                  variant="secondary"
+                  size="small"
+                />
               </div>
             </div>
             <div class="card-body p-0">
@@ -115,13 +119,10 @@
                         </div>
                       </td>
                       <td>
-                        <span
-                          class="badge rounded-pill"
-                          :class="getInteractionTypeBadgeClass(interaction.type)"
-                        >
+                        <Badge :color="getInteractionTypeColor(interaction.type)" size="small">
                           <i :class="getInteractionTypeIcon(interaction.type)" class="me-1"></i>
                           {{ interaction.type }}
-                        </span>
+                        </Badge>
                       </td>
                     </tr>
                     <tr v-if="paginatedInteractions.length === 0">
@@ -182,6 +183,7 @@
   import { useRoute, useRouter } from 'vue-router';
   import PageHeader from '@/components/ui/PageHeader.vue';
   import StatsCard from '@/components/ui/StatsCard.vue';
+  import Badge from '@/components/ui/Badge.vue';
   import { apiService } from '@/services/apiService.js';
   import { formatDateLong, formatTimeFull } from '@/utils/dateUtils.js';
 
@@ -320,16 +322,16 @@
     fetchAgentInteractions();
   };
 
-  const getInteractionTypeBadgeClass = (type) => {
+  const getInteractionTypeColor = (type) => {
     switch (type) {
       case 'REPORT':
-        return 'bg-info';
+        return '#0dcaf0';
       case 'PING':
-        return 'bg-success';
+        return '#198754';
       case 'REGISTRATION':
-        return 'bg-primary';
+        return '#0d6efd';
       default:
-        return 'bg-secondary';
+        return '#6c757d';
     }
   };
 

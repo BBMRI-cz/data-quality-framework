@@ -111,9 +111,7 @@
                   </div>
                 </div>
                 <div class="agent-status">
-                  <span :class="getStatusClass(agent.status)" class="badge">
-                    {{ agent.status }}
-                  </span>
+                  <Badge :text="agent.status" :color="getStatusColor(agent.status)" size="small" />
                 </div>
               </div>
 
@@ -199,9 +197,7 @@
                 </div>
 
                 <div class="agent-col-status">
-                  <span :class="getStatusClass(agent.status)" class="badge">
-                    {{ agent.status }}
-                  </span>
+                  <Badge :text="agent.status" :color="getStatusColor(agent.status)" size="small" />
                 </div>
 
                 <div class="agent-col-actions" @click.stop>
@@ -292,6 +288,7 @@
   import { ref, computed, onMounted } from 'vue';
   import { useRouter } from 'vue-router';
   import { apiService } from '@/services/apiService.js';
+  import Badge from '@/components/ui/Badge.vue';
   import PageHeader from '@/components/ui/PageHeader.vue';
 
   const router = useRouter();
@@ -389,18 +386,18 @@
   });
 
   // Methods
-  const getStatusClass = (status) => {
+  const getStatusColor = (status) => {
     switch (status) {
       case 'ACTIVE':
-        return 'bg-success';
+        return '#198754';
       case 'PENDING':
-        return 'bg-warning text-dark';
+        return '#ffc107';
       case 'INACTIVE':
-        return 'bg-secondary';
+        return '#6c757d';
       case 'ERROR':
-        return 'bg-danger';
+        return '#dc3545';
       default:
-        return 'bg-secondary';
+        return '#6c757d';
     }
   };
 
@@ -736,12 +733,6 @@
     margin-top: 1rem;
     padding-top: 1rem;
     border-top: 1px solid #f8f9fa;
-  }
-
-  /* Badge styles */
-  .badge {
-    font-size: 0.75rem;
-    padding: 0.375rem 0.75rem;
   }
 
   /* Form controls */

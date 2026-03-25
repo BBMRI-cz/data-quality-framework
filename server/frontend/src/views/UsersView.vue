@@ -84,7 +84,7 @@
           <div class="card-header bg-white border-bottom py-3">
             <div class="d-flex justify-content-between align-items-center">
               <h5 class="mb-0 fw-semibold">System Users</h5>
-              <span class="badge bg-secondary">{{ filteredUsers.length }} users</span>
+              <Badge :text="`${filteredUsers.length} users`" variant="secondary" size="small" />
             </div>
           </div>
           <div class="card-body p-0">
@@ -318,13 +318,6 @@
     box-shadow: inset 3px 0 0 #0d6efd;
   }
 
-  .badge {
-    font-weight: 500;
-    padding: 0.35rem 0.65rem;
-    font-size: 0.75rem;
-    white-space: nowrap;
-  }
-
   /* Responsive */
   @media (max-width: 992px) {
     .table th,
@@ -363,11 +356,6 @@
     .table th,
     .table td {
       padding: 0.5rem 0.35rem;
-    }
-
-    .badge {
-      font-size: 0.65rem;
-      padding: 0.25rem 0.45rem;
     }
   }
 

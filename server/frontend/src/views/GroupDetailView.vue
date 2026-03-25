@@ -76,9 +76,11 @@
                   <i class="bi bi-people-fill text-primary me-2"></i>
                   Assign Agents
                 </h5>
-                <span class="badge bg-primary-soft text-primary px-3 py-2">
-                  {{ editForm.agentIds.length }} / {{ filteredAgents.length }} selected
-                </span>
+                <Badge
+                  :text="`${editForm.agentIds.length} / ${filteredAgents.length} selected`"
+                  variant="secondary"
+                  size="small"
+                />
               </div>
             </div>
             <div class="card-body p-4">
@@ -179,16 +181,11 @@
                       </div>
                       <div class="agent-id">{{ agent.id }}</div>
                       <div v-if="agent.status" class="agent-status mt-2">
-                        <span
-                          class="status-badge"
-                          :class="{
-                            'status-active': agent.status === 'ACTIVE',
-                            'status-inactive': agent.status === 'INACTIVE',
-                            'status-pending': agent.status === 'PENDING',
-                          }"
-                        >
-                          {{ agent.status }}
-                        </span>
+                        <Badge
+                          :text="agent.status"
+                          :color="getStatusColor(agent.status)"
+                          size="small"
+                        />
                       </div>
                     </div>
                   </div>
@@ -246,6 +243,7 @@
   import { apiService } from '@/services/apiService.js';
   import { notificationService } from '@/services/notificationService.js';
   import PageHeader from '@/components/ui/PageHeader.vue';
+  import Badge from '@/components/ui/Badge.vue';
   import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue';
 
   const route = useRoute();
@@ -291,6 +289,19 @@
       return name.includes(query) || id.includes(query);
     });
   });
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'ACTIVE':
+        return '#198754';
+      case 'INACTIVE':
+        return '#dc3545';
+      case 'PENDING':
+        return '#ffc107';
+      default:
+        return '#6c757d';
+    }
+  };
 
   const hasChanges = computed(() => {
     if (isNew.value) return true;
@@ -498,11 +509,6 @@
     box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
   }
 
-  /* Badge Styles */
-  .bg-primary-soft {
-    background-color: rgba(102, 126, 234, 0.15);
-  }
-
   /* Agent Controls */
   .agent-controls {
     background: #f8f9fa;
@@ -669,34 +675,6 @@
   .agent-status {
     display: flex;
     align-items: center;
-  }
-
-  .status-badge {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
-    border-radius: 12px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .status-active {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
-  }
-
-  .status-inactive {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-  }
-
-  .status-pending {
-    background-color: #fff3cd;
-    color: #856404;
-    border: 1px solid #ffeaa7;
   }
 
   /* Action Buttons */

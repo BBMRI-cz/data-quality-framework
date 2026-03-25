@@ -82,7 +82,7 @@
           <div class="card-header bg-white border-bottom py-3">
             <div class="d-flex justify-content-between align-items-center">
               <h5 class="mb-0 fw-semibold">Quality Check Definitions</h5>
-              <span class="badge bg-secondary">{{ filteredChecks.length }} checks</span>
+              <Badge :text="`${filteredChecks.length} checks`" variant="secondary" size="small" />
             </div>
           </div>
           <div class="card-body p-0">
@@ -114,7 +114,7 @@
                       <div class="d-md-none small text-muted mt-1">{{ check.description }}</div>
                     </td>
                     <td>
-                      <CategoryBadge :category="check.category" />
+                      <ValuesFilterBadge :category="check.category" />
                     </td>
                     <td class="d-none d-md-table-cell">
                       <div class="text-muted small">
@@ -138,6 +138,7 @@
 <script setup>
   import { ref, computed, onMounted } from 'vue';
   import { apiService } from '@/services/apiService.js';
+  import Badge from '@/components/ui/Badge.vue';
   import PageHeader from '@/components/ui/PageHeader.vue';
   import ValuesFilter from '@/components/ui/ValuesFilter.vue';
   import ValuesFilterBadge from '@/components/ui/ValuesFilterBadge.vue';
@@ -371,13 +372,6 @@
     font-size: 0.875rem;
   }
 
-  .badge {
-    font-weight: 500;
-    padding: 0.35rem 0.65rem;
-    font-size: 0.75rem;
-    white-space: nowrap;
-  }
-
   /* Responsive */
   @media (max-width: 992px) {
     .table th,
@@ -424,11 +418,6 @@
 
     .hash-code {
       max-width: 100px;
-    }
-
-    .badge {
-      font-size: 0.65rem;
-      padding: 0.25rem 0.45rem;
     }
   }
 

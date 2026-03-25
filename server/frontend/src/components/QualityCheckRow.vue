@@ -20,9 +20,7 @@
 
         <!-- Status Badge -->
         <div v-if="checkStatus === CheckStatus.FAILED" class="check-status">
-          <span class="status-badge" :class="getStatusBadgeClass()">
-            {{ getStatusText() }}
-          </span>
+          <Badge :text="getStatusText()" :color="getStatusColor()" size="small" />
         </div>
 
         <!-- Expand Button -->
@@ -81,6 +79,7 @@
   import { computed, ref } from 'vue';
   import { useRouter } from 'vue-router';
   import { CheckStatus } from '@/utils/qualityCheckUtils.js';
+  import Badge from '@/components/ui/Badge.vue';
 
   const router = useRouter();
 
@@ -294,18 +293,15 @@
     }
   }
 
-  /**
-   * Get the status badge class
-   */
-  function getStatusBadgeClass() {
+  function getStatusColor() {
     switch (checkStatus.value) {
       case CheckStatus.FAILED:
-        return 'badge-error';
+        return '#dc3545';
       case CheckStatus.WARNING:
-        return 'badge-warning';
+        return '#ffc107';
       case CheckStatus.PASSED:
       default:
-        return 'badge-success';
+        return '#198754';
     }
   }
 
@@ -410,25 +406,6 @@
   /* Status Badge */
   .check-status {
     flex-shrink: 0;
-  }
-
-  .status-badge {
-    padding: 0.375rem 0.75rem;
-    border-radius: var(--radius-md);
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .badge-warning {
-    background: #fff3cd;
-    color: #997404;
-  }
-
-  .badge-error {
-    background: #f8d7da;
-    color: #842029;
   }
 
   /* Action Buttons */

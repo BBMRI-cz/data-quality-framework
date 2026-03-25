@@ -1,25 +1,29 @@
 <template>
   <div class="d-flex gap-2 flex-wrap">
     <button
-      class="btn btn-sm rounded-pill"
-      :class="modelValue === null ? 'btn-custom-primary' : 'btn-outline-custom-primary'"
+      class="btn btn-sm p-0 border-0 bg-transparent filter-chip"
       @click="$emit('update:modelValue', null)"
     >
-      All
+      <Badge text="All" :variant="modelValue === null ? 'primary' : 'secondary'" size="large" />
     </button>
     <button
       v-for="category in categories"
       :key="category"
-      class="btn btn-sm rounded-pill"
-      :class="modelValue === category ? 'btn-custom-primary' : 'btn-outline-custom-primary'"
+      class="btn btn-sm p-0 border-0 bg-transparent filter-chip"
       @click="$emit('update:modelValue', category)"
     >
-      {{ category }}
+      <Badge
+        :text="category"
+        :variant="modelValue === category ? 'primary' : 'secondary'"
+        size="large"
+      />
     </button>
   </div>
 </template>
 
 <script setup>
+  import Badge from '@/components/ui/Badge.vue';
+
   defineProps({
     categories: {
       type: Array,
@@ -35,27 +39,7 @@
 </script>
 
 <style scoped>
-  /* Custom Primary Button */
-  .btn-custom-primary {
-    background-color: var(--color-primary);
-    border-color: var(--color-primary);
-    color: #fff;
-  }
-
-  .btn-custom-primary:hover {
-    background-color: var(--color-primary-dark);
-    border-color: var(--color-primary-dark);
-    color: #fff;
-  }
-
-  .btn-outline-custom-primary {
-    color: var(--color-primary);
-    border-color: var(--color-primary);
-    background-color: transparent;
-  }
-
-  .btn-outline-custom-primary:hover {
-    background-color: var(--color-primary);
-    color: #fff;
+  .filter-chip {
+    line-height: 1;
   }
 </style>

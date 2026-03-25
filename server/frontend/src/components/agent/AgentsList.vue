@@ -49,9 +49,11 @@
               </div>
               <div class="agent-actions d-flex align-items-center gap-2 ms-2">
                 <!-- Display status badge only -->
-                <span :class="getStatusClass(agent.status)" class="badge">
-                  {{ getStatusDisplayText(agent.status) }}
-                </span>
+                <Badge
+                  :text="getStatusDisplayText(agent.status)"
+                  :color="getStatusColor(agent.status)"
+                  size="small"
+                />
               </div>
             </div>
           </div>
@@ -71,6 +73,7 @@
   import { ref, onMounted, computed, watch } from 'vue';
   import { useRouter } from 'vue-router';
   import { apiService } from '@/services/apiService.js';
+  import Badge from '@/components/ui/Badge.vue';
 
   const router = useRouter();
   const emit = defineEmits(['agentsLoaded']);
@@ -113,18 +116,18 @@
     }
   };
 
-  const getStatusClass = (status) => {
+  const getStatusColor = (status) => {
     switch (status) {
       case 'ACTIVE':
-        return 'bg-success';
+        return '#198754';
       case 'INACTIVE':
-        return 'bg-secondary';
+        return '#6c757d';
       case 'ERROR':
-        return 'bg-danger';
+        return '#dc3545';
       case 'PENDING':
-        return 'bg-warning';
+        return '#ffc107';
       default:
-        return 'bg-secondary';
+        return '#6c757d';
     }
   };
 
@@ -233,11 +236,6 @@
     line-height: 1.2;
   }
 
-  .badge {
-    font-size: 0.7rem;
-    padding: 0.25rem 0.5rem;
-  }
-
   .pending-agent {
     background-color: #fff3cd;
   }
@@ -258,7 +256,7 @@
       gap: 0.5rem;
     }
 
-    .badge {
+    .agent-actions {
       align-self: flex-end;
     }
   }

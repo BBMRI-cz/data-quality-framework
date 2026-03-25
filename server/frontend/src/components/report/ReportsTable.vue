@@ -3,7 +3,7 @@
     <div class="card-header bg-white border-bottom py-3">
       <div class="d-flex justify-content-between align-items-center">
         <h5 class="mb-0 fw-semibold">Recent Reports</h5>
-        <span class="badge bg-secondary">{{ reports.length }} reports</span>
+        <Badge :text="`${reports.length} reports`" variant="secondary" size="small" />
       </div>
     </div>
     <div class="card-body p-0">
@@ -46,9 +46,12 @@
                 </div>
               </td>
               <td class="text-center">
-                <span class="badge rounded-pill" :class="getReportStatusBadgeClass(report)">
-                  {{ getReportStatusText(report) }}
-                </span>
+                <Badge
+                  :text="getReportStatusText(report)"
+                  :color="getReportStatusColor(report)"
+                  size="small"
+                  :class="{ 'status-alert': isReportStatusAlert(report) }"
+                />
               </td>
               <td class="text-center">
                 <span class="text-muted">{{ getCheckCounts(report).total }}</span>
@@ -90,6 +93,7 @@
   import { useRouter } from 'vue-router';
   import { countChecksByStatus, getReportStatus, CheckStatus } from '@/utils/qualityCheckUtils.js';
   import { formatDateShort, formatTime } from '@/utils/dateUtils.js';
+  import Badge from '@/components/ui/Badge.vue';
 
   const router = useRouter();
 
@@ -147,19 +151,24 @@
     return getReportStatus(report, props.qualityCheckMap);
   };
 
-  const getReportStatusBadgeClass = (report) => {
+  const getReportStatusColor = (report) => {
     const status = getReportStatus(report, props.qualityCheckMap);
 
     switch (status) {
       case CheckStatus.PASSED:
-        return 'bg-success';
+        return '#198754';
       case CheckStatus.WARNING:
-        return 'bg-warning text-dark';
+        return '#ffc107';
       case CheckStatus.FAILED:
-        return 'bg-danger';
+        return '#dc3545';
       default:
-        return 'bg-secondary';
+        return '#6c757d';
     }
+  };
+
+  const isReportStatusAlert = (report) => {
+    const status = getReportStatus(report, props.qualityCheckMap);
+    return status === CheckStatus.WARNING || status === CheckStatus.FAILED;
   };
 </script>
 
@@ -212,20 +221,8 @@
     cursor: pointer;
   }
 
-  .badge {
-    font-weight: 500;
-    padding: 0.35rem 0.65rem;
-    font-size: 0.75rem;
-    white-space: nowrap;
-  }
-
-  .badge.rounded-pill {
-    padding: 0.35rem 0.85rem;
-  }
-
   /* Status indicator animation */
-  .badge.bg-danger,
-  .badge.bg-warning {
+  .status-alert {
     animation: pulse-subtle 2s ease-in-out infinite;
   }
 
