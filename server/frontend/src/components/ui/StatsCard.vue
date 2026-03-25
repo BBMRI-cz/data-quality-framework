@@ -4,13 +4,15 @@
       <div class="d-flex justify-content-between align-items-start">
         <div>
           <p class="text-muted mb-1">{{ label }}</p>
-          <p class="display-6 fw-bold text-dark mb-0" :title="tooltipText">{{ displayValue }}</p>
+          <p class="display-6 fw-bold mb-0" :style="valueStyle" :title="tooltipText">
+            {{ displayValue }}
+          </p>
         </div>
         <div
           v-if="icon"
-          class="d-inline-flex align-items-center justify-content-center p-2 rounded bg-light"
+          class="d-inline-flex align-items-center justify-content-center p-3 rounded bg-light"
         >
-          <i :class="iconClass"></i>
+          <i :class="[iconClass, 'fs-4']" :style="iconStyle"></i>
         </div>
       </div>
       <div v-if="trendText" class="mt-3">
@@ -36,6 +38,10 @@
       required: true,
     },
     tooltipText: {
+      type: String,
+      default: '',
+    },
+    color: {
       type: String,
       default: '',
     },
@@ -106,6 +112,14 @@
   );
 
   const iconClass = computed(() => props.icon);
+
+  const valueStyle = computed(() => {
+    return props.color ? { color: props.color } : null;
+  });
+
+  const iconStyle = computed(() => {
+    return props.color ? { color: props.color } : null;
+  });
 
   const trendClass = computed(() => {
     switch (props.trendType) {

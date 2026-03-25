@@ -6,18 +6,26 @@
         label="Agents"
         :value="`${filteredAgents.length}`"
         icon="bi bi-database-fill-gear"
+        color="var(--color-primary)"
         :tooltip-text="filteredAgents.map((a) => a.name).join(', ')"
       />
-      <StatsCard label="Quality Checks" :value="`${totalChecks}`" icon="bi bi-check-square-fill" />
+      <StatsCard
+        label="Quality Checks"
+        :value="`${totalChecks}`"
+        icon="bi bi-check-square-fill"
+        color="var(--color-success)"
+      />
       <StatsCard
         label="Agents with Errors"
         :value="`${sitesWithErrors}`"
-        icon="bi bi-exclamation-triangle-fill"
+        :icon="failedStatus.icon"
+        :color="failedStatus.color"
       />
       <StatsCard
         label="Agents with Warnings"
         :value="`${sitesWithWarnings}`"
-        icon="bi bi-exclamation-circle-fill"
+        :icon="warningStatus.icon"
+        :color="warningStatus.color"
       />
     </div>
 
@@ -55,10 +63,16 @@
 
 <script setup>
   import { toRefs } from 'vue';
+  import { CheckStatus } from '@/utils/qualityCheckUtils.js';
+  import { useStatuses } from '@/composables/useStatuses.js';
   import StatsCard from '../ui/StatsCard.vue';
   import AgentCard from '../agent/AgentCard.vue';
   import LabeledValuesFilter from '@/components/ui/LabeledValuesFilter.vue';
   import { useSiteStats } from '@/composables/useSiteStats.js';
+
+  const { getStatusMeta } = useStatuses();
+  const failedStatus = getStatusMeta(CheckStatus.FAILED);
+  const warningStatus = getStatusMeta(CheckStatus.WARNING);
 
   const props = defineProps({
     reports: {

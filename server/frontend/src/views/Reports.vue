@@ -24,20 +24,32 @@
               label="Total Reports"
               :value="reports.length"
               icon="bi bi-file-earmark-text"
+              color="var(--color-primary)"
             />
           </div>
           <div class="col-12 col-sm-6 col-lg-3">
-            <StatsCard label="Passed" :value="reportStats.passed" icon="bi bi-check-circle" />
+            <StatsCard
+              label="Passed"
+              :value="reportStats.passed"
+              :icon="passedStatus.icon"
+              :color="passedStatus.color"
+            />
           </div>
           <div class="col-12 col-sm-6 col-lg-3">
             <StatsCard
               label="With Warnings"
               :value="reportStats.warnings"
-              icon="bi bi-exclamation-circle"
+              :icon="warningStatus.icon"
+              :color="warningStatus.color"
             />
           </div>
           <div class="col-12 col-sm-6 col-lg-3">
-            <StatsCard label="Failed" :value="reportStats.failed" icon="bi bi-x-circle" />
+            <StatsCard
+              label="Failed"
+              :value="reportStats.failed"
+              :icon="failedStatus.icon"
+              :color="failedStatus.color"
+            />
           </div>
         </div>
 
@@ -98,6 +110,8 @@
   import { useRouter } from 'vue-router';
   import { useReportsOverview } from '@/composables/useReportsOverview.js';
   import { useReportTableRows } from '@/composables/useReportTableRows.js';
+  import { useStatuses } from '@/composables/useStatuses.js';
+  import { CheckStatus } from '@/utils/qualityCheckUtils.js';
   import PageHeader from '@/components/ui/PageHeader.vue';
   import StatsCard from '@/components/ui/StatsCard.vue';
   import LabeledValuesFilter from '@/components/ui/LabeledValuesFilter.vue';
@@ -105,6 +119,10 @@
   import Badge from '@/components/ui/Badge.vue';
 
   const router = useRouter();
+  const { getStatusMeta } = useStatuses();
+  const passedStatus = getStatusMeta(CheckStatus.PASSED);
+  const warningStatus = getStatusMeta(CheckStatus.WARNING);
+  const failedStatus = getStatusMeta(CheckStatus.FAILED);
 
   const {
     reports,

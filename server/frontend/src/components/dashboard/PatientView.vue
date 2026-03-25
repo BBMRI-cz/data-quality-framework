@@ -6,12 +6,19 @@
         label="Total Patients"
         :value="`${totalPatients.toLocaleString()}`"
         icon="bi bi-people-fill"
+        color="var(--color-primary)"
       />
-      <StatsCard label="From Sites" :value="`${fromSites}`" icon="bi bi-database-fill-gear" />
+      <StatsCard
+        label="From Sites"
+        :value="`${fromSites}`"
+        icon="bi bi-database-fill-gear"
+        color="var(--color-primary-dark)"
+      />
       <StatsCard
         label="Total Samples"
         :value="`${totalSamples.toLocaleString()}`"
         icon="bi bi-eyedropper"
+        color="var(--color-primary-dark)"
       />
     </div>
 

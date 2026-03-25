@@ -1,6 +1,7 @@
 :root {
   /* Colors - Primary Palette */
   --color-primary: #667eea;
+  --color-primary-dark: #764ba2;
   --color-success: #198754;
   --color-danger: #dc2626;
   --color-warning: #ffc107;
