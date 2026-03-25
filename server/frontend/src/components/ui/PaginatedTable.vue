@@ -9,7 +9,25 @@
       </div>
     </div>
 
-    <div class="card-body p-0">
+    <div v-if="loading" class="card-body table-state text-center">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">{{ loadingText }}</span>
+      </div>
+    </div>
+
+    <div v-else-if="error" class="card-body table-state">
+      <div class="alert alert-danger mb-0" role="alert">
+        <h6 class="alert-heading">{{ errorTitle }}</h6>
+        <p class="mb-0">{{ error }}</p>
+      </div>
+    </div>
+
+    <div v-else-if="totalItems === 0" class="card-body table-state text-center">
+      <h5 class="mb-2">{{ emptyTitle }}</h5>
+      <p class="text-muted mb-0">{{ emptyText }}</p>
+    </div>
+
+    <div v-else class="card-body p-0">
       <div class="table-responsive">
         <table class="table table-hover mb-0 align-middle">
           <thead class="table-light">
@@ -32,17 +50,12 @@
                 </slot>
               </td>
             </tr>
-            <tr v-if="paginatedItems.length === 0">
-              <td :colspan="columns.length" class="text-center text-muted py-5">
-                <p class="mb-0">{{ emptyText }}</p>
-              </td>
-            </tr>
           </tbody>
         </table>
       </div>
     </div>
 
-    <div v-if="showPagination" class="card-footer bg-white border-top py-2">
+    <div v-if="showPagination && !loading && !error" class="card-footer bg-white border-top py-2">
       <div class="d-flex justify-content-end align-items-center gap-2">
         <button
           type="button"
@@ -112,6 +125,26 @@
       type: String,
       default: 'No data available',
     },
+    emptyTitle: {
+      type: String,
+      default: 'No Results Found',
+    },
+    loading: {
+      type: Boolean,
+      default: false,
+    },
+    loadingText: {
+      type: String,
+      default: 'Loading data...',
+    },
+    error: {
+      type: String,
+      default: '',
+    },
+    errorTitle: {
+      type: String,
+      default: 'Error Loading Data',
+    },
     paginate: {
       type: Boolean,
       default: true,
@@ -169,6 +202,10 @@
 </script>
 
 <style scoped>
+  .table-state {
+    padding: 3rem 1rem;
+  }
+
   .table td,
   .table th {
     padding-top: 1rem;

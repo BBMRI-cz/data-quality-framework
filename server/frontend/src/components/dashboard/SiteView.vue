@@ -23,14 +23,16 @@
 
     <!-- Category Filter -->
     <div class="mb-4">
-      <div class="filter-label">Categories:</div>
-      <ValuesFilter v-model="selectedCategory" :categories="categories" />
+      <LabeledValuesFilter
+        v-model="selectedCategory"
+        label="Categories:"
+        :categories="categories"
+      />
     </div>
 
     <!-- Group Filter -->
     <div v-if="groups.length > 0" class="mb-4">
-      <div class="filter-label">Groups:</div>
-      <ValuesFilter v-model="selectedGroup" :categories="groups" />
+      <LabeledValuesFilter v-model="selectedGroup" label="Groups:" :categories="groups" />
     </div>
 
     <!-- Main Content Grid -->
@@ -55,7 +57,7 @@
   import { toRefs } from 'vue';
   import StatsCard from '../ui/StatsCard.vue';
   import AgentCard from '../agent/AgentCard.vue';
-  import ValuesFilter from '../ui/ValuesFilter.vue';
+  import LabeledValuesFilter from '@/components/ui/LabeledValuesFilter.vue';
   import { useSiteStats } from '@/composables/useSiteStats.js';
 
   const props = defineProps({
@@ -95,15 +97,6 @@
     gap: 1rem;
   }
 
-  /* Filter Labels */
-  .filter-label {
-    font-size: 0.875rem;
-    color: #6c757d;
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
 
   /* Main Content Grid */
   .content-grid {

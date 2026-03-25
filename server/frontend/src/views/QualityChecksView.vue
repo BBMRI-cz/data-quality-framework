@@ -28,7 +28,7 @@
 
         <!-- Filters -->
         <div class="filters-card mb-3 mb-md-4">
-          <div class="filters-content">
+          <div class="filters-top-row">
             <div class="search-filter">
               <input
                 v-model="searchQuery"
@@ -37,55 +37,35 @@
                 placeholder="Search quality checks..."
               />
             </div>
-            <div class="category-filter-container">
-              <ValuesFilter v-model="selectedCategory" :categories="categories" />
-            </div>
             <div class="results-count">
               <span class="text-muted small">{{ filteredChecks.length }} checks</span>
             </div>
           </div>
         </div>
-
-        <!-- Loading state -->
-        <div v-if="loading" class="loading-state">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading quality checks...</span>
-          </div>
-        </div>
-
-        <!-- Error state -->
-        <div v-else-if="error" class="alert alert-danger" role="alert">
-          <h6 class="alert-heading">Error Loading Quality Checks</h6>
-          <p class="mb-0">{{ error }}</p>
-        </div>
-
-        <!-- Empty state -->
-        <div v-else-if="filteredChecks.length === 0" class="empty-state">
-          <div class="empty-state-icon">
-            <i class="bi bi-clipboard-check"></i>
-          </div>
-          <h5 class="empty-state-title">No Quality Checks Found</h5>
-          <p class="empty-state-text">
-            {{
-              searchQuery
-                ? 'Try adjusting your search criteria'
-                : 'No quality checks are configured yet'
-            }}
-          </p>
+        <div class="category-filter-container mt-3">
+          <LabeledValuesFilter
+              v-model="selectedCategory"
+              label="Categories:"
+              :categories="categories"
+          />
         </div>
 
         <!-- Quality Checks Table -->
         <PaginatedTable
-          v-else
           title="Quality Check Definitions"
           :columns="tableColumns"
           :items="tableRows"
           :page="currentPage"
           :page-size="pageSize"
           :total-items="tableRows.length"
+          :loading="loading"
+          loading-text="Loading quality checks..."
+          :error="error"
+          error-title="Error Loading Quality Checks"
+          empty-title="No Quality Checks Found"
+          :empty-text="emptyStateText"
           item-key="hash"
           item-label="checks"
-          empty-text="No quality checks are configured yet"
           @row-click="viewCheckDetail"
           @page-change="onPageChange"
         >
@@ -109,7 +89,7 @@
   import StatsCard from '@/components/ui/StatsCard.vue';
   import PaginatedTable from '@/components/ui/PaginatedTable.vue';
   import PageHeader from '@/components/ui/PageHeader.vue';
-  import ValuesFilter from '@/components/ui/ValuesFilter.vue';
+  import LabeledValuesFilter from '@/components/ui/LabeledValuesFilter.vue';
   import ValuesFilterBadge from '@/components/ui/ValuesFilterBadge.vue';
   import { useRouter } from 'vue-router';
   import { formatDateShort } from '@/utils/dateUtils.js';
@@ -192,6 +172,12 @@
     }));
   });
 
+  const emptyStateText = computed(() => {
+    return searchQuery.value
+      ? 'Try adjusting your search criteria'
+      : 'No quality checks are configured yet';
+  });
+
   const onPageChange = (page) => {
     currentPage.value = page;
   };
@@ -258,9 +244,8 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   }
 
-  .filters-content {
+  .filters-top-row {
     display: flex;
-    flex-wrap: wrap;
     gap: 1rem;
     align-items: center;
   }
@@ -270,43 +255,14 @@
     min-width: 200px;
   }
 
+  .category-filter-container {
+    min-width: 240px;
+  }
+
   .results-count {
     margin-left: auto;
   }
 
-  /* Loading State */
-  .loading-state {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 4rem 0;
-  }
-
-  /* Empty State */
-  .empty-state {
-    text-align: center;
-    padding: 4rem 2rem;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  }
-
-  .empty-state-icon {
-    font-size: 4rem;
-    color: #e0e0e0;
-    margin-bottom: 1rem;
-  }
-
-  .empty-state-title {
-    color: #2c3e50;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-  }
-
-  .empty-state-text {
-    color: #6c757d;
-    margin-bottom: 0;
-  }
 
   /* Responsive */
   @media (max-width: 768px) {
@@ -314,14 +270,9 @@
       grid-template-columns: repeat(3, 1fr);
     }
 
-    .filters-content {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
     .results-count {
       margin-left: 0;
-      text-align: center;
+      text-align: left;
     }
   }
 
