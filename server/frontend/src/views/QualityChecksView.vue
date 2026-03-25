@@ -72,8 +72,7 @@
 </template>
 
 <script setup>
-  import { ref, computed, onMounted, watch } from 'vue';
-  import { apiService } from '@/services/apiService.js';
+  import { onMounted } from 'vue';
   import Badge from '@/components/ui/Badge.vue';
   import StatsCard from '@/components/ui/StatsCard.vue';
   import PaginatedTable from '@/components/ui/PaginatedTable.vue';
@@ -81,128 +80,41 @@
   import LabeledValuesFilter from '@/components/ui/LabeledValuesFilter.vue';
   import SearchBar from '@/components/ui/SearchBar.vue';
   import ValuesFilterBadge from '@/components/ui/ValuesFilterBadge.vue';
+  import { useQualityChecksTable } from '@/composables/useQualityChecksTable.js';
   import { useRouter } from 'vue-router';
-  import { formatDateShort } from '@/utils/dateUtils.js';
 
   const router = useRouter();
 
-  const qualityChecks = ref([]);
-  const loading = ref(false);
-  const error = ref(null);
-  const searchQuery = ref('');
-  const selectedCategory = ref(null);
-  const currentPage = ref(0);
-  const pageSize = 10;
+  const {
+    qualityChecks,
+    loading,
+    error,
+    searchQuery,
+    selectedCategory,
+    currentPage,
+    pageSize,
+    categories,
+    filteredChecks,
+    tableRows,
+    emptyStateText,
+    onPageChange,
+    loadQualityChecks,
+    refreshChecks,
+  } = useQualityChecksTable();
 
   const tableColumns = [
     { key: 'hash', label: 'Hash' },
     { key: 'name', label: 'Name' },
     { key: 'category', label: 'Category' },
     { key: 'description', label: 'Description' },
-    {
-      key: 'registeredAtText',
-      label: 'Registered At',
-    },
+    { key: 'registeredAtText', label: 'Registered At' },
   ];
-
-  const categories = computed(() => {
-    const cats = new Set();
-    qualityChecks.value.forEach((check) => {
-      if (check.category && check.category.name) {
-        cats.add(check.category.name);
-      } else {
-        cats.add('No Category');
-      }
-    });
-    return Array.from(cats).sort();
-  });
-
-  const filteredChecks = computed(() => {
-    let checks = qualityChecks.value;
-
-    if (selectedCategory.value) {
-      checks = checks.filter((check) => {
-        const categoryName = check.category?.name || 'No Category';
-        return categoryName === selectedCategory.value;
-      });
-    }
-
-    if (!searchQuery.value) {
-      return checks;
-    }
-
-    const query = searchQuery.value.toLowerCase();
-    return checks.filter(
-      (check) =>
-        check.name?.toLowerCase().includes(query) ||
-        check.description?.toLowerCase().includes(query) ||
-        check.hash?.toLowerCase().includes(query) ||
-        check.category?.name?.toLowerCase().includes(query)
-    );
-  });
-
-  const tableRows = computed(() => {
-    return filteredChecks.value.map((check) => ({
-      ...check,
-      description: check.description || 'No description',
-      registeredAtText: check.registeredAt ? formatDateShort(check.registeredAt) : null,
-    }));
-  });
-
-  const emptyStateText = computed(() => {
-    return searchQuery.value
-      ? 'Try adjusting your search criteria'
-      : 'No quality checks are configured yet';
-  });
-
-  const onPageChange = (page) => {
-    currentPage.value = page;
-  };
-
-  const loadQualityChecks = async () => {
-    loading.value = true;
-    error.value = null;
-
-    try {
-      const data = await apiService.getQualityChecks();
-      // Handle HAL format response
-      if (data._embedded && data._embedded.qualityChecks) {
-        qualityChecks.value = data._embedded.qualityChecks;
-      } else if (Array.isArray(data)) {
-        qualityChecks.value = data;
-      } else {
-        qualityChecks.value = [];
-      }
-    } catch (err) {
-      error.value = err.message || 'Failed to load quality checks';
-      console.error('Error loading quality checks:', err);
-    } finally {
-      loading.value = false;
-    }
-  };
-
-  const refreshChecks = () => {
-    loadQualityChecks();
-  };
 
   const viewCheckDetail = (check) => {
     router.push(`/quality-checks/${check.hash}`);
   };
 
-  watch([searchQuery, selectedCategory], () => {
-    currentPage.value = 0;
-  });
-
-  watch(tableRows, (rows) => {
-    const maxPage = Math.max(Math.ceil(rows.length / pageSize) - 1, 0);
-    if (currentPage.value > maxPage) {
-      currentPage.value = maxPage;
-    }
-  });
-
-  onMounted(() => {
-    loadQualityChecks();
-  });
+  onMounted(loadQualityChecks);
 </script>
 
 <style scoped>
@@ -236,21 +148,12 @@
     min-width: 240px;
   }
 
-  .results-count {
-    margin-left: auto;
-  }
-
-
   /* Responsive */
   @media (max-width: 768px) {
     .stats-grid {
       grid-template-columns: repeat(3, 1fr);
     }
 
-    .results-count {
-      margin-left: 0;
-      text-align: left;
-    }
   }
 
   @media (max-width: 576px) {
