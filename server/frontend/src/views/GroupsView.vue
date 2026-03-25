@@ -1,121 +1,67 @@
 <template>
-  <div class="container-fluid px-2 px-md-3 py-3 py-md-4">
-    <div class="row">
-      <div class="col-12">
-        <!-- Page Header -->
-        <PageHeader
-          title="Groups"
-          mobile-title="Groups"
-          subtitle="Manage agent groups"
-          icon="bi bi-collection"
+  <div class="container-fluid py-3 py-md-4">
+    <PageHeader
+      title="Groups"
+      mobile-title="Groups"
+      subtitle="Manage agent groups"
+      icon="bi bi-collection"
+    >
+      <template #actions>
+        <button
+          class="btn btn-outline-primary btn-sm"
+          :disabled="loading"
+          @click="refreshGroups"
         >
-          <template #actions>
-            <button
-              class="btn btn-outline-primary btn-sm"
-              :disabled="loading"
-              @click="refreshGroups"
-            >
-              <i class="bi bi-arrow-clockwise"></i>
-              <span class="d-none d-md-inline ms-1">Refresh</span>
-            </button>
-            <button class="btn btn-primary btn-sm ms-2" :disabled="loading" @click="createGroup">
-              <i class="bi bi-plus-lg"></i>
-              <span class="d-none d-md-inline ms-1">New Group</span>
-            </button>
-          </template>
-        </PageHeader>
+          <i class="bi bi-arrow-clockwise"></i>
+          <span class="d-none d-md-inline ms-1">Refresh</span>
+        </button>
+        <button class="btn btn-primary btn-sm ms-2" :disabled="loading" @click="createGroup">
+          <i class="bi bi-plus-lg"></i>
+          <span class="d-none d-md-inline ms-1">New Group</span>
+        </button>
+      </template>
+    </PageHeader>
 
-        <!-- Stats Cards -->
-        <div class="stats-grid mb-3 mb-md-4">
-          <div class="stat-card">
-            <div class="stat-number text-dark">{{ groups.length }}</div>
-            <div class="stat-label">Total Groups</div>
-          </div>
-        </div>
-
-        <!-- Filters -->
-        <div class="filters-card mb-3 mb-md-4">
-          <div class="filters-content">
-            <div class="search-filter">
-              <input
-                v-model="searchQuery"
-                type="text"
-                class="form-control"
-                placeholder="Search groups..."
-              />
-            </div>
-            <div class="results-count">
-              <span class="text-muted small">{{ filteredGroups.length }} groups</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Loading state -->
-        <div v-if="loading" class="loading-state">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading groups...</span>
-          </div>
-        </div>
-
-        <!-- Error state -->
-        <div v-else-if="error" class="alert alert-danger" role="alert">
-          <h6 class="alert-heading">Error Loading Groups</h6>
-          <p class="mb-0">{{ error }}</p>
-        </div>
-
-        <!-- Empty state -->
-        <div v-else-if="filteredGroups.length === 0" class="empty-state">
-          <div class="empty-state-icon">
-            <i class="bi bi-collection"></i>
-          </div>
-          <h5 class="empty-state-title">No Groups Found</h5>
-          <p class="empty-state-text">
-            {{
-              searchQuery ? 'Try adjusting your search criteria' : 'No groups are configured yet'
-            }}
-          </p>
-        </div>
-
-        <!-- Groups Table -->
-        <div v-else class="card border-0 shadow-sm">
-          <div class="card-header bg-white border-bottom py-3">
-            <div class="d-flex justify-content-between align-items-center">
-              <h5 class="mb-0 fw-semibold">Group Definitions</h5>
-              <Badge :text="`${filteredGroups.length} groups`" variant="secondary" size="small" />
-            </div>
-          </div>
-          <div class="card-body p-0">
-            <table class="table table-hover mb-0 align-middle">
-              <thead class="table-light">
-                <tr>
-                  <th class="ps-4">Name</th>
-                  <th>Agents</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="group in filteredGroups"
-                  :key="group.id"
-                  class="table-row-hover cursor-pointer"
-                  @click="viewGroupDetail(group)"
-                >
-                  <td class="ps-4">
-                    <div class="fw-medium">{{ group.name }}</div>
-                  </td>
-                  <td>
-                    <Badge
-                      :text="`${group.agentIds?.length || 0} agents`"
-                      variant="primary"
-                      size="small"
-                    />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+    <div class="row g-3 mb-3 mb-md-4">
+      <div class="col-12 col-sm-6 col-lg-4">
+        <StatsCard
+          label="Total Groups"
+          :value="groups.length"
+          icon="bi bi-collection"
+        />
       </div>
     </div>
+
+    <div class="mb-3 mb-md-4">
+      <SearchBar v-model="searchQuery" placeholder="Search groups..." />
+    </div>
+
+    <PaginatedTable
+      title="Group Definitions"
+      :columns="tableColumns"
+      :items="tableRows"
+      :total-items="filteredGroups.length"
+      :loading="loading"
+      :error="error"
+      :empty-title="emptyTitle"
+      :empty-text="emptyText"
+      item-key="id"
+      item-label="groups"
+      :paginate="false"
+      @row-click="viewGroupDetail"
+    >
+      <template #header-meta>
+        <Badge :text="`${filteredGroups.length} groups`" variant="secondary" size="small" />
+      </template>
+
+      <template #cell-name="{ value }">
+        <span class="fw-medium">{{ value }}</span>
+      </template>
+
+      <template #cell-agentsCount="{ value }">
+        <Badge :text="`${value} agents`" variant="primary" size="small" />
+      </template>
+    </PaginatedTable>
   </div>
 </template>
 
@@ -124,6 +70,9 @@
   import { useRouter } from 'vue-router';
   import { apiService } from '@/services/apiService.js';
   import PageHeader from '@/components/ui/PageHeader.vue';
+  import StatsCard from '@/components/ui/StatsCard.vue';
+  import SearchBar from '@/components/ui/SearchBar.vue';
+  import PaginatedTable from '@/components/ui/PaginatedTable.vue';
   import Badge from '@/components/ui/Badge.vue';
 
   const router = useRouter();
@@ -131,6 +80,10 @@
   const loading = ref(false);
   const error = ref(null);
   const searchQuery = ref('');
+  const tableColumns = [
+    { key: 'name', label: 'Name' },
+    { key: 'agentsCount', label: 'Agents' },
+  ];
 
   const filteredGroups = computed(() => {
     if (!searchQuery.value) {
@@ -140,6 +93,18 @@
     const query = searchQuery.value.toLowerCase();
     return groups.value.filter((group) => group.name?.toLowerCase().includes(query));
   });
+
+  const tableRows = computed(() =>
+    filteredGroups.value.map((group) => ({
+      ...group,
+      agentsCount: group.agentIds?.length || 0,
+    }))
+  );
+
+  const emptyTitle = computed(() => 'No Groups Found');
+  const emptyText = computed(() =>
+    searchQuery.value ? 'Try adjusting your search criteria' : 'No groups are configured yet'
+  );
 
   const loadGroups = async () => {
     loading.value = true;
@@ -179,186 +144,3 @@
     loadGroups();
   });
 </script>
-
-<style scoped>
-  /* Stats Grid */
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1rem;
-  }
-
-  .stat-card {
-    background: white;
-    padding: 1.25rem;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    text-align: center;
-  }
-
-  .stat-number {
-    font-size: 2rem;
-    font-weight: 700;
-    margin-bottom: 0.25rem;
-  }
-
-  .stat-label {
-    font-size: 0.875rem;
-    color: #6c757d;
-    font-weight: 500;
-  }
-
-  /* Filters */
-  .filters-card {
-    background: white;
-    padding: 1rem;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  }
-
-  .filters-content {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    align-items: center;
-  }
-
-  .search-filter {
-    flex: 1;
-    min-width: 200px;
-  }
-
-  .results-count {
-    margin-left: auto;
-  }
-
-  /* Loading State */
-  .loading-state {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 4rem 0;
-  }
-
-  /* Empty State */
-  .empty-state {
-    text-align: center;
-    padding: 4rem 2rem;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  }
-
-  .empty-state-icon {
-    font-size: 4rem;
-    color: #e0e0e0;
-    margin-bottom: 1rem;
-  }
-
-  .empty-state-title {
-    color: #2c3e50;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-  }
-
-  .empty-state-text {
-    color: #6c757d;
-    margin-bottom: 0;
-  }
-
-  /* Table Styling */
-  .card {
-    border-radius: 12px;
-    overflow: hidden;
-  }
-
-  .table {
-    font-size: 0.875rem;
-  }
-
-  .table th {
-    font-weight: 600;
-    font-size: 0.813rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #6c757d;
-    padding: 1rem 0.75rem;
-    border-bottom: 2px solid #dee2e6;
-    white-space: nowrap;
-  }
-
-  .table td {
-    vertical-align: middle;
-    padding: 1rem 0.75rem;
-    border-bottom: 1px solid #f0f0f0;
-    font-size: 0.875rem;
-  }
-
-  .table-row-hover {
-    transition: all 0.2s ease-in-out;
-    cursor: pointer;
-  }
-
-  .table-row-hover:hover {
-    background-color: #f8f9fa;
-    transform: translateX(2px);
-    box-shadow: inset 3px 0 0 #0d6efd;
-  }
-
-  /* Responsive */
-  @media (max-width: 992px) {
-    .table th,
-    .table td {
-      padding: 0.75rem 0.5rem;
-    }
-  }
-
-  @media (max-width: 768px) {
-    .stats-grid {
-      grid-template-columns: repeat(3, 1fr);
-    }
-
-    .stat-number {
-      font-size: 1.5rem;
-    }
-
-    .stat-label {
-      font-size: 0.75rem;
-    }
-
-    .filters-content {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .results-count {
-      margin-left: 0;
-      text-align: center;
-    }
-
-    .table {
-      font-size: 0.75rem;
-    }
-
-    .table th,
-    .table td {
-      padding: 0.5rem 0.35rem;
-    }
-  }
-
-  @media (max-width: 576px) {
-    .stats-grid {
-      grid-template-columns: repeat(3, 1fr);
-      gap: 0.5rem;
-    }
-
-    .stat-card {
-      padding: 0.875rem 0.5rem;
-    }
-
-    .container-fluid {
-      padding-left: 0.75rem;
-      padding-right: 0.75rem;
-    }
-  }
-</style>
