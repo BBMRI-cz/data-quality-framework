@@ -74,7 +74,6 @@
           v-else
           :key="group"
           :text="group"
-          variant="secondary"
           size="small"
         />
       </template>
