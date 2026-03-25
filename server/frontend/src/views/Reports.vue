@@ -75,14 +75,6 @@
               <Badge :text="`${filteredReports.length} reports`" variant="secondary" size="small" />
             </template>
 
-            <template #cell-id="{ value }">
-              <span class="font-monospace small">{{ value }}</span>
-            </template>
-
-            <template #cell-agentName="{ value }">
-              <span class="fw-medium">{{ value }}</span>
-            </template>
-
             <template #cell-status="{ item, value }">
               <div class="d-flex align-items-center gap-1">
                 <Badge :text="value" :color="item.statusColor" size="small" />
