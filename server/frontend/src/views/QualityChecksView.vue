@@ -36,9 +36,9 @@
         </div>
         <div class="category-filter-container mt-3">
           <LabeledValuesFilter
-              v-model="selectedCategory"
-              label="Categories:"
-              :categories="categories"
+            v-model="selectedCategory"
+            label="Categories:"
+            :categories="categories"
           />
         </div>
 
@@ -153,7 +153,6 @@
     .stats-grid {
       grid-template-columns: repeat(3, 1fr);
     }
-
   }
 
   @media (max-width: 576px) {

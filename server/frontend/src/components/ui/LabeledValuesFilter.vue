@@ -1,7 +1,11 @@
 <template>
   <div>
     <div class="filter-label">{{ label }}</div>
-    <ValuesFilter :model-value="modelValue" :categories="categories" @update:model-value="onUpdate" />
+    <ValuesFilter
+      :model-value="modelValue"
+      :categories="categories"
+      @update:model-value="onUpdate"
+    />
   </div>
 </template>
 
@@ -40,4 +44,3 @@
     letter-spacing: 0.5px;
   }
 </style>
-

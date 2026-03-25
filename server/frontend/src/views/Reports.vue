@@ -18,50 +18,75 @@
         </PageHeader>
 
         <!-- Stats Cards -->
-        <div class="stats-grid mb-3 mb-md-4">
-          <div class="stat-card">
-            <div class="stat-number text-dark">{{ reports.length }}</div>
-            <div class="stat-label">Total Reports</div>
+        <div class="row g-3 mb-3 mb-md-4">
+          <div class="col-12 col-sm-6 col-lg-3">
+            <StatsCard
+              label="Total Reports"
+              :value="reports.length"
+              icon="bi bi-file-earmark-text"
+            />
           </div>
-          <div class="stat-card">
-            <div class="stat-number text-success">{{ reportStats.passed }}</div>
-            <div class="stat-label">Passed</div>
+          <div class="col-12 col-sm-6 col-lg-3">
+            <StatsCard label="Passed" :value="reportStats.passed" icon="bi bi-check-circle" />
           </div>
-          <div class="stat-card">
-            <div class="stat-number text-warning">{{ reportStats.warnings }}</div>
-            <div class="stat-label">With Warnings</div>
+          <div class="col-12 col-sm-6 col-lg-3">
+            <StatsCard
+              label="With Warnings"
+              :value="reportStats.warnings"
+              icon="bi bi-exclamation-circle"
+            />
           </div>
-          <div class="stat-card">
-            <div class="stat-number text-danger">{{ reportStats.failed }}</div>
-            <div class="stat-label">Failed</div>
+          <div class="col-12 col-sm-6 col-lg-3">
+            <StatsCard label="Failed" :value="reportStats.failed" icon="bi bi-x-circle" />
           </div>
-        </div>
-
-        <!-- Loading state -->
-        <div v-if="loading" class="loading-state">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
-          </div>
-        </div>
-
-        <!-- Error state -->
-        <div v-else-if="error" class="alert alert-danger" role="alert">
-          <i class="bi bi-exclamation-triangle-fill me-2"></i>
-          {{ error }}
         </div>
 
         <!-- Reports table -->
-        <div v-else>
+        <div>
           <div class="mb-4">
-            <div class="filter-label">Status:</div>
-            <ValuesFilter v-model="selectedStatus" :categories="statuses" />
+            <LabeledValuesFilter v-model="selectedStatus" label="Status:" :categories="statuses" />
           </div>
-          <ReportsTable
-            :reports="reports"
-            :quality-check-map="qualityCheckMap"
-            :agents="agents"
-            :selected-status="selectedStatus"
-          />
+          <PaginatedTable
+            title="Recent Reports"
+            :columns="columns"
+            :items="tableRows"
+            :total-items="filteredReports.length"
+            :loading="loading"
+            :error="error"
+            :paginate="false"
+            item-key="id"
+            item-label="reports"
+            empty-text="No reports available"
+            @row-click="openReport"
+          >
+            <template #header-meta>
+              <Badge :text="`${filteredReports.length} reports`" variant="secondary" size="small" />
+            </template>
+
+            <template #cell-id="{ value }">
+              <span class="font-monospace small">{{ value }}</span>
+            </template>
+
+            <template #cell-agentName="{ value }">
+              <span class="fw-medium">{{ value }}</span>
+            </template>
+
+            <template #cell-status="{ item, value }">
+              <div class="d-flex align-items-center gap-1">
+                <Badge :text="value" :color="item.statusColor" size="small" />
+              </div>
+            </template>
+
+            <template #cell-warnings="{ value }">
+              <span :class="value > 0 ? 'text-warning fw-semibold' : 'text-muted'">{{
+                value
+              }}</span>
+            </template>
+
+            <template #cell-errors="{ value }">
+              <span :class="value > 0 ? 'text-danger fw-semibold' : 'text-muted'">{{ value }}</span>
+            </template>
+          </PaginatedTable>
         </div>
       </div>
     </div>
@@ -69,173 +94,40 @@
 </template>
 
 <script setup>
-  import { ref, onMounted, computed } from 'vue';
-  import ReportsTable from '@/components/report/ReportsTable.vue';
+  import { onMounted } from 'vue';
+  import { useRouter } from 'vue-router';
+  import { useReportsOverview } from '@/composables/useReportsOverview.js';
+  import { useReportTableRows } from '@/composables/useReportTableRows.js';
   import PageHeader from '@/components/ui/PageHeader.vue';
-  import ValuesFilter from '@/components/ui/ValuesFilter.vue';
-  import { apiService } from '@/services/apiService.js';
-  import { getReportStatus, CheckStatus } from '@/utils/qualityCheckUtils.js';
+  import StatsCard from '@/components/ui/StatsCard.vue';
+  import LabeledValuesFilter from '@/components/ui/LabeledValuesFilter.vue';
+  import PaginatedTable from '@/components/ui/PaginatedTable.vue';
+  import Badge from '@/components/ui/Badge.vue';
 
-  const reports = ref([]);
-  const qualityCheckMap = ref(new Map());
-  const agents = ref([]);
-  const loading = ref(true);
-  const error = ref(null);
+  const router = useRouter();
 
-  const selectedStatus = ref(null);
-  const statuses = [CheckStatus.PASSED, CheckStatus.WARNING, CheckStatus.FAILED];
+  const {
+    reports,
+    qualityCheckMap,
+    agents,
+    loading,
+    error,
+    selectedStatus,
+    statuses,
+    reportStats,
+    fetchData,
+  } = useReportsOverview();
 
-  const reportStats = computed(() => {
-    const stats = {
-      passed: 0,
-      warnings: 0,
-      failed: 0,
-    };
-
-    reports.value.forEach((report) => {
-      const status = getReportStatus(report, qualityCheckMap.value);
-
-      switch (status) {
-        case CheckStatus.PASSED:
-          stats.passed++;
-          break;
-        case CheckStatus.WARNING:
-          stats.warnings++;
-          break;
-        case CheckStatus.FAILED:
-          stats.failed++;
-          break;
-      }
-    });
-
-    return stats;
+  const { columns, filteredReports, tableRows } = useReportTableRows({
+    reports,
+    qualityCheckMap,
+    agents,
+    selectedStatus,
   });
 
-  const fetchData = async () => {
-    try {
-      loading.value = true;
-      error.value = null;
-
-      // Fetch quality checks, reports, and agents in parallel
-      const [checksData, reportsData, agentsData] = await Promise.all([
-        apiService.getQualityChecks(),
-        apiService.getReports(),
-        apiService.getAgents(),
-      ]);
-
-      // Handle HAL format response for quality checks
-      const checks =
-        checksData._embedded?.qualityChecks || (Array.isArray(checksData) ? checksData : []);
-
-      // Handle HAL format response for reports
-      const reportsArray =
-        reportsData._embedded?.reports || (Array.isArray(reportsData) ? reportsData : []);
-
-      // Handle HAL format response for agents
-      agents.value = agentsData._embedded?.agents || (Array.isArray(agentsData) ? agentsData : []);
-
-      // Convert quality checks array to Map for quick lookup
-      qualityCheckMap.value = new Map(checks.map((check) => [check.hash, check]));
-
-      // Sort reports by timestamp (newest first)
-      reports.value = reportsArray.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    } catch (err) {
-      console.error('Error fetching reports:', err);
-      error.value = err.message || 'Failed to load reports';
-    } finally {
-      loading.value = false;
-    }
+  const openReport = (report) => {
+    router.push(`/reports/${report.id}`);
   };
 
-  onMounted(() => {
-    fetchData();
-  });
+  onMounted(fetchData);
 </script>
-
-<style scoped>
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 0.75rem;
-  }
-
-  .stat-card {
-    background: white;
-    border-radius: 8px;
-    padding: 1.25rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    transition:
-      transform 0.2s,
-      box-shadow 0.2s;
-  }
-
-  .stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
-
-  .stat-number {
-    font-size: 1.75rem;
-    font-weight: 700;
-    line-height: 1.2;
-    margin-bottom: 0.25rem;
-  }
-
-  .stat-label {
-    font-size: 0.813rem;
-    color: #6c757d;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .loading-state {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 300px;
-  }
-
-  .spinner-border {
-    width: 3rem;
-    height: 3rem;
-  }
-
-  /* Filter Labels */
-  .filter-label {
-    font-size: 0.875rem;
-    color: #6c757d;
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  @media (min-width: 576px) {
-    .stats-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-
-  @media (min-width: 768px) {
-    .stats-grid {
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1rem;
-    }
-
-    .stat-card {
-      padding: 1.5rem;
-    }
-  }
-
-  @media (max-width: 576px) {
-    .container-fluid {
-      padding-left: 0.75rem;
-      padding-right: 0.75rem;
-    }
-
-    .stat-number {
-      font-size: 1.5rem;
-    }
-  }
-</style>

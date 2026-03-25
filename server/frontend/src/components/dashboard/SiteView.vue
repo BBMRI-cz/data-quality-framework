@@ -97,7 +97,6 @@
     gap: 1rem;
   }
 
-
   /* Main Content Grid */
   .content-grid {
     display: grid;

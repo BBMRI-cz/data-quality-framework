@@ -136,12 +136,49 @@
       <!-- Recent Reports Table -->
       <div class="row">
         <div class="col-12">
-          <ReportsTable
-            :reports="reports"
-            :quality-check-map="qualityCheckMap"
-            :agents="agentArray"
-            @report-selected="openReportModal"
-          />
+          <div class="mb-4">
+            <LabeledValuesFilter v-model="selectedStatus" label="Status:" :categories="statuses" />
+          </div>
+
+          <PaginatedTable
+            title="Recent Reports"
+            :columns="columns"
+            :items="tableRows"
+            :total-items="filteredReports.length"
+            :paginate="false"
+            item-key="id"
+            item-label="reports"
+            empty-text="No reports available"
+            @row-click="openReportModal"
+          >
+            <template #header-meta>
+              <Badge :text="`${filteredReports.length} reports`" variant="secondary" size="small" />
+            </template>
+
+            <template #cell-id="{ value }">
+              <span class="font-monospace small">{{ value }}</span>
+            </template>
+
+            <template #cell-agentName="{ value }">
+              <span class="fw-medium">{{ value }}</span>
+            </template>
+
+            <template #cell-status="{ item, value }">
+              <div class="d-flex align-items-center gap-1">
+                <Badge :text="value" :color="item.statusColor" size="small" />
+              </div>
+            </template>
+
+            <template #cell-warnings="{ value }">
+              <span :class="value > 0 ? 'text-warning fw-semibold' : 'text-muted'">{{
+                value
+              }}</span>
+            </template>
+
+            <template #cell-errors="{ value }">
+              <span :class="value > 0 ? 'text-danger fw-semibold' : 'text-muted'">{{ value }}</span>
+            </template>
+          </PaginatedTable>
         </div>
       </div>
     </div>
@@ -190,7 +227,11 @@
   import { ref, onMounted, computed } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import StatsCard from '@/components/ui/StatsCard.vue';
-  import ReportsTable from '@/components/report/ReportsTable.vue';
+  import PaginatedTable from '@/components/ui/PaginatedTable.vue';
+  import Badge from '@/components/ui/Badge.vue';
+  import LabeledValuesFilter from '@/components/ui/LabeledValuesFilter.vue';
+  import { useReportTableRows } from '@/composables/useReportTableRows.js';
+  import { useStatuses } from '@/composables/useStatuses.js';
   import ReportDetailsModal from '@/components/report/ReportDetailsModal.vue';
   import PageHeader from '@/components/ui/PageHeader.vue';
   import BaseModal from '@/components/BaseModal.vue';
@@ -208,8 +249,11 @@
   const reports = ref([]);
   const qualityChecks = ref([]);
   const selectedReport = ref(null);
+  const selectedStatus = ref(null);
   const processing = ref(false);
   const showDeleteModal = ref(false);
+
+  const { allowedValues: statuses } = useStatuses();
 
   const agentName = computed(() => {
     return agent.value?.name || 'Unknown Agent';
@@ -226,6 +270,13 @@
       map.set(check.hash, check);
     });
     return map;
+  });
+
+  const { columns, filteredReports, tableRows } = useReportTableRows({
+    reports,
+    qualityCheckMap,
+    agents: agentArray,
+    selectedStatus,
   });
 
   const reportStats = computed(() => {
