@@ -12,7 +12,7 @@
         label="From Sites"
         :value="`${fromSites}`"
         icon="bi bi-database-fill-gear"
-        color="var(--color-primary-dark)"
+        color="var(--color-primary)"
       />
       <StatsCard
         label="Total Samples"

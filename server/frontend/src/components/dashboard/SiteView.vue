@@ -13,7 +13,7 @@
         label="Quality Checks"
         :value="`${totalChecks}`"
         icon="bi bi-check-square-fill"
-        color="var(--color-success)"
+        color="var(--color-primary)"
       />
       <StatsCard
         label="Agents with Errors"
