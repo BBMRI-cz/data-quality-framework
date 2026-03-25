@@ -7,11 +7,7 @@
       icon="bi bi-people"
     >
       <template #actions>
-        <button
-          class="btn btn-outline-primary btn-sm"
-          :disabled="loading"
-          @click="refreshUsers"
-        >
+        <button class="btn btn-outline-primary btn-sm" :disabled="loading" @click="refreshUsers">
           <i class="bi bi-arrow-clockwise"></i>
           <span class="d-none d-md-inline ms-1">Refresh</span>
         </button>
@@ -33,6 +29,7 @@
           label="Total Users"
           :value="users.length"
           icon="bi bi-people"
+          color="var(--color-primary)"
         />
       </div>
     </div>

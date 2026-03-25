@@ -7,11 +7,7 @@
       icon="bi bi-collection"
     >
       <template #actions>
-        <button
-          class="btn btn-outline-primary btn-sm"
-          :disabled="loading"
-          @click="refreshGroups"
-        >
+        <button class="btn btn-outline-primary btn-sm" :disabled="loading" @click="refreshGroups">
           <i class="bi bi-arrow-clockwise"></i>
           <span class="d-none d-md-inline ms-1">Refresh</span>
         </button>
@@ -28,6 +24,7 @@
           label="Total Groups"
           :value="groups.length"
           icon="bi bi-collection"
+          color="var(--color-primary)"
         />
       </div>
     </div>

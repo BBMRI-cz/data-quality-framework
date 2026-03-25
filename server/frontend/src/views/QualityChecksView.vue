@@ -7,11 +7,7 @@
       icon="bi bi-check-square"
     >
       <template #actions>
-        <button
-          class="btn btn-outline-primary btn-sm"
-          :disabled="loading"
-          @click="refreshChecks"
-        >
+        <button class="btn btn-outline-primary btn-sm" :disabled="loading" @click="refreshChecks">
           <i class="bi bi-arrow-clockwise"></i>
           <span class="d-none d-md-inline ms-1">Refresh</span>
         </button>
@@ -20,7 +16,13 @@
 
     <div class="row g-3 mb-3 mb-md-4">
       <div class="col-12 col-sm-6 col-lg-4">
-        <StatsCard label="Total Checks" :value="qualityChecks.length" :animation-duration="600" />
+        <StatsCard
+          label="Total Checks"
+          :value="qualityChecks.length"
+          :animation-duration="600"
+          icon="bi bi-check-square"
+          color="var(--color-primary)"
+        />
       </div>
     </div>
 
@@ -29,7 +31,11 @@
     </div>
 
     <div class="mb-3 mb-md-4">
-      <LabeledValuesFilter v-model="selectedCategory" label="Categories:" :categories="categories" />
+      <LabeledValuesFilter
+        v-model="selectedCategory"
+        label="Categories:"
+        :categories="categories"
+      />
     </div>
 
     <PaginatedTable
@@ -103,4 +109,3 @@
 
   onMounted(loadQualityChecks);
 </script>
-

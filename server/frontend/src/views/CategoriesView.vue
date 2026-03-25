@@ -28,6 +28,7 @@
           label="Total Categories"
           :value="categories.length"
           icon="bi bi-tags"
+          color="var(--color-primary)"
         />
       </div>
     </div>
@@ -138,4 +139,3 @@
     loadCategories();
   });
 </script>
-
