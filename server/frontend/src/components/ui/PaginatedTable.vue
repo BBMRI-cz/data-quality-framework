@@ -123,7 +123,7 @@
     },
     emptyText: {
       type: String,
-      default: 'No data available',
+      default: 'No items found',
     },
     emptyTitle: {
       type: String,
@@ -135,7 +135,7 @@
     },
     loadingText: {
       type: String,
-      default: 'Loading data...',
+      default: 'Loading...',
     },
     error: {
       type: String,
@@ -143,7 +143,7 @@
     },
     errorTitle: {
       type: String,
-      default: 'Error Loading Data',
+      default: 'Unable to load data',
     },
     paginate: {
       type: Boolean,

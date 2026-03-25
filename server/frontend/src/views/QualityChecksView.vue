@@ -59,10 +59,7 @@
           :page-size="pageSize"
           :total-items="tableRows.length"
           :loading="loading"
-          loading-text="Loading quality checks..."
           :error="error"
-          error-title="Error Loading Quality Checks"
-          empty-title="No Quality Checks Found"
           :empty-text="emptyStateText"
           item-key="hash"
           item-label="checks"
@@ -105,27 +102,13 @@
   const pageSize = 10;
 
   const tableColumns = [
-    {
-      key: 'hash',
-      label: 'Hash',
-      headerClass: 'ps-4 d-none d-lg-table-cell',
-      cellClass: 'ps-4 d-none d-lg-table-cell',
-    },
+    { key: 'hash', label: 'Hash' },
     { key: 'name', label: 'Name' },
     { key: 'category', label: 'Category' },
-    {
-      key: 'description',
-      label: 'Description',
-      headerClass: 'd-none d-md-table-cell',
-      cellClass: 'd-none d-md-table-cell',
-      fallback: 'No description',
-    },
+    { key: 'description', label: 'Description' },
     {
       key: 'registeredAtText',
       label: 'Registered At',
-      headerClass: 'd-none d-xl-table-cell',
-      cellClass: 'd-none d-xl-table-cell',
-      fallback: 'N/A',
     },
   ];
 
@@ -168,6 +151,7 @@
   const tableRows = computed(() => {
     return filteredChecks.value.map((check) => ({
       ...check,
+      description: check.description || 'No description',
       registeredAtText: check.registeredAt ? formatDateShort(check.registeredAt) : null,
     }));
   });
