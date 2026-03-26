@@ -3,20 +3,20 @@ import { countChecksByStatus } from '@/utils/qualityCheckUtils.js';
 
 const AGENT_STATUS_META = {
   ACTIVE: {
-	color: 'var(--color-success)',
-	trendType: 'positive',
+    color: 'var(--color-success)',
+    trendType: 'positive',
   },
   PENDING: {
-	color: 'var(--color-warning)',
-	trendType: 'negative',
+    color: 'var(--color-warning)',
+    trendType: 'negative',
   },
   DECLINED: {
-	color: 'var(--color-danger)',
-	trendType: 'negative',
+    color: 'var(--color-danger)',
+    trendType: 'negative',
   },
   INACTIVE: {
-	color: 'var(--color-danger)',
-	trendType: 'negative',
+    color: 'var(--color-danger)',
+    trendType: 'negative',
   },
 };
 
@@ -27,12 +27,12 @@ const DEFAULT_AGENT_STATUS_META = {
 
 function formatRelativeTime(dateString) {
   if (!dateString) {
-	return 'N/A';
+    return 'N/A';
   }
 
   const date = new Date(dateString);
   if (Number.isNaN(date.getTime())) {
-	return 'N/A';
+    return 'N/A';
   }
 
   const now = new Date();
@@ -51,91 +51,90 @@ function formatRelativeTime(dateString) {
 
 function toLabel(status) {
   if (!status) {
-	return 'Unknown';
+    return 'Unknown';
   }
 
   return status
-	.toLowerCase()
-	.split('_')
-	.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-	.join(' ');
+    .toLowerCase()
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }
 
 export function useAgentReportStats({ agent, reports, qualityChecks }) {
   const qualityCheckMap = computed(() => {
-	const map = new Map();
+    const map = new Map();
 
-	qualityChecks.value.forEach((check) => {
-	  map.set(check.hash, check);
-	});
+    qualityChecks.value.forEach((check) => {
+      map.set(check.hash, check);
+    });
 
-	return map;
+    return map;
   });
 
   const agentName = computed(() => {
-	return agent.value?.name || 'Unknown Agent';
+    return agent.value?.name || 'Unknown Agent';
   });
 
   const agentVersion = computed(() => {
-	return agent.value?.version || 'N/A';
+    return agent.value?.version || 'N/A';
   });
 
   const agentStatusLabel = computed(() => {
-	return toLabel(agent.value?.status);
+    return toLabel(agent.value?.status);
   });
 
   const agentStatusMeta = computed(() => {
-	return AGENT_STATUS_META[agent.value?.status] || DEFAULT_AGENT_STATUS_META;
+    return AGENT_STATUS_META[agent.value?.status] || DEFAULT_AGENT_STATUS_META;
   });
 
   const agentStatusColor = computed(() => {
-	return agentStatusMeta.value.color;
+    return agentStatusMeta.value.color;
   });
 
   const agentStatusTrendType = computed(() => {
-	return agentStatusMeta.value.trendType;
+    return agentStatusMeta.value.trendType;
   });
 
   const reportStats = computed(() => {
-	const total = reports.value.length;
+    const total = reports.value.length;
 
-	if (!total) {
-	  return {
-		total: 0,
-		failed: 0,
-		passed: 0,
-		warnings: 0,
-		lastReportTime: 'N/A',
-	  };
-	}
+    if (!total) {
+      return {
+        total: 0,
+        failed: 0,
+        passed: 0,
+        warnings: 0,
+        lastReportTime: 'N/A',
+      };
+    }
 
-	const latestReport = reports.value.reduce((latest, current) => {
-	  if (!latest) {
-		return current;
-	  }
+    const latestReport = reports.value.reduce((latest, current) => {
+      if (!latest) {
+        return current;
+      }
 
-	  return new Date(current.timestamp) > new Date(latest.timestamp) ? current : latest;
-	}, null);
+      return new Date(current.timestamp) > new Date(latest.timestamp) ? current : latest;
+    }, null);
 
-	const counts = countChecksByStatus(latestReport, qualityCheckMap.value);
+    const counts = countChecksByStatus(latestReport, qualityCheckMap.value);
 
-	return {
-	  total,
-	  failed: counts.failed,
-	  passed: counts.passed,
-	  warnings: counts.warnings,
-	  lastReportTime: formatRelativeTime(latestReport.timestamp),
-	};
+    return {
+      total,
+      failed: counts.failed,
+      passed: counts.passed,
+      warnings: counts.warnings,
+      lastReportTime: formatRelativeTime(latestReport.timestamp),
+    };
   });
 
   return {
-	qualityCheckMap,
-	reportStats,
-	agentName,
-	agentVersion,
-	agentStatusLabel,
-	agentStatusColor,
-	agentStatusTrendType,
+    qualityCheckMap,
+    reportStats,
+    agentName,
+    agentVersion,
+    agentStatusLabel,
+    agentStatusColor,
+    agentStatusTrendType,
   };
 }
-

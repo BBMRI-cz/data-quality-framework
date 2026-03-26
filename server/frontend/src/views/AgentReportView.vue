@@ -305,7 +305,6 @@
     router.go(-1);
   };
 
-
   onMounted(() => {
     fetchAgentDetails();
   });

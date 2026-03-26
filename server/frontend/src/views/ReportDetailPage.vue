@@ -144,11 +144,7 @@
   import AppCallout from '@/components/AppCallout.vue';
   import ValuesFilter from '@/components/ui/ValuesFilter.vue';
   import { apiService } from '@/services/apiService.js';
-  import {
-    getCheckStatus,
-    CheckStatus,
-    getStatusIcon,
-  } from '@/utils/qualityCheckUtils.js';
+  import { getCheckStatus, CheckStatus, getStatusIcon } from '@/utils/qualityCheckUtils.js';
 
   const route = useRoute();
   const router = useRouter();

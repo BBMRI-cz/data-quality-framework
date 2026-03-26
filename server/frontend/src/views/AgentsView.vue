@@ -69,13 +69,7 @@
 
       <template #cell-groups="{ value }">
         <span v-if="!value.length" class="text-muted fst-italic">N/A</span>
-        <Badge
-          v-for="group in value"
-          v-else
-          :key="group"
-          :text="group"
-          size="small"
-        />
+        <Badge v-for="group in value" v-else :key="group" :text="group" size="small" />
       </template>
 
       <template #cell-status="{ item, value }">
