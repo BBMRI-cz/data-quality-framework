@@ -19,7 +19,7 @@
         <StatsCard
           label="Total"
           :value="agentStats.total"
-          icon="bi-database-fill-gear"
+          icon="bi bi-database-fill-gear"
           color="var(--color-primary)"
         />
       </div>
@@ -91,7 +91,7 @@
   import Badge from '@/components/ui/Badge.vue';
 
   const router = useRouter();
-  const loading = ref(false);
+  const loading = ref(true);
   const error = ref(null);
   const agents = ref([]);
 

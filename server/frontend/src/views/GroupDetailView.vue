@@ -293,13 +293,13 @@
   const getStatusColor = (status) => {
     switch (status) {
       case 'ACTIVE':
-        return '#198754';
+        return 'var(--color-success)';
       case 'INACTIVE':
-        return '#dc3545';
+        return 'var(--color-danger)';
       case 'PENDING':
-        return '#ffc107';
+        return 'var(--color-warning)';
       default:
-        return '#6c757d';
+        return 'var(--color-gray-500)';
     }
   };
 

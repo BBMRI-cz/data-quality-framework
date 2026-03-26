@@ -14,5 +14,5 @@
   });
 
   const label = computed(() => props.category?.name || 'No Category');
-  const activeColor = computed(() => props.category?.colorHex || '#6c757d');
+  const activeColor = computed(() => props.category?.colorHex || 'var(--color-gray-500)');
 </script>

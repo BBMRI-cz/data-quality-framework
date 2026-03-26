@@ -237,32 +237,6 @@
     return `${formattedDate} ${formattedTime}`;
   });
 
-  const latestPingColor = computed(() => {
-    const latestPing = interactions.value.find((i) => i.type === 'PING');
-    if (!latestPing) return '#198754'; // default green
-
-    const date = new Date(latestPing.timestamp);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffDays > 3) return '#dc3545'; // red if more than 3 days old
-    return '#198754'; // green otherwise
-  });
-
-  const latestPingBgColor = computed(() => {
-    const latestPing = interactions.value.find((i) => i.type === 'PING');
-    if (!latestPing) return '#d1e7dd'; // default light green
-
-    const date = new Date(latestPing.timestamp);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffDays > 3) return '#f8d7da'; // light red if more than 3 days old
-    return '#d1e7dd'; // light green otherwise
-  });
-
   const firstRegistrationTime = computed(() => {
     const registration = [...interactions.value].reverse().find((i) => i.type === 'REGISTRATION');
     if (!registration) return null;
@@ -319,13 +293,13 @@
   const getInteractionTypeColor = (type) => {
     switch (type) {
       case 'REPORT':
-        return '#0dcaf0';
+        return 'var(--color-primary-dark)';
       case 'PING':
-        return '#198754';
+        return 'var(--color-success)';
       case 'REGISTRATION':
-        return '#0d6efd';
+        return 'var(--color-primary)';
       default:
-        return '#6c757d';
+        return 'var(--color-gray-500)';
     }
   };
 
