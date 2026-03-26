@@ -36,26 +36,31 @@
           <StatsCard
             :label="'Total Checks'"
             :value="report.results?.length || 0"
+            color="var(--color-primary)"
             icon="bi bi-list-check"
           />
           <StatsCard
             :label="'Received Date'"
             :value="formatTimestamp(report.timestamp)"
+            color="var(--color-primary-dark)"
             icon="bi bi-clock-history"
           />
           <StatsCard
             :label="'Passed'"
             :value="countPassed()"
+            color="var(--color-success)"
             :icon="getStatusIcon(CheckStatus.PASSED)"
           />
           <StatsCard
             :label="'Warnings'"
             :value="countWarnings()"
+            color="var(--color-warning)"
             :icon="getStatusIcon(CheckStatus.WARNING)"
           />
           <StatsCard
             :label="'Errors'"
             :value="countErrors()"
+            color="var(--color-danger)"
             :icon="getStatusIcon(CheckStatus.FAILED)"
           />
         </div>
@@ -143,8 +148,6 @@
     getCheckStatus,
     CheckStatus,
     getStatusIcon,
-    getStatusColor,
-    getStatusBgColor,
   } from '@/utils/qualityCheckUtils.js';
 
   const route = useRoute();
