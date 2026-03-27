@@ -81,7 +81,6 @@
   const loading = ref(true);
   const error = ref(null);
   const agents = ref([]);
-  const processingAgent = ref(null);
 
   const activeAgentsCount = computed(() => {
     return agents.value.filter((agent) => agent.status === 'ACTIVE').length;
@@ -119,15 +118,15 @@
   const getStatusColor = (status) => {
     switch (status) {
       case 'ACTIVE':
-        return '#198754';
+        return 'var(--color-success)';
       case 'INACTIVE':
-        return '#6c757d';
+        return 'var(--color-gray-500)';
       case 'ERROR':
-        return '#dc3545';
+        return 'var(--color-danger)';
       case 'PENDING':
-        return '#ffc107';
+        return 'var(--color-warning)';
       default:
-        return '#6c757d';
+        return 'var(--color-gray-500)';
     }
   };
 
@@ -151,40 +150,6 @@
       return 'Requires Attention';
     }
     return status;
-  };
-
-  const approveAgent = async (agent) => {
-    try {
-      processingAgent.value = agent.id;
-      await apiService.approveAgent(agent.id);
-      // Update the agent status locally
-      const agentIndex = agents.value.findIndex((a) => a.id === agent.id);
-      if (agentIndex !== -1) {
-        agents.value[agentIndex].status = 'ACTIVE';
-      }
-    } catch (err) {
-      console.error('Error approving agent:', err);
-      error.value = `Failed to approve agent: ${err.message}`;
-    } finally {
-      processingAgent.value = null;
-    }
-  };
-
-  const declineAgent = async (agent) => {
-    try {
-      processingAgent.value = agent.id;
-      await apiService.declineAgent(agent.id);
-      // Update the agent status locally
-      const agentIndex = agents.value.findIndex((a) => a.id === agent.id);
-      if (agentIndex !== -1) {
-        agents.value[agentIndex].status = 'INACTIVE';
-      }
-    } catch (err) {
-      console.error('Error declining agent:', err);
-      error.value = `Failed to decline agent: ${err.message}`;
-    } finally {
-      processingAgent.value = null;
-    }
   };
 
   const navigateToAgentReport = (agent) => {
@@ -219,7 +184,7 @@
   }
 
   .hover-bg-light:hover {
-    background-color: #f8f9fa !important;
+    background-color: var(--bg-hover) !important;
   }
 
   .cursor-pointer {
@@ -246,7 +211,7 @@
 
   /* Header gradient to match sidebar */
   .header-gradient {
-    background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(180deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
   }
 
   @media (max-width: 768px) {

@@ -23,7 +23,7 @@ export function useAgentManagementActions({ agent, agentId, error, onDeleted }) 
     try {
       processing.value = true;
       await apiService.declineAgent(agentToDecline.id);
-      agentToDecline.status = 'DECLINED';
+      agentToDecline.status = 'INACTIVE';
     } catch (err) {
       error.value = 'Failed to decline agent';
       console.error('Error declining agent:', err);

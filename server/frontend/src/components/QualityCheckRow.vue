@@ -296,12 +296,12 @@
   function getStatusColor() {
     switch (checkStatus.value) {
       case CheckStatus.FAILED:
-        return '#dc3545';
+        return 'var(--color-danger)';
       case CheckStatus.WARNING:
-        return '#ffc107';
+        return 'var(--color-warning)';
       case CheckStatus.PASSED:
       default:
-        return '#198754';
+        return 'var(--color-success)';
     }
   }
 

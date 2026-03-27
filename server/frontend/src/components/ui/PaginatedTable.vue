@@ -217,7 +217,7 @@
   }
 
   .table-row-hover:hover {
-    background-color: #f8f9fa;
+    background-color: var(--bg-hover);
   }
 
   .cursor-pointer {

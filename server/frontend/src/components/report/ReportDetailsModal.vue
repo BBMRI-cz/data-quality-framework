@@ -194,13 +194,13 @@
   const getStatusColor = (status) => {
     switch (status) {
       case CheckStatus.PASSED:
-        return '#198754';
+        return 'var(--color-success)';
       case CheckStatus.WARNING:
-        return '#ffc107';
+        return 'var(--color-warning)';
       case CheckStatus.FAILED:
-        return '#dc3545';
+        return 'var(--color-danger)';
       default:
-        return '#6c757d';
+        return 'var(--color-gray-500)';
     }
   };
 
