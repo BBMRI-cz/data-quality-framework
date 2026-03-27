@@ -96,12 +96,7 @@
               <div v-if="user?.roles && user.roles.length > 0" class="col-12">
                 <label class="form-label fw-semibold">Roles</label>
                 <div>
-                  <Badge
-                    v-for="role in user.roles"
-                    :key="role"
-                    :text="role"
-                    variant="primary"
-                  />
+                  <Badge v-for="role in user.roles" :key="role" :text="role" variant="primary" />
                 </div>
               </div>
             </div>
@@ -149,11 +144,11 @@
   import { ref, computed, onMounted, reactive } from 'vue';
   import { useRouter, useRoute } from 'vue-router';
   import { useHead } from '@unhead/vue';
-  import { apiService } from '../services/apiService.js';
-  import { notificationService } from '../services/notificationService.js';
-  import PageHeader from '../components/PageHeader.vue';
-  import DeleteConfirmModal from '../components/DeleteConfirmModal.vue';
-  import Badge from '../components/Badge.vue';
+  import { apiService } from '@/services/apiService.js';
+  import { notificationService } from '@/services/notificationService.js';
+  import PageHeader from '@/components/ui/PageHeader.vue';
+  import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue';
+  import Badge from '@/components/ui/Badge.vue';
 
   const router = useRouter();
   const route = useRoute();

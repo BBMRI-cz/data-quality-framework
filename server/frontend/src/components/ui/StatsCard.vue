@@ -4,10 +4,15 @@
       <div class="d-flex justify-content-between align-items-start">
         <div>
           <p class="text-muted mb-1">{{ label }}</p>
-          <p class="display-6 fw-bold text-dark mb-0" :title="tooltipText">{{ displayValue }}</p>
+          <p class="display-6 fw-bold mb-0" :style="valueStyle" :title="tooltipText">
+            {{ displayValue }}
+          </p>
         </div>
-        <div class="icon-container p-3 rounded" :style="{ backgroundColor: iconBgColor }">
-          <i :class="iconClass" :style="{ color: iconColor }" style="font-size: 1.25rem"></i>
+        <div
+          v-if="icon"
+          class="d-inline-flex align-items-center justify-content-center p-3 rounded bg-light"
+        >
+          <i :class="[iconClass, 'fs-4']" :style="iconStyle"></i>
         </div>
       </div>
       <div v-if="trendText" class="mt-3">
@@ -36,18 +41,13 @@
       type: String,
       default: '',
     },
+    color: {
+      type: String,
+      default: '',
+    },
     icon: {
       type: String,
-      required: true,
-      default: 'bi bi-graph-up',
-    },
-    iconColor: {
-      type: String,
-      default: '#0d6efd', // Bootstrap primary color
-    },
-    iconBgColor: {
-      type: String,
-      default: '#cfe2ff', // Bootstrap primary light
+      default: '',
     },
     trendText: {
       type: String,
@@ -113,6 +113,14 @@
 
   const iconClass = computed(() => props.icon);
 
+  const valueStyle = computed(() => {
+    return props.color ? { color: props.color } : null;
+  });
+
+  const iconStyle = computed(() => {
+    return props.color ? { color: props.color } : null;
+  });
+
   const trendClass = computed(() => {
     switch (props.trendType) {
       case 'positive':
@@ -139,24 +147,3 @@
     }
   });
 </script>
-
-<style scoped>
-  .icon-container {
-    min-width: 48px;
-    min-height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .card {
-    transition:
-      transform 0.2s ease-in-out,
-      box-shadow 0.2s ease-in-out;
-  }
-
-  .card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
-  }
-</style>

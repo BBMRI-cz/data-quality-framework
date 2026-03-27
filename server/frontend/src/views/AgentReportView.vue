@@ -79,30 +79,16 @@
       </div>
     </div>
 
-    <!-- Loading State -->
-    <div v-if="loading" class="text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading agent report...</span>
-      </div>
-    </div>
-
-    <!-- Error State -->
-    <div v-else-if="error" class="alert alert-danger" role="alert">
-      <i class="bi bi-exclamation-triangle me-2"></i>
-      {{ error }}
-    </div>
-
     <!-- Agent Report Content -->
-    <div v-else>
+    <div>
       <!-- Stats Cards -->
       <div class="row mb-4">
         <div class="col-12 col-sm-6 col-md-3 mb-3">
           <StatsCard
             label="Total Reports"
             :value="reportStats.total"
+            color="var(--color-primary)"
             icon="bi bi-file-text"
-            icon-color="#0d6efd"
-            icon-bg-color="#cfe2ff"
             trend-text="All time"
             trend-type="neutral"
           />
@@ -111,19 +97,18 @@
           <StatsCard
             label="Failed Checks"
             :value="reportStats.failed"
+            color="var(--color-danger)"
             icon="bi bi-x-circle"
-            icon-color="#dc3545"
-            icon-bg-color="#f8d7da"
             trend-text="Needs attention"
+            trend-type="negative"
           />
         </div>
         <div class="col-12 col-sm-6 col-md-3 mb-3">
           <StatsCard
             label="Warnings"
             :value="reportStats.warnings"
+            color="var(--color-warning)"
             icon="bi bi-exclamation-triangle"
-            icon-color="#ffc107"
-            icon-bg-color="#fff3cd"
             trend-text="Review recommended"
             trend-type="neutral"
           />
@@ -132,11 +117,32 @@
           <StatsCard
             label="Last Report"
             :value="reportStats.lastReportTime"
+            color="var(--color-primary-dark)"
             icon="bi bi-clock"
-            icon-color="#0dcaf0"
-            icon-bg-color="#cff4fc"
             trend-text="Timestamp"
             trend-type="neutral"
+          />
+        </div>
+      </div>
+
+      <div class="row mb-4">
+        <div class="col-12 col-md-6 mb-3">
+          <StatsCard
+            label="Agent Version"
+            :value="agentVersion"
+            color="var(--color-gray-600)"
+            trend-text="Reported version"
+            trend-type="neutral"
+          />
+        </div>
+        <div class="col-12 col-md-6 mb-3">
+          <StatsCard
+            label="Agent Status"
+            :value="agentStatusLabel"
+            :color="agentStatusColor"
+            icon="bi bi-activity"
+            trend-text="Current state"
+            :trend-type="agentStatusTrendType"
           />
         </div>
       </div>
@@ -144,22 +150,48 @@
       <!-- Recent Reports Table -->
       <div class="row">
         <div class="col-12">
-          <ReportsTable
-            :reports="reports"
-            :quality-check-map="qualityCheckMap"
-            :agents="agentArray"
-            @report-selected="openReportModal"
-          />
+          <div class="mb-4">
+            <LabeledValuesFilter v-model="selectedStatus" label="Status:" :categories="statuses" />
+          </div>
+
+          <PaginatedTable
+            title="Recent Reports"
+            :columns="columns"
+            :items="tableRows"
+            :total-items="filteredReports.length"
+            :loading="loading"
+            :error="error"
+            loading-text="Loading agent report..."
+            error-title="Unable to load agent report"
+            :paginate="false"
+            item-key="id"
+            item-label="reports"
+            empty-text="No reports available"
+            @row-click="openReport"
+          >
+            <template #header-meta>
+              <Badge :text="`${filteredReports.length} reports`" variant="secondary" size="small" />
+            </template>
+
+            <template #cell-status="{ item, value }">
+              <div class="d-flex align-items-center gap-1">
+                <Badge :text="value" :color="item.statusColor" size="small" />
+              </div>
+            </template>
+
+            <template #cell-warnings="{ value }">
+              <span :class="value > 0 ? 'text-warning fw-semibold' : 'text-muted'">{{
+                value
+              }}</span>
+            </template>
+
+            <template #cell-errors="{ value }">
+              <span :class="value > 0 ? 'text-danger fw-semibold' : 'text-muted'">{{ value }}</span>
+            </template>
+          </PaginatedTable>
         </div>
       </div>
     </div>
-
-    <!-- Report Details Modal -->
-    <ReportDetailsModal
-      :report="selectedReport"
-      :quality-check-map="qualityCheckMap"
-      @close="closeReportModal"
-    />
 
     <!-- Delete Confirmation Modal -->
     <BaseModal
@@ -197,159 +229,72 @@
 <script setup>
   import { ref, onMounted, computed } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
-  import StatsCard from '../components/StatsCard.vue';
-  import ReportsTable from '../components/ReportsTable.vue';
-  import ReportDetailsModal from '../components/ReportDetailsModal.vue';
-  import PageHeader from '../components/PageHeader.vue';
-  import BaseModal from '../components/BaseModal.vue';
-  import { apiService } from '../services/apiService.js';
-  import { notificationService } from '../services/notificationService.js';
-  import { countChecksByStatus } from '../utils/qualityCheckUtils.js';
+  import StatsCard from '@/components/ui/StatsCard.vue';
+  import PaginatedTable from '@/components/ui/PaginatedTable.vue';
+  import Badge from '@/components/ui/Badge.vue';
+  import LabeledValuesFilter from '@/components/ui/LabeledValuesFilter.vue';
+  import { useReportTableRows } from '@/composables/useReportTableRows.js';
+  import { useStatuses } from '@/composables/useStatuses.js';
+  import { useAgentReportData } from '@/composables/useAgentReportData.js';
+  import { useAgentReportStats } from '@/composables/useAgentReportStats.js';
+  import { useAgentManagementActions } from '@/composables/useAgentManagementActions.js';
+  import PageHeader from '@/components/ui/PageHeader.vue';
+  import BaseModal from '@/components/BaseModal.vue';
 
   const route = useRoute();
   const router = useRouter();
 
   const agentId = ref(route.params.uuid);
-  const loading = ref(true);
-  const error = ref(null);
-  const agent = ref(null);
-  const reports = ref([]);
-  const qualityChecks = ref([]);
-  const selectedReport = ref(null);
-  const processing = ref(false);
-  const showDeleteModal = ref(false);
+  const { loading, error, agent, reports, qualityChecks, fetchAgentDetails } =
+    useAgentReportData(agentId);
 
-  const agentName = computed(() => {
-    return agent.value?.name || 'Unknown Agent';
+  const {
+    qualityCheckMap,
+    reportStats,
+    agentName,
+    agentVersion,
+    agentStatusLabel,
+    agentStatusColor,
+    agentStatusTrendType,
+  } = useAgentReportStats({
+    agent,
+    reports,
+    qualityChecks,
   });
+
+  const selectedStatus = ref(null);
+
+  const {
+    processing,
+    showDeleteModal,
+    approveAgent,
+    declineAgent,
+    handleUpdateAgentName,
+    confirmDeleteAgent,
+    closeDeleteModal,
+    deleteAgent,
+  } = useAgentManagementActions({
+    agent,
+    agentId,
+    error,
+    onDeleted: () => router.push({ name: 'Agents' }),
+  });
+
+  const { allowedValues: statuses } = useStatuses();
 
   const agentArray = computed(() => {
     return agent.value ? [agent.value] : [];
   });
 
-  // Create a map of hash -> quality check for quick lookup
-  const qualityCheckMap = computed(() => {
-    const map = new Map();
-    qualityChecks.value.forEach((check) => {
-      map.set(check.hash, check);
-    });
-    return map;
+  const { columns, filteredReports, tableRows } = useReportTableRows({
+    reports,
+    qualityCheckMap,
+    agents: agentArray,
+    selectedStatus,
   });
 
-  const reportStats = computed(() => {
-    const total = reports.value.length;
-
-    // Get the latest report for stats calculation
-    const sortedReports = [...reports.value].sort(
-      (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
-    );
-    const latestReport = sortedReports[0];
-
-    if (!latestReport) {
-      return {
-        total: 0,
-        failed: 0,
-        passed: 0,
-        warnings: 0,
-        lastReportTime: 'N/A',
-      };
-    }
-
-    const counts = countChecksByStatus(latestReport, qualityCheckMap.value);
-    const lastReportTime = formatTime(latestReport.timestamp);
-
-    return {
-      total,
-      failed: counts.failed,
-      passed: counts.passed,
-      warnings: counts.warnings,
-      lastReportTime,
-    };
-  });
-
-  const fetchAgentDetails = async () => {
-    try {
-      loading.value = true;
-      error.value = null;
-
-      // Fetch quality checks first
-      const qualityChecksResponse = await apiService.getQualityChecks();
-      qualityChecks.value = qualityChecksResponse._embedded?.qualityChecks || [];
-
-      // Fetch agent details
-      const agentsResponse = await apiService.getAgents();
-      const agents = agentsResponse._embedded?.agents || [];
-      agent.value = agents.find((a) => a.id === agentId.value);
-
-      if (!agent.value) {
-        error.value = 'Agent not found';
-        return;
-      }
-
-      // Fetch real reports from the API
-      const reportsResponse = await apiService.getAgentReports(agentId.value);
-      const reportsList = reportsResponse._embedded?.reports || reportsResponse.reports || [];
-
-      // Sort reports by timestamp (newest first)
-      reports.value = reportsList.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    } catch (err) {
-      error.value = err.message || 'Failed to load agent report';
-      console.error('Error fetching agent details:', err);
-    } finally {
-      loading.value = false;
-    }
-  };
-
-  const formatTime = (dateString) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
-
-  const openReportModal = (report) => {
-    selectedReport.value = report;
-  };
-
-  const closeReportModal = () => {
-    selectedReport.value = null;
-  };
-
-  const approveAgent = async (agent) => {
-    try {
-      processing.value = true;
-      await apiService.approveAgent(agent.id);
-      agent.status = 'ACTIVE';
-      // Optionally, refetch agent details or update the UI accordingly
-    } catch (err) {
-      error.value = 'Failed to approve agent';
-      console.error('Error approving agent:', err);
-    } finally {
-      processing.value = false;
-    }
-  };
-
-  const declineAgent = async (agent) => {
-    try {
-      processing.value = true;
-      await apiService.declineAgent(agent.id);
-      agent.status = 'DECLINED';
-      // Optionally, refetch agent details or update the UI accordingly
-    } catch (err) {
-      error.value = 'Failed to decline agent';
-      console.error('Error declining agent:', err);
-    } finally {
-      processing.value = false;
-    }
+  const openReport = (report) => {
+    router.push({ name: 'ReportDetail', params: { id: report.id } });
   };
 
   const goToInteractions = () => {
@@ -358,51 +303,6 @@
 
   const goBack = () => {
     router.go(-1);
-  };
-
-  const handleUpdateAgentName = async (newName) => {
-    try {
-      await apiService.updateAgentName(agentId.value, newName);
-
-      // Update the local agent object
-      if (agent.value) {
-        agent.value.name = newName;
-      }
-    } catch (err) {
-      error.value = 'Failed to update agent name';
-      console.error('Error updating agent name:', err);
-    }
-  };
-
-  const confirmDeleteAgent = () => {
-    showDeleteModal.value = true;
-  };
-
-  const closeDeleteModal = () => {
-    showDeleteModal.value = false;
-  };
-
-  const deleteAgent = async () => {
-    try {
-      processing.value = true;
-      const agentNameToDelete = agent.value?.name || agent.value?.id || 'Agent';
-      await apiService.deleteAgent(agentId.value);
-
-      // Show success notification
-      notificationService.success(
-        'Agent Deleted',
-        `${agentNameToDelete} has been successfully deleted.`
-      );
-
-      // Close modal and navigate back to agents list after successful deletion
-      showDeleteModal.value = false;
-      router.push({ name: 'Agents' });
-    } catch (err) {
-      error.value = 'Failed to delete agent';
-      console.error('Error deleting agent:', err);
-      notificationService.error('Delete Failed', 'Could not delete the agent. Please try again.');
-      processing.value = false;
-    }
   };
 
   onMounted(() => {

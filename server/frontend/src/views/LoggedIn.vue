@@ -12,8 +12,8 @@
 <script setup>
   import { onMounted } from 'vue';
   import { useAuth, useOidcStore } from 'vue3-oidc';
-  import { initializeOidc } from '../utils/oidc.js';
-  import { authStore } from '../stores/authStore.js';
+  import { initializeOidc } from '@/utils/oidc.js';
+  import { authStore } from '@/stores/authStore.js';
   import { useRouter } from 'vue-router';
 
   const router = useRouter();

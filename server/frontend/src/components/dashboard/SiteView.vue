@@ -6,43 +6,41 @@
         label="Agents"
         :value="`${filteredAgents.length}`"
         icon="bi bi-database-fill-gear"
-        icon-color="#0d6efd"
-        icon-bg-color="#cfe2ff"
+        color="var(--color-primary)"
         :tooltip-text="filteredAgents.map((a) => a.name).join(', ')"
       />
       <StatsCard
         label="Quality Checks"
         :value="`${totalChecks}`"
         icon="bi bi-check-square-fill"
-        icon-color="#6f42c1"
-        icon-bg-color="#e2d9f3"
+        color="var(--color-primary)"
       />
       <StatsCard
         label="Agents with Errors"
         :value="`${sitesWithErrors}`"
-        icon="bi bi-exclamation-triangle-fill"
-        icon-color="#dc3545"
-        icon-bg-color="#f8d7da"
+        :icon="failedStatus.icon"
+        :color="failedStatus.color"
       />
       <StatsCard
         label="Agents with Warnings"
         :value="`${sitesWithWarnings}`"
-        icon="bi bi-exclamation-circle-fill"
-        icon-color="#ffc107"
-        icon-bg-color="#fff3cd"
+        :icon="warningStatus.icon"
+        :color="warningStatus.color"
       />
     </div>
 
     <!-- Category Filter -->
     <div class="mb-4">
-      <div class="filter-label">Categories:</div>
-      <CategoryFilter v-model="selectedCategory" :categories="categories" />
+      <LabeledValuesFilter
+        v-model="selectedCategory"
+        label="Categories:"
+        :categories="categories"
+      />
     </div>
 
     <!-- Group Filter -->
     <div v-if="groups.length > 0" class="mb-4">
-      <div class="filter-label">Groups:</div>
-      <CategoryFilter v-model="selectedGroup" :categories="groups" />
+      <LabeledValuesFilter v-model="selectedGroup" label="Groups:" :categories="groups" />
     </div>
 
     <!-- Main Content Grid -->
@@ -65,10 +63,16 @@
 
 <script setup>
   import { toRefs } from 'vue';
-  import StatsCard from './StatsCard.vue';
-  import AgentCard from './AgentCard.vue';
-  import CategoryFilter from './CategoryFilter.vue';
-  import { useSiteStats } from '../composables/useSiteStats';
+  import { CheckStatus } from '@/utils/qualityCheckUtils.js';
+  import { useStatuses } from '@/composables/useStatuses.js';
+  import StatsCard from '../ui/StatsCard.vue';
+  import AgentCard from '../agent/AgentCard.vue';
+  import LabeledValuesFilter from '@/components/ui/LabeledValuesFilter.vue';
+  import { useSiteStats } from '@/composables/useSiteStats.js';
+
+  const { getStatusMeta } = useStatuses();
+  const failedStatus = getStatusMeta(CheckStatus.FAILED);
+  const warningStatus = getStatusMeta(CheckStatus.WARNING);
 
   const props = defineProps({
     reports: {
@@ -105,16 +109,6 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 1rem;
-  }
-
-  /* Filter Labels */
-  .filter-label {
-    font-size: 0.875rem;
-    color: #6c757d;
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
   }
 
   /* Main Content Grid */

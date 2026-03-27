@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue';
-import { CheckStatus } from '../utils/qualityCheckUtils.js';
+import { CheckStatus } from '@/utils/qualityCheckUtils.js';
 
 export function useSiteStats(reports, qualityCheckMap, agents) {
   const selectedCategory = ref(null);

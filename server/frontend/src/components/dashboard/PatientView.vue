@@ -6,35 +6,32 @@
         label="Total Patients"
         :value="`${totalPatients.toLocaleString()}`"
         icon="bi bi-people-fill"
-        icon-color="#0d6efd"
-        icon-bg-color="#cfe2ff"
+        color="var(--color-primary)"
       />
       <StatsCard
         label="From Sites"
         :value="`${fromSites}`"
         icon="bi bi-database-fill-gear"
-        icon-color="#198754"
-        icon-bg-color="#d1e7dd"
+        color="var(--color-primary)"
       />
       <StatsCard
         label="Total Samples"
         :value="`${totalSamples.toLocaleString()}`"
         icon="bi bi-eyedropper"
-        icon-color="#6610f2"
-        icon-bg-color="#e0cffc"
+        color="var(--color-primary-dark)"
       />
     </div>
 
     <!-- Category Filter -->
     <div class="mb-4">
       <div class="filter-label">Categories:</div>
-      <CategoryFilter v-model="selectedCategory" :categories="categories" />
+      <ValuesFilter v-model="selectedCategory" :categories="categories" />
     </div>
 
     <!-- Group Filter -->
     <div v-if="groups.length > 0" class="mb-4">
       <div class="filter-label">Groups:</div>
-      <CategoryFilter v-model="selectedGroup" :categories="groups" />
+      <ValuesFilter v-model="selectedGroup" :categories="groups" />
     </div>
 
     <!-- Main Content Grid -->
@@ -68,10 +65,10 @@
 
 <script setup>
   import { toRefs } from 'vue';
-  import StatsCard from './StatsCard.vue';
-  import CategoryFilter from './CategoryFilter.vue';
-  import QualityCheckRow from './QualityCheckRow.vue';
-  import { usePatientStats } from '../composables/usePatientStats';
+  import StatsCard from '../ui/StatsCard.vue';
+  import ValuesFilter from '../ui/ValuesFilter.vue';
+  import QualityCheckRow from '../QualityCheckRow.vue';
+  import { usePatientStats } from '@/composables/usePatientStats.js';
 
   const props = defineProps({
     reports: {

@@ -53,8 +53,6 @@
             label="Agent Version"
             :value="agentVersion || 'unknown'"
             icon="bi bi-code-square"
-            icon-color="#6f42c1"
-            icon-bg-color="#e0cffc"
             trend-text="Current version"
             trend-type="neutral"
           />
@@ -64,8 +62,6 @@
             label="Latest Ping"
             :value="latestPingTime || 'No pings recorded'"
             icon="bi bi-heart-pulse"
-            :icon-color="latestPingColor"
-            :icon-bg-color="latestPingBgColor"
             trend-text="Health check"
             trend-type="neutral"
           />
@@ -75,8 +71,6 @@
             label="First Registration"
             :value="firstRegistrationTime || 'Not registered'"
             icon="bi bi-person-plus"
-            icon-color="#0d6efd"
-            icon-bg-color="#cfe2ff"
             trend-text="Agent joined"
             trend-type="neutral"
           />
@@ -92,7 +86,11 @@
                 <h5 class="mb-0 fw-semibold">
                   <i class="bi bi-clock-history text-primary me-2"></i>Agent Activity Log
                 </h5>
-                <span class="badge bg-secondary">{{ totalInteractions }} interactions</span>
+                <Badge
+                  :text="`${totalInteractions} interactions`"
+                  variant="secondary"
+                  size="small"
+                />
               </div>
             </div>
             <div class="card-body p-0">
@@ -115,13 +113,10 @@
                         </div>
                       </td>
                       <td>
-                        <span
-                          class="badge rounded-pill"
-                          :class="getInteractionTypeBadgeClass(interaction.type)"
-                        >
+                        <Badge :color="getInteractionTypeColor(interaction.type)" size="small">
                           <i :class="getInteractionTypeIcon(interaction.type)" class="me-1"></i>
                           {{ interaction.type }}
-                        </span>
+                        </Badge>
                       </td>
                     </tr>
                     <tr v-if="paginatedInteractions.length === 0">
@@ -180,10 +175,11 @@
 <script setup>
   import { ref, computed, onMounted } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
-  import PageHeader from '../components/PageHeader.vue';
-  import StatsCard from '../components/StatsCard.vue';
-  import { apiService } from '../services/apiService.js';
-  import { formatDateLong, formatTimeFull } from '../utils/dateUtils.js';
+  import PageHeader from '@/components/ui/PageHeader.vue';
+  import StatsCard from '@/components/ui/StatsCard.vue';
+  import Badge from '@/components/ui/Badge.vue';
+  import { apiService } from '@/services/apiService.js';
+  import { formatDateLong, formatTimeFull } from '@/utils/dateUtils.js';
 
   const route = useRoute();
   const router = useRouter();
@@ -241,32 +237,6 @@
     return `${formattedDate} ${formattedTime}`;
   });
 
-  const latestPingColor = computed(() => {
-    const latestPing = interactions.value.find((i) => i.type === 'PING');
-    if (!latestPing) return '#198754'; // default green
-
-    const date = new Date(latestPing.timestamp);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffDays > 3) return '#dc3545'; // red if more than 3 days old
-    return '#198754'; // green otherwise
-  });
-
-  const latestPingBgColor = computed(() => {
-    const latestPing = interactions.value.find((i) => i.type === 'PING');
-    if (!latestPing) return '#d1e7dd'; // default light green
-
-    const date = new Date(latestPing.timestamp);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffDays > 3) return '#f8d7da'; // light red if more than 3 days old
-    return '#d1e7dd'; // light green otherwise
-  });
-
   const firstRegistrationTime = computed(() => {
     const registration = [...interactions.value].reverse().find((i) => i.type === 'REGISTRATION');
     if (!registration) return null;
@@ -320,16 +290,16 @@
     fetchAgentInteractions();
   };
 
-  const getInteractionTypeBadgeClass = (type) => {
+  const getInteractionTypeColor = (type) => {
     switch (type) {
       case 'REPORT':
-        return 'bg-info';
+        return 'var(--color-primary-dark)';
       case 'PING':
-        return 'bg-success';
+        return 'var(--color-success)';
       case 'REGISTRATION':
-        return 'bg-primary';
+        return 'var(--color-primary)';
       default:
-        return 'bg-secondary';
+        return 'var(--color-gray-500)';
     }
   };
 

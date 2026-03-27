@@ -53,9 +53,11 @@
                   <i class="bi bi-clipboard-check text-info"></i>
                   <div>
                     <small class="text-muted d-block">Overall Status</small>
-                    <span class="badge" :class="getOverallStatusBadgeClass()">
-                      {{ getOverallStatus() }}
-                    </span>
+                    <Badge
+                      :text="getOverallStatus()"
+                      :color="getStatusColor(getOverallStatus())"
+                      size="small"
+                    />
                   </div>
                 </div>
               </div>
@@ -120,9 +122,11 @@
                         <h6 class="mb-1 fw-semibold">{{ getCheckName(result.hash) }}</h6>
                         <p class="mb-2 small text-muted">{{ getCheckDescription(result.hash) }}</p>
                         <div class="d-flex align-items-center gap-2 flex-wrap">
-                          <span class="badge" :class="getCheckBadgeClass(result)">
-                            {{ getCheckStatusText(result) }}
-                          </span>
+                          <Badge
+                            :text="getCheckStatusText(result)"
+                            :color="getStatusColor(getCheckStatusText(result))"
+                            size="small"
+                          />
                         </div>
                       </div>
                     </div>
@@ -152,13 +156,12 @@
 <script setup>
   import {
     getCheckStatus,
-    getStatusBadgeClass,
-    formatScore,
     countChecksByStatus,
     getReportStatus,
     CheckStatus,
-  } from '../utils/qualityCheckUtils.js';
-  import { formatDateShort, formatTime } from '../utils/dateUtils.js';
+  } from '@/utils/qualityCheckUtils.js';
+  import { formatDateShort, formatTime } from '@/utils/dateUtils.js';
+  import Badge from '@/components/ui/Badge.vue';
 
   const props = defineProps({
     report: {
@@ -188,9 +191,17 @@
     return getCheckStatus(result, check);
   };
 
-  const getCheckBadgeClass = (result) => {
-    const status = getCheckStatusText(result);
-    return getStatusBadgeClass(status);
+  const getStatusColor = (status) => {
+    switch (status) {
+      case CheckStatus.PASSED:
+        return 'var(--color-success)';
+      case CheckStatus.WARNING:
+        return 'var(--color-warning)';
+      case CheckStatus.FAILED:
+        return 'var(--color-danger)';
+      default:
+        return 'var(--color-gray-500)';
+    }
   };
 
   const getCheckIcon = (result) => {
@@ -228,11 +239,6 @@
   const getOverallStatus = () => {
     return getReportStatus(props.report, props.qualityCheckMap);
   };
-
-  const getOverallStatusBadgeClass = () => {
-    const status = getOverallStatus();
-    return getStatusBadgeClass(status);
-  };
 </script>
 
 <style scoped>
@@ -250,10 +256,6 @@
   .modal-content {
     border-radius: 0.75rem;
     overflow: hidden;
-  }
-
-  .bg-gradient-primary {
-    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
   }
 
   .bg-gradient-purple {
@@ -422,14 +424,6 @@
     line-height: 1;
   }
 
-  .score-label {
-    font-size: 0.625rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    margin-top: 0.125rem;
-    opacity: 0.8;
-  }
-
   .score-success {
     background-color: #d1e7dd;
     border-color: #198754;
@@ -452,14 +446,6 @@
     background-color: #e9ecef;
     border-color: #6c757d;
     color: #495057;
-  }
-
-  .badge {
-    font-weight: 600;
-    padding: 0.35rem 0.75rem;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
   }
 
   /* Footer close button */

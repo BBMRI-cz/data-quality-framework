@@ -1,26 +1,26 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import { authStore } from '../stores/authStore.js';
+import { authStore } from '@/stores/authStore.js';
 
-import Dashboard from '../views/Dashboard.vue';
-import Reports from '../views/Reports.vue';
-import ReportDetailPage from '../views/ReportDetailPage.vue';
-import Settings from '../views/Settings.vue';
-import Profile from '../views/Profile.vue';
-import AgentsView from '../views/AgentsView.vue';
-import AgentReportView from '../views/AgentReportView.vue';
-import AgentInteractionsView from '../views/AgentInteractionsView.vue';
-import QualityChecksView from '../views/QualityChecksView.vue';
-import QualityCheckDetailView from '../views/QualityCheckDetailView.vue';
-import CategoriesView from '../views/CategoriesView.vue';
-import CategoryDetailView from '../views/CategoryDetailView.vue';
-import LoginView from '../views/LoginView.vue';
-import LoggedIn from '../views/LoggedIn.vue';
-import OidcSettings from '../views/OidcSettings.vue';
-import NotFound from '../views/NotFound.vue';
-import GroupsView from '../views/GroupsView.vue';
-import GroupDetailView from '../views/GroupDetailView.vue';
-import UsersView from '../views/UsersView.vue';
-import UserDetailView from '../views/UserDetailView.vue';
+import Dashboard from '@/views/Dashboard.vue';
+import Reports from '@/views/Reports.vue';
+import ReportDetailPage from '@/views/ReportDetailPage.vue';
+import Settings from '@/views/Settings.vue';
+import Profile from '@/views/Profile.vue';
+import AgentsView from '@/views/AgentsView.vue';
+import AgentReportView from '@/views/AgentReportView.vue';
+import AgentInteractionsView from '@/views/AgentInteractionsView.vue';
+import QualityChecksView from '@/views/QualityChecksView.vue';
+import QualityCheckDetailView from '@/views/QualityCheckDetailView.vue';
+import CategoriesView from '@/views/CategoriesView.vue';
+import CategoryDetailView from '@/views/CategoryDetailView.vue';
+import LoginView from '@/views/LoginView.vue';
+import LoggedIn from '@/views/LoggedIn.vue';
+import OidcSettings from '@/views/OidcSettings.vue';
+import NotFound from '@/views/NotFound.vue';
+import GroupsView from '@/views/GroupsView.vue';
+import GroupDetailView from '@/views/GroupDetailView.vue';
+import UsersView from '@/views/UsersView.vue';
+import UserDetailView from '@/views/UserDetailView.vue';
 
 const routes = [
   {

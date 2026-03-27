@@ -208,10 +208,10 @@
 
 <script setup>
   import { onMounted, ref } from 'vue';
-  import settingsStore from '../stores/settingsStore';
-  import { authStore } from '../stores/authStore';
-  import PageHeader from '../components/PageHeader.vue';
-  import DeleteConfirmModal from '../components/DeleteConfirmModal.vue';
+  import settingsStore from '@/stores/settingsStore';
+  import { authStore } from '@/stores/authStore';
+  import PageHeader from '@/components/ui/PageHeader.vue';
+  import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue';
 
   const reloadTimeout = 500;
   const { settings, loading, error } = settingsStore;

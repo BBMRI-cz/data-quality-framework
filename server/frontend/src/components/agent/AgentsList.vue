@@ -49,9 +49,11 @@
               </div>
               <div class="agent-actions d-flex align-items-center gap-2 ms-2">
                 <!-- Display status badge only -->
-                <span :class="getStatusClass(agent.status)" class="badge">
-                  {{ getStatusDisplayText(agent.status) }}
-                </span>
+                <Badge
+                  :text="getStatusDisplayText(agent.status)"
+                  :color="getStatusColor(agent.status)"
+                  size="small"
+                />
               </div>
             </div>
           </div>
@@ -70,7 +72,8 @@
 <script setup>
   import { ref, onMounted, computed, watch } from 'vue';
   import { useRouter } from 'vue-router';
-  import { apiService } from '../services/apiService.js';
+  import { apiService } from '@/services/apiService.js';
+  import Badge from '@/components/ui/Badge.vue';
 
   const router = useRouter();
   const emit = defineEmits(['agentsLoaded']);
@@ -78,7 +81,6 @@
   const loading = ref(true);
   const error = ref(null);
   const agents = ref([]);
-  const processingAgent = ref(null);
 
   const activeAgentsCount = computed(() => {
     return agents.value.filter((agent) => agent.status === 'ACTIVE').length;
@@ -113,18 +115,18 @@
     }
   };
 
-  const getStatusClass = (status) => {
+  const getStatusColor = (status) => {
     switch (status) {
       case 'ACTIVE':
-        return 'bg-success';
+        return 'var(--color-success)';
       case 'INACTIVE':
-        return 'bg-secondary';
+        return 'var(--color-gray-500)';
       case 'ERROR':
-        return 'bg-danger';
+        return 'var(--color-danger)';
       case 'PENDING':
-        return 'bg-warning';
+        return 'var(--color-warning)';
       default:
-        return 'bg-secondary';
+        return 'var(--color-gray-500)';
     }
   };
 
@@ -148,40 +150,6 @@
       return 'Requires Attention';
     }
     return status;
-  };
-
-  const approveAgent = async (agent) => {
-    try {
-      processingAgent.value = agent.id;
-      await apiService.approveAgent(agent.id);
-      // Update the agent status locally
-      const agentIndex = agents.value.findIndex((a) => a.id === agent.id);
-      if (agentIndex !== -1) {
-        agents.value[agentIndex].status = 'ACTIVE';
-      }
-    } catch (err) {
-      console.error('Error approving agent:', err);
-      error.value = `Failed to approve agent: ${err.message}`;
-    } finally {
-      processingAgent.value = null;
-    }
-  };
-
-  const declineAgent = async (agent) => {
-    try {
-      processingAgent.value = agent.id;
-      await apiService.declineAgent(agent.id);
-      // Update the agent status locally
-      const agentIndex = agents.value.findIndex((a) => a.id === agent.id);
-      if (agentIndex !== -1) {
-        agents.value[agentIndex].status = 'INACTIVE';
-      }
-    } catch (err) {
-      console.error('Error declining agent:', err);
-      error.value = `Failed to decline agent: ${err.message}`;
-    } finally {
-      processingAgent.value = null;
-    }
   };
 
   const navigateToAgentReport = (agent) => {
@@ -216,7 +184,7 @@
   }
 
   .hover-bg-light:hover {
-    background-color: #f8f9fa !important;
+    background-color: var(--bg-hover) !important;
   }
 
   .cursor-pointer {
@@ -233,11 +201,6 @@
     line-height: 1.2;
   }
 
-  .badge {
-    font-size: 0.7rem;
-    padding: 0.25rem 0.5rem;
-  }
-
   .pending-agent {
     background-color: #fff3cd;
   }
@@ -248,7 +211,7 @@
 
   /* Header gradient to match sidebar */
   .header-gradient {
-    background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(180deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
   }
 
   @media (max-width: 768px) {
@@ -258,7 +221,7 @@
       gap: 0.5rem;
     }
 
-    .badge {
+    .agent-actions {
       align-self: flex-end;
     }
   }

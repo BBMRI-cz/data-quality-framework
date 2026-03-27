@@ -1,8 +1,13 @@
 <template>
-  <span class="badge" :class="badgeClasses">
+  <span class="badge border rounded-pill" :style="badgeStyle" :class="badgeClasses">
     <span v-if="closable" class="badge-content">
       <slot>{{ text }}</slot>
-      <button class="badge-close" @click="$emit('remove', text)">
+      <button
+        type="button"
+        class="badge-close"
+        aria-label="Remove badge"
+        @click="emit('remove', text)"
+      >
         <i class="bi bi-x"></i>
       </button>
     </span>
@@ -13,7 +18,7 @@
 <script setup>
   import { computed } from 'vue';
 
-  defineEmits(['remove']);
+  const emit = defineEmits(['remove']);
 
   const props = defineProps({
     text: {
@@ -23,10 +28,11 @@
     variant: {
       type: String,
       default: 'primary',
-      validator: (value) =>
-        ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'].includes(
-          value
-        ),
+      validator: (value) => ['primary', 'secondary'].includes(value),
+    },
+    color: {
+      type: String,
+      default: '',
     },
     size: {
       type: String,
@@ -39,18 +45,26 @@
     },
   });
 
-  const badgeClasses = computed(() => {
-    const classes = [`bg-${props.variant}`];
-    if (props.size === 'small') {
-      classes.push('badge-sm');
-    } else if (props.size === 'large') {
-      classes.push('badge-lg');
-    }
-    if (props.closable) {
-      classes.push('badge-closable');
-    }
-    return classes;
-  });
+  const variantColors = {
+    primary: 'var(--color-primary)',
+    secondary: 'var(--color-gray-500)',
+  };
+
+  const activeColor = computed(
+    () => props.color || variantColors[props.variant] || variantColors.primary
+  );
+
+  const badgeStyle = computed(() => ({
+    backgroundColor: `color-mix(in srgb, ${activeColor.value} 12%, transparent)`,
+    color: activeColor.value,
+    borderColor: `color-mix(in srgb, ${activeColor.value} 25%, transparent)`,
+  }));
+
+  const badgeClasses = computed(() => ({
+    'badge-sm': props.size === 'small',
+    'badge-lg': props.size === 'large',
+    'badge-closable': props.closable,
+  }));
 </script>
 
 <style scoped>
@@ -91,17 +105,18 @@
   .badge-content {
     display: flex;
     align-items: center;
+    gap: 0.4rem;
   }
 
   .badge-close {
     background: none;
     border: none;
-    color: rgba(255, 255, 255, 0.7);
+    color: currentColor;
+    opacity: 0.7;
     font-size: 1.3em;
     line-height: 1;
     cursor: pointer;
     padding: 0;
-    margin-left: 0.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -112,7 +127,7 @@
   }
 
   .badge-close:hover {
-    color: white;
-    background: rgba(255, 255, 255, 0.2);
+    opacity: 1;
+    background: color-mix(in srgb, currentColor 20%, transparent);
   }
 </style>

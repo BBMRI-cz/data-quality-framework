@@ -1,6 +1,6 @@
 import { reactive } from 'vue';
-import { apiService } from '../services/apiService';
-import { resetOidc } from '../utils/oidc';
+import { apiService } from '@/services/apiService';
+import { resetOidc } from '@/utils/oidc';
 
 export const authStore = reactive({
   user: null,

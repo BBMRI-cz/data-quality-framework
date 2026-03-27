@@ -54,7 +54,7 @@
 
 <script setup>
   import { ref, computed, onMounted } from 'vue';
-  import { apiService } from '../services/apiService';
+  import { apiService } from '@/services/apiService';
 
   const buildInfo = ref(null);
 

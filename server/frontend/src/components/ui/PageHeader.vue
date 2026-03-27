@@ -5,7 +5,7 @@
         <div class="d-flex align-items-center gap-2 mb-1">
           <h1 v-if="!isEditing" class="page-title mb-0">
             <slot name="icon">
-              <i v-if="icon" :class="['me-2', 'text-primary', icon]"></i>
+              <i v-if="icon" :class="['me-2', 'page-title-icon', icon]"></i>
             </slot>
             <span :class="{ 'd-none d-sm-inline': mobileTitle }">{{ title }}</span>
             <span v-if="mobileTitle" class="d-inline d-sm-none">{{ mobileTitle }}</span>
@@ -162,6 +162,10 @@
     color: #6c757d;
     font-size: 0.875rem;
     margin: 0;
+  }
+
+  .page-title-icon {
+    color: var(--color-primary);
   }
 
   .header-actions {

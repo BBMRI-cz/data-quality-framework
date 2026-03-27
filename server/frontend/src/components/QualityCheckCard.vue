@@ -95,7 +95,7 @@
 <script setup>
   import { computed, ref } from 'vue';
   import { useRouter } from 'vue-router';
-  import { CheckStatus } from '../utils/qualityCheckUtils.js';
+  import { CheckStatus } from '@/utils/qualityCheckUtils.js';
 
   // Router
   const router = useRouter();

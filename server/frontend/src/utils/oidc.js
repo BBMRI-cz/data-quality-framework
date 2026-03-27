@@ -1,6 +1,6 @@
 import { createOidc, useOidcStore } from 'vue3-oidc';
-import settingsStore from '../stores/settingsStore';
-import { authStore } from '../stores/authStore';
+import settingsStore from '@/stores/settingsStore';
+import { authStore } from '@/stores/authStore';
 
 let oidcInitialized = false;
 let oidcInitializationPromise = null;

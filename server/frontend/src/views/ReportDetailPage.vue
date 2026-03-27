@@ -36,37 +36,32 @@
           <StatsCard
             :label="'Total Checks'"
             :value="report.results?.length || 0"
+            color="var(--color-primary)"
             icon="bi bi-list-check"
-            icon-color="#6c757d"
-            icon-bg-color="#e7e7e7"
           />
           <StatsCard
             :label="'Received Date'"
             :value="formatTimestamp(report.timestamp)"
+            color="var(--color-primary-dark)"
             icon="bi bi-clock-history"
-            icon-color="#0dcaf0"
-            icon-bg-color="#cff4fc"
           />
           <StatsCard
             :label="'Passed'"
             :value="countPassed()"
+            color="var(--color-success)"
             :icon="getStatusIcon(CheckStatus.PASSED)"
-            :icon-color="getStatusColor(CheckStatus.PASSED)"
-            :icon-bg-color="getStatusBgColor(CheckStatus.PASSED)"
           />
           <StatsCard
             :label="'Warnings'"
             :value="countWarnings()"
+            color="var(--color-warning)"
             :icon="getStatusIcon(CheckStatus.WARNING)"
-            :icon-color="getStatusColor(CheckStatus.WARNING)"
-            :icon-bg-color="getStatusBgColor(CheckStatus.WARNING)"
           />
           <StatsCard
             :label="'Errors'"
             :value="countErrors()"
+            color="var(--color-danger)"
             :icon="getStatusIcon(CheckStatus.FAILED)"
-            :icon-color="getStatusColor(CheckStatus.FAILED)"
-            :icon-bg-color="getStatusBgColor(CheckStatus.FAILED)"
           />
         </div>
 
@@ -88,12 +83,12 @@
         <!-- Category Filter -->
         <div class="mb-4">
           <div class="filter-label">Category:</div>
-          <CategoryFilter v-model="selectedCategory" :categories="categories" />
+          <ValuesFilter v-model="selectedCategory" :categories="categories" />
         </div>
 
         <div class="mb-4">
           <div class="filter-label">Status:</div>
-          <CategoryFilter v-model="selectedStatus" :categories="statuses" />
+          <ValuesFilter v-model="selectedStatus" :categories="statuses" />
         </div>
 
         <!-- Results Section -->
@@ -144,18 +139,12 @@
   import { ref, onMounted, nextTick, computed } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import { useHead } from '@unhead/vue';
-  import PageHeader from '../components/PageHeader.vue';
-  import StatsCard from '../components/StatsCard.vue';
-  import AppCallout from '../components/AppCallout.vue';
-  import CategoryFilter from '../components/CategoryFilter.vue';
-  import { apiService } from '../services/apiService.js';
-  import {
-    getCheckStatus,
-    CheckStatus,
-    getStatusIcon,
-    getStatusColor,
-    getStatusBgColor,
-  } from '../utils/qualityCheckUtils.js';
+  import PageHeader from '@/components/ui/PageHeader.vue';
+  import StatsCard from '@/components/ui/StatsCard.vue';
+  import AppCallout from '@/components/AppCallout.vue';
+  import ValuesFilter from '@/components/ui/ValuesFilter.vue';
+  import { apiService } from '@/services/apiService.js';
+  import { getCheckStatus, CheckStatus, getStatusIcon } from '@/utils/qualityCheckUtils.js';
 
   const route = useRoute();
   const router = useRouter();

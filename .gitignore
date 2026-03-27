@@ -18,7 +18,7 @@
 /agent/frontend/frontend.iml
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
-
+.proxyai
 # Package Files #
 *.jar
 *.war
