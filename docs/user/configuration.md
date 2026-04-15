@@ -61,10 +61,14 @@ Be careful when using environment variables for sensitive information like passw
 
 The following are standard environment variables recognized by the Data Quality Agent:
 
-| Variable | Description | Default |
-| :--- | :--- | :--- |
-| `REPORTING_SERVER_URL` | URL of the central reporting server to send data to. | (Optional) |
-| `REPORTING_SERVER_NAME` | Name of the reporting server for identification. | `Central Data Quality Server of BBMRI` |
+| Variable                              | Description                                                                                         | Default                                         |
+|:--------------------------------------|:----------------------------------------------------------------------------------------------------|:------------------------------------------------|
+| `REPORTING_SERVER_URL`                | URL of the central reporting server to send data to.                                                | (Optional)                                      |
+| `REPORTING_SERVER_NAME`               | Name of the reporting server for identification.                                                    | `Central Data Quality Server of BBMRI`          |
+| `OTEL_METRICS_EXPORT_ENABLED`         | Enables OTLP metrics export (`true`/`false`).                                                       | `false`                                         |
+| `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` | OTLP HTTP metrics endpoint URL.                                                                     | `https://grafana.bbmri-eric.eu/otel/v1/metrics` |
+| `OTEL_EXPORTER_OTLP_AUTHORIZATION`    | Optional Authorization header value (for example `Bearer <token>`) sent with OTLP metrics requests. | (Not set)                                       |
+You can also define additional labels with `MANAGEMENT_METRICS_TAGS_<LABEL_NAME>`.
 
 Additionally, as described above, you can override any internal setting using the `APP_SETTING_` prefix. Common settings include:
 
@@ -73,6 +77,3 @@ Additionally, as described above, you can override any internal setting using th
 *   `fhirPassword`: Password for FHIR server authentication (Base64 encoded).
 
 By using environment variables, you can fully automate the configuration of your Data Quality Agent during deployment.
-
-
-
