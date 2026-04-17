@@ -1,0 +1,16 @@
+services:
+  quality-agent:
+    environment:
+      - OTEL_METRICS_EXPORT_ENABLED=true
+      - OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=http://otel-collector:4318/v1/metrics
+      - OTEL_EXPORTER_OTLP_AUTHORIZATION=Bearer ci-test-token
+      - MANAGEMENT_OTLP_METRICS_EXPORT_STEP=5s
+
+  otel-collector:
+    container_name: otel-collector
+    image: otel/opentelemetry-collector:0.102.1
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      - ./.github/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
+
+
