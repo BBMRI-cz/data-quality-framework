@@ -20,8 +20,8 @@
     "axios": "^1.15.0",
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.13.1",
-    "vue": "^3.5.32",
-    "vue-router": "^5.0.4",
+    "vue": "^3.5.33",
+    "vue-router": "^5.0.6",
     "vue3-oidc": "^1.0.2"
   },
   "devDependencies": {
