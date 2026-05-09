@@ -27,7 +27,6 @@ class ServerControllerTest {
 
   @Autowired private ObjectMapper objectMapper;
 
-
   @Test
   @WithUserDetails("admin")
   void getAllServers_returnsEmptyList() throws Exception {
