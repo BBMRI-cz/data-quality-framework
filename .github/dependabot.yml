@@ -63,6 +63,11 @@ updates:
           - "com.fasterxml*"
         update-types:
           - "major"
+      all-other-java:
+        patterns:
+          - "*"
+        update-types:
+          - "major"
 
   - package-ecosystem: "maven"
     directory: "/server/backend"
@@ -105,6 +110,11 @@ updates:
           - "org.projectlombok*"
           - "com.google*"
           - "com.fasterxml*"
+        update-types:
+          - "major"
+      all-other-java:
+        patterns:
+          - "*"
         update-types:
           - "major"
 
@@ -154,12 +164,9 @@ updates:
           - "pinia*"
         update-types:
           - "major"
-      development-dependencies:
-        dependency-type: "development"
-        update-types:
-          - "major"
-      production-dependencies:
-        dependency-type: "production"
+      all-other-npm:
+        patterns:
+          - "*"
         update-types:
           - "major"
 
@@ -209,12 +216,9 @@ updates:
           - "pinia*"
         update-types:
           - "major"
-      development-dependencies:
-        dependency-type: "development"
-        update-types:
-          - "major"
-      production-dependencies:
-        dependency-type: "production"
+      all-other-npm:
+        patterns:
+          - "*"
         update-types:
           - "major"
 
@@ -238,12 +242,9 @@ updates:
           - "@vitepress*"
         update-types:
           - "major"
-      development-dependencies:
-        dependency-type: "development"
-        update-types:
-          - "major"
-      production-dependencies:
-        dependency-type: "production"
+      all-other-npm:
+        patterns:
+          - "*"
         update-types:
           - "major"
 
