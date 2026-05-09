@@ -7,7 +7,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.agent.server.dto.ServerCreateDto;
 import eu.bbmri_eric.quality.agent.server.dto.ServerUpdateDto;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -15,9 +14,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@Transactional
 class ServerControllerTest {
 
   private static final String SERVERS_ENDPOINT = "/api/servers";
@@ -26,12 +27,6 @@ class ServerControllerTest {
 
   @Autowired private ObjectMapper objectMapper;
 
-  @Autowired private ServerRepository serverRepository;
-
-  @AfterEach
-  void tearDown() {
-    serverRepository.deleteAll();
-  }
 
   @Test
   @WithUserDetails("admin")
