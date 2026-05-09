@@ -18,6 +18,8 @@ updates:
       github-actions-updates:
         patterns:
           - "*"
+        update-types:
+          - "major"
 
   - package-ecosystem: "maven"
     directory: "/agent/backend"
@@ -38,21 +40,29 @@ updates:
         patterns:
           - "org.springframework*"
           - "io.spring*"
+        update-types:
+          - "major"
       testing-framework:
         patterns:
           - "*junit*"
           - "*mockito*"
           - "*assertj*"
+        update-types:
+          - "major"
       fhir-healthcare:
         patterns:
           - "ca.uhn.hapi*"
           - "*fhir*"
+        update-types:
+          - "major"
       utilities:
         patterns:
           - "org.mapstruct*"
           - "org.projectlombok*"
           - "com.google*"
           - "com.fasterxml*"
+        update-types:
+          - "major"
 
   - package-ecosystem: "maven"
     directory: "/server/backend"
@@ -73,22 +83,30 @@ updates:
         patterns:
           - "org.springframework*"
           - "io.spring*"
+        update-types:
+          - "major"
       testing-framework:
         patterns:
           - "*junit*"
           - "*mockito*"
           - "*assertj*"
+        update-types:
+          - "major"
       database:
         patterns:
           - "org.postgresql*"
           - "*jdbc*"
           - "*hibernate*"
+        update-types:
+          - "major"
       utilities:
         patterns:
           - "org.mapstruct*"
           - "org.projectlombok*"
           - "com.google*"
           - "com.fasterxml*"
+        update-types:
+          - "major"
 
   - package-ecosystem: "npm"
     directory: "/agent/frontend"
@@ -242,6 +260,12 @@ updates:
       - "docker"
       - "agent"
     open-pull-requests-limit: 5
+    groups:
+      docker-updates:
+        patterns:
+          - "*"
+        update-types:
+          - "major"
 
   - package-ecosystem: "docker"
     directory: "/server"
@@ -256,4 +280,10 @@ updates:
       - "docker"
       - "server"
     open-pull-requests-limit: 5
+    groups:
+      docker-updates:
+        patterns:
+          - "*"
+        update-types:
+          - "major"
 
