@@ -30,11 +30,7 @@ class ServerControllerTest {
 
   @AfterEach
   void tearDown() {
-    try {
-      serverRepository.deleteAll();
-    } catch (Exception e) {
-      // Ignore cleanup errors as @DirtiesContext will handle context reset
-    }
+    serverRepository.deleteAll();
   }
 
   @Test
