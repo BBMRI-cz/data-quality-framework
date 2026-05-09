@@ -1,14 +1,12 @@
-# Dependabot configuration for automated dependency updates
-# See https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
-
 version: 2
+
 updates:
-  # GitHub Actions dependencies
   - package-ecosystem: "github-actions"
     directory: "/"
-    schedule:
+    schedule: &schedule_weekly_morning
       interval: "weekly"
       day: "monday"
+      time: "05:00"
     commit-message:
       prefix: "ci"
       include: "scope"
@@ -20,12 +18,10 @@ updates:
       github-actions-updates:
         patterns:
           - "*"
-  # Maven dependencies for Agent backend
+
   - package-ecosystem: "maven"
     directory: "/agent/backend"
-    schedule:
-      interval: "weekly"
-      day: "monday"
+    schedule: *schedule_weekly_morning
     commit-message:
       prefix: "build(agent)"
       include: "scope"
@@ -33,25 +29,31 @@ updates:
       - "dependencies"
       - "java"
       - "agent"
-    open-pull-requests-limit: 10
-    # Group minor and patch updates together to reduce PR noise
+    open-pull-requests-limit: 5
     groups:
-      spring:
+      spring-framework:
         patterns:
           - "org.springframework*"
           - "io.spring*"
-      testing:
+      testing-framework:
         patterns:
           - "*junit*"
           - "*mockito*"
           - "*assertj*"
+      fhir-healthcare:
+        patterns:
+          - "ca.uhn.hapi*"
+          - "*fhir*"
+      utilities:
+        patterns:
+          - "org.mapstruct*"
+          - "org.projectlombok*"
+          - "com.google*"
+          - "com.fasterxml*"
 
-  # Maven dependencies for Server backend
   - package-ecosystem: "maven"
     directory: "/server/backend"
-    schedule:
-      interval: "weekly"
-      day: "monday"
+    schedule: *schedule_weekly_morning
     commit-message:
       prefix: "build(server)"
       include: "scope"
@@ -59,25 +61,32 @@ updates:
       - "dependencies"
       - "java"
       - "server"
-    open-pull-requests-limit: 10
-    # Group minor and patch updates together to reduce PR noise
+    open-pull-requests-limit: 5
     groups:
-      spring:
+      spring-framework:
         patterns:
           - "org.springframework*"
           - "io.spring*"
-      testing:
+      testing-framework:
         patterns:
           - "*junit*"
           - "*mockito*"
           - "*assertj*"
+      database:
+        patterns:
+          - "org.postgresql*"
+          - "*jdbc*"
+          - "*hibernate*"
+      utilities:
+        patterns:
+          - "org.mapstruct*"
+          - "org.projectlombok*"
+          - "com.google*"
+          - "com.fasterxml*"
 
-  # NPM dependencies for Agent frontend
   - package-ecosystem: "npm"
     directory: "/agent/frontend"
-    schedule:
-      interval: "weekly"
-      day: "monday"
+    schedule: *schedule_weekly_morning
     commit-message:
       prefix: "build(agent-ui)"
       include: "scope"
@@ -85,25 +94,51 @@ updates:
       - "dependencies"
       - "javascript"
       - "agent"
-    open-pull-requests-limit: 10
-    # Group development dependencies together
+    open-pull-requests-limit: 5
     groups:
-      vue:
+      vue-framework:
         patterns:
           - "vue*"
           - "@vue*"
-      dev-dependencies:
+        update-types:
+          - "major"
+      build-tools:
+        patterns:
+          - "vite*"
+          - "@vitejs*"
+        update-types:
+          - "major"
+      testing-tools:
+        patterns:
+          - "@vitest*"
+          - "*test*"
+          - "*jest*"
+        update-types:
+          - "major"
+      linting-formatting:
+        patterns:
+          - "eslint*"
+          - "*prettier*"
+          - "@eslint*"
+        update-types:
+          - "major"
+      state-management:
+        patterns:
+          - "pinia*"
+        update-types:
+          - "major"
+      development-dependencies:
         dependency-type: "development"
         update-types:
-          - "minor"
-          - "patch"
+          - "major"
+      production-dependencies:
+        dependency-type: "production"
+        update-types:
+          - "major"
 
-  # NPM dependencies for Server frontend
   - package-ecosystem: "npm"
     directory: "/server/frontend"
-    schedule:
-      interval: "weekly"
-      day: "monday"
+    schedule: *schedule_weekly_morning
     commit-message:
       prefix: "build(server-ui)"
       include: "scope"
@@ -111,44 +146,77 @@ updates:
       - "dependencies"
       - "javascript"
       - "server"
-    open-pull-requests-limit: 10
-    # Group development dependencies together
+    open-pull-requests-limit: 5
     groups:
-      vue:
+      vue-framework:
         patterns:
           - "vue*"
           - "@vue*"
-      dev-dependencies:
+        update-types:
+          - "major"
+      build-tools:
+        patterns:
+          - "vite*"
+          - "@vitejs*"
+        update-types:
+          - "major"
+      testing-tools:
+        patterns:
+          - "@vitest*"
+          - "*test*"
+          - "*jest*"
+        update-types:
+          - "major"
+      linting-formatting:
+        patterns:
+          - "eslint*"
+          - "*prettier*"
+          - "@eslint*"
+        update-types:
+          - "major"
+      state-management:
+        patterns:
+          - "pinia*"
+        update-types:
+          - "major"
+      development-dependencies:
         dependency-type: "development"
         update-types:
-          - "minor"
-          - "patch"
+          - "major"
+      production-dependencies:
+        dependency-type: "production"
+        update-types:
+          - "major"
 
-  # NPM dependencies for Documentation
   - package-ecosystem: "npm"
     directory: "/docs"
-    schedule:
-      interval: "weekly"
-      day: "monday"
+    schedule: *schedule_weekly_morning
     commit-message:
       prefix: "docs"
       include: "scope"
     labels:
       - "dependencies"
       - "documentation"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
     groups:
-      vitepress:
+      vitepress-docs:
         patterns:
           - "vitepress*"
           - "@vitepress*"
+        update-types:
+          - "major"
+      development-dependencies:
+        dependency-type: "development"
+        update-types:
+          - "major"
+      production-dependencies:
+        dependency-type: "production"
+        update-types:
+          - "major"
 
-  # Docker dependencies
   - package-ecosystem: "docker"
     directory: "/agent"
-    schedule:
-      interval: "weekly"
-      day: "monday"
+    schedule: *schedule_weekly_morning
     commit-message:
       prefix: "build(agent)"
     labels:
@@ -159,9 +227,7 @@ updates:
 
   - package-ecosystem: "docker"
     directory: "/server"
-    schedule:
-      interval: "weekly"
-      day: "monday"
+    schedule: *schedule_weekly_morning
     commit-message:
       prefix: "build(server)"
     labels:
