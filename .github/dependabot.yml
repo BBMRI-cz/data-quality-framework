@@ -3,7 +3,7 @@ version: 2
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
-    schedule: &schedule_weekly_morning
+    schedule:
       interval: "weekly"
       day: "monday"
       time: "05:00"
@@ -21,7 +21,10 @@ updates:
 
   - package-ecosystem: "maven"
     directory: "/agent/backend"
-    schedule: *schedule_weekly_morning
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "05:00"
     commit-message:
       prefix: "build(agent)"
       include: "scope"
@@ -53,7 +56,10 @@ updates:
 
   - package-ecosystem: "maven"
     directory: "/server/backend"
-    schedule: *schedule_weekly_morning
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "05:00"
     commit-message:
       prefix: "build(server)"
       include: "scope"
@@ -86,7 +92,10 @@ updates:
 
   - package-ecosystem: "npm"
     directory: "/agent/frontend"
-    schedule: *schedule_weekly_morning
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "05:00"
     commit-message:
       prefix: "build(agent-ui)"
       include: "scope"
@@ -138,7 +147,10 @@ updates:
 
   - package-ecosystem: "npm"
     directory: "/server/frontend"
-    schedule: *schedule_weekly_morning
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "05:00"
     commit-message:
       prefix: "build(server-ui)"
       include: "scope"
@@ -190,7 +202,10 @@ updates:
 
   - package-ecosystem: "npm"
     directory: "/docs"
-    schedule: *schedule_weekly_morning
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "05:00"
     commit-message:
       prefix: "docs"
       include: "scope"
@@ -216,7 +231,10 @@ updates:
 
   - package-ecosystem: "docker"
     directory: "/agent"
-    schedule: *schedule_weekly_morning
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "05:00"
     commit-message:
       prefix: "build(agent)"
     labels:
@@ -227,7 +245,10 @@ updates:
 
   - package-ecosystem: "docker"
     directory: "/server"
-    schedule: *schedule_weekly_morning
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "05:00"
     commit-message:
       prefix: "build(server)"
     labels:
