@@ -34,6 +34,12 @@
         <!-- Stats Cards -->
         <div class="stats-grid mb-4">
           <StatsCard
+            v-if="agent"
+            :label="'Agent Name'"
+            :value="agent.name || 'N/A'"
+            color="var(--color-primary)"
+          />
+          <StatsCard
             :label="'Total Checks'"
             :value="report.results?.length || 0"
             color="var(--color-primary)"
@@ -43,7 +49,6 @@
             :label="'Received Date'"
             :value="formatTimestamp(report.timestamp)"
             color="var(--color-primary-dark)"
-            icon="bi bi-clock-history"
           />
           <StatsCard
             :label="'Passed'"
@@ -152,6 +157,7 @@
   const loading = ref(true);
   const error = ref(null);
   const report = ref(null);
+  const agent = ref(null);
   useHead({
     title: computed(() => (report.value?.id ? `Report ${report.value.id}` : 'Report Detail')),
   });
@@ -213,7 +219,7 @@
   });
 
   const goBack = () => {
-    router.push('/reports');
+    router.go(-1);
   };
 
   const navigateToCheckDetail = (result) => {
@@ -366,6 +372,16 @@
 
       report.value = reportData;
 
+      // Fetch agent details if agentId is available
+      if (report.value?.agentId) {
+        try {
+          agent.value = await apiService.getAgent(report.value.agentId);
+        } catch (err) {
+          console.error('Failed to fetch agent details:', err);
+          // Don't fail the entire page load if agent fetch fails
+        }
+      }
+
       // Handle HAL format response for quality checks
       const checks =
         checksData._embedded?.qualityChecks || (Array.isArray(checksData) ? checksData : []);
@@ -393,8 +409,12 @@
 
   .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: var(--spacing-md);
+  }
+
+  .stats-grid > * {
+    overflow: hidden;
   }
 
   .results-container {
