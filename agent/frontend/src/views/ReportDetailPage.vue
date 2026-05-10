@@ -449,7 +449,6 @@
     letter-spacing: 0.5px;
   }
 
-
   .result-card {
     transition:
       transform var(--transition-base),

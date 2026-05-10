@@ -48,7 +48,6 @@
           <StatCard :number="server.clientId || 'N/A'" label="Client ID" number-class="text-dark" />
         </div>
 
-
         <!-- Filters -->
         <div class="filters-section mb-4">
           <div class="filter-item">
@@ -212,7 +211,6 @@
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: var(--spacing-md);
   }
-
 
   .filters-section {
     display: grid;
