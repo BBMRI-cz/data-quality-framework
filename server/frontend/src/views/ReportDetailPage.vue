@@ -33,23 +33,23 @@
       <template v-else-if="report">
         <!-- Stats Cards -->
         <div class="stats-grid mb-4">
+          <StatsCard v-if="agent" :label="'Agent Name'" :value="agent.name || 'N/A'" />
           <StatsCard
-            v-if="agent"
-            :label="'Agent Name'"
-            :value="agent.name || 'N/A'"
-            color="var(--color-primary)"
+            :label="'Total Patients'"
+            :value="report.totalPatients || 'N/A'"
+            icon="bi bi-person"
+          />
+          <StatsCard
+            :label="'Total Samples'"
+            :value="report.totalSamples || 'N/A'"
+            icon="bi bi-eyedropper"
           />
           <StatsCard
             :label="'Total Checks'"
             :value="report.results?.length || 0"
-            color="var(--color-primary)"
             icon="bi bi-list-check"
           />
-          <StatsCard
-            :label="'Received Date'"
-            :value="formatTimestamp(report.timestamp)"
-            color="var(--color-primary-dark)"
-          />
+          <StatsCard :label="'Received Date'" :value="formatTimestamp(report.timestamp)" />
           <StatsCard
             :label="'Passed'"
             :value="countPassed()"
