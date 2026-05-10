@@ -147,3 +147,10 @@
     }
   });
 </script>
+
+<style scoped>
+  .display-6 {
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+</style>
