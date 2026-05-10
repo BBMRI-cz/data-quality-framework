@@ -97,7 +97,7 @@
         >
           <template #timestamp="{ item }">
             <div class="d-flex flex-column gap-1">
-              <span class="fw-500">{{ formatDateShort(item.timestamp) }}</span>
+              <span class="fw-medium">{{ formatDateShort(item.timestamp) }}</span>
               <span class="text-muted small">{{ formatTime(item.timestamp) }}</span>
             </div>
           </template>
