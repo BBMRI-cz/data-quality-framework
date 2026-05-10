@@ -102,7 +102,7 @@
             </div>
           </template>
           <template #type="{ item }">
-            <span class="badge" :class="getInteractionTypeBadgeClass(item.type)">
+            <span :class="['badge', getInteractionTypeBadge(item.type), getInteractionBadgeTextColor(item.type)]">
               {{ item.type }}
             </span>
           </template>
@@ -147,6 +147,7 @@
   import ActionButton from '@/components/ActionButton.vue';
   import { useServerDetails } from '@/composables/useServerDetails.js';
   import { formatStatus, getStatusTextClass } from '@/utils/serverStatus.js';
+  import { getInteractionTypeBadge } from '@/utils/interactionTypes.js';
   import { truncateText, formatDateShort, formatTime, isValidJson } from '@/utils/stringUtils.js';
 
   const route = useRoute();
@@ -176,15 +177,12 @@
     { key: 'description', label: 'Description' },
   ];
 
-  // Map interaction type to Bootstrap badge class
-  function getInteractionTypeBadgeClass(type) {
-    const baseClass = 'text-white';
-    const typeClasses = {
-      UPDATE: 'bg-primary',
-      COMMUNICATION: 'bg-success',
-      REGISTRATION: 'bg-warning',
+  // Text color override for badge types that need it (e.g. bg-warning needs text-dark for contrast)
+  function getInteractionBadgeTextColor(type) {
+    const textColorByType = {
+      REGISTRATION: 'text-dark', // bg-info needs dark text for adequate contrast
     };
-    return `${typeClasses[type] || 'bg-secondary'} ${baseClass}`;
+    return textColorByType[type] || 'text-white';
   }
 
   onMounted(fetchServer);
@@ -214,7 +212,7 @@
 
   .filters-section {
     display: grid;
-    grid-template-columns: auto auto 1fr;
+    grid-template-columns: auto 1fr auto;
     gap: var(--spacing-md);
     align-items: flex-end;
   }
