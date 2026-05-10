@@ -9,7 +9,6 @@
 
     <div class="page-content">
       <div class="settings-card-container">
-
         <div class="settings-card">
           <div class="settings-section">
             <div class="section-header">
@@ -19,7 +18,8 @@
                   Privacy Parameters
                 </h2>
                 <p class="text-muted mb-0">
-                  Configure the differential privacy settings to balance data utility and privacy protection
+                  Configure the differential privacy settings to balance data utility and privacy
+                  protection
                 </p>
               </div>
             </div>
@@ -70,7 +70,7 @@
                 required
                 :options="[
                   { value: 'LAPLACE', label: 'Laplace' },
-                  { value: 'GAUSSIAN', label: 'Gaussian' }
+                  { value: 'GAUSSIAN', label: 'Gaussian' },
                 ]"
               />
 
@@ -121,12 +121,11 @@
     isSaving.value = true;
 
     try {
-
       const parsedDelta = Number(privacySettings.delta);
       if (!Number.isFinite(parsedDelta) || parsedDelta <= 0) {
         notificationService.error(
-            'Invalid Delta',
-            'Delta must be a positive number (e.g., 1e-8). Please correct the value and try again.'
+          'Invalid Delta',
+          'Delta must be a positive number (e.g., 1e-8). Please correct the value and try again.'
         );
         isSaving.value = false;
         return;
@@ -150,7 +149,10 @@
       );
     } catch (error) {
       console.error('Error saving privacy settings:', error);
-      notificationService.error('Save Failed', 'Unable to save privacy settings. Please try again.');
+      notificationService.error(
+        'Save Failed',
+        'Unable to save privacy settings. Please try again.'
+      );
     } finally {
       isSaving.value = false;
     }
@@ -176,13 +178,13 @@
     const success = await loadSettings();
     if (success) {
       notificationService.info(
-          'Changes Discarded',
-          'Settings have been reset to the last saved values'
+        'Changes Discarded',
+        'Settings have been reset to the last saved values'
       );
     } else {
       notificationService.error(
-          'Reset Failed',
-          'Unable to reload privacy settings. Your local changes were not discarded.'
+        'Reset Failed',
+        'Unable to reload privacy settings. Your local changes were not discarded.'
       );
     }
   }
@@ -341,7 +343,5 @@
       font-size: 1.2rem;
       gap: var(--spacing-sm);
     }
-
   }
 </style>
-
