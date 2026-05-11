@@ -1,4 +1,4 @@
-FROM node:20-alpine@sha256:6178e78b972f79c335df281f4b7674a2d85071aae2af020ffa39f0a770265435 AS frontend-builder
+FROM node:26-alpine@sha256:e71ac5e964b9201072425d59d2e876359efa25dc96bb1768cb73295728d6e4ea AS frontend-builder
 WORKDIR /app/frontend
 COPY agent/frontend/package*.json ./
 RUN npm install --silent
@@ -17,7 +17,7 @@ COPY --from=frontend-builder /app/frontend/dist ./src/main/resources/static
 RUN mvn --quiet -B versions:set -DnewVersion=$ARTIFACT_VERSION
 RUN mvn package --quiet -DskipTests
 
-FROM eclipse-temurin:21-jre-jammy@sha256:daebe9ae03913ec4b2dadd8df60f3ea3df1aa6108fecd5d324d000bdd5c4c816
+FROM eclipse-temurin:25-jre-jammy@sha256:0df1bb22182727e325476c0a9ab38ec4d2b042cbce0ea18a7da71284fea0c40c
 RUN groupadd -r appuser && useradd -r -g appuser -u 1001 appuser
 WORKDIR /app
 RUN mkdir -p /app/data && \
