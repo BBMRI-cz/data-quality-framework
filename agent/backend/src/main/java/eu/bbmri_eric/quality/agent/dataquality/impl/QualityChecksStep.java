@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -22,10 +23,13 @@ class QualityChecksStep implements ReportPipelineStep {
 
   private final QualityCheckRepository repository;
   private final FHIRStore fhirStore;
+  private final ModelMapper modelMapper;
 
-  QualityChecksStep(QualityCheckRepository repository, FHIRStore fhirStore) {
+  QualityChecksStep(
+      QualityCheckRepository repository, FHIRStore fhirStore, ModelMapper modelMapper) {
     this.repository = repository;
     this.fhirStore = fhirStore;
+    this.modelMapper = modelMapper;
   }
 
   @Override
@@ -76,42 +80,20 @@ class QualityChecksStep implements ReportPipelineStep {
 
   private void executeStratifiedCheck(StratifiedDataQualityCheck check, Report report) {
     Map<String, ResultDTO> results = check.executeWithStratification(fhirStore);
-    int count = results.size();
-
     for (Map.Entry<String, ResultDTO> entry : results.entrySet()) {
       String stratum = entry.getKey();
       ResultDTO resultDTO = entry.getValue();
-
-      Result result =
-          new Result(
-              check.getName() + " (%s)".formatted(stratum),
-              check.getId(),
-              resultDTO.rawResult(),
-              null,
-              check.getWarningThreshold(),
-              check.getErrorThreshold(),
-              check.getEpsilonBudget() / count,
-              resultDTO.error(),
-              stratum);
-      result.setPatients(resultDTO.idSet());
+      Result result = modelMapper.map(resultDTO, Result.class);
+      modelMapper.map(check, result);
+      result.setCheckName(check.getName() + " (%s)".formatted(stratum));
       report.addResult(result);
     }
   }
 
   private void executeCheck(DataQualityCheck check, Report report) {
     ResultDTO resultDTO = check.execute(fhirStore);
-    Result result =
-        new Result(
-            check.getName(),
-            check.getId(),
-            resultDTO.rawResult(),
-            null, // Obfuscation happens in a later step
-            check.getWarningThreshold(),
-            check.getErrorThreshold(),
-            check.getEpsilonBudget(),
-            resultDTO.error(),
-            null);
-    result.setPatients(resultDTO.idSet());
+    Result result = modelMapper.map(resultDTO, Result.class);
+    modelMapper.map(check, result);
     report.addResult(result);
   }
 
