@@ -100,7 +100,7 @@ class QualityChecksStep implements ReportPipelineStep {
             check.getName(),
             check.getId(),
             resultDTO.rawResult(),
-            0.0,
+            0.0, // Obfuscation happens in a later step
             check.getWarningThreshold(),
             check.getErrorThreshold(),
             check.getEpsilonBudget(),

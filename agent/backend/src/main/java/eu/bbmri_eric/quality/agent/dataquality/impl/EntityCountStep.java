@@ -20,8 +20,8 @@ class EntityCountStep implements ReportPipelineStep {
   public Report execute(Report report) {
     log.info("Counting entities for report id: {}", report.getId());
 
-    int patientCount = fhirStore.countResources("Patient");
-    int sampleCount = fhirStore.countResources("Specimen");
+    Integer patientCount = fhirStore.countResources("Patient");
+    Integer sampleCount = fhirStore.countResources("Specimen");
 
     report.setNumberOfEntities(patientCount);
     report.setNumberOfSecondaryEntities(sampleCount);
