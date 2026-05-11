@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -30,17 +31,13 @@ class QualityChecksStep implements ReportPipelineStep {
   @Override
   public Report execute(Report report) {
     log.info("Running quality checks for report id: {}", report.getId());
+    List<DataQualityCheck> dataQualityChecks = compileChecksToRun();
+    runRelevantChecks(report, dataQualityChecks);
+    log.info("Completed quality checks for report id: {}", report.getId());
+    return report;
+  }
 
-    List<DataQualityCheck> dataQualityChecks = new ArrayList<>();
-
-    for (QualityCheck qualityCheck : repository.findAll()) {
-      if (qualityCheck.getType() == QualityCheckType.CQL) {
-        dataQualityChecks.add(qualityCheck);
-      } else if (qualityCheck.getType() == QualityCheckType.JAVA) {
-        createBuiltInCheck(qualityCheck).ifPresent(dataQualityChecks::add);
-      }
-    }
-
+  private void runRelevantChecks(Report report, List<DataQualityCheck> dataQualityChecks) {
     for (DataQualityCheck dataQualityCheck : dataQualityChecks) {
       if (dataQualityCheck instanceof StratifiedDataQualityCheck stratifiedCheck) {
         executeStratifiedCheck(stratifiedCheck, report);
@@ -48,9 +45,18 @@ class QualityChecksStep implements ReportPipelineStep {
         executeCheck(dataQualityCheck, report);
       }
     }
+  }
 
-    log.info("Completed quality checks for report id: {}", report.getId());
-    return report;
+  private @NonNull List<DataQualityCheck> compileChecksToRun() {
+    List<DataQualityCheck> dataQualityChecks = new ArrayList<>();
+    for (QualityCheck qualityCheck : repository.findAll()) {
+      if (qualityCheck.getType() == QualityCheckType.CQL) {
+        dataQualityChecks.add(qualityCheck);
+      } else if (qualityCheck.getType() == QualityCheckType.JAVA) {
+        createBuiltInCheck(qualityCheck).ifPresent(dataQualityChecks::add);
+      }
+    }
+    return dataQualityChecks;
   }
 
   private Optional<DataQualityCheck> createBuiltInCheck(QualityCheck config) {
@@ -81,7 +87,7 @@ class QualityChecksStep implements ReportPipelineStep {
               check.getName() + " (%s)".formatted(stratum),
               check.getId(),
               resultDTO.rawResult(),
-              0.0,
+              null,
               check.getWarningThreshold(),
               check.getErrorThreshold(),
               check.getEpsilonBudget() / count,
@@ -94,13 +100,12 @@ class QualityChecksStep implements ReportPipelineStep {
 
   private void executeCheck(DataQualityCheck check, Report report) {
     ResultDTO resultDTO = check.execute(fhirStore);
-
     Result result =
         new Result(
             check.getName(),
             check.getId(),
             resultDTO.rawResult(),
-            0.0, // Obfuscation happens in a later step
+            null, // Obfuscation happens in a later step
             check.getWarningThreshold(),
             check.getErrorThreshold(),
             check.getEpsilonBudget(),

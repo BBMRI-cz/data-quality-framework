@@ -22,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -43,11 +44,11 @@ class ReportServiceImpl implements ReportService {
 
   ReportServiceImpl(
       ReportRepository reportRepository,
-      QualityCheckService cqlQueryService,
+      QualityCheckService qualityCheckService,
       ModelMapper modelMapper,
       EventPublisher publisher) {
     this.reportRepository = reportRepository;
-    this.qualityCheckService = cqlQueryService;
+    this.qualityCheckService = qualityCheckService;
     this.modelMapper = modelMapper;
     this.publisher = publisher;
   }
@@ -150,8 +151,8 @@ class ReportServiceImpl implements ReportService {
             .map(
                 result -> {
                   double value;
-                  if (report.getNumberOfEntities() == 0) {
-                    // Handle edge case: 0/0 = NaN, return 0.0 instead
+                  if (Objects.isNull(report.getNumberOfEntities())
+                      || report.getNumberOfEntities() == 0) {
                     value = 0.0;
                   } else {
                     value = result.getObfuscatedValue() / report.getNumberOfEntities();
