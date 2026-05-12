@@ -42,7 +42,7 @@
             number-class="text-primary"
           />
           <StatCard
-            :number="report.results?.length || 0"
+            :number="resultSummary.total"
             label="Total Checks"
             number-class="text-secondary"
           />
@@ -77,7 +77,7 @@
                 v-for="result in filteredResults"
                 :id="getCheckIdKey(result)"
                 :key="getCheckIdKey(result)"
-                :class="['result-card', 'card', 'mb-3', getResultClass(result)]"
+                :class="['result-card', 'card', 'mb-3', getResultClass(report, result)]"
               >
                 <div class="card-body">
                   <div class="d-flex justify-content-between align-items-start">
@@ -97,11 +97,11 @@
                       <div class="result-details">
                         <div class="detail-row">
                           <span class="detail-label">Occurrence Rate:</span>
-                          <span class="detail-value">{{ calculatePercentage(result) }}%</span>
+                          <span class="detail-value">{{ formatOccurrenceRate(report, result) }}</span>
                         </div>
-                        <div v-if="result.error" class="detail-row">
+                        <div v-if="getResultError(report, result)" class="detail-row">
                           <span class="detail-label text-danger">Error:</span>
-                          <span class="detail-value text-danger">{{ result.error }}</span>
+                          <span class="detail-value text-danger">{{ getResultError(report, result) }}</span>
                         </div>
                       </div>
                     </div>
@@ -190,6 +190,15 @@
   import ActionButton from '@/components/ActionButton.vue';
   import FilterComponent from '@/components/FilterComponent.vue';
   import { useReportStore } from '@/stores/reportStore.js';
+  import {
+    CHECK_STATUS,
+    formatOccurrenceRate,
+    getResultClass,
+    getResultError,
+    getResultPriority,
+    getResultStatus,
+    getResultSummary,
+  } from '@/utils/reportResultUtils.js';
 
   const route = useRoute();
   const router = useRouter();
@@ -206,13 +215,8 @@
   const modalPatientId = ref('');
   const selectedStatus = ref(null);
 
-  const CHECK_STATUS = {
-    PASSED: 'PASSED',
-    WARNING: 'WARNING',
-    FAILED: 'FAILED',
-  };
-
   const statuses = [CHECK_STATUS.PASSED, CHECK_STATUS.WARNING, CHECK_STATUS.FAILED];
+  const resultSummary = computed(() => getResultSummary(report.value));
 
   const checkExists = (checkId) => {
     return qualityChecks.value.some((check) => check.id === checkId);
@@ -259,44 +263,6 @@
     return result.checkId + '_' + (result.stratum || 'all');
   }
 
-  const getOccurrenceValue = (result) => {
-    const rawValue = Number(result?.rawValue);
-    if (Number.isFinite(rawValue)) {
-      return rawValue;
-    }
-
-    const obfuscatedValue = Number(result?.obfuscatedValue);
-    if (Number.isFinite(obfuscatedValue)) {
-      return obfuscatedValue;
-    }
-
-    return 0;
-  };
-
-  const calculatePercentage = (result) => {
-    const total = Number(report.value?.numberOfEntities);
-    if (!Number.isFinite(total) || total <= 0) {
-      return '0.00';
-    }
-
-    return ((getOccurrenceValue(result) / total) * 100).toFixed(2);
-  };
-
-  const getResultPercentage = (result) => {
-    return parseFloat(calculatePercentage(result));
-  };
-
-  const getResultStatus = (result) => {
-    const percentage = getResultPercentage(result);
-    if (percentage >= result.errorThreshold || result.error) {
-      return CHECK_STATUS.FAILED;
-    }
-    if (percentage >= result.warningThreshold) {
-      return CHECK_STATUS.WARNING;
-    }
-    return CHECK_STATUS.PASSED;
-  };
-
   const calculateEpsilonUsed = () => {
     if (!report.value?.results) return 0;
     return report.value.results.reduce((sum, result) => sum + result.epsilon, 0);
@@ -307,43 +273,15 @@
   };
 
   const countErrors = () => {
-    if (!report.value?.results) return 0;
-    return report.value.results.filter((result) => getResultStatus(result) === CHECK_STATUS.FAILED)
-      .length;
+    return resultSummary.value.failed;
   };
 
   const countWarnings = () => {
-    if (!report.value?.results) return 0;
-    return report.value.results.filter((result) => getResultStatus(result) === CHECK_STATUS.WARNING)
-      .length;
+    return resultSummary.value.warnings;
   };
 
   const countPassed = () => {
-    if (!report.value?.results) return 0;
-    return report.value.results.filter((result) => getResultStatus(result) === CHECK_STATUS.PASSED)
-      .length;
-  };
-
-  const getResultClass = (result) => {
-    const status = getResultStatus(result);
-    if (status === CHECK_STATUS.FAILED) {
-      return 'bg-danger';
-    }
-    if (status === CHECK_STATUS.WARNING) {
-      return 'bg-warning';
-    }
-    return 'bg-success';
-  };
-
-  const getResultPriority = (result) => {
-    const status = getResultStatus(result);
-    if (status === CHECK_STATUS.FAILED) {
-      return 0; // Errors first
-    }
-    if (status === CHECK_STATUS.WARNING) {
-      return 1; // Warnings second
-    }
-    return 2; // Passed last
+    return resultSummary.value.passed;
   };
 
   const filteredResults = computed(() => {
@@ -353,11 +291,11 @@
       if (!selectedStatus.value) {
         return true;
       }
-      return getResultStatus(result) === selectedStatus.value;
+      return getResultStatus(report.value, result) === selectedStatus.value;
     });
 
     return [...statusFiltered].sort((a, b) => {
-      return getResultPriority(a) - getResultPriority(b);
+      return getResultPriority(report.value, a) - getResultPriority(report.value, b);
     });
   });
 

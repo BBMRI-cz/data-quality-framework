@@ -36,13 +36,17 @@ public class ResultMapper {
                 return true;
               }
               boolean destinationIsId = "id".equals(mapping.getLastDestinationProperty().getName());
+              boolean isErrorMessageMapping =
+                  "error".equals(mapping.getLastDestinationProperty().getName());
               boolean rootSourceIsDataQualityCheck =
                   context.getParent() != null
                       && context.getParent().getSource() instanceof DataQualityCheck;
               boolean rootDestinationIsResult =
                   context.getParent() != null
                       && context.getParent().getDestination() instanceof Result;
-              return !(destinationIsId && rootSourceIsDataQualityCheck && rootDestinationIsResult);
+              return !((destinationIsId || isErrorMessageMapping)
+                  && rootSourceIsDataQualityCheck
+                  && rootDestinationIsResult);
             });
   }
 }

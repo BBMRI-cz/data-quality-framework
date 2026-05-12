@@ -120,6 +120,24 @@ public class ResultMapperTest {
   }
 
   @Test
+  void mapQualityCheck_doesNotMapErrorThresholdIntoErrorMessage() {
+    Result result = new Result("Preexisting Check", 42L, null, null, 10, 20, 1.0f, null, null);
+
+    QualityCheck qualityCheck =
+        new QualityCheck(123L, "Age Check", "Checks ages", "define Age: true");
+    qualityCheck.setWarningThreshold(17);
+    qualityCheck.setErrorThreshold(31);
+    qualityCheck.setEpsilonBudget(0.75f);
+
+    modelMapper.map(qualityCheck, result);
+
+    assertNull(result.getError());
+    assertEquals(17, result.getWarningThreshold());
+    assertEquals(31, result.getErrorThreshold());
+    assertEquals(0.75f, result.getEpsilon());
+  }
+
+  @Test
   void mapResultDTO_preservesUnmappedFieldsOnNewResult() {
     Set<String> idSet = Set.of("patient-zero");
     ResultDTO resultDTO = new ResultDTO(0, "MissingData", idSet, "Data check failed");
