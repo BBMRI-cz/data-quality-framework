@@ -38,7 +38,12 @@
         <div class="stats-grid mb-4">
           <StatCard
             :number="report.numberOfEntities?.toLocaleString() || 'N/A'"
-            label="Total Entities"
+            label="Patients"
+            number-class="text-primary"
+          />
+          <StatCard
+            :number="report.numberOfSecondaryEntities?.toLocaleString() || 'N/A'"
+            label="Samples"
             number-class="text-primary"
           />
           <StatCard
