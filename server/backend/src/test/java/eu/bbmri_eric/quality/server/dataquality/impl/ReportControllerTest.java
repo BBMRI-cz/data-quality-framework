@@ -546,7 +546,7 @@ class ReportControllerTest {
             post(API_V1_AGENTS_REPORTS, testAgentId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonRequest))
-        .andExpect(status().isOk());
+        .andExpect(status().isCreated());
   }
 
   @Test
