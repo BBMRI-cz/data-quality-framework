@@ -24,6 +24,20 @@
         <!-- Statistics Grid -->
         <div class="stats-grid mb-4">
           <StatCard
+            v-if="latestReport"
+            :number="latestReport.numberOfEntities?.toLocaleString() || 'N/A'"
+            label="Patients"
+            number-class="text-primary"
+            help-text="Total number of patients included in the latest report"
+          />
+          <StatCard
+            v-if="latestReport"
+            :number="latestReport.numberOfSecondaryEntities?.toLocaleString() || 'N/A'"
+            label="Samples"
+            number-class="text-primary"
+            help-text="Total number of samples included in the latest report"
+          />
+          <StatCard
             :number="successfulChecks"
             label="Passed"
             number-class="text-success"
@@ -46,7 +60,6 @@
             :number="formatTimestamp(latestReport.generatedAt)"
             label="Generated At"
             number-class="text-primary"
-            help-text="Timestamp when this quality report was generated"
           />
         </div>
 
