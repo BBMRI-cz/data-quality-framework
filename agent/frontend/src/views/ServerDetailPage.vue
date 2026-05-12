@@ -102,7 +102,13 @@
             </div>
           </template>
           <template #type="{ item }">
-            <span :class="['badge', getInteractionTypeBadge(item.type), getInteractionBadgeTextColor(item.type)]">
+            <span
+              :class="[
+                'badge',
+                getInteractionTypeBadge(item.type),
+                getInteractionBadgeTextColor(item.type),
+              ]"
+            >
               {{ item.type }}
             </span>
           </template>

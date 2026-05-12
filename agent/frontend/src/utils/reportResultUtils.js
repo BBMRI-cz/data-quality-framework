@@ -119,6 +119,24 @@ export function getResultClass(report, result) {
 }
 
 /**
+ * Get the Bootstrap text class for a report result status.
+ *
+ * @param {Object} report - Report object containing numberOfEntities
+ * @param {Object} result - Report result
+ * @returns {string} Bootstrap text class
+ */
+export function getResultTextClass(report, result) {
+  const status = getResultStatus(report, result);
+  if (status === CHECK_STATUS.FAILED) {
+    return 'text-danger';
+  }
+  if (status === CHECK_STATUS.WARNING) {
+    return 'text-warning';
+  }
+  return 'text-success';
+}
+
+/**
  * Get sort priority for a report result.
  *
  * @param {Object} report - Report object containing numberOfEntities
@@ -150,8 +168,9 @@ export function getResultError(report, result) {
     return result.error;
   }
 
-  return getResultStatus(report, result) === CHECK_STATUS.FAILED && !Number.isFinite(getOccurrenceValue(result))
-    ? 'There is no error message'
+  return getResultStatus(report, result) === CHECK_STATUS.FAILED &&
+    !Number.isFinite(getOccurrenceValue(result))
+    ? 'Missing error message'
     : null;
 }
 
@@ -202,4 +221,3 @@ export function getResultSummary(report) {
     failed: counts.failed,
   };
 }
-

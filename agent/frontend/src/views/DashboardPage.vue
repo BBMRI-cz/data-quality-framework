@@ -118,6 +118,7 @@
   import { useUserStore } from '@/stores/userStore.js';
   import { useHealthStore } from '@/stores/healthStore.js';
   import { useReportStore } from '@/stores/reportStore.js';
+  import { getResultPriority, getResultSummary } from '@/utils/reportResultUtils.js';
   import { ref, watch, computed, onMounted } from 'vue';
 
   const showPasswordModal = ref(false);
@@ -151,65 +152,25 @@
 
   const latestReport = computed(() => reportStore.latestReport);
 
-  const calculatePercentage = (result) => {
-    const total = latestReport.value?.numberOfEntities || 1;
-    return (result.obfuscatedValue / total) * 100;
-  };
+  const resultSummary = computed(() => getResultSummary(latestReport.value));
 
   const successfulChecks = computed(() => {
-    if (!latestReport.value?.results) return 0;
-    return latestReport.value.results.filter((result) => {
-      const percentage = calculatePercentage(result);
-      return percentage < result.warningThreshold && !result.error;
-    }).length;
+    return resultSummary.value.passed;
   });
 
   const errorChecks = computed(() => {
-    if (!latestReport.value?.results) return 0;
-    return latestReport.value.results.filter((result) => {
-      const percentage = calculatePercentage(result);
-      return percentage >= result.errorThreshold || result.error;
-    }).length;
+    return resultSummary.value.failed;
   });
 
   const warningChecks = computed(() => {
-    if (!latestReport.value?.results) return 0;
-    return latestReport.value.results.filter((result) => {
-      const percentage = calculatePercentage(result);
-      return (
-        percentage >= result.warningThreshold && percentage < result.errorThreshold && !result.error
-      );
-    }).length;
+    return resultSummary.value.warnings;
   });
 
   const sortedResults = computed(() => {
     if (!latestReport.value?.results) return [];
 
     return [...latestReport.value.results].sort((a, b) => {
-      const aPercentage = calculatePercentage(a);
-      const bPercentage = calculatePercentage(b);
-
-      // Determine status for a
-      let aStatus;
-      if (aPercentage >= a.errorThreshold || a.error) {
-        aStatus = 0; // Error
-      } else if (aPercentage >= a.warningThreshold && aPercentage < a.errorThreshold && !a.error) {
-        aStatus = 1; // Warning
-      } else {
-        aStatus = 2; // Passed
-      }
-
-      // Determine status for b
-      let bStatus;
-      if (bPercentage >= b.errorThreshold || b.error) {
-        bStatus = 0; // Error
-      } else if (bPercentage >= b.warningThreshold && bPercentage < b.errorThreshold && !b.error) {
-        bStatus = 1; // Warning
-      } else {
-        bStatus = 2; // Passed
-      }
-
-      return aStatus - bStatus;
+      return getResultPriority(latestReport.value, a) - getResultPriority(latestReport.value, b);
     });
   });
 

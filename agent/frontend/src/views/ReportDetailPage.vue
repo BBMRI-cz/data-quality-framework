@@ -97,11 +97,15 @@
                       <div class="result-details">
                         <div class="detail-row">
                           <span class="detail-label">Occurrence Rate:</span>
-                          <span class="detail-value">{{ formatOccurrenceRate(report, result) }}</span>
+                          <span class="detail-value">{{
+                            formatOccurrenceRate(report, result)
+                          }}</span>
                         </div>
                         <div v-if="getResultError(report, result)" class="detail-row">
                           <span class="detail-label text-danger">Error:</span>
-                          <span class="detail-value text-danger">{{ getResultError(report, result) }}</span>
+                          <span class="detail-value text-danger">{{
+                            getResultError(report, result)
+                          }}</span>
                         </div>
                       </div>
                     </div>
