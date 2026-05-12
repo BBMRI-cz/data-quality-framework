@@ -70,21 +70,6 @@
           />
         </div>
 
-        <!-- Privacy Note -->
-        <AppCallout type="info" icon="bi-shield-lock" class="mb-3">
-          <small>
-            Results in this report are obfuscated using differential privacy to protect sensitive
-            information.
-            <a
-              href="https://bbmri-cz.github.io/data-quality-framework/user/privacy.html"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="fw-semibold"
-              >Learn more</a
-            >.
-          </small>
-        </AppCallout>
-
         <!-- Category Filter -->
         <div class="mb-4">
           <div class="filter-label">Category:</div>
@@ -277,22 +262,16 @@
       return 'bg-danger';
     } else if (status === CheckStatus.WARNING) {
       return 'bg-warning';
+    } else if (status === CheckStatus.PASSED) {
+      return 'bg-success';
     }
-    return 'bg-success';
+
+    return 'bg-secondary';
   };
 
   function getResultValue(result) {
     if (result.result == null) return 'N/A';
     return `${(result.result * 100).toFixed(1)}%`;
-  }
-
-  function getThresholds(result) {
-    const check = qualityCheckMap.value.get(result.hash);
-    if (!check) return null;
-    return {
-      warning: check.warningThreshold,
-      error: check.errorThreshold,
-    };
   }
 
   function formatTimestamp(timestamp) {
@@ -327,7 +306,7 @@
         day: 'numeric',
         year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
       });
-    } catch (err) {
+    } catch {
       return 'Invalid date';
     }
   }

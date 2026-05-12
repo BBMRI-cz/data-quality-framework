@@ -136,7 +136,7 @@ public class Report {
    * @param result the numeric result of the check
    * @return the created quality check result
    */
-  public QualityCheckResult addQualityCheckResult(QualityCheck qualityCheck, double result) {
+  public QualityCheckResult addQualityCheckResult(QualityCheck qualityCheck, Double result) {
     QualityCheckResult checkResult = new QualityCheckResult(this, qualityCheck, result);
     qualityCheckResults.add(checkResult);
     return checkResult;

@@ -2,13 +2,14 @@ package eu.bbmri_eric.quality.agent.dataquality.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.util.Objects;
+import lombok.Getter;
 import org.springframework.hateoas.server.core.Relation;
 
 /** DTO for quality check result data. */
+@Getter
 @Schema(name = "Quality Check Result", description = "Result of a quality check execution")
 @Relation(itemRelation = "result", collectionRelation = "results")
 public final class QualityCheckResultDTO {
@@ -28,39 +29,19 @@ public final class QualityCheckResultDTO {
       example = "Completeness Check",
       requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   @Size(max = 255, message = "Name must be at most 255 characters")
-  private String name = "";
+  private String name;
 
   @Schema(
       description = "Numeric result of the quality check",
       example = "0.95",
-      requiredMode = Schema.RequiredMode.REQUIRED)
-  @NotNull(message = "Result cannot be null")
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   private final Double result;
-
-  /** Constructor with hash and result only. */
-  public QualityCheckResultDTO(String hash, Double result) {
-    this.hash = hash;
-    this.name = "";
-    this.result = result;
-  }
 
   /** Constructor with hash, name, and result. */
   public QualityCheckResultDTO(String hash, String name, Double result) {
     this.hash = hash;
     this.name = name != null ? name : "";
     this.result = result;
-  }
-
-  public String getHash() {
-    return hash;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public Double getResult() {
-    return result;
   }
 
   @Override

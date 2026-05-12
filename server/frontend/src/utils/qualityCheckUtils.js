@@ -20,7 +20,7 @@ export const CheckStatus = {
  */
 export function getCheckStatus(result, check) {
   if (!check) return CheckStatus.UNKNOWN;
-  if (result == null || typeof result.result !== 'number') return CheckStatus.UNKNOWN;
+  if (result == null || typeof result.result !== 'number') return CheckStatus.FAILED;
 
   const errorThreshold = check.errorThreshold;
   const warningThreshold = check.warningThreshold;

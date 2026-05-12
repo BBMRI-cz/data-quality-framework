@@ -242,7 +242,8 @@ INSERT INTO quality_check_result (report_id, quality_check_hash, result) VALUES
 INSERT INTO report (id, timestamp, agent_id, total_patients, total_samples) VALUES
     ('report-current-1', NOW() - INTERVAL '2 hours', 'agent-001', 1275, 3850),
     ('report-current-2', NOW() - INTERVAL '1 hour', 'agent-002', 895, 2475),
-    ('report-current-3', NOW() - INTERVAL '30 minutes', 'agent-004', 2125, 6600);
+    ('report-current-3', NOW() - INTERVAL '30 minutes', 'agent-004', 2125, 6600),
+    ('report-null-001', NOW() - INTERVAL '15 minutes', 'agent-003', NULL, NULL);
 
 -- Add results for current reports
 INSERT INTO quality_check_result (report_id, quality_check_hash, result) VALUES
@@ -255,7 +256,15 @@ INSERT INTO quality_check_result (report_id, quality_check_hash, result) VALUES
     ('report-current-3', 'unsupported-gender-check', 0.01),
     ('report-current-3', 'missing-birthdate-check', 0.02),
     ('report-current-3', 'invalid-date-check', 0.02),
-    ('report-current-3', 'broken-reference-check', 0.01);
+    ('report-current-3', 'broken-reference-check', 0.01),
+    ('report-null-001', 'unsupported-gender-check', NULL),
+    ('report-null-001', 'missing-birthdate-check', NULL),
+    ('report-null-001', 'invalid-date-check', NULL),
+    ('report-null-001', 'duplicate-patient-check', NULL),
+    ('report-null-001', 'invalid-format-check', NULL),
+    ('report-null-001', 'broken-reference-check', NULL),
+    ('report-null-001', 'outlier-value-check', NULL),
+    ('report-null-001', 'invalid-coding-check', NULL);
 
 -- Insert agent interactions
 -- Registration interactions (when agents first joined)

@@ -51,8 +51,6 @@ class ReportSender {
                   clientFactory.createClient(
                       agentId, server.getUrl(), server.getClientId(), server.getClientSecret());
               try {
-                reportDTO.setTotalPatients(((reportDTO.getTotalPatients() + 9) / 10) * 10);
-                reportDTO.setTotalSamples(((reportDTO.getTotalSamples() + 9) / 10) * 10);
                 client.sendReport(reportDTO);
                 String reportJson = objectMapper.writeValueAsString(reportDTO);
                 server.addInteraction(

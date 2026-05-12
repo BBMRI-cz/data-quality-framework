@@ -2,7 +2,6 @@ package eu.bbmri_eric.quality.server.dataquality.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.util.Objects;
 import org.springframework.hateoas.server.core.Relation;
@@ -27,7 +26,6 @@ public class QualityCheckResultDTO {
       requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   private String name = "";
 
-  @NotNull(message = "Result cannot be null")
   @Schema(
       description = "Numeric result of the quality check",
       example = "0.95",
