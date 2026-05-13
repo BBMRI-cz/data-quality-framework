@@ -91,7 +91,7 @@ public interface FHIRStore {
    * @param resourceType the type of FHIR resource to count
    * @return the total number of resources found
    */
-  int countResources(String resourceType);
+  Integer countResources(String resourceType);
 
   /**
    * Fetches all resources of a given type from the store with optional field selection.

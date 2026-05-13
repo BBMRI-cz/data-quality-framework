@@ -320,7 +320,7 @@ class BlazeFHIRStore implements FHIRStore {
   }
 
   @Override
-  public int countResources(String resourceType) {
+  public Integer countResources(String resourceType) {
     try {
       Bundle bundle =
           client
@@ -330,10 +330,10 @@ class BlazeFHIRStore implements FHIRStore {
               .returnBundle(Bundle.class)
               .execute();
 
-      return bundle.getTotal(); // no parsing of entries happens
+      return bundle.getTotal();
     } catch (Exception e) {
       log.error("Failed to count resources of type: {}", resourceType, e);
-      return -1; // Or throw a custom exception if preferred
+      return null;
     }
   }
 

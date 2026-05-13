@@ -10,14 +10,14 @@ export const useReportStore = defineStore('report', {
     isGenerating: false,
     pagination: {
       page: 0,
-      size: 10,
+      size: 5,
       totalElements: 0,
       totalPages: 0,
     },
   }),
 
   actions: {
-    async fetchReports({ page = 0, size = 10 } = {}) {
+    async fetchReports({ page = 0, size = 5 } = {}) {
       this.isLoading = true;
       try {
         const result = await reportService.getAll({ page, size });

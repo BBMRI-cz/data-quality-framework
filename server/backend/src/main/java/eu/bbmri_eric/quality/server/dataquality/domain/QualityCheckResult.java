@@ -22,7 +22,7 @@ public class QualityCheckResult {
   @JoinColumn(name = "quality_check_hash")
   private QualityCheck qualityCheck;
 
-  private double result;
+  private Double result;
 
   /** Default constructor for JPA. */
   protected QualityCheckResult() {}
@@ -34,7 +34,7 @@ public class QualityCheckResult {
    * @param qualityCheck the quality check that was executed
    * @param result the numeric result of the check
    */
-  QualityCheckResult(Report report, QualityCheck qualityCheck, double result) {
+  QualityCheckResult(Report report, QualityCheck qualityCheck, Double result) {
     this.report = report;
     this.qualityCheck = qualityCheck;
     this.result = result;
@@ -73,7 +73,7 @@ public class QualityCheckResult {
    *
    * @return the result value
    */
-  public double getResult() {
+  public Double getResult() {
     return result;
   }
 
@@ -82,7 +82,7 @@ public class QualityCheckResult {
    *
    * @param result the result value to set
    */
-  public void setResult(double result) {
+  public void setResult(Double result) {
     this.result = result;
   }
 

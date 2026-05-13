@@ -3,7 +3,8 @@ INSERT INTO report (id, generated_at, epsilon_budget, number_of_entities, number
 VALUES
     (1001, '2023-10-25 10:00:00', 2.0, 1500, 3000, 'GENERATED'),
     (1002, '2023-10-26 14:30:00', 2.0, 1550, 3100, 'GENERATED'),
-    (1003, '2023-10-27 09:15:00', 2.0, 1500, null, 'GENERATED');
+    (1003, '2023-10-27 09:15:00', 2.0, 1500, null, 'GENERATED'),
+    (1004, '2023-10-28 12:00:00', 2.0, null, null, 'GENERATED');
 
 INSERT INTO result (check_name, check_id, raw_value, obfuscated_value, report_id, warning_threshold, error_threshold, epsilon, stratum)
 SELECT name, id, 5, 5.2, 1001, warning_threshold, error_threshold, epsilon_budget, NULL FROM quality_check WHERE name = 'Missing Gender attribute';
@@ -85,6 +86,9 @@ SELECT name, id, 35, 35.1, 1002, warning_threshold, error_threshold, epsilon_bud
 INSERT INTO result (check_name, check_id, raw_value, obfuscated_value, report_id, warning_threshold, error_threshold, epsilon, stratum)
 SELECT name, id, 5, 5.0, 1002, warning_threshold, error_threshold, epsilon_budget, NULL FROM quality_check WHERE name = 'Patients without specimen';
 
+INSERT INTO result (check_name, check_id, raw_value, obfuscated_value, report_id, warning_threshold, error_threshold, epsilon, error, stratum)
+SELECT name, id, NULL, NULL, 1002, warning_threshold, error_threshold, epsilon_budget, 'Null result encountered during aggregation', NULL FROM quality_check WHERE name = 'Patients without identifier';
+
 
 -- Report 1003 Results (Partial results for testing)
 INSERT INTO result (check_name, check_id, raw_value, obfuscated_value, report_id, warning_threshold, error_threshold, epsilon, stratum)
@@ -95,3 +99,15 @@ SELECT name, id, 5, 5.2, 1003, warning_threshold, error_threshold, epsilon_budge
 
 INSERT INTO result (check_name, check_id, raw_value, obfuscated_value, report_id, warning_threshold, error_threshold, epsilon, stratum)
 SELECT name, id, 20, 19.8, 1003, warning_threshold, error_threshold, epsilon_budget, NULL FROM quality_check WHERE name = 'Missing diagnosis or condition';
+
+
+-- Report 1004 Results (Null results with an explicit error value)
+INSERT INTO result (check_name, check_id, raw_value, obfuscated_value, report_id, warning_threshold, error_threshold, epsilon, error, stratum)
+SELECT name, id, NULL, NULL, 1004, warning_threshold, error_threshold, epsilon_budget, 'Calculation failed while processing null input', NULL FROM quality_check WHERE name = 'Missing Gender attribute';
+
+INSERT INTO result (check_name, check_id, raw_value, obfuscated_value, report_id, warning_threshold, error_threshold, epsilon, error, stratum)
+SELECT name, id, NULL, NULL, 1004, warning_threshold, error_threshold, epsilon_budget, NULL, NULL FROM quality_check WHERE name = 'Impossible birth date (in the future or before 20th century)';
+
+INSERT INTO result (check_name, check_id, raw_value, obfuscated_value, report_id, warning_threshold, error_threshold, epsilon, error, stratum)
+SELECT name, id, NULL, NULL, 1004, warning_threshold, error_threshold, epsilon_budget, NULL, NULL FROM quality_check WHERE name = 'Missing diagnosis or condition';
+

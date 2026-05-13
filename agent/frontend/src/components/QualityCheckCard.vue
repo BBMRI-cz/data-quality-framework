@@ -5,7 +5,7 @@
       <div class="position-absolute top-0 end-0 p-3">
         <i
           class="bi bi-check-square"
-          :class="getResultColorClass(check)"
+          :class="getResultTextClass(reportContext, check)"
           style="font-size: 1.5rem; opacity: 0.75"
         ></i>
       </div>
@@ -33,10 +33,10 @@
       <div class="flex-grow-1 d-flex flex-column justify-content-center align-items-center mb-3">
         <div
           class="display-4 fw-bold mb-2"
-          :class="getResultColorClass(check)"
+          :class="getResultTextClass(reportContext, check)"
           style="line-height: 1"
         >
-          {{ formatPercentage(check.rawValue) }}%
+          {{ formatOccurrenceRate(reportContext, check) }}
         </div>
         <div class="text-muted" style="font-size: 0.9rem">Occurrence Rate</div>
       </div>
@@ -56,9 +56,13 @@
         </div>
 
         <!-- Error Message if present -->
-        <div v-if="check.error" class="alert alert-danger p-2 mt-2 mb-0" style="font-size: 0.75rem">
+        <div
+          v-if="getResultError(reportContext, check)"
+          class="alert alert-danger p-2 mt-2 mb-0"
+          style="font-size: 0.75rem"
+        >
           <i class="bi bi-exclamation-triangle-fill me-1"></i>
-          {{ check.error }}
+          {{ getResultError(reportContext, check) }}
         </div>
       </div>
     </div>
@@ -66,7 +70,13 @@
 </template>
 
 <script setup>
+  import { computed } from 'vue';
   import { useRouter } from 'vue-router';
+  import {
+    formatOccurrenceRate,
+    getResultTextClass,
+    getResultError,
+  } from '@/utils/reportResultUtils.js';
 
   const router = useRouter();
 
@@ -85,21 +95,7 @@
     },
   });
 
-  const formatPercentage = (value) => {
-    const percentage = (value / props.totalEntities) * 100;
-    return percentage.toFixed(1);
-  };
-
-  const getResultColorClass = (check) => {
-    const percentage = parseFloat(formatPercentage(check.rawValue));
-
-    if (percentage >= check.errorThreshold || check.error) {
-      return 'text-danger';
-    } else if (percentage >= check.warningThreshold) {
-      return 'text-warning';
-    }
-    return 'text-success';
-  };
+  const reportContext = computed(() => ({ numberOfEntities: props.totalEntities }));
 
   const getCheckIdKey = (check) => {
     return check.checkId + '_' + (check.stratum || 'all');

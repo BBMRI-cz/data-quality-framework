@@ -528,7 +528,7 @@ class ReportControllerTest {
 
   @Test
   @WithUserDetails("admin")
-  void create_shouldRejectNullResultValue() throws Exception {
+  void create_shouldAcceptNullResultValue() throws Exception {
     String jsonRequest =
         """
         {
@@ -546,7 +546,7 @@ class ReportControllerTest {
             post(API_V1_AGENTS_REPORTS, testAgentId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonRequest))
-        .andExpect(status().isBadRequest());
+        .andExpect(status().isCreated());
   }
 
   @Test

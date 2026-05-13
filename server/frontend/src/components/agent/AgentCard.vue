@@ -82,7 +82,7 @@
 <script setup>
   import { computed, ref } from 'vue';
   import { useRouter } from 'vue-router';
-  import { CheckStatus } from '@/utils/qualityCheckUtils.js';
+  import { CheckStatus, getCheckStatus } from '@/utils/qualityCheckUtils.js';
 
   const router = useRouter();
 
@@ -93,7 +93,6 @@
     },
     reports: {
       type: Array,
-      required: true,
       default: () => [],
     },
     qualityCheckMap: {
@@ -138,7 +137,7 @@
           hash: result.hash,
           checkName: qualityCheck.name || qualityCheck.cql || result.hash,
           category: qualityCheck.category?.name,
-          result: normalizeResultValue(result.result),
+          result: result.result,
           qualityCheck: qualityCheck,
         };
       })
@@ -160,8 +159,8 @@
   // Sort check results by status (worst first)
   const sortedCheckResults = computed(() => {
     return [...filteredCheckResults.value].sort((a, b) => {
-      const statusA = getResultStatus(a.result, a.qualityCheck);
-      const statusB = getResultStatus(b.result, b.qualityCheck);
+      const statusA = getCheckStatus(a, a.qualityCheck);
+      const statusB = getCheckStatus(b, b.qualityCheck);
 
       const statusOrder = {
         [CheckStatus.FAILED]: 0,
@@ -185,7 +184,7 @@
     };
 
     filteredCheckResults.value.forEach((check) => {
-      const status = getResultStatus(check.result, check.qualityCheck);
+      const status = getCheckStatus(check, check.qualityCheck);
       if (status === CheckStatus.FAILED) {
         stats.errors++;
       } else if (status === CheckStatus.WARNING) {
@@ -261,24 +260,8 @@
   });
 
   // Helper Functions
-  function normalizeResultValue(raw) {
-    if (typeof raw !== 'number' || isNaN(raw)) return 0;
-    return raw > 1 ? Math.min(raw / 100, 1) : Math.max(raw, 0);
-  }
-
-  function getResultStatus(result, qualityCheck) {
-    const percentage = result <= 1 ? result * 100 : result;
-
-    if (percentage > qualityCheck.errorThreshold) {
-      return CheckStatus.FAILED;
-    } else if (percentage > qualityCheck.warningThreshold) {
-      return CheckStatus.WARNING;
-    }
-    return CheckStatus.PASSED;
-  }
-
   function getCheckStatusClass(check) {
-    const status = getResultStatus(check.result, check.qualityCheck);
+    const status = getCheckStatus(check, check.qualityCheck);
     return {
       'status-error': status === CheckStatus.FAILED,
       'status-warning': status === CheckStatus.WARNING,
@@ -287,7 +270,7 @@
   }
 
   function getCheckStatusIcon(check) {
-    const status = getResultStatus(check.result, check.qualityCheck);
+    const status = getCheckStatus(check, check.qualityCheck);
     switch (status) {
       case CheckStatus.FAILED:
         return 'bi bi-x-circle-fill';
@@ -300,6 +283,10 @@
   }
 
   function formatCheckResult(result) {
+    if (result == null || typeof result !== 'number' || Number.isNaN(result)) {
+      return 'N/A';
+    }
+
     const percentage = result <= 1 ? result * 100 : result;
     return `${percentage.toFixed(1)}%`;
   }

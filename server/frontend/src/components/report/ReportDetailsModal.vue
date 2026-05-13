@@ -133,7 +133,7 @@
                   </div>
                   <div class="check-score">
                     <div class="score-circle" :class="getScoreCircleClass(result)">
-                      <span class="score-value">{{ (result.result * 100).toFixed(1) }}%</span>
+                      <span class="score-value">{{ getResultDisplayValue(result) }}</span>
                     </div>
                   </div>
                 </div>
@@ -230,6 +230,14 @@
       default:
         return 'score-secondary';
     }
+  };
+
+  const getResultDisplayValue = (result) => {
+    if (result?.result == null || typeof result.result !== 'number') {
+      return 'N/A';
+    }
+
+    return `${(result.result * 100).toFixed(1)}%`;
   };
 
   const getCheckCounts = () => {

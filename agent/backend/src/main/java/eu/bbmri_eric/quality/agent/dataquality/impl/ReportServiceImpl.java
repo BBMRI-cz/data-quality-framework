@@ -22,10 +22,10 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.NonNull;
 import org.modelmapper.ModelMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -35,7 +35,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 class ReportServiceImpl implements ReportService {
 
-  private static final Logger log = LoggerFactory.getLogger(ReportServiceImpl.class);
   private final ReportRepository reportRepository;
   private final QualityCheckService qualityCheckService;
   private final ModelMapper modelMapper;
@@ -43,11 +42,11 @@ class ReportServiceImpl implements ReportService {
 
   ReportServiceImpl(
       ReportRepository reportRepository,
-      QualityCheckService cqlQueryService,
+      QualityCheckService qualityCheckService,
       ModelMapper modelMapper,
       EventPublisher publisher) {
     this.reportRepository = reportRepository;
-    this.qualityCheckService = cqlQueryService;
+    this.qualityCheckService = qualityCheckService;
     this.modelMapper = modelMapper;
     this.publisher = publisher;
   }
@@ -144,28 +143,48 @@ class ReportServiceImpl implements ReportService {
   public ObfuscatedReportDTO getObfuscatedById(Long id) {
     Report report =
         reportRepository.findById(id).orElseThrow(() -> new ReportNotFoundException(id));
+    Integer roundedPatientCount = roundEntityCount(report.getNumberOfEntities());
+    Integer rounderSampleCount = roundEntityCount(report.getNumberOfSecondaryEntities());
     List<QualityCheckDTO> qualityCheckDTOS = qualityCheckService.findAll();
-    var results =
-        report.getResults().stream()
+    var results = prepareObfuscatedResults(report, roundedPatientCount, qualityCheckDTOS);
+    return new ObfuscatedReportDTO(results, roundedPatientCount, rounderSampleCount);
+  }
+
+  private static @NonNull List<QualityCheckResultDTO> prepareObfuscatedResults(
+      Report report, Integer roundedPatientCount, List<QualityCheckDTO> qualityCheckDTOS) {
+    return (report.getResults() == null ? List.<Result>of() : report.getResults())
+        .stream()
             .map(
                 result -> {
-                  double value;
-                  if (report.getNumberOfEntities() == 0) {
-                    // Handle edge case: 0/0 = NaN, return 0.0 instead
-                    value = 0.0;
-                  } else {
-                    value = result.getObfuscatedValue() / report.getNumberOfEntities();
+                  Double value = calculateObfuscatedValue(result, roundedPatientCount);
+                  Double boundedValue = null;
+                  if (value != null) {
+                    double roundedValue =
+                        BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_UP).doubleValue();
+                    boundedValue = Math.clamp(roundedValue, 0.0, 1.0);
                   }
-                  double roundedValue =
-                      BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_UP).doubleValue();
-                  double boundedValue = Math.min(1.0, Math.max(0.0, roundedValue));
                   String checkIdLabel = formatCheckIdWithStratum(result, qualityCheckDTOS);
                   return new QualityCheckResultDTO(
                       checkIdLabel, result.getCheckName(), boundedValue);
                 })
             .collect(Collectors.toList());
-    return new ObfuscatedReportDTO(
-        results, report.getNumberOfEntities(), report.getNumberOfSecondaryEntities());
+  }
+
+  private static Integer roundEntityCount(Integer count) {
+    if (Objects.isNull(count)) {
+      return null;
+    }
+    return ((count + 9) / 10) * 10;
+  }
+
+  private static Double calculateObfuscatedValue(Result result, Integer numberOfEntities) {
+    if (Objects.isNull(numberOfEntities) || Objects.isNull(result.getObfuscatedValue())) {
+      return null;
+    }
+    if (numberOfEntities == 0) {
+      return 0.0;
+    }
+    return result.getObfuscatedValue() / numberOfEntities;
   }
 
   private static String getCheckId(Result result, List<QualityCheckDTO> cqlQueryDTOS) {

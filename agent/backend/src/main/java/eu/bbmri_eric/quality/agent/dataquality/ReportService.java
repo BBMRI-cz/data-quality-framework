@@ -10,7 +10,7 @@ public interface ReportService
     extends CRUDService<ReportDTO, ReportCreateDTO, ReportUpdateDTO, Long> {
 
   /**
-   * Get a report by ID.
+   * Get a report by ID that has obfuscated values and is ready for sharing.
    *
    * @param id the report ID
    * @return the report as a DTO with obfuscated values safe for sharing

@@ -51,8 +51,8 @@ public class Result {
   public Result(
       String checkName,
       Long checkId,
-      int rawValue,
-      double obfuscatedValue,
+      Integer rawValue,
+      Double obfuscatedValue,
       int warningThreshold,
       int errorThreshold,
       float epsilon,

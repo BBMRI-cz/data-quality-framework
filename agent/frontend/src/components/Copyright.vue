@@ -39,6 +39,17 @@
         View on GitHub
       </a>
     </p>
+    <p class="docs-section">
+      <a
+        href="https://fdqf.bbmri-eric.eu/user/"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="feedback-link"
+      >
+        <i class="bi bi-book" aria-hidden="true"></i>
+        Documentation
+      </a>
+    </p>
     <p v-if="buildInfo" class="build-info">
       {{ buildInfo.version }} • {{ buildInfo.gitCommit
       }}<span v-if="buildInfo.buildTime"> • {{ formatBuildTime(buildInfo.buildTime) }}</span>
@@ -148,6 +159,11 @@
   .github-link:hover {
     color: #764ba2;
     text-decoration: underline;
+  }
+
+  .docs-section {
+    margin-top: 0.25rem;
+    margin-bottom: 0;
   }
 
   sup {
