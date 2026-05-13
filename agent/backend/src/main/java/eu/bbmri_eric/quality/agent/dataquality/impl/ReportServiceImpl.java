@@ -24,6 +24,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.NonNull;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -142,28 +143,38 @@ class ReportServiceImpl implements ReportService {
   public ObfuscatedReportDTO getObfuscatedById(Long id) {
     Report report =
         reportRepository.findById(id).orElseThrow(() -> new ReportNotFoundException(id));
+    Integer roundedPatientCount = roundEntityCount(report.getNumberOfEntities());
+    Integer rounderSampleCount = roundEntityCount(report.getNumberOfSecondaryEntities());
     List<QualityCheckDTO> qualityCheckDTOS = qualityCheckService.findAll();
-    var results =
-        (report.getResults() == null ? List.<Result>of() : report.getResults())
-            .stream()
-                .map(
-                    result -> {
-                      Double value = calculateObfuscatedValue(result, report.getNumberOfEntities());
-                      Double boundedValue = null;
-                      if (value != null) {
-                        double roundedValue =
-                            BigDecimal.valueOf(value)
-                                .setScale(2, RoundingMode.HALF_UP)
-                                .doubleValue();
-                        boundedValue = Math.clamp(roundedValue, 0.0, 1.0);
-                      }
-                      String checkIdLabel = formatCheckIdWithStratum(result, qualityCheckDTOS);
-                      return new QualityCheckResultDTO(
-                          checkIdLabel, result.getCheckName(), boundedValue);
-                    })
-                .collect(Collectors.toList());
-    return new ObfuscatedReportDTO(
-        results, report.getNumberOfEntities(), report.getNumberOfSecondaryEntities());
+    var results = prepareObfuscatedResults(report, roundedPatientCount, qualityCheckDTOS);
+    return new ObfuscatedReportDTO(results, roundedPatientCount, rounderSampleCount);
+  }
+
+  private static @NonNull List<QualityCheckResultDTO> prepareObfuscatedResults(
+      Report report, Integer roundedPatientCount, List<QualityCheckDTO> qualityCheckDTOS) {
+    return (report.getResults() == null ? List.<Result>of() : report.getResults())
+        .stream()
+            .map(
+                result -> {
+                  Double value = calculateObfuscatedValue(result, roundedPatientCount);
+                  Double boundedValue = null;
+                  if (value != null) {
+                    double roundedValue =
+                        BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_UP).doubleValue();
+                    boundedValue = Math.clamp(roundedValue, 0.0, 1.0);
+                  }
+                  String checkIdLabel = formatCheckIdWithStratum(result, qualityCheckDTOS);
+                  return new QualityCheckResultDTO(
+                      checkIdLabel, result.getCheckName(), boundedValue);
+                })
+            .collect(Collectors.toList());
+  }
+
+  private static Integer roundEntityCount(Integer count) {
+    if (Objects.isNull(count)) {
+      return null;
+    }
+    return ((count + 9) / 10) * 10;
   }
 
   private static Double calculateObfuscatedValue(Result result, Integer numberOfEntities) {

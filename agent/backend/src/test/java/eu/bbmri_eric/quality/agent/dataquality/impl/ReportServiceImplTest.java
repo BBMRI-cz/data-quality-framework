@@ -12,6 +12,7 @@ import eu.bbmri_eric.quality.agent.dataquality.domain.Result;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ObfuscatedReportDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckResultDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.ReportDTO;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -19,11 +20,9 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @SpringBootTest
-@ActiveProfiles("test")
 class ReportServiceImplTest {
 
   @Autowired private ReportRepository reportRepository;
@@ -79,7 +78,7 @@ class ReportServiceImplTest {
       Report report,
       String checkName,
       Long checkId,
-      int rawValue,
+      Integer rawValue,
       Double obfuscatedValue,
       String stratum) {
     Result result =
@@ -151,6 +150,18 @@ class ReportServiceImplTest {
     }
 
     @Test
+    @DisplayName("should return different values for normal and obfuscated reports")
+    void shouldReturnDifferentValuesForNormalAndObfuscatedReports() {
+      ReportDTO normalReport = reportService.findById(testReport.getId());
+      ObfuscatedReportDTO obfuscatedReport = reportService.getObfuscatedById(testReport.getId());
+
+      double normalCount = normalReport.getResults().getFirst().getRawValue();
+      double obfuscatedValue = obfuscatedReport.getResults().getFirst().getResult();
+
+      assertThat(obfuscatedValue).isNotEqualTo(normalCount);
+    }
+
+    @Test
     @DisplayName("should handle reports with zero entities (0/0 case)")
     void shouldHandleZeroEntities() {
       Report report = new Report();
@@ -163,6 +174,36 @@ class ReportServiceImplTest {
 
       assertThat(reportDTO.getResults()).hasSize(1);
       assertThat(reportDTO.getResults().getFirst().getResult()).isEqualTo(0.0);
+    }
+
+    @Test
+    @DisplayName("should handle reports with null entities")
+    void shouldHandleNullEntities() {
+      Report report = new Report();
+      report.setNumberOfEntities(0);
+      report.setStatus(ReportStatus.GENERATED);
+      addResultToReport(report, "Test Check", 1L, null, null, null);
+      Report savedReport = reportRepository.save(report);
+
+      ObfuscatedReportDTO reportDTO = reportService.getObfuscatedById(savedReport.getId());
+
+      assertThat(reportDTO.getResults()).hasSize(1);
+      assertThat(reportDTO.getResults().getFirst().getResult()).isEqualTo(null);
+    }
+
+    @Test
+    @DisplayName("should round entity counts")
+    void shouldRoundEntityCounts() {
+      Report report = new Report();
+      report.setNumberOfEntities(678);
+      report.setNumberOfSecondaryEntities(1273);
+      report.setStatus(ReportStatus.GENERATED);
+      addResultToReport(report, "Test Check", 1L, null, null, null);
+      Report savedReport = reportRepository.save(report);
+      ObfuscatedReportDTO reportDTO = reportService.getObfuscatedById(savedReport.getId());
+      assertThat(savedReport.getNumberOfEntities()).isNotEqualTo(reportDTO.getTotalPatients());
+      assertThat(savedReport.getNumberOfSecondaryEntities())
+          .isNotEqualTo(reportDTO.getTotalSamples());
     }
 
     @Test
@@ -285,16 +326,14 @@ class ReportServiceImplTest {
     }
 
     @Test
-    @DisplayName("should return zero when obfuscated value is null")
-    void shouldReturnZeroWhenObfuscatedValueIsNull() {
+    @DisplayName("should accept null values")
+    void nullValuesForResults() {
       Report report = new Report();
       report.setNumberOfEntities(1000);
       report.setStatus(ReportStatus.GENERATED);
-      addResultToReport(report, "Check with null obfuscated value", 1L, 50, null, null);
+      addResultToReport(report, "Check with null obfuscated value", 1L, null, null, null);
       report = reportRepository.save(report);
-
       ObfuscatedReportDTO reportDTO = reportService.getObfuscatedById(report.getId());
-
       assertThat(reportDTO.getResults()).hasSize(1);
       assertThat(reportDTO.getResults().getFirst().getResult()).isNull();
     }
