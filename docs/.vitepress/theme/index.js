@@ -3,6 +3,7 @@ import { h } from 'vue'
 import DefaultTheme from 'vitepress/theme'
 import './style.css'
 import 'bootstrap-icons/font/bootstrap-icons.css'
+import {setupMatomoRouteTracking} from '../plugins/vitepress-plugin-matomo.js'
 
 export default {
   extends: DefaultTheme,
@@ -11,7 +12,7 @@ export default {
       // https://vitepress.dev/guide/extending-default-theme#layout-slots
     })
   },
-  enhanceApp({ app, router, siteData }) {
-    // ...
+  enhanceApp({ router }) {
+    setupMatomoRouteTracking(router)
   }
 }
