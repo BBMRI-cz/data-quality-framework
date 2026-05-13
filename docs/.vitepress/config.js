@@ -58,6 +58,15 @@ export default defineConfig({
                         {text: 'Deployment', link: '/user/deployment'},
                         {text: 'Configuration', link: '/user/configuration'},
                         {text: 'OIDC Configuration', link: '/user/oidc-configuration'},
+                        {
+                            text: 'Troubleshooting',
+                            items: [
+                                {
+                                    text: 'Why report contains N/A values',
+                                    link: '/user/troubleshooting/report'
+                                }
+                            ]
+                        },
                     ]
                 }
             ],

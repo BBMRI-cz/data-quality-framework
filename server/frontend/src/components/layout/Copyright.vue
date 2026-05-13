@@ -39,6 +39,17 @@
         View on GitHub
       </a>
     </p>
+    <p class="docs-section">
+      <a
+        href="https://fdqf.bbmri-eric.eu/user/"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="feedback-link"
+      >
+        <i class="bi bi-book" aria-hidden="true"></i>
+        Documentation
+      </a>
+    </p>
     <p class="swagger-section">
       <a :href="swaggerUrl" target="_blank" rel="noopener noreferrer" class="swagger-link">
         <i class="bi bi-braces-asterisk" aria-hidden="true"></i>
@@ -87,30 +98,30 @@
   .copyright {
     text-align: center;
     padding: 1rem 0;
-    color: #6b7280;
+    color: var(--color-gray-500);
     font-size: 0.875rem;
   }
 
   .org-link {
-    color: #667eea;
+    color: var(--color-primary);
     text-decoration: none;
     transition: color 0.2s ease;
     font-weight: 500;
   }
 
   .org-link:hover {
-    color: #764ba2;
+    color: var(--color-primary-dark);
     text-decoration: underline;
   }
 
   .license-link {
-    color: #667eea;
+    color: var(--color-primary);
     text-decoration: none;
     transition: color 0.2s ease;
   }
 
   .license-link:hover {
-    color: #764ba2;
+    color: var(--color-primary-dark);
     text-decoration: underline;
   }
 
@@ -120,7 +131,7 @@
   }
 
   .feedback-link {
-    color: #667eea;
+    color: var(--color-primary);
     text-decoration: none;
     transition: color 0.2s ease;
     font-weight: 500;
@@ -134,7 +145,7 @@
   }
 
   .feedback-link:hover {
-    color: #764ba2;
+    color: var(--color-primary-dark);
     text-decoration: underline;
   }
 
@@ -144,7 +155,7 @@
   }
 
   .github-link {
-    color: #667eea;
+    color: var(--color-primary);
     text-decoration: none;
     transition: color 0.2s ease;
     font-weight: 500;
@@ -158,8 +169,13 @@
   }
 
   .github-link:hover {
-    color: #764ba2;
+    color: var(--color-primary-dark);
     text-decoration: underline;
+  }
+
+  .docs-section {
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
   }
 
   .swagger-section {
@@ -168,7 +184,7 @@
   }
 
   .swagger-link {
-    color: #667eea;
+    color: var(--color-primary);
     text-decoration: none;
     transition: color 0.2s ease;
     font-weight: 500;
@@ -182,7 +198,7 @@
   }
 
   .swagger-link:hover {
-    color: #764ba2;
+    color: var(--color-primary-dark);
     text-decoration: underline;
   }
 
@@ -194,7 +210,7 @@
     margin-top: 0.75rem;
     margin-bottom: 0;
     font-size: 0.7rem;
-    color: #9ca3af;
+    color: var(--color-gray-500);
     opacity: 0.85;
   }
 </style>
