@@ -37,6 +37,7 @@ class ReportControllerTest {
 
   public static final String API_V1_AGENTS_REPORTS = "/api/v1/agents/{agentId}/reports";
   public static final String API_V1_REPORTS_ID = "/api/v1/reports/{id}";
+  public static final String API_V1_REPORTS = "/api/v1/reports";
 
   @Autowired private MockMvc mockMvc;
   @Autowired private ObjectMapper objectMapper;
@@ -143,7 +144,13 @@ class ReportControllerTest {
         .perform(get(API_V1_AGENTS_REPORTS, testAgentId))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$._embedded").doesNotExist())
-        .andExpect(jsonPath("$._links.self.href").value("http://localhost/api/v1"));
+        .andExpect(jsonPath("$.page.totalElements").value(0))
+        .andExpect(
+            jsonPath("$._links.current.href")
+                .value(
+                    "http://localhost/api/v1/agents/"
+                        + testAgentId
+                        + "/reports?page=0&size=20&order=ASC"));
   }
 
   @Test
@@ -160,7 +167,12 @@ class ReportControllerTest {
         .andExpect(jsonPath("$._embedded.reports.length()").value(2))
         .andExpect(jsonPath("$._embedded.reports[?(@.id == '" + report1.getId() + "')]").exists())
         .andExpect(jsonPath("$._embedded.reports[?(@.id == '" + report2.getId() + "')]").exists())
-        .andExpect(jsonPath("$._links.self.href").value("http://localhost/api/v1"))
+        .andExpect(
+            jsonPath("$._links.current.href")
+                .value(
+                    "http://localhost/api/v1/agents/"
+                        + testAgentId
+                        + "/reports?page=0&size=20&order=ASC"))
         .andExpect(jsonPath("$._embedded.reports[0]._links.self.href").exists())
         .andExpect(jsonPath("$._embedded.reports[1]._links.self.href").exists());
   }
@@ -608,5 +620,209 @@ class ReportControllerTest {
     assertTrue(qualityCheckRepository.findById("completeness-check").isPresent());
     assertTrue(qualityCheckRepository.findById("consistency-check").isPresent());
     assertTrue(qualityCheckRepository.findById("accuracy-check").isPresent());
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void findAll_shouldReturnPagedReportsWithMetadata() throws Exception {
+    seedReportsWithTotals(30, 10, 20);
+
+    mockMvc
+        .perform(
+            get(API_V1_REPORTS)
+                .param("page", "0")
+                .param("size", "2")
+                .param("sort", "totalPatients")
+                .param("order", "ASC"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$._embedded.reports").isArray())
+        .andExpect(jsonPath("$._embedded.reports.length()").value(2))
+        .andExpect(jsonPath("$._embedded.reports[0].totalPatients").value(10))
+        .andExpect(jsonPath("$._embedded.reports[1].totalPatients").value(20))
+        .andExpect(jsonPath("$.page.size").value(2))
+        .andExpect(jsonPath("$.page.totalElements").value(3))
+        .andExpect(jsonPath("$.page.totalPages").value(2))
+        .andExpect(jsonPath("$.page.number").value(0))
+        .andExpect(
+            jsonPath("$._links.current.href")
+                .value(
+                    "http://localhost/api/v1/reports?page=0&size=2&sort=totalPatients&order=ASC"))
+        .andExpect(jsonPath("$._links.next.href").exists());
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void findAll_shouldReturnSecondPage() throws Exception {
+    seedReportsWithTotals(30, 10, 20);
+
+    mockMvc
+        .perform(
+            get(API_V1_REPORTS)
+                .param("page", "1")
+                .param("size", "2")
+                .param("sort", "totalPatients")
+                .param("order", "ASC"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$._embedded.reports.length()").value(1))
+        .andExpect(jsonPath("$._embedded.reports[0].totalPatients").value(30))
+        .andExpect(jsonPath("$.page.number").value(1))
+        .andExpect(
+            jsonPath("$._links.current.href")
+                .value(
+                    "http://localhost/api/v1/reports?page=1&size=2&sort=totalPatients&order=ASC"))
+        .andExpect(jsonPath("$._links.previous.href").exists())
+        .andExpect(jsonPath("$._links.first.href").exists());
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void findAll_shouldSortDescendingWhenOrderDesc() throws Exception {
+    seedReportsWithTotals(30, 10, 20);
+
+    mockMvc
+        .perform(
+            get(API_V1_REPORTS)
+                .param("page", "0")
+                .param("size", "3")
+                .param("sort", "totalPatients")
+                .param("order", "DESC"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$._embedded.reports.length()").value(3))
+        .andExpect(jsonPath("$._embedded.reports[0].totalPatients").value(30))
+        .andExpect(jsonPath("$._embedded.reports[1].totalPatients").value(20))
+        .andExpect(jsonPath("$._embedded.reports[2].totalPatients").value(10));
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void findAll_shouldDefaultToMostRecentFirst() throws Exception {
+    Report olderReport = new Report();
+    testAgent.addReport(olderReport);
+    agentRepository.saveAndFlush(testAgent);
+
+    Report newerReport = new Report();
+    testAgent.addReport(newerReport);
+    agentRepository.saveAndFlush(testAgent);
+
+    mockMvc
+        .perform(get(API_V1_REPORTS).param("size", "2"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$._embedded.reports.length()").value(2))
+        .andExpect(jsonPath("$._embedded.reports[0].id").value(newerReport.getId()))
+        .andExpect(jsonPath("$._embedded.reports[1].id").value(olderReport.getId()));
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void findByAgentId_shouldReturnPagedReportsWithMetadata() throws Exception {
+    Agent otherAgent = agentRepository.save(new Agent(UUID.randomUUID().toString()));
+    seedReportsForAgent(otherAgent, 5);
+    seedReportsForAgent(testAgent, 30, 10, 20);
+
+    mockMvc
+        .perform(
+            get(API_V1_AGENTS_REPORTS, testAgentId)
+                .param("page", "0")
+                .param("size", "2")
+                .param("sort", "totalPatients")
+                .param("order", "ASC"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$._embedded.reports").isArray())
+        .andExpect(jsonPath("$._embedded.reports.length()").value(2))
+        .andExpect(jsonPath("$._embedded.reports[0].totalPatients").value(10))
+        .andExpect(jsonPath("$._embedded.reports[1].totalPatients").value(20))
+        .andExpect(jsonPath("$.page.size").value(2))
+        .andExpect(jsonPath("$.page.totalElements").value(3))
+        .andExpect(jsonPath("$.page.totalPages").value(2))
+        .andExpect(jsonPath("$.page.number").value(0))
+        .andExpect(
+            jsonPath("$._links.current.href")
+                .value(
+                    "http://localhost/api/v1/agents/"
+                        + testAgentId
+                        + "/reports?page=0&size=2&sort=totalPatients&order=ASC"))
+        .andExpect(jsonPath("$._links.next.href").exists());
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void findByAgentId_shouldReturnSecondPage() throws Exception {
+    seedReportsForAgent(testAgent, 30, 10, 20);
+
+    mockMvc
+        .perform(
+            get(API_V1_AGENTS_REPORTS, testAgentId)
+                .param("page", "1")
+                .param("size", "2")
+                .param("sort", "totalPatients")
+                .param("order", "ASC"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$._embedded.reports.length()").value(1))
+        .andExpect(jsonPath("$._embedded.reports[0].totalPatients").value(30))
+        .andExpect(jsonPath("$.page.number").value(1))
+        .andExpect(
+            jsonPath("$._links.current.href")
+                .value(
+                    "http://localhost/api/v1/agents/"
+                        + testAgentId
+                        + "/reports?page=1&size=2&sort=totalPatients&order=ASC"))
+        .andExpect(jsonPath("$._links.previous.href").exists())
+        .andExpect(jsonPath("$._links.first.href").exists());
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void findByAgentId_shouldSortDescendingWhenOrderDesc() throws Exception {
+    seedReportsForAgent(testAgent, 30, 10, 20);
+
+    mockMvc
+        .perform(
+            get(API_V1_AGENTS_REPORTS, testAgentId)
+                .param("page", "0")
+                .param("size", "3")
+                .param("sort", "totalPatients")
+                .param("order", "DESC"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$._embedded.reports.length()").value(3))
+        .andExpect(jsonPath("$._embedded.reports[0].totalPatients").value(30))
+        .andExpect(jsonPath("$._embedded.reports[1].totalPatients").value(20))
+        .andExpect(jsonPath("$._embedded.reports[2].totalPatients").value(10));
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void findByAgentId_shouldDefaultToMostRecentFirst() throws Exception {
+    Report olderReport = new Report();
+    testAgent.addReport(olderReport);
+    agentRepository.saveAndFlush(testAgent);
+
+    Report newerReport = new Report();
+    testAgent.addReport(newerReport);
+    agentRepository.saveAndFlush(testAgent);
+
+    mockMvc
+        .perform(get(API_V1_AGENTS_REPORTS, testAgentId).param("size", "2"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$._embedded.reports.length()").value(2))
+        .andExpect(jsonPath("$._embedded.reports[0].id").value(newerReport.getId()))
+        .andExpect(jsonPath("$._embedded.reports[1].id").value(olderReport.getId()));
+  }
+
+  private void seedReportsWithTotals(int... totals) {
+    for (int total : totals) {
+      Report report = new Report();
+      report.setTotalPatients(total);
+      testAgent.addReport(report);
+    }
+    agentRepository.saveAndFlush(testAgent);
+  }
+
+  private void seedReportsForAgent(Agent agent, int... totals) {
+    for (int total : totals) {
+      Report report = new Report();
+      report.setTotalPatients(total);
+      agent.addReport(report);
+    }
+    agentRepository.saveAndFlush(agent);
   }
 }
