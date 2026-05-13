@@ -1,5 +1,6 @@
 import {defineConfig} from 'vitepress'
 import {getLatestVersionSync} from './version.js'
+import {createMatomoConfigEntries} from './plugins/vitepress-plugin-matomo.js'
 
 const version = getLatestVersionSync();
 
@@ -123,7 +124,7 @@ export default defineConfig({
     markdown: {
         lineNumbers: true,
         linkify: true,
-        config: (md) => {
+        config: () => {
             // Add any markdown-it plugins here if needed
         }
     },
@@ -147,6 +148,10 @@ export default defineConfig({
             content: 'Open-source, privacy-preserving framework for monitoring and ensuring data quality in biomedical research environments'
         }],
         ['meta', {name: 'twitter:card', content: 'summary_large_image'}],
-        ['meta', {name: 'twitter:image', content: '/logo.svg'}]
+        ['meta', {name: 'twitter:image', content: '/logo.svg'}],
+        ...createMatomoConfigEntries({
+            baseUrl: process.env.MATOMO_BASE_URL ?? process.env.MATOMO_URL,
+            siteId: process.env.MATOMO_SITE_ID
+        })
     ]
 })

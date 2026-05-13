@@ -379,6 +379,9 @@ jobs:
     name: Documentation Build and Deployment
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
+    env:
+      MATOMO_BASE_URL: 'https://matomo.bbmri-eric.eu/'
+      MATOMO_SITE_ID: '12'
     permissions:
       contents: read
       pages: write
