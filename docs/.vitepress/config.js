@@ -1,6 +1,6 @@
 import {defineConfig} from 'vitepress'
 import {getLatestVersionSync} from './version.js'
-import {createMatomoPlugin} from './plugins/vitepress-plugin-matomo.js'
+import {createMatomoConfigEntries} from './plugins/vitepress-plugin-matomo.js'
 
 const version = getLatestVersionSync();
 
@@ -149,9 +149,9 @@ export default defineConfig({
         }],
         ['meta', {name: 'twitter:card', content: 'summary_large_image'}],
         ['meta', {name: 'twitter:image', content: '/logo.svg'}],
-        ...createMatomoPlugin({
+        ...createMatomoConfigEntries({
             baseUrl: process.env.MATOMO_BASE_URL ?? process.env.MATOMO_URL,
             siteId: process.env.MATOMO_SITE_ID
-        }).head
+        })
     ]
 })
