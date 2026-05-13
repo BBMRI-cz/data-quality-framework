@@ -80,12 +80,15 @@ class QualityChecksStep implements ReportPipelineStep {
 
   private void executeStratifiedCheck(StratifiedDataQualityCheck check, Report report) {
     Map<String, ResultDTO> results = check.executeWithStratification(fhirStore);
+    int count = results.size();
     for (Map.Entry<String, ResultDTO> entry : results.entrySet()) {
       String stratum = entry.getKey();
       ResultDTO resultDTO = entry.getValue();
       Result result = modelMapper.map(resultDTO, Result.class);
       modelMapper.map(check, result);
+      result.setStratum(check.getName() + " (%s)".formatted(stratum));
       result.setCheckName(check.getName() + " (%s)".formatted(stratum));
+      result.setEpsilon(check.getEpsilonBudget() / count);
       report.addResult(result);
     }
   }
