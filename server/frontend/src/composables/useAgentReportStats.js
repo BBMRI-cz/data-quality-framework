@@ -61,7 +61,7 @@ function toLabel(status) {
     .join(' ');
 }
 
-export function useAgentReportStats({ agent, reports, qualityChecks, totalReports }) {
+export function useAgentReportStats({ agent, latestReport, qualityChecks, totalReports }) {
   const qualityCheckMap = computed(() => {
     const map = new Map();
 
@@ -97,11 +97,12 @@ export function useAgentReportStats({ agent, reports, qualityChecks, totalReport
   });
 
   const reportStats = computed(() => {
-    const total = typeof totalReports?.value === 'number' ? totalReports.value : reports.value.length;
+    const total = typeof totalReports?.value === 'number' ? totalReports.value : 0;
+    const report = latestReport?.value;
 
-    if (!total) {
+    if (!total || !report) {
       return {
-        total: 0,
+        total: total || 0,
         failed: 0,
         passed: 0,
         warnings: 0,
@@ -109,22 +110,14 @@ export function useAgentReportStats({ agent, reports, qualityChecks, totalReport
       };
     }
 
-    const latestReport = reports.value.reduce((latest, current) => {
-      if (!latest) {
-        return current;
-      }
-
-      return new Date(current.timestamp) > new Date(latest.timestamp) ? current : latest;
-    }, null);
-
-    const counts = countChecksByStatus(latestReport, qualityCheckMap.value);
+    const counts = countChecksByStatus(report, qualityCheckMap.value);
 
     return {
       total,
       failed: counts.failed,
       passed: counts.passed,
       warnings: counts.warnings,
-      lastReportTime: formatRelativeTime(latestReport.timestamp),
+      lastReportTime: formatRelativeTime(report.timestamp),
     };
   });
 

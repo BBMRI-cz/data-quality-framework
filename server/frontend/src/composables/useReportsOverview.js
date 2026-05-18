@@ -15,6 +15,8 @@ export function useReportsOverview() {
   const currentPage = ref(0);
   const pageSize = ref(10);
   const totalReports = ref(0);
+  const statsReports = ref([]);
+  const statsLoaded = ref(false);
 
   const selectedStatus = ref(null);
   const statuses = allowedValues;
@@ -26,7 +28,7 @@ export function useReportsOverview() {
       failed: 0,
     };
 
-    reports.value.forEach((report) => {
+    statsReports.value.forEach((report) => {
       const status = getReportStatus(report, qualityCheckMap.value);
 
       switch (status) {
@@ -45,31 +47,73 @@ export function useReportsOverview() {
     return stats;
   });
 
+  const parseReportsResponse = (reportsData) => {
+    const reportsArray =
+      reportsData?._embedded?.reports || (Array.isArray(reportsData) ? reportsData : []);
+    const pageInfo = reportsData?.page || null;
+    return { reportsArray, pageInfo };
+  };
+
+  const fetchReportsPage = async () => {
+    const reportsData = await apiService.getReports({
+      page: currentPage.value,
+      size: pageSize.value,
+    });
+    const { reportsArray, pageInfo } = parseReportsResponse(reportsData);
+
+    reports.value = reportsArray;
+    totalReports.value = pageInfo?.totalElements ?? reportsArray.length;
+  };
+
+  const fetchReportStats = async () => {
+    if (!totalReports.value) {
+      statsReports.value = [];
+      statsLoaded.value = true;
+      return;
+    }
+
+    if (totalReports.value <= pageSize.value) {
+      statsReports.value = reports.value;
+      statsLoaded.value = true;
+      return;
+    }
+
+    const statsPageSize = 200;
+    const totalPages = Math.ceil(totalReports.value / statsPageSize);
+    const allReports = [];
+
+    for (let page = 0; page < totalPages; page += 1) {
+      const response = await apiService.getReports({ page, size: statsPageSize });
+      const { reportsArray } = parseReportsResponse(response);
+      allReports.push(...reportsArray);
+    }
+
+    statsReports.value = allReports;
+    statsLoaded.value = true;
+  };
+
   const fetchData = async () => {
     loading.value = true;
     error.value = null;
 
     try {
-      const [checksData, reportsData, agentsData] = await Promise.all([
+      const [checksData, agentsData] = await Promise.all([
         apiService.getQualityChecks(),
-        apiService.getReports({ page: currentPage.value, size: pageSize.value }),
         apiService.getAgents(),
       ]);
 
       const checks =
         checksData?._embedded?.qualityChecks || (Array.isArray(checksData) ? checksData : []);
 
-      const reportsArray =
-        reportsData?._embedded?.reports || (Array.isArray(reportsData) ? reportsData : []);
-
-      const pageInfo = reportsData?.page || null;
-
       agents.value = agentsData?._embedded?.agents || (Array.isArray(agentsData) ? agentsData : []);
 
       qualityCheckMap.value = new Map(checks.map((check) => [check.hash, check]));
 
-      reports.value = reportsArray;
-      totalReports.value = pageInfo?.totalElements ?? reportsArray.length;
+      await fetchReportsPage();
+
+      if (!statsLoaded.value) {
+        await fetchReportStats();
+      }
     } catch (err) {
       console.error('Error fetching reports:', err);
       error.value = err.message || 'Failed to load reports';
@@ -85,6 +129,7 @@ export function useReportsOverview() {
 
   const refreshPage = () => {
     currentPage.value = 0;
+    statsLoaded.value = false;
     fetchData();
   };
 

@@ -10,6 +10,7 @@ export function useAgentReportData(agentId) {
   const currentPage = ref(0);
   const pageSize = ref(5);
   const totalReports = ref(0);
+  const latestReport = ref(null);
 
   const fetchAgentDetails = async () => {
     try {
@@ -29,6 +30,7 @@ export function useAgentReportData(agentId) {
       if (!agent.value) {
         reports.value = [];
         totalReports.value = 0;
+        latestReport.value = null;
         error.value = 'Agent not found';
         return;
       }
@@ -45,6 +47,17 @@ export function useAgentReportData(agentId) {
 
       reports.value = reportsList;
       totalReports.value = pageInfo?.totalElements ?? reportsList.length;
+
+      const latestSource =
+        currentPage.value === 0 ? reportsResponse : await apiService.getAgentReports(agentId.value, {
+          page: 0,
+          size: 1,
+        });
+      const latestList =
+        latestSource?._embedded?.reports ||
+        latestSource?.reports ||
+        (Array.isArray(latestSource) ? latestSource : []);
+      latestReport.value = latestList[0] || null;
     } catch (err) {
       error.value = err.message || 'Failed to load agent report';
       console.error('Error fetching agent details:', err);
@@ -72,6 +85,7 @@ export function useAgentReportData(agentId) {
     currentPage,
     pageSize,
     totalReports,
+    latestReport,
     fetchAgentDetails,
     changePage,
     refreshPage,

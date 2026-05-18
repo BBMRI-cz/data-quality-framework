@@ -256,6 +256,7 @@
     currentPage,
     pageSize,
     totalReports,
+    latestReport,
     fetchAgentDetails,
     changePage,
   } = useAgentReportData(agentId);
@@ -270,7 +271,7 @@
     agentStatusTrendType,
   } = useAgentReportStats({
     agent,
-    reports,
+    latestReport,
     qualityChecks,
     totalReports,
   });
