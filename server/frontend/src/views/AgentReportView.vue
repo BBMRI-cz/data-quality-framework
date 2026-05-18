@@ -150,22 +150,17 @@
       <!-- Recent Reports Table -->
       <div class="row">
         <div class="col-12">
-          <div class="mb-4">
-            <LabeledValuesFilter v-model="selectedStatus" label="Status:" :categories="statuses" />
-          </div>
-
           <PaginatedTable
             title="Recent Reports"
             :columns="columns"
             :items="tableRows"
             :page="currentPage"
             :page-size="pageSize"
-            :total-items="visibleReportCount"
+            :total-items="totalReports"
             :loading="loading"
             :error="error"
             loading-text="Loading agent report..."
             error-title="Unable to load agent report"
-            :paginate="!isStatusFiltered"
             item-key="id"
             item-label="reports"
             empty-text="No reports available"
@@ -173,7 +168,7 @@
             @page-change="changePage"
           >
             <template #header-meta>
-              <Badge :text="`${visibleReportCount} reports`" variant="secondary" size="small" />
+              <Badge :text="`${totalReports} reports`" variant="secondary" size="small" />
             </template>
 
             <template #cell-status="{ item, value }">
@@ -233,9 +228,7 @@
   import StatsCard from '@/components/ui/StatsCard.vue';
   import PaginatedTable from '@/components/ui/PaginatedTable.vue';
   import Badge from '@/components/ui/Badge.vue';
-  import LabeledValuesFilter from '@/components/ui/LabeledValuesFilter.vue';
   import { useReportTableRows } from '@/composables/useReportTableRows.js';
-  import { useStatuses } from '@/composables/useStatuses.js';
   import { useAgentReportData } from '@/composables/useAgentReportData.js';
   import { useAgentReportStats } from '@/composables/useAgentReportStats.js';
   import { useAgentManagementActions } from '@/composables/useAgentManagementActions.js';
@@ -275,8 +268,6 @@
     totalReports,
   });
 
-  const selectedStatus = ref(null);
-
   const {
     processing,
     showDeleteModal,
@@ -293,23 +284,15 @@
     onDeleted: () => router.push({ name: 'Agents' }),
   });
 
-  const { allowedValues: statuses } = useStatuses();
-
   const agentArray = computed(() => {
     return agent.value ? [agent.value] : [];
   });
 
-  const { columns, filteredReports, tableRows } = useReportTableRows({
+  const { columns, tableRows } = useReportTableRows({
     reports,
     qualityCheckMap,
     agents: agentArray,
-    selectedStatus,
   });
-
-  const isStatusFiltered = computed(() => Boolean(selectedStatus.value));
-  const visibleReportCount = computed(() =>
-    isStatusFiltered.value ? filteredReports.value.length : totalReports.value
-  );
 
   const openReport = (report) => {
     router.push({ name: 'ReportDetail', params: { id: report.id } });

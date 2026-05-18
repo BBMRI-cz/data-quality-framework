@@ -1,11 +1,8 @@
 import { computed, ref } from 'vue';
 import { apiService } from '@/services/apiService.js';
 import { getReportStatus, CheckStatus } from '@/utils/qualityCheckUtils.js';
-import { useStatuses } from '@/composables/useStatuses.js';
 
 export function useReportsOverview() {
-  const { allowedValues, statusOptions } = useStatuses();
-
   const reports = ref([]);
   const qualityCheckMap = ref(new Map());
   const agents = ref([]);
@@ -15,11 +12,6 @@ export function useReportsOverview() {
   const currentPage = ref(0);
   const pageSize = ref(10);
   const totalReports = ref(0);
-  const statsReports = ref([]);
-  const statsLoaded = ref(false);
-
-  const selectedStatus = ref(null);
-  const statuses = allowedValues;
 
   const reportStats = computed(() => {
     const stats = {
@@ -28,7 +20,7 @@ export function useReportsOverview() {
       failed: 0,
     };
 
-    statsReports.value.forEach((report) => {
+    reports.value.forEach((report) => {
       const status = getReportStatus(report, qualityCheckMap.value);
 
       switch (status) {
@@ -65,42 +57,6 @@ export function useReportsOverview() {
     totalReports.value = pageInfo?.totalElements ?? reportsArray.length;
   };
 
-  const fetchReportStats = async () => {
-    if (!totalReports.value) {
-      statsReports.value = [];
-      statsLoaded.value = true;
-      return;
-    }
-
-    if (totalReports.value <= pageSize.value) {
-      statsReports.value = reports.value;
-      statsLoaded.value = true;
-      return;
-    }
-
-    const statsPageSize = 200;
-    const totalPages = Math.ceil(totalReports.value / statsPageSize);
-    const allReports = [];
-    const batchSize = 3;
-
-    for (let page = 0; page < totalPages; page += batchSize) {
-      const pages = Array.from(
-        { length: Math.min(batchSize, totalPages - page) },
-        (_, index) => page + index
-      );
-      const responses = await Promise.all(
-        pages.map((batchPage) => apiService.getReports({ page: batchPage, size: statsPageSize }))
-      );
-      responses.forEach((response) => {
-        const { reportsArray } = parseReportsResponse(response);
-        allReports.push(...reportsArray);
-      });
-    }
-
-    statsReports.value = allReports;
-    statsLoaded.value = true;
-  };
-
   const fetchData = async () => {
     loading.value = true;
     error.value = null;
@@ -119,10 +75,6 @@ export function useReportsOverview() {
       qualityCheckMap.value = new Map(checks.map((check) => [check.hash, check]));
 
       await fetchReportsPage();
-
-      if (!statsLoaded.value) {
-        await fetchReportStats();
-      }
     } catch (err) {
       console.error('Error fetching reports:', err);
       error.value = err.message || 'Failed to load reports';
@@ -138,7 +90,6 @@ export function useReportsOverview() {
 
   const refreshPage = () => {
     currentPage.value = 0;
-    statsLoaded.value = false;
     fetchData();
   };
 
@@ -148,9 +99,6 @@ export function useReportsOverview() {
     agents,
     loading,
     error,
-    selectedStatus,
-    statuses,
-    statusOptions,
     reportStats,
     fetchData,
     currentPage,
