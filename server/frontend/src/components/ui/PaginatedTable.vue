@@ -56,33 +56,20 @@
     </div>
 
     <div v-if="showPagination && !loading && !error" class="card-footer bg-white border-top py-2">
-      <div class="d-flex justify-content-end align-items-center gap-2">
-        <button
-          type="button"
-          class="btn btn-sm btn-outline-secondary"
-          :disabled="page === 0"
-          aria-label="Previous page"
-          @click="changePage(page - 1, $event)"
-        >
-          Previous
-        </button>
-        <span class="small text-muted">Page {{ page + 1 }} of {{ totalPages }}</span>
-        <button
-          type="button"
-          class="btn btn-sm btn-outline-secondary"
-          :disabled="page >= totalPages - 1"
-          aria-label="Next page"
-          @click="changePage(page + 1, $event)"
-        >
-          Next
-        </button>
-      </div>
+      <PaginationControls
+        :page="page"
+        :total-pages="totalPages"
+        @previous="changePage(page - 1, $event)"
+        @next="changePage(page + 1, $event)"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
-  import { computed, nextTick, onMounted, ref, watch } from 'vue';
+  import { computed } from 'vue';
+  import { usePaginatedTableLayout } from '@/composables/usePaginatedTableLayout.js';
+  import PaginationControls from '@/components/ui/PaginationControls.vue';
 
   const props = defineProps({
     title: {
@@ -199,89 +186,17 @@
     emit('row-click', item);
   };
 
-  const pendingRestore = ref(null);
-  const contentRef = ref(null);
-  const contentMinHeight = ref(null);
-
-  const updateContentHeight = () => {
-    if (!contentRef.value) {
-      return;
-    }
-    const height = contentRef.value.getBoundingClientRect().height;
-    if (height > 0) {
-      contentMinHeight.value = height;
-    }
-  };
-
-  const bodyStyle = computed(() => {
-    if (!contentMinHeight.value) {
-      return undefined;
-    }
-    return { minHeight: `${contentMinHeight.value}px` };
-  });
-
-  const restoreScrollAndFocus = async () => {
-    const pending = pendingRestore.value;
-    if (!pending) {
-      return;
-    }
-    pendingRestore.value = null;
-
-    await nextTick();
-
-    const scrollingElement = document.scrollingElement || document.documentElement;
-    const restoreScrollPosition = () => {
-      if (scrollingElement && typeof pending.scrollTop === 'number') {
-        scrollingElement.scrollTop = pending.scrollTop;
-      }
-    };
-    restoreScrollPosition();
-    requestAnimationFrame(() => {
-      restoreScrollPosition();
-    });
-
-    if (pending.focusedElement?.focus) {
-      try {
-        pending.focusedElement.focus({ preventScroll: true });
-      } catch (error) {
-        pending.focusedElement.focus();
-      }
-    }
-  };
-
-  watch(
-    () => props.loading,
-    (isLoading) => {
-      if (!isLoading) {
-        restoreScrollAndFocus();
-        nextTick(updateContentHeight);
-      }
-    }
-  );
-
-  watch(paginatedItems, () => {
-    if (!props.loading) {
-      nextTick(updateContentHeight);
-    }
-  });
-
-  onMounted(() => {
-    nextTick(updateContentHeight);
+  const { bodyStyle, contentRef, handlePageChange } = usePaginatedTableLayout({
+    loading: computed(() => props.loading),
+    paginatedItems,
+    onPageChange: (nextPage) => emit('page-change', nextPage),
   });
 
   const changePage = (nextPage, event) => {
     if (nextPage < 0 || nextPage > totalPages.value - 1) {
       return;
     }
-    const focusedElement = event?.currentTarget || null;
-    const scrollingElement = document.scrollingElement || document.documentElement;
-    const scrollTop = scrollingElement ? scrollingElement.scrollTop : null;
-    emit('page-change', nextPage);
-
-    pendingRestore.value = { scrollTop, focusedElement };
-    if (!props.loading) {
-      restoreScrollAndFocus();
-    }
+    handlePageChange(nextPage, event);
   };
 </script>
 
