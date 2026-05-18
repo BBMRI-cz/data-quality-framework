@@ -1,10 +1,5 @@
 <template>
-  <button
-    :type="type"
-    class="btn-secondary"
-    :disabled="disabled"
-    v-bind="$attrs"
-  >
+  <button :type="type" class="btn-secondary" :disabled="disabled" v-bind="$attrs">
     <i v-if="icon" :class="['bi', icon, 'me-2']"></i>
     <slot>{{ text }}</slot>
   </button>

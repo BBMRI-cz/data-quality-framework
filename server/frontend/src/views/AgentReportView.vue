@@ -154,26 +154,26 @@
             <LabeledValuesFilter v-model="selectedStatus" label="Status:" :categories="statuses" />
           </div>
 
-              <PaginatedTable
-                title="Recent Reports"
-                :columns="columns"
-                :items="tableRows"
-                :page="currentPage"
-                :page-size="pageSize"
-                :total-items="totalReports"
-                :loading="loading"
-                :error="error"
-                loading-text="Loading agent report..."
-                error-title="Unable to load agent report"
-                item-key="id"
-                item-label="reports"
-                empty-text="No reports available"
-                @row-click="openReport"
-                @page-change="changePage"
-              >
-                <template #header-meta>
-                  <Badge :text="`${totalReports} reports`" variant="secondary" size="small" />
-                </template>
+          <PaginatedTable
+            title="Recent Reports"
+            :columns="columns"
+            :items="tableRows"
+            :page="currentPage"
+            :page-size="pageSize"
+            :total-items="totalReports"
+            :loading="loading"
+            :error="error"
+            loading-text="Loading agent report..."
+            error-title="Unable to load agent report"
+            item-key="id"
+            item-label="reports"
+            empty-text="No reports available"
+            @row-click="openReport"
+            @page-change="changePage"
+          >
+            <template #header-meta>
+              <Badge :text="`${totalReports} reports`" variant="secondary" size="small" />
+            </template>
 
             <template #cell-status="{ item, value }">
               <div class="d-flex align-items-center gap-1">
@@ -217,9 +217,7 @@
       <ul class="text-muted small mb-0">
         <li>The agent and all its configuration</li>
         <li>
-          All associated reports ({{ totalReports }} report{{
-            totalReports !== 1 ? 's' : ''
-          }})
+          All associated reports ({{ totalReports }} report{{ totalReports !== 1 ? 's' : '' }})
         </li>
         <li>All quality check results</li>
         <li>All interaction history</li>

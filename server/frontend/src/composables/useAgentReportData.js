@@ -49,10 +49,12 @@ export function useAgentReportData(agentId) {
       totalReports.value = pageInfo?.totalElements ?? reportsList.length;
 
       const latestSource =
-        currentPage.value === 0 ? reportsResponse : await apiService.getAgentReports(agentId.value, {
-          page: 0,
-          size: 1,
-        });
+        currentPage.value === 0
+          ? reportsResponse
+          : await apiService.getAgentReports(agentId.value, {
+              page: 0,
+              size: 1,
+            });
       const latestList =
         latestSource?._embedded?.reports ||
         latestSource?.reports ||

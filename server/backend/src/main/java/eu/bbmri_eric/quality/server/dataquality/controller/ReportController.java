@@ -66,6 +66,7 @@ class ReportController {
       description = "Retrieves all reports in the system with pagination")
   public ResponseEntity<PagedModel<EntityModel<ReportDTO>>> findAll(
       @ParameterObject FilterDTO filter) {
+    // TODO: Add support for filtering
     return ResponseEntity.ok(linkBuilder.toPagedModel(reportService.findAll(filter), filter));
   }
 }
