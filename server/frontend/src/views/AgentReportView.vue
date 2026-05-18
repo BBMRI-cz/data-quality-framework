@@ -160,11 +160,12 @@
             :items="tableRows"
             :page="currentPage"
             :page-size="pageSize"
-            :total-items="totalReports"
+            :total-items="visibleReportCount"
             :loading="loading"
             :error="error"
             loading-text="Loading agent report..."
             error-title="Unable to load agent report"
+            :paginate="!isStatusFiltered"
             item-key="id"
             item-label="reports"
             empty-text="No reports available"
@@ -172,7 +173,7 @@
             @page-change="changePage"
           >
             <template #header-meta>
-              <Badge :text="`${totalReports} reports`" variant="secondary" size="small" />
+              <Badge :text="`${visibleReportCount} reports`" variant="secondary" size="small" />
             </template>
 
             <template #cell-status="{ item, value }">
@@ -298,12 +299,17 @@
     return agent.value ? [agent.value] : [];
   });
 
-  const { columns, tableRows } = useReportTableRows({
+  const { columns, filteredReports, tableRows } = useReportTableRows({
     reports,
     qualityCheckMap,
     agents: agentArray,
     selectedStatus,
   });
+
+  const isStatusFiltered = computed(() => Boolean(selectedStatus.value));
+  const visibleReportCount = computed(() =>
+    isStatusFiltered.value ? filteredReports.value.length : totalReports.value
+  );
 
   const openReport = (report) => {
     router.push({ name: 'ReportDetail', params: { id: report.id } });

@@ -150,7 +150,7 @@ class ReportControllerTest {
                 .value(
                     "http://localhost/api/v1/agents/"
                         + testAgentId
-                        + "/reports?page=0&size=20&order=ASC"));
+                        + "/reports?page=0&size=20&sort=timestamp&order=DESC"));
   }
 
   @Test
@@ -172,7 +172,7 @@ class ReportControllerTest {
                 .value(
                     "http://localhost/api/v1/agents/"
                         + testAgentId
-                        + "/reports?page=0&size=20&order=ASC"))
+                        + "/reports?page=0&size=20&sort=timestamp&order=DESC"))
         .andExpect(jsonPath("$._embedded.reports[0]._links.self.href").exists())
         .andExpect(jsonPath("$._embedded.reports[1]._links.self.href").exists());
   }

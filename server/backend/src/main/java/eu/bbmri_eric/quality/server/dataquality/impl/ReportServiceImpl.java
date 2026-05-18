@@ -132,19 +132,15 @@ class ReportServiceImpl implements ReportService {
       throw new EntityNotFoundException(agentId);
     }
 
+    FilterDTO normalizedFilter = normalizeFilter(filter);
     Sort.Direction direction =
-        filter.getOrder() == null || filter.getOrder().name().equalsIgnoreCase("ASC")
-            ? Sort.Direction.ASC
-            : Sort.Direction.DESC;
+        normalizedFilter.getOrder() == FilterDTO.SortOrder.DESC
+            ? Sort.Direction.DESC
+            : Sort.Direction.ASC;
 
-    String sortProperty = filter.getSort();
-    if (sortProperty == null) {
-      sortProperty = "timestamp";
-      direction = Sort.Direction.DESC;
-    }
-
-    Sort sort = Sort.by(direction, sortProperty);
-    PageRequest pageRequest = PageRequest.of(filter.getPage(), filter.getSize(), sort);
+    Sort sort = Sort.by(direction, normalizedFilter.getSort());
+    PageRequest pageRequest =
+        PageRequest.of(normalizedFilter.getPage(), normalizedFilter.getSize(), sort);
     Page<Report> page = reportRepository.findByAgentId(agentId, pageRequest);
 
     List<ReportDTO> content = page.getContent().stream().map(this::convertToDTO).toList();
@@ -160,19 +156,15 @@ class ReportServiceImpl implements ReportService {
   @Override
   @Transactional(readOnly = true)
   public PageResponse<ReportDTO> findAll(FilterDTO filter) {
+    FilterDTO normalizedFilter = normalizeFilter(filter);
     Sort.Direction direction =
-        filter.getOrder() == null || filter.getOrder().name().equalsIgnoreCase("ASC")
-            ? Sort.Direction.ASC
-            : Sort.Direction.DESC;
+        normalizedFilter.getOrder() == FilterDTO.SortOrder.DESC
+            ? Sort.Direction.DESC
+            : Sort.Direction.ASC;
 
-    String sortProperty = filter.getSort();
-    if (sortProperty == null) {
-      sortProperty = "timestamp";
-      direction = Sort.Direction.DESC;
-    }
-
-    Sort sort = Sort.by(direction, sortProperty);
-    PageRequest pageRequest = PageRequest.of(filter.getPage(), filter.getSize(), sort);
+    Sort sort = Sort.by(direction, normalizedFilter.getSort());
+    PageRequest pageRequest =
+        PageRequest.of(normalizedFilter.getPage(), normalizedFilter.getSize(), sort);
     Page<Report> page = reportRepository.findAll(pageRequest);
 
     List<ReportDTO> content = page.getContent().stream().map(this::convertToDTO).toList();
@@ -187,5 +179,18 @@ class ReportServiceImpl implements ReportService {
 
   private ReportDTO convertToDTO(Report report) {
     return modelMapper.map(report, ReportDTO.class);
+  }
+
+  private FilterDTO normalizeFilter(FilterDTO filter) {
+    if (filter.getOrder() == null) {
+      filter.setOrder(FilterDTO.SortOrder.ASC);
+    }
+
+    if (filter.getSort() == null || filter.getSort().isBlank()) {
+      filter.setSort("timestamp");
+      filter.setOrder(FilterDTO.SortOrder.DESC);
+    }
+
+    return filter;
   }
 }

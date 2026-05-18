@@ -45,6 +45,7 @@ final class ReportLinkBuilder {
     PagedModel<EntityModel<ReportDTO>> pagedModel = PagedModel.of(reportModels, metadata);
     Link selfLink = linkTo(methodOn(ReportController.class).findAll(filter)).withSelfRel();
 
+    pagedModel.add(selfLink);
     List<Link> paginationLinks = LinkBuilder.getPageLinks(selfLink.toUri(), filter, pageResponse);
     pagedModel.add(paginationLinks);
 
@@ -67,6 +68,7 @@ final class ReportLinkBuilder {
     Link selfLink =
         linkTo(methodOn(ReportController.class).findByAgentId(agentId, filter)).withSelfRel();
 
+    pagedModel.add(selfLink);
     List<Link> paginationLinks = LinkBuilder.getPageLinks(selfLink.toUri(), filter, pageResponse);
     pagedModel.add(paginationLinks);
 

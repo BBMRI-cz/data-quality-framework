@@ -64,9 +64,10 @@
             :items="tableRows"
             :page="currentPage"
             :page-size="pageSize"
-            :total-items="totalReports"
+            :total-items="visibleReportCount"
             :loading="loading"
             :error="error"
+            :paginate="!isStatusFiltered"
             item-key="id"
             item-label="reports"
             empty-text="No reports available"
@@ -74,7 +75,7 @@
             @page-change="changePage"
           >
             <template #header-meta>
-              <Badge :text="`${totalReports} reports`" variant="secondary" size="small" />
+              <Badge :text="`${visibleReportCount} reports`" variant="secondary" size="small" />
             </template>
 
             <template #cell-status="{ item, value }">
@@ -100,7 +101,7 @@
 </template>
 
 <script setup>
-  import { onMounted } from 'vue';
+  import { computed, onMounted } from 'vue';
   import { useRouter } from 'vue-router';
   import { useReportsOverview } from '@/composables/useReportsOverview.js';
   import { useReportTableRows } from '@/composables/useReportTableRows.js';
@@ -135,12 +136,17 @@
     refreshPage,
   } = useReportsOverview();
 
-  const { columns, tableRows } = useReportTableRows({
+  const { columns, filteredReports, tableRows } = useReportTableRows({
     reports,
     qualityCheckMap,
     agents,
     selectedStatus,
   });
+
+  const isStatusFiltered = computed(() => Boolean(selectedStatus.value));
+  const visibleReportCount = computed(() =>
+    isStatusFiltered.value ? filteredReports.value.length : totalReports.value
+  );
 
   const openReport = (report) => {
     router.push(`/reports/${report.id}`);

@@ -81,11 +81,20 @@ export function useReportsOverview() {
     const statsPageSize = 200;
     const totalPages = Math.ceil(totalReports.value / statsPageSize);
     const allReports = [];
+    const batchSize = 3;
 
-    for (let page = 0; page < totalPages; page += 1) {
-      const response = await apiService.getReports({ page, size: statsPageSize });
-      const { reportsArray } = parseReportsResponse(response);
-      allReports.push(...reportsArray);
+    for (let page = 0; page < totalPages; page += batchSize) {
+      const pages = Array.from(
+        { length: Math.min(batchSize, totalPages - page) },
+        (_, index) => page + index
+      );
+      const responses = await Promise.all(
+        pages.map((batchPage) => apiService.getReports({ page: batchPage, size: statsPageSize }))
+      );
+      responses.forEach((response) => {
+        const { reportsArray } = parseReportsResponse(response);
+        allReports.push(...reportsArray);
+      });
     }
 
     statsReports.value = allReports;

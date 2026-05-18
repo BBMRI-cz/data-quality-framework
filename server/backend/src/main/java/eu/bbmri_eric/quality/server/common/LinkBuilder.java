@@ -2,12 +2,9 @@ package eu.bbmri_eric.quality.server.common;
 
 import eu.bbmri_eric.quality.server.common.dto.FilterDTO;
 import eu.bbmri_eric.quality.server.common.dto.PageResponse;
-import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.hateoas.IanaLinkRelations;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.PagedModel;
@@ -17,8 +14,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 /** Utility for building pagination links using Spring HATEOAS link relations. */
 public final class LinkBuilder {
-  private static final Logger logger = LoggerFactory.getLogger(LinkBuilder.class);
-
   private LinkBuilder() {}
 
   /**
@@ -52,21 +47,27 @@ public final class LinkBuilder {
       URI baseUri, FilterDTO filterDTO, PagedModel.PageMetadata pageMetadata) {
     List<Link> links = new ArrayList<>();
 
-    links.add(Link.of(createBaseUriBuilder(baseUri, filterDTO)).withRel(IanaLinkRelations.CURRENT));
-    int currentPage = filterDTO.getPage();
-    if (pageMetadata.getNumber() > 0) {
-      filterDTO.setPage(0);
-      links.add(Link.of(createBaseUriBuilder(baseUri, filterDTO)).withRel(IanaLinkRelations.FIRST));
-      filterDTO.setPage(currentPage - 1);
+    int currentPage = (int) pageMetadata.getNumber();
+    links.add(
+        Link.of(createBaseUriBuilder(baseUri, copyWithPage(filterDTO, currentPage)))
+            .withRel(IanaLinkRelations.CURRENT));
+    if (currentPage > 0) {
       links.add(
-          Link.of(createBaseUriBuilder(baseUri, filterDTO)).withRel(IanaLinkRelations.PREVIOUS));
+          Link.of(createBaseUriBuilder(baseUri, copyWithPage(filterDTO, 0)))
+              .withRel(IanaLinkRelations.FIRST));
+      links.add(
+          Link.of(createBaseUriBuilder(baseUri, copyWithPage(filterDTO, currentPage - 1)))
+              .withRel(IanaLinkRelations.PREVIOUS));
     }
 
-    if (pageMetadata.getNumber() < pageMetadata.getTotalPages() - 1) {
-      filterDTO.setPage(currentPage + 1);
-      links.add(Link.of(createBaseUriBuilder(baseUri, filterDTO)).withRel(IanaLinkRelations.NEXT));
-      filterDTO.setPage((int) pageMetadata.getTotalPages() - 1);
-      links.add(Link.of(createBaseUriBuilder(baseUri, filterDTO)).withRel(IanaLinkRelations.LAST));
+    long lastPage = Math.max(pageMetadata.getTotalPages() - 1, 0);
+    if (currentPage < lastPage) {
+      links.add(
+          Link.of(createBaseUriBuilder(baseUri, copyWithPage(filterDTO, currentPage + 1)))
+              .withRel(IanaLinkRelations.NEXT));
+      links.add(
+          Link.of(createBaseUriBuilder(baseUri, copyWithPage(filterDTO, (int) lastPage)))
+              .withRel(IanaLinkRelations.LAST));
     }
 
     return links;
@@ -81,20 +82,20 @@ public final class LinkBuilder {
 
   private static MultiValueMap<String, String> getQueryParams(FilterDTO filterDTO) {
     MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
-    Field[] fields = filterDTO.getClass().getDeclaredFields();
 
-    for (Field field : fields) {
-      try {
-        field.setAccessible(true);
-        Object value = field.get(filterDTO);
-        if (value != null) {
-          queryParams.add(field.getName(), String.valueOf(value));
-        }
-      } catch (IllegalAccessException e) {
-        logger.error("Error while getting query params", e);
-      }
+    queryParams.add("page", String.valueOf(filterDTO.getPage()));
+    queryParams.add("size", String.valueOf(filterDTO.getSize()));
+    if (filterDTO.getSort() != null && !filterDTO.getSort().isBlank()) {
+      queryParams.add("sort", filterDTO.getSort());
+    }
+    if (filterDTO.getOrder() != null) {
+      queryParams.add("order", filterDTO.getOrder().name());
     }
 
     return queryParams;
+  }
+
+  private static FilterDTO copyWithPage(FilterDTO filterDTO, int page) {
+    return new FilterDTO(page, filterDTO.getSize(), filterDTO.getSort(), filterDTO.getOrder());
   }
 }
