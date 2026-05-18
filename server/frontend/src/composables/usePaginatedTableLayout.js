@@ -74,9 +74,10 @@ export function usePaginatedTableLayout({ loading, paginatedItems, onPageChange 
     const scrollingElement = getScrollingElement();
     const scrollTop = scrollingElement ? scrollingElement.scrollTop : null;
 
+    pendingRestore.value = { scrollTop, focusedElement };
+
     onPageChange(nextPage);
 
-    pendingRestore.value = { scrollTop, focusedElement };
     if (!loading.value) {
       restoreScrollAndFocus();
     }
