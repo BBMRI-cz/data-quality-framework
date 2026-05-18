@@ -86,7 +86,7 @@
         <div class="col-12 col-sm-6 col-md-3 mb-3">
           <StatsCard
             label="Total Reports"
-            :value="reportStats.total"
+            :value="totalReports"
             color="var(--color-primary)"
             icon="bi bi-file-text"
             trend-text="All time"
@@ -154,24 +154,26 @@
             <LabeledValuesFilter v-model="selectedStatus" label="Status:" :categories="statuses" />
           </div>
 
-          <PaginatedTable
-            title="Recent Reports"
-            :columns="columns"
-            :items="tableRows"
-            :total-items="filteredReports.length"
-            :loading="loading"
-            :error="error"
-            loading-text="Loading agent report..."
-            error-title="Unable to load agent report"
-            :paginate="false"
-            item-key="id"
-            item-label="reports"
-            empty-text="No reports available"
-            @row-click="openReport"
-          >
-            <template #header-meta>
-              <Badge :text="`${filteredReports.length} reports`" variant="secondary" size="small" />
-            </template>
+              <PaginatedTable
+                title="Recent Reports"
+                :columns="columns"
+                :items="tableRows"
+                :page="currentPage"
+                :page-size="pageSize"
+                :total-items="totalReports"
+                :loading="loading"
+                :error="error"
+                loading-text="Loading agent report..."
+                error-title="Unable to load agent report"
+                item-key="id"
+                item-label="reports"
+                empty-text="No reports available"
+                @row-click="openReport"
+                @page-change="changePage"
+              >
+                <template #header-meta>
+                  <Badge :text="`${totalReports} reports`" variant="secondary" size="small" />
+                </template>
 
             <template #cell-status="{ item, value }">
               <div class="d-flex align-items-center gap-1">
@@ -215,8 +217,8 @@
       <ul class="text-muted small mb-0">
         <li>The agent and all its configuration</li>
         <li>
-          All associated reports ({{ reportStats.total }} report{{
-            reportStats.total !== 1 ? 's' : ''
+          All associated reports ({{ totalReports }} report{{
+            totalReports !== 1 ? 's' : ''
           }})
         </li>
         <li>All quality check results</li>
@@ -245,8 +247,18 @@
   const router = useRouter();
 
   const agentId = ref(route.params.uuid);
-  const { loading, error, agent, reports, qualityChecks, fetchAgentDetails } =
-    useAgentReportData(agentId);
+  const {
+    loading,
+    error,
+    agent,
+    reports,
+    qualityChecks,
+    currentPage,
+    pageSize,
+    totalReports,
+    fetchAgentDetails,
+    changePage,
+  } = useAgentReportData(agentId);
 
   const {
     qualityCheckMap,
@@ -260,6 +272,7 @@
     agent,
     reports,
     qualityChecks,
+    totalReports,
   });
 
   const selectedStatus = ref(null);
@@ -286,7 +299,7 @@
     return agent.value ? [agent.value] : [];
   });
 
-  const { columns, filteredReports, tableRows } = useReportTableRows({
+  const { columns, tableRows } = useReportTableRows({
     reports,
     qualityCheckMap,
     agents: agentArray,

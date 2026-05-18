@@ -62,7 +62,7 @@
           class="btn btn-sm btn-outline-secondary"
           :disabled="page === 0"
           aria-label="Previous page"
-          @click="changePage(page - 1)"
+          @click="changePage(page - 1, $event)"
         >
           Previous
         </button>
@@ -72,7 +72,7 @@
           class="btn btn-sm btn-outline-secondary"
           :disabled="page >= totalPages - 1"
           aria-label="Next page"
-          @click="changePage(page + 1)"
+          @click="changePage(page + 1, $event)"
         >
           Next
         </button>
@@ -82,7 +82,7 @@
 </template>
 
 <script setup>
-  import { computed } from 'vue';
+  import { computed, nextTick, ref, watch } from 'vue';
 
   const props = defineProps({
     title: {
@@ -170,6 +170,12 @@
       return props.items;
     }
 
+    const shouldSlice =
+      typeof props.totalItems !== 'number' || props.totalItems === props.items.length;
+    if (!shouldSlice) {
+      return props.items;
+    }
+
     const size = Math.max(props.pageSize, 1);
     const start = Math.max(props.page, 0) * size;
     return props.items.slice(start, start + size);
@@ -193,11 +199,46 @@
     emit('row-click', item);
   };
 
-  const changePage = (nextPage) => {
+  const pendingRestore = ref(null);
+
+  const restoreScrollAndFocus = async () => {
+    const pending = pendingRestore.value;
+    if (!pending) {
+      return;
+    }
+    pendingRestore.value = null;
+
+    await nextTick();
+
+    const scrollingElement = document.scrollingElement || document.documentElement;
+    if (scrollingElement && typeof pending.scrollTop === 'number') {
+      scrollingElement.scrollTop = pending.scrollTop;
+    }
+    pending.focusedElement?.focus?.();
+  };
+
+  watch(
+    () => props.loading,
+    (isLoading) => {
+      if (!isLoading) {
+        restoreScrollAndFocus();
+      }
+    }
+  );
+
+  const changePage = (nextPage, event) => {
     if (nextPage < 0 || nextPage > totalPages.value - 1) {
       return;
     }
+    const focusedElement = event?.currentTarget || null;
+    const scrollingElement = document.scrollingElement || document.documentElement;
+    const scrollTop = scrollingElement ? scrollingElement.scrollTop : null;
     emit('page-change', nextPage);
+
+    pendingRestore.value = { scrollTop, focusedElement };
+    if (!props.loading) {
+      restoreScrollAndFocus();
+    }
   };
 </script>
 

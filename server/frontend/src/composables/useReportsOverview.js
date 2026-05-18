@@ -12,6 +12,10 @@ export function useReportsOverview() {
   const loading = ref(true);
   const error = ref(null);
 
+  const currentPage = ref(0);
+  const pageSize = ref(10);
+  const totalReports = ref(0);
+
   const selectedStatus = ref(null);
   const statuses = allowedValues;
 
@@ -48,7 +52,7 @@ export function useReportsOverview() {
     try {
       const [checksData, reportsData, agentsData] = await Promise.all([
         apiService.getQualityChecks(),
-        apiService.getReports(),
+        apiService.getReports({ page: currentPage.value, size: pageSize.value }),
         apiService.getAgents(),
       ]);
 
@@ -58,19 +62,30 @@ export function useReportsOverview() {
       const reportsArray =
         reportsData?._embedded?.reports || (Array.isArray(reportsData) ? reportsData : []);
 
+      const pageInfo = reportsData?.page || null;
+
       agents.value = agentsData?._embedded?.agents || (Array.isArray(agentsData) ? agentsData : []);
 
       qualityCheckMap.value = new Map(checks.map((check) => [check.hash, check]));
 
-      reports.value = reportsArray
-        .slice()
-        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      reports.value = reportsArray;
+      totalReports.value = pageInfo?.totalElements ?? reportsArray.length;
     } catch (err) {
       console.error('Error fetching reports:', err);
       error.value = err.message || 'Failed to load reports';
     } finally {
       loading.value = false;
     }
+  };
+
+  const changePage = (nextPage) => {
+    currentPage.value = nextPage;
+    fetchData();
+  };
+
+  const refreshPage = () => {
+    currentPage.value = 0;
+    fetchData();
   };
 
   return {
@@ -84,5 +99,10 @@ export function useReportsOverview() {
     statusOptions,
     reportStats,
     fetchData,
+    currentPage,
+    pageSize,
+    totalReports,
+    changePage,
+    refreshPage,
   };
 }

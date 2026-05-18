@@ -53,8 +53,8 @@ class ApiService {
     return response.data;
   }
 
-  async getAgentReports(agentId) {
-    const response = await api.get(`/v1/agents/${agentId}/reports`);
+  async getAgentReports(agentId, params = {}) {
+    const response = await api.get(`/v1/agents/${agentId}/reports`, { params });
     return response.data;
   }
 
@@ -63,8 +63,8 @@ class ApiService {
     return response.data;
   }
 
-  async getReports() {
-    const response = await api.get('/v1/reports');
+  async getReports(params = {}) {
+    const response = await api.get('/v1/reports', { params });
     return response.data;
   }
 

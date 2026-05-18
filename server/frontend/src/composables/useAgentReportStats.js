@@ -61,7 +61,7 @@ function toLabel(status) {
     .join(' ');
 }
 
-export function useAgentReportStats({ agent, reports, qualityChecks }) {
+export function useAgentReportStats({ agent, reports, qualityChecks, totalReports }) {
   const qualityCheckMap = computed(() => {
     const map = new Map();
 
@@ -97,7 +97,7 @@ export function useAgentReportStats({ agent, reports, qualityChecks }) {
   });
 
   const reportStats = computed(() => {
-    const total = reports.value.length;
+    const total = typeof totalReports?.value === 'number' ? totalReports.value : reports.value.length;
 
     if (!total) {
       return {
