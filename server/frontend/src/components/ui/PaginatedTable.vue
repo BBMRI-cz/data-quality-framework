@@ -9,25 +9,25 @@
       </div>
     </div>
 
-    <div v-if="loading" class="card-body table-state text-center">
+    <div v-if="loading" class="card-body table-state text-center" :style="bodyStyle">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">{{ loadingText }}</span>
       </div>
     </div>
 
-    <div v-else-if="error" class="card-body table-state">
+    <div v-else-if="error" class="card-body table-state" :style="bodyStyle">
       <div class="alert alert-danger mb-0" role="alert">
         <h6 class="alert-heading">{{ errorTitle }}</h6>
         <p class="mb-0">{{ error }}</p>
       </div>
     </div>
 
-    <div v-else-if="totalItems === 0" class="card-body table-state text-center">
+    <div v-else-if="totalItems === 0" class="card-body table-state text-center" :style="bodyStyle">
       <h5 class="mb-2">{{ emptyTitle }}</h5>
       <p class="text-muted mb-0">{{ emptyText }}</p>
     </div>
 
-    <div v-else class="card-body p-0">
+    <div v-else ref="contentRef" class="card-body p-0" :style="bodyStyle">
       <div class="table-responsive">
         <table class="table table-hover mb-0 align-middle">
           <thead class="table-light">
@@ -82,7 +82,7 @@
 </template>
 
 <script setup>
-  import { computed, nextTick, ref, watch } from 'vue';
+  import { computed, nextTick, onMounted, ref, watch } from 'vue';
 
   const props = defineProps({
     title: {
@@ -200,6 +200,25 @@
   };
 
   const pendingRestore = ref(null);
+  const contentRef = ref(null);
+  const contentMinHeight = ref(null);
+
+  const updateContentHeight = () => {
+    if (!contentRef.value) {
+      return;
+    }
+    const height = contentRef.value.getBoundingClientRect().height;
+    if (height > 0) {
+      contentMinHeight.value = height;
+    }
+  };
+
+  const bodyStyle = computed(() => {
+    if (!contentMinHeight.value) {
+      return undefined;
+    }
+    return { minHeight: `${contentMinHeight.value}px` };
+  });
 
   const restoreScrollAndFocus = async () => {
     const pending = pendingRestore.value;
@@ -211,10 +230,23 @@
     await nextTick();
 
     const scrollingElement = document.scrollingElement || document.documentElement;
-    if (scrollingElement && typeof pending.scrollTop === 'number') {
-      scrollingElement.scrollTop = pending.scrollTop;
+    const restoreScrollPosition = () => {
+      if (scrollingElement && typeof pending.scrollTop === 'number') {
+        scrollingElement.scrollTop = pending.scrollTop;
+      }
+    };
+    restoreScrollPosition();
+    requestAnimationFrame(() => {
+      restoreScrollPosition();
+    });
+
+    if (pending.focusedElement?.focus) {
+      try {
+        pending.focusedElement.focus({ preventScroll: true });
+      } catch (error) {
+        pending.focusedElement.focus();
+      }
     }
-    pending.focusedElement?.focus?.();
   };
 
   watch(
@@ -222,9 +254,20 @@
     (isLoading) => {
       if (!isLoading) {
         restoreScrollAndFocus();
+        nextTick(updateContentHeight);
       }
     }
   );
+
+  watch(paginatedItems, () => {
+    if (!props.loading) {
+      nextTick(updateContentHeight);
+    }
+  });
+
+  onMounted(() => {
+    nextTick(updateContentHeight);
+  });
 
   const changePage = (nextPage, event) => {
     if (nextPage < 0 || nextPage > totalPages.value - 1) {
@@ -251,6 +294,10 @@
   .table th {
     padding-top: 1rem;
     padding-bottom: 1rem;
+  }
+
+  .table-responsive {
+    overflow-anchor: none;
   }
 
   .table-row-hover {
