@@ -25,9 +25,9 @@
     "vue3-oidc": "^1.0.2"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.2",
+    "@eslint/js": "^10.0.1",
     "@vitejs/plugin-vue": "^6.0.6",
-    "eslint": "^9.39.2",
+    "eslint": "^10.4.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-vue": "^10.8.0",
     "prettier": "^3.8.3",
