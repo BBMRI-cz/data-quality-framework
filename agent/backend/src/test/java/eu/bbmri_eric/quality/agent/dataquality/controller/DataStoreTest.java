@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import eu.bbmri_eric.quality.agent.dataquality.DataStore;
+import eu.bbmri_eric.quality.agent.dataquality.DataStoreFactory;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -14,10 +15,13 @@ class DataStoreTest {
   @Test
   void getEntity_success() throws Exception {
     DataStore mockDataStore = Mockito.mock(DataStore.class);
+    DataStoreFactory mockFactory = Mockito.mock(DataStoreFactory.class);
+    Mockito.when(mockFactory.resolveDataStore()).thenReturn(mockDataStore);
+
     JSONObject entity = new JSONObject().put("id", "123").put("type", "Patient");
     Mockito.when(mockDataStore.getEntity("Patient", "123")).thenReturn(entity);
 
-    EntityController controller = new EntityController(mockDataStore);
+    EntityController controller = new EntityController(mockFactory);
     ResponseEntity<String> response = controller.getEntity("Patient", "123");
 
     assertEquals(200, response.getStatusCodeValue());
@@ -28,10 +32,13 @@ class DataStoreTest {
   @Test
   void getEntity_error() throws Exception {
     DataStore mockDataStore = Mockito.mock(DataStore.class);
+    DataStoreFactory mockFactory = Mockito.mock(DataStoreFactory.class);
+    Mockito.when(mockFactory.resolveDataStore()).thenReturn(mockDataStore);
+
     Mockito.when(mockDataStore.getEntity("Patient", "fail"))
         .thenThrow(new RuntimeException("Not found"));
 
-    EntityController controller = new EntityController(mockDataStore);
+    EntityController controller = new EntityController(mockFactory);
     ResponseEntity<String> response = controller.getEntity("Patient", "fail");
 
     assertEquals(500, response.getStatusCodeValue());

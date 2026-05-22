@@ -21,14 +21,14 @@
                 : 'bi-exclamation-triangle-fill',
             ]"
           ></i>
-          <strong>FHIR® Server:</strong> {{ healthStore.healthStatus.status }}
+          <strong>{{ dataSourceLabel }}:</strong> {{ healthStore.healthStatus.status }}
           <span v-if="healthStore.healthStatus.details?.error" class="ms-2">
             - {{ healthStore.healthStatus.details.error }}</span
           >
         </span>
         <small v-if="healthStore.healthStatus.status !== 'UP'" class="mt-2 tip-text">
           <i class="bi bi-info-circle me-1"></i>
-          Tip: Check your FHIR® server connection details in
+          Tip: Check your {{ dataSourceLabel }} connection details in
           <router-link to="/settings" class="settings-link">Settings</router-link>
         </small>
       </div>
@@ -49,9 +49,16 @@
 </template>
 
 <script setup>
+  import { computed } from 'vue';
   import { useHealthStore } from '@/stores/healthStore.js';
+  import { useSettingsStore } from '@/stores/settingsStore.js';
 
   const healthStore = useHealthStore();
+  const settingsStore = useSettingsStore();
+
+  const isSql = computed(() => settingsStore.settings?.databaseType === 'SQL');
+
+  const dataSourceLabel = computed(() => (isSql.value ? 'SQL Database' : 'FHIR® Server'));
 </script>
 
 <style scoped>

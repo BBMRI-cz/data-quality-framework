@@ -38,9 +38,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+
 class BlazeFHIRStore implements FHIRServer {
   private static final Logger log = LoggerFactory.getLogger(BlazeFHIRStore.class);
   private final RestTemplateBuilder restTemplateBuilder;

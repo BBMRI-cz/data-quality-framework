@@ -1,6 +1,7 @@
 package eu.bbmri_eric.quality.agent.dataquality.impl;
 
 import eu.bbmri_eric.quality.agent.dataquality.DataStore;
+import eu.bbmri_eric.quality.agent.dataquality.DataStoreFactory;
 import eu.bbmri_eric.quality.agent.dataquality.FHIRServer;
 import eu.bbmri_eric.quality.agent.dataquality.ReportPipelineStep;
 import eu.bbmri_eric.quality.agent.dataquality.domain.DataQualityCheck;
@@ -23,31 +24,35 @@ import org.springframework.stereotype.Component;
 class QualityChecksStep implements ReportPipelineStep {
 
   private final QualityCheckRepository repository;
-  private final DataStore dataStore;
+  private final DataStoreFactory dataStoreFactory;
   private final ModelMapper modelMapper;
 
   QualityChecksStep(
-      QualityCheckRepository repository, DataStore dataStore, ModelMapper modelMapper) {
+      QualityCheckRepository repository,
+      DataStoreFactory dataStoreFactory,
+      ModelMapper modelMapper) {
     this.repository = repository;
-    this.dataStore = dataStore;
+    this.dataStoreFactory = dataStoreFactory;
     this.modelMapper = modelMapper;
   }
 
   @Override
   public Report execute(Report report) {
     log.info("Running quality checks for report id: {}", report.getId());
+    DataStore dataStore = dataStoreFactory.resolveDataStore();
     List<DataQualityCheck> dataQualityChecks = compileChecksToRun(dataStore);
-    runRelevantChecks(report, dataQualityChecks);
+    runRelevantChecks(report, dataQualityChecks, dataStore);
     log.info("Completed quality checks for report id: {}", report.getId());
     return report;
   }
 
-  private void runRelevantChecks(Report report, List<DataQualityCheck> dataQualityChecks) {
+  private void runRelevantChecks(
+      Report report, List<DataQualityCheck> dataQualityChecks, DataStore dataStore) {
     for (DataQualityCheck dataQualityCheck : dataQualityChecks) {
       if (dataQualityCheck instanceof StratifiedDataQualityCheck stratifiedCheck) {
-        executeStratifiedCheck(stratifiedCheck, report);
+        executeStratifiedCheck(stratifiedCheck, report, dataStore);
       } else {
-        executeCheck(dataQualityCheck, report);
+        executeCheck(dataQualityCheck, report, dataStore);
       }
     }
   }
@@ -83,7 +88,8 @@ class QualityChecksStep implements ReportPipelineStep {
     return Optional.empty();
   }
 
-  private void executeStratifiedCheck(StratifiedDataQualityCheck check, Report report) {
+  private void executeStratifiedCheck(
+      StratifiedDataQualityCheck check, Report report, DataStore dataStore) {
     if (!(dataStore instanceof FHIRServer fhirStore)) {
       ResultDTO resultDTO = new ResultDTO("FHIR data store required for " + check.getName());
       Result result = modelMapper.map(resultDTO, Result.class);
@@ -105,7 +111,7 @@ class QualityChecksStep implements ReportPipelineStep {
     }
   }
 
-  private void executeCheck(DataQualityCheck check, Report report) {
+  private void executeCheck(DataQualityCheck check, Report report, DataStore dataStore) {
     ResultDTO resultDTO = check.execute(dataStore);
     Result result = modelMapper.map(resultDTO, Result.class);
     modelMapper.map(check, result);

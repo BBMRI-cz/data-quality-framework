@@ -1,17 +1,15 @@
 package eu.bbmri_eric.quality.agent.dataquality.impl;
 
 import eu.bbmri_eric.quality.agent.dataquality.DataStore;
-import eu.bbmri_eric.quality.agent.dataquality.dto.DatabaseHealthDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.DBStatus;
+import eu.bbmri_eric.quality.agent.dataquality.dto.DatabaseHealthDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
 import org.json.JSONObject;
-import org.springframework.stereotype.Component;
 
 class SqlDataStore implements DataStore {
   private static final String NOT_IMPLEMENTED_MESSAGE = "SQL data store not implemented yet.";
 
-  public SqlDataStore() {
-  }
+  public SqlDataStore() {}
 
   @Override
   public JSONObject getEntity(String entityType, String id) {
@@ -36,4 +34,3 @@ class SqlDataStore implements DataStore {
     return new DatabaseHealthDTO(DBStatus.DOWN, NOT_IMPLEMENTED_MESSAGE, null);
   }
 }
-

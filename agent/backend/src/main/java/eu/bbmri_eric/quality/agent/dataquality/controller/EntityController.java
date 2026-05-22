@@ -1,6 +1,7 @@
 package eu.bbmri_eric.quality.agent.dataquality.controller;
 
 import eu.bbmri_eric.quality.agent.dataquality.DataStore;
+import eu.bbmri_eric.quality.agent.dataquality.DataStoreFactory;
 import java.util.NoSuchElementException;
 import org.json.JSONObject;
 import org.springframework.http.MediaType;
@@ -13,15 +14,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/entities")
 class EntityController {
-  private final DataStore dataStore;
+  private final DataStoreFactory dataStoreFactory;
 
-  EntityController(DataStore dataStore) {
-    this.dataStore = dataStore;
+  EntityController(DataStoreFactory dataStoreFactory) {
+    this.dataStoreFactory = dataStoreFactory;
   }
 
   @GetMapping("{entityType}/{id}")
   public ResponseEntity<String> getEntity(
       @PathVariable String entityType, @PathVariable String id) {
+    DataStore dataStore = dataStoreFactory.resolveDataStore();
     try {
       JSONObject response = dataStore.getEntity(entityType, id);
       if (response == null) {
@@ -39,6 +41,7 @@ class EntityController {
 
   @GetMapping("health")
   public ResponseEntity<String> checkHealth() {
+    DataStore dataStore = dataStoreFactory.resolveDataStore();
     try {
       JSONObject healthResult = dataStore.checkHealth();
 
