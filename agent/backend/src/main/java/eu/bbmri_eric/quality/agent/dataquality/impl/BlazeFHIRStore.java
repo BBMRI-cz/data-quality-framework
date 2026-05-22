@@ -41,16 +41,14 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-
-@Component
 class BlazeFHIRStore implements FHIRServer {
   private static final Logger log = LoggerFactory.getLogger(BlazeFHIRStore.class);
-  private volatile IGenericClient client;
-  private volatile RestTemplate restTemplate;
-  private volatile String fhirUrl;
   private final RestTemplateBuilder restTemplateBuilder;
   private final HttpHeaders headers;
   private final FhirContext ctx;
+  private volatile IGenericClient client;
+  private volatile RestTemplate restTemplate;
+  private volatile String fhirUrl;
 
   BlazeFHIRStore(RestTemplateBuilder restTemplateBuilder) {
     this.restTemplateBuilder = restTemplateBuilder;
@@ -79,6 +77,29 @@ class BlazeFHIRStore implements FHIRServer {
 
     headers = new HttpHeaders();
     headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+  }
+
+  private static JSONArray getJsonArray() {
+    JSONArray group = new JSONArray();
+    JSONObject groupEntry = new JSONObject();
+    JSONArray population = new JSONArray();
+    JSONObject populationEntry = new JSONObject();
+    JSONObject populationCode = new JSONObject();
+    JSONArray populationCoding = new JSONArray();
+    JSONObject populationCodingEntry = new JSONObject();
+    populationCodingEntry.put("system", "http://terminology.hl7.org/CodeSystem/measure-population");
+    populationCodingEntry.put("code", "initial-population");
+    populationCoding.put(populationCodingEntry);
+    populationCode.put("coding", populationCoding);
+    populationEntry.put("code", populationCode);
+    JSONObject criteria = new JSONObject();
+    criteria.put("language", "text/cql-identifier");
+    criteria.put("expression", "InInitialPopulation");
+    populationEntry.put("criteria", criteria);
+    population.put(populationEntry);
+    groupEntry.put("population", population);
+    group.put(groupEntry);
+    return group;
   }
 
   @EventListener
@@ -200,29 +221,6 @@ class BlazeFHIRStore implements FHIRServer {
     measure.put("group", group);
 
     return measure;
-  }
-
-  private static JSONArray getJsonArray() {
-    JSONArray group = new JSONArray();
-    JSONObject groupEntry = new JSONObject();
-    JSONArray population = new JSONArray();
-    JSONObject populationEntry = new JSONObject();
-    JSONObject populationCode = new JSONObject();
-    JSONArray populationCoding = new JSONArray();
-    JSONObject populationCodingEntry = new JSONObject();
-    populationCodingEntry.put("system", "http://terminology.hl7.org/CodeSystem/measure-population");
-    populationCodingEntry.put("code", "initial-population");
-    populationCoding.put(populationCodingEntry);
-    populationCode.put("coding", populationCoding);
-    populationEntry.put("code", populationCode);
-    JSONObject criteria = new JSONObject();
-    criteria.put("language", "text/cql-identifier");
-    criteria.put("expression", "InInitialPopulation");
-    populationEntry.put("criteria", criteria);
-    population.put(populationEntry);
-    groupEntry.put("population", population);
-    group.put(groupEntry);
-    return group;
   }
 
   public JSONObject createLibrary(String libraryUri, String cqlData) {

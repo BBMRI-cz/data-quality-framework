@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.agent.dataquality.impl;
 
+import eu.bbmri_eric.quality.agent.dataquality.DataStore;
 import eu.bbmri_eric.quality.agent.dataquality.FHIRServer;
 import eu.bbmri_eric.quality.agent.dataquality.ReportPipelineStep;
 import eu.bbmri_eric.quality.agent.dataquality.domain.DataQualityCheck;
@@ -22,20 +23,20 @@ import org.springframework.stereotype.Component;
 class QualityChecksStep implements ReportPipelineStep {
 
   private final QualityCheckRepository repository;
-  private final FHIRServer fhirStore;
+  private final DataStore dataStore;
   private final ModelMapper modelMapper;
 
   QualityChecksStep(
-      QualityCheckRepository repository, FHIRServer fhirStore, ModelMapper modelMapper) {
+      QualityCheckRepository repository, DataStore dataStore, ModelMapper modelMapper) {
     this.repository = repository;
-    this.fhirStore = fhirStore;
+    this.dataStore = dataStore;
     this.modelMapper = modelMapper;
   }
 
   @Override
   public Report execute(Report report) {
     log.info("Running quality checks for report id: {}", report.getId());
-    List<DataQualityCheck> dataQualityChecks = compileChecksToRun();
+    List<DataQualityCheck> dataQualityChecks = compileChecksToRun(dataStore);
     runRelevantChecks(report, dataQualityChecks);
     log.info("Completed quality checks for report id: {}", report.getId());
     return report;
@@ -51,13 +52,17 @@ class QualityChecksStep implements ReportPipelineStep {
     }
   }
 
-  private @NonNull List<DataQualityCheck> compileChecksToRun() {
+  private @NonNull List<DataQualityCheck> compileChecksToRun(DataStore dataStore) {
     List<DataQualityCheck> dataQualityChecks = new ArrayList<>();
     for (QualityCheck qualityCheck : repository.findAll()) {
-      if (qualityCheck.getType() == QualityCheckType.CQL) {
+      if (qualityCheck.getType() == QualityCheckType.CQL && dataStore instanceof FHIRServer) {
         dataQualityChecks.add(qualityCheck);
-      } else if (qualityCheck.getType() == QualityCheckType.JAVA) {
+      } else if (qualityCheck.getType() == QualityCheckType.JAVA
+          && dataStore instanceof FHIRServer) {
         createBuiltInCheck(qualityCheck).ifPresent(dataQualityChecks::add);
+      } else if (qualityCheck.getType() == QualityCheckType.SQL
+          && dataStore instanceof SqlDataStore) {
+        dataQualityChecks.add(qualityCheck);
       }
     }
     return dataQualityChecks;
@@ -79,6 +84,13 @@ class QualityChecksStep implements ReportPipelineStep {
   }
 
   private void executeStratifiedCheck(StratifiedDataQualityCheck check, Report report) {
+    if (!(dataStore instanceof FHIRServer fhirStore)) {
+      ResultDTO resultDTO = new ResultDTO("FHIR data store required for " + check.getName());
+      Result result = modelMapper.map(resultDTO, Result.class);
+      modelMapper.map(check, result);
+      report.addResult(result);
+      return;
+    }
     Map<String, ResultDTO> results = check.executeWithStratification(fhirStore);
     int count = results.size();
     for (Map.Entry<String, ResultDTO> entry : results.entrySet()) {
@@ -94,7 +106,7 @@ class QualityChecksStep implements ReportPipelineStep {
   }
 
   private void executeCheck(DataQualityCheck check, Report report) {
-    ResultDTO resultDTO = check.execute(fhirStore);
+    ResultDTO resultDTO = check.execute(dataStore);
     Result result = modelMapper.map(resultDTO, Result.class);
     modelMapper.map(check, result);
     report.addResult(result);

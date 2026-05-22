@@ -6,5 +6,6 @@ public enum QualityCheckType {
   CQL,
 
   /** Java-based built-in check implementation. */
-  JAVA
+  JAVA,
+  SQL
 }
