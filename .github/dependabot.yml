@@ -5,286 +5,64 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-      day: "monday"
-      time: "05:00"
     commit-message:
       prefix: "ci"
       include: "scope"
     labels:
       - "dependencies"
       - "github-actions"
-    open-pull-requests-limit: 5
     groups:
-      github-actions-updates:
+      all-actions:
         patterns:
           - "*"
-        update-types:
-          - "major"
 
   - package-ecosystem: "maven"
-    directory: "/agent/backend"
+    directories:
+      - "/agent/backend"
+      - "/server/backend"
     schedule:
       interval: "weekly"
-      day: "monday"
-      time: "05:00"
     commit-message:
-      prefix: "build(agent)"
+      prefix: "build"
       include: "scope"
     labels:
       - "dependencies"
       - "java"
-      - "agent"
-    open-pull-requests-limit: 5
     groups:
-      spring-framework:
-        patterns:
-          - "org.springframework*"
-          - "io.spring*"
-        update-types:
-          - "major"
-      testing-framework:
-        patterns:
-          - "*junit*"
-          - "*mockito*"
-          - "*assertj*"
-        update-types:
-          - "major"
-      fhir-healthcare:
-        patterns:
-          - "ca.uhn.hapi*"
-          - "*fhir*"
-        update-types:
-          - "major"
-      utilities:
-        patterns:
-          - "org.mapstruct*"
-          - "org.projectlombok*"
-          - "com.google*"
-          - "com.fasterxml*"
-        update-types:
-          - "major"
-      all-other-java:
+      all-java:
         patterns:
           - "*"
-        update-types:
-          - "major"
-
-  - package-ecosystem: "maven"
-    directory: "/server/backend"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "05:00"
-    commit-message:
-      prefix: "build(server)"
-      include: "scope"
-    labels:
-      - "dependencies"
-      - "java"
-      - "server"
-    open-pull-requests-limit: 5
-    groups:
-      spring-framework:
-        patterns:
-          - "org.springframework*"
-          - "io.spring*"
-        update-types:
-          - "major"
-      testing-framework:
-        patterns:
-          - "*junit*"
-          - "*mockito*"
-          - "*assertj*"
-        update-types:
-          - "major"
-      database:
-        patterns:
-          - "org.postgresql*"
-          - "*jdbc*"
-          - "*hibernate*"
-        update-types:
-          - "major"
-      utilities:
-        patterns:
-          - "org.mapstruct*"
-          - "org.projectlombok*"
-          - "com.google*"
-          - "com.fasterxml*"
-        update-types:
-          - "major"
-      all-other-java:
-        patterns:
-          - "*"
-        update-types:
-          - "major"
 
   - package-ecosystem: "npm"
-    directory: "/agent/frontend"
+    directories:
+      - "/agent/frontend"
+      - "/server/frontend"
+      - "/docs"
     schedule:
       interval: "weekly"
-      day: "monday"
-      time: "05:00"
     commit-message:
-      prefix: "build(agent-ui)"
+      prefix: "build"
       include: "scope"
     labels:
       - "dependencies"
       - "javascript"
-      - "agent"
-    open-pull-requests-limit: 5
     groups:
-      vue-framework:
-        patterns:
-          - "vue*"
-          - "@vue*"
-        update-types:
-          - "major"
-      build-tools:
-        patterns:
-          - "vite*"
-          - "@vitejs*"
-        update-types:
-          - "major"
-      testing-tools:
-        patterns:
-          - "@vitest*"
-          - "*test*"
-          - "*jest*"
-        update-types:
-          - "major"
-      linting-formatting:
-        patterns:
-          - "eslint*"
-          - "*prettier*"
-          - "@eslint*"
-        update-types:
-          - "major"
-      state-management:
-        patterns:
-          - "pinia*"
-        update-types:
-          - "major"
-      all-other-npm:
+      all-js:
         patterns:
           - "*"
-        update-types:
-          - "major"
-
-  - package-ecosystem: "npm"
-    directory: "/server/frontend"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "05:00"
-    commit-message:
-      prefix: "build(server-ui)"
-      include: "scope"
-    labels:
-      - "dependencies"
-      - "javascript"
-      - "server"
-    open-pull-requests-limit: 5
-    groups:
-      vue-framework:
-        patterns:
-          - "vue*"
-          - "@vue*"
-        update-types:
-          - "major"
-      build-tools:
-        patterns:
-          - "vite*"
-          - "@vitejs*"
-        update-types:
-          - "major"
-      testing-tools:
-        patterns:
-          - "@vitest*"
-          - "*test*"
-          - "*jest*"
-        update-types:
-          - "major"
-      linting-formatting:
-        patterns:
-          - "eslint*"
-          - "*prettier*"
-          - "@eslint*"
-        update-types:
-          - "major"
-      state-management:
-        patterns:
-          - "pinia*"
-        update-types:
-          - "major"
-      all-other-npm:
-        patterns:
-          - "*"
-        update-types:
-          - "major"
-
-  - package-ecosystem: "npm"
-    directory: "/docs"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "05:00"
-    commit-message:
-      prefix: "docs"
-      include: "scope"
-    labels:
-      - "dependencies"
-      - "documentation"
-    open-pull-requests-limit: 3
-    groups:
-      vitepress-docs:
-        patterns:
-          - "vitepress*"
-          - "@vitepress*"
-        update-types:
-          - "major"
-      all-other-npm:
-        patterns:
-          - "*"
-        update-types:
-          - "major"
 
   - package-ecosystem: "docker"
-    directory: "/agent"
+    directories:
+      - "/agent"
+      - "/server"
     schedule:
       interval: "weekly"
-      day: "monday"
-      time: "05:00"
     commit-message:
-      prefix: "build(agent)"
+      prefix: "build"
     labels:
       - "dependencies"
       - "docker"
-      - "agent"
-    open-pull-requests-limit: 5
     groups:
-      docker-updates:
+      all-docker:
         patterns:
           - "*"
-        update-types:
-          - "major"
-
-  - package-ecosystem: "docker"
-    directory: "/server"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "05:00"
-    commit-message:
-      prefix: "build(server)"
-    labels:
-      - "dependencies"
-      - "docker"
-      - "server"
-    open-pull-requests-limit: 5
-    groups:
-      docker-updates:
-        patterns:
-          - "*"
-        update-types:
-          - "major"
-
