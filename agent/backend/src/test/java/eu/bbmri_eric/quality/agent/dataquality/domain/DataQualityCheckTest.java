@@ -3,6 +3,9 @@ package eu.bbmri_eric.quality.agent.dataquality.domain;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import eu.bbmri_eric.quality.agent.dataquality.DataStore;
+import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 public class DataQualityCheckTest {
@@ -39,6 +42,28 @@ public class DataQualityCheckTest {
   @Test
   void testExecuteDoesNotThrow() {
     QualityCheck check = new QualityCheck();
-    assertDoesNotThrow(() -> check.execute(null));
+    DataStore dataStore =
+        new DataStore() {
+          @Override
+          public org.json.JSONObject getEntity(String entityType, String id) {
+            return new org.json.JSONObject();
+          }
+
+          @Override
+          public org.json.JSONObject checkHealth() {
+            return new org.json.JSONObject();
+          }
+
+          @Override
+          public ResultDTO executeQuery(String query) {
+            return new ResultDTO(0, "", Set.of());
+          }
+
+          @Override
+          public eu.bbmri_eric.quality.agent.dataquality.dto.DatabaseHealthDTO checkHealthV2() {
+            return null;
+          }
+        };
+    assertDoesNotThrow(() -> check.execute(dataStore));
   }
 }

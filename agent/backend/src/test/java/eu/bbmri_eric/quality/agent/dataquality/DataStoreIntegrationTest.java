@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import eu.bbmri_eric.quality.agent.dataquality.dto.DatabaseHealthDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,8 +41,8 @@ public class DataStoreIntegrationTest {
         }
 
         @Override
-        public Object executeQuery(String query) {
-          return null;
+        public ResultDTO executeQuery(String query) {
+          return new ResultDTO(0, "", java.util.Set.of());
         }
 
         @Override

@@ -196,7 +196,7 @@ class SettingsControllerTest {
   @WithMockUser(username = "admin")
   void updateSettings_withSqlEmptyUrl_shouldReturn400() throws Exception {
     SettingsDTO dto = validSqlSettingsDTO();
-    dto.setSqlUrl("");
+    dto.setSqlUrl("sdfsdf sfs ");
 
     mockMvc
         .perform(

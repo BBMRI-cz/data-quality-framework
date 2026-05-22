@@ -9,8 +9,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
+import eu.bbmri_eric.quality.agent.dataquality.impl.FhirCqlQueryExecutor;
 import java.util.Set;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -69,7 +69,6 @@ class CQLQueryTest {
   @Test
   void execute_returnsCorrectPatientIds() throws Exception {
     FHIRServer mockStore = mock(FHIRServer.class);
-    QualityCheck query = new QualityCheck("name", "desc", "query");
 
     stubMeasureSetup(mockStore);
     // measureReport
@@ -92,7 +91,7 @@ class CQLQueryTest {
     when(mockStore.getPatientList("list123")).thenReturn(patientList("Patient/p1", "Patient/p2"));
 
     // Act
-    ResultDTO result = query.execute(mockStore);
+    ResultDTO result = FhirCqlQueryExecutor.execute(mockStore, "query");
 
     // Assert
     assertEquals(Set.of("p1", "p2"), result.idSet());
@@ -103,12 +102,11 @@ class CQLQueryTest {
   void execute_returnsEmptySet_whenPopulationCountIsZero_andDoesNotCallGetPatientList()
       throws Exception {
     FHIRServer store = mock(FHIRServer.class);
-    QualityCheck query = new QualityCheck("name", "desc", "query");
     stubMeasureSetup(store);
 
     when(store.evaluateMeasureList("measure1")).thenReturn(measureReportWith(0, "List/list123"));
 
-    ResultDTO result = query.execute(store);
+    ResultDTO result = FhirCqlQueryExecutor.execute(store, "query");
 
     assertEquals(Set.of(), result.idSet());
     assertEquals(0, result.rawResult());
@@ -118,12 +116,11 @@ class CQLQueryTest {
   @Test
   void execute_returnsEmptySet_whenListReferenceMissing_evenIfCountPositive() throws Exception {
     FHIRServer store = mock(FHIRServer.class);
-    QualityCheck query = new QualityCheck("name", "desc", "query");
     stubMeasureSetup(store);
 
     when(store.evaluateMeasureList("measure1")).thenReturn(measureReportWith(3, null));
 
-    ResultDTO result = query.execute(store);
+    ResultDTO result = FhirCqlQueryExecutor.execute(store, "query");
 
     assertEquals(Set.of(), result.idSet());
     assertEquals(3, result.rawResult());

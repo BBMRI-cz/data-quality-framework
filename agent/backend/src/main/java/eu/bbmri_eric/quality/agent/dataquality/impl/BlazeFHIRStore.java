@@ -7,6 +7,8 @@ import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.api.ServerValidationModeEnum;
 import ca.uhn.fhir.rest.client.interceptor.BasicAuthInterceptor;
 import eu.bbmri_eric.quality.agent.dataquality.FHIRServer;
+import eu.bbmri_eric.quality.agent.dataquality.dto.DatabaseHealthDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
 import eu.bbmri_eric.quality.agent.settings.DatabaseType;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
 import eu.bbmri_eric.quality.agent.settings.event.SettingsUpdatedEvent;
@@ -381,6 +383,11 @@ class BlazeFHIRStore implements FHIRServer {
     }
   }
 
+  @Override
+  public JSONObject getEntity(String entityType, String id) throws Exception {
+    return null;
+  }
+
   public JSONObject checkHealth() {
     JSONObject healthStatus = new JSONObject();
     try {
@@ -394,5 +401,15 @@ class BlazeFHIRStore implements FHIRServer {
       healthStatus.put("details", details);
     }
     return healthStatus;
+  }
+
+  @Override
+  public ResultDTO executeQuery(String query) {
+    return FhirCqlQueryExecutor.execute(this, query);
+  }
+
+  @Override
+  public DatabaseHealthDTO checkHealthV2() {
+    return null;
   }
 }

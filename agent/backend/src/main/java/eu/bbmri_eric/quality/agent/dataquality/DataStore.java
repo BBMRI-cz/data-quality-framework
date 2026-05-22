@@ -1,6 +1,7 @@
 package eu.bbmri_eric.quality.agent.dataquality;
 
 import eu.bbmri_eric.quality.agent.dataquality.dto.DatabaseHealthDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
 import org.json.JSONObject;
 
 /** Provides connectivity to a database on which the Data Quality Checks should be executed. */
@@ -21,10 +22,9 @@ public interface DataStore {
    * Executes a query against the connected database.
    *
    * @param query the query string to execute. e.g., SQL or CQL
-   * @return the result of the query execution, typically a {@link java.sql.ResultSet} or an update
-   *     count depending on the query type
+   * @return the result of the query execution as a {@link ResultDTO}
    */
-  Object executeQuery(String query);
+  ResultDTO executeQuery(String query);
 
   /**
    * Checks the health of the database connection.

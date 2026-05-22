@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.agent.dataquality.impl;
 
+import eu.bbmri_eric.quality.agent.dataquality.DataStore;
 import eu.bbmri_eric.quality.agent.dataquality.FHIRServer;
 import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
@@ -27,7 +28,10 @@ class SurvivalRateCheck implements StratifiedDataQualityCheck {
   }
 
   @Override
-  public ResultDTO execute(FHIRServer fhirStore) {
+  public ResultDTO execute(DataStore dataStore) {
+    if (!(dataStore instanceof FHIRServer fhirStore)) {
+      return new ResultDTO("FHIR data store required for " + getName());
+    }
     try {
       List<Resource> patients =
           fhirStore.fetchAllResources("Patient", List.of("id", "gender", "deceased"));

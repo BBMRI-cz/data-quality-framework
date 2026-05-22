@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.agent.dataquality.impl;
 
+import eu.bbmri_eric.quality.agent.dataquality.DataStore;
 import eu.bbmri_eric.quality.agent.dataquality.FHIRServer;
 import eu.bbmri_eric.quality.agent.dataquality.domain.DataQualityCheck;
 import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
@@ -33,7 +34,10 @@ class DuplicateIdentifierCheck implements DataQualityCheck {
   }
 
   @Override
-  public ResultDTO execute(FHIRServer fhirStore) {
+  public ResultDTO execute(DataStore dataStore) {
+    if (!(dataStore instanceof FHIRServer fhirStore)) {
+      return new ResultDTO("FHIR data store required for " + getName());
+    }
     try {
       List<Resource> patients = fhirStore.fetchAllResources("Patient", List.of("id", "identifier"));
       Map<String, List<String>> identifierMap = new HashMap<>();
