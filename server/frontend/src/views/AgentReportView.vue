@@ -86,7 +86,7 @@
         <div class="col-12 col-sm-6 col-md-3 mb-3">
           <StatsCard
             label="Total Reports"
-            :value="reportStats.total"
+            :value="totalReports"
             color="var(--color-primary)"
             icon="bi bi-file-text"
             trend-text="All time"
@@ -150,27 +150,25 @@
       <!-- Recent Reports Table -->
       <div class="row">
         <div class="col-12">
-          <div class="mb-4">
-            <LabeledValuesFilter v-model="selectedStatus" label="Status:" :categories="statuses" />
-          </div>
-
           <PaginatedTable
             title="Recent Reports"
             :columns="columns"
             :items="tableRows"
-            :total-items="filteredReports.length"
+            :page="currentPage"
+            :page-size="pageSize"
+            :total-items="totalReports"
             :loading="loading"
             :error="error"
             loading-text="Loading agent report..."
             error-title="Unable to load agent report"
-            :paginate="false"
             item-key="id"
             item-label="reports"
             empty-text="No reports available"
             @row-click="openReport"
+            @page-change="changePage"
           >
             <template #header-meta>
-              <Badge :text="`${filteredReports.length} reports`" variant="secondary" size="small" />
+              <Badge :text="`${totalReports} reports`" variant="secondary" size="small" />
             </template>
 
             <template #cell-status="{ item, value }">
@@ -215,9 +213,7 @@
       <ul class="text-muted small mb-0">
         <li>The agent and all its configuration</li>
         <li>
-          All associated reports ({{ reportStats.total }} report{{
-            reportStats.total !== 1 ? 's' : ''
-          }})
+          All associated reports ({{ totalReports }} report{{ totalReports !== 1 ? 's' : '' }})
         </li>
         <li>All quality check results</li>
         <li>All interaction history</li>
@@ -232,9 +228,7 @@
   import StatsCard from '@/components/ui/StatsCard.vue';
   import PaginatedTable from '@/components/ui/PaginatedTable.vue';
   import Badge from '@/components/ui/Badge.vue';
-  import LabeledValuesFilter from '@/components/ui/LabeledValuesFilter.vue';
   import { useReportTableRows } from '@/composables/useReportTableRows.js';
-  import { useStatuses } from '@/composables/useStatuses.js';
   import { useAgentReportData } from '@/composables/useAgentReportData.js';
   import { useAgentReportStats } from '@/composables/useAgentReportStats.js';
   import { useAgentManagementActions } from '@/composables/useAgentManagementActions.js';
@@ -245,8 +239,19 @@
   const router = useRouter();
 
   const agentId = ref(route.params.uuid);
-  const { loading, error, agent, reports, qualityChecks, fetchAgentDetails } =
-    useAgentReportData(agentId);
+  const {
+    loading,
+    error,
+    agent,
+    reports,
+    qualityChecks,
+    currentPage,
+    pageSize,
+    totalReports,
+    latestReport,
+    fetchAgentDetails,
+    changePage,
+  } = useAgentReportData(agentId);
 
   const {
     qualityCheckMap,
@@ -258,11 +263,10 @@
     agentStatusTrendType,
   } = useAgentReportStats({
     agent,
-    reports,
+    latestReport,
     qualityChecks,
+    totalReports,
   });
-
-  const selectedStatus = ref(null);
 
   const {
     processing,
@@ -280,17 +284,14 @@
     onDeleted: () => router.push({ name: 'Agents' }),
   });
 
-  const { allowedValues: statuses } = useStatuses();
-
   const agentArray = computed(() => {
     return agent.value ? [agent.value] : [];
   });
 
-  const { columns, filteredReports, tableRows } = useReportTableRows({
+  const { columns, tableRows } = useReportTableRows({
     reports,
     qualityCheckMap,
     agents: agentArray,
-    selectedStatus,
   });
 
   const openReport = (report) => {

@@ -9,25 +9,25 @@
       </div>
     </div>
 
-    <div v-if="loading" class="card-body table-state text-center">
+    <div v-if="loading" class="card-body table-state text-center" :style="bodyStyle">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">{{ loadingText }}</span>
       </div>
     </div>
 
-    <div v-else-if="error" class="card-body table-state">
+    <div v-else-if="error" class="card-body table-state" :style="bodyStyle">
       <div class="alert alert-danger mb-0" role="alert">
         <h6 class="alert-heading">{{ errorTitle }}</h6>
         <p class="mb-0">{{ error }}</p>
       </div>
     </div>
 
-    <div v-else-if="totalItems === 0" class="card-body table-state text-center">
+    <div v-else-if="totalItems === 0" class="card-body table-state text-center" :style="bodyStyle">
       <h5 class="mb-2">{{ emptyTitle }}</h5>
       <p class="text-muted mb-0">{{ emptyText }}</p>
     </div>
 
-    <div v-else class="card-body p-0">
+    <div v-else ref="contentRef" class="card-body p-0" :style="bodyStyle">
       <div class="table-responsive">
         <table class="table table-hover mb-0 align-middle">
           <thead class="table-light">
@@ -56,33 +56,20 @@
     </div>
 
     <div v-if="showPagination && !loading && !error" class="card-footer bg-white border-top py-2">
-      <div class="d-flex justify-content-end align-items-center gap-2">
-        <button
-          type="button"
-          class="btn btn-sm btn-outline-secondary"
-          :disabled="page === 0"
-          aria-label="Previous page"
-          @click="changePage(page - 1)"
-        >
-          Previous
-        </button>
-        <span class="small text-muted">Page {{ page + 1 }} of {{ totalPages }}</span>
-        <button
-          type="button"
-          class="btn btn-sm btn-outline-secondary"
-          :disabled="page >= totalPages - 1"
-          aria-label="Next page"
-          @click="changePage(page + 1)"
-        >
-          Next
-        </button>
-      </div>
+      <PaginationControls
+        :page="page"
+        :total-pages="totalPages"
+        @previous="changePage(page - 1, $event)"
+        @next="changePage(page + 1, $event)"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
   import { computed } from 'vue';
+  import { usePaginatedTableLayout } from '@/composables/usePaginatedTableLayout.js';
+  import PaginationControls from '@/components/ui/PaginationControls.vue';
 
   const props = defineProps({
     title: {
@@ -170,6 +157,12 @@
       return props.items;
     }
 
+    const shouldSlice =
+      typeof props.totalItems !== 'number' || props.totalItems === props.items.length;
+    if (!shouldSlice) {
+      return props.items;
+    }
+
     const size = Math.max(props.pageSize, 1);
     const start = Math.max(props.page, 0) * size;
     return props.items.slice(start, start + size);
@@ -193,11 +186,17 @@
     emit('row-click', item);
   };
 
-  const changePage = (nextPage) => {
+  const { bodyStyle, contentRef, handlePageChange } = usePaginatedTableLayout({
+    loading: computed(() => props.loading),
+    paginatedItems,
+    onPageChange: (nextPage) => emit('page-change', nextPage),
+  });
+
+  const changePage = (nextPage, event) => {
     if (nextPage < 0 || nextPage > totalPages.value - 1) {
       return;
     }
-    emit('page-change', nextPage);
+    handlePageChange(nextPage, event);
   };
 </script>
 
@@ -210,6 +209,10 @@
   .table th {
     padding-top: 1rem;
     padding-bottom: 1rem;
+  }
+
+  .table-responsive {
+    overflow-anchor: none;
   }
 
   .table-row-hover {

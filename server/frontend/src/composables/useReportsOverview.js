@@ -1,19 +1,17 @@
 import { computed, ref } from 'vue';
 import { apiService } from '@/services/apiService.js';
 import { getReportStatus, CheckStatus } from '@/utils/qualityCheckUtils.js';
-import { useStatuses } from '@/composables/useStatuses.js';
 
 export function useReportsOverview() {
-  const { allowedValues, statusOptions } = useStatuses();
-
   const reports = ref([]);
   const qualityCheckMap = ref(new Map());
   const agents = ref([]);
   const loading = ref(true);
   const error = ref(null);
 
-  const selectedStatus = ref(null);
-  const statuses = allowedValues;
+  const currentPage = ref(0);
+  const pageSize = ref(10);
+  const totalReports = ref(0);
 
   const reportStats = computed(() => {
     const stats = {
@@ -41,30 +39,42 @@ export function useReportsOverview() {
     return stats;
   });
 
+  const parseReportsResponse = (reportsData) => {
+    const reportsArray =
+      reportsData?._embedded?.reports || (Array.isArray(reportsData) ? reportsData : []);
+    const pageInfo = reportsData?.page || null;
+    return { reportsArray, pageInfo };
+  };
+
+  const fetchReportsPage = async () => {
+    const reportsData = await apiService.getReports({
+      page: currentPage.value,
+      size: pageSize.value,
+    });
+    const { reportsArray, pageInfo } = parseReportsResponse(reportsData);
+
+    reports.value = reportsArray;
+    totalReports.value = pageInfo?.totalElements ?? reportsArray.length;
+  };
+
   const fetchData = async () => {
     loading.value = true;
     error.value = null;
 
     try {
-      const [checksData, reportsData, agentsData] = await Promise.all([
+      const [checksData, agentsData] = await Promise.all([
         apiService.getQualityChecks(),
-        apiService.getReports(),
         apiService.getAgents(),
       ]);
 
       const checks =
         checksData?._embedded?.qualityChecks || (Array.isArray(checksData) ? checksData : []);
 
-      const reportsArray =
-        reportsData?._embedded?.reports || (Array.isArray(reportsData) ? reportsData : []);
-
       agents.value = agentsData?._embedded?.agents || (Array.isArray(agentsData) ? agentsData : []);
 
       qualityCheckMap.value = new Map(checks.map((check) => [check.hash, check]));
 
-      reports.value = reportsArray
-        .slice()
-        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      await fetchReportsPage();
     } catch (err) {
       console.error('Error fetching reports:', err);
       error.value = err.message || 'Failed to load reports';
@@ -73,16 +83,28 @@ export function useReportsOverview() {
     }
   };
 
+  const changePage = (nextPage) => {
+    currentPage.value = nextPage;
+    fetchData();
+  };
+
+  const refreshPage = () => {
+    currentPage.value = 0;
+    fetchData();
+  };
+
   return {
     reports,
     qualityCheckMap,
     agents,
     loading,
     error,
-    selectedStatus,
-    statuses,
-    statusOptions,
     reportStats,
     fetchData,
+    currentPage,
+    pageSize,
+    totalReports,
+    changePage,
+    refreshPage,
   };
 }

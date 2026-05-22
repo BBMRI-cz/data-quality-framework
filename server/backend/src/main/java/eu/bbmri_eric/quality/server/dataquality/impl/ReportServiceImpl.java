@@ -1,6 +1,8 @@
 package eu.bbmri_eric.quality.server.dataquality.impl;
 
 import eu.bbmri_eric.quality.server.common.EntityNotFoundException;
+import eu.bbmri_eric.quality.server.common.dto.FilterDTO;
+import eu.bbmri_eric.quality.server.common.dto.PageResponse;
 import eu.bbmri_eric.quality.server.dataquality.ReportService;
 import eu.bbmri_eric.quality.server.dataquality.domain.Agent;
 import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheck;
@@ -16,6 +18,9 @@ import java.util.List;
 import org.jspecify.annotations.NonNull;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -122,8 +127,48 @@ class ReportServiceImpl implements ReportService {
 
   @Override
   @Transactional(readOnly = true)
+  public PageResponse<ReportDTO> findByAgentId(String agentId, FilterDTO filter) {
+    if (!agentRepository.existsById(agentId)) {
+      throw new EntityNotFoundException(agentId);
+    }
+
+    FilterDTO normalizedFilter = normalizeFilter(filter);
+    Sort.Direction direction =
+        normalizedFilter.getOrder() == FilterDTO.SortOrder.DESC
+            ? Sort.Direction.DESC
+            : Sort.Direction.ASC;
+
+    Sort sort = Sort.by(direction, normalizedFilter.getSort());
+    PageRequest pageRequest =
+        PageRequest.of(normalizedFilter.getPage(), normalizedFilter.getSize(), sort);
+    Page<Report> page = reportRepository.findByAgentId(agentId, pageRequest);
+
+    List<ReportDTO> content = page.getContent().stream().map(this::convertToDTO).toList();
+    return new PageResponse<>(content, page.getNumber(), page.getSize(), page.getTotalElements());
+  }
+
+  @Override
+  @Transactional(readOnly = true)
   public List<ReportDTO> findAll() {
     return reportRepository.findAll().stream().map(this::convertToDTO).toList();
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public PageResponse<ReportDTO> findAll(FilterDTO filter) {
+    FilterDTO normalizedFilter = normalizeFilter(filter);
+    Sort.Direction direction =
+        normalizedFilter.getOrder() == FilterDTO.SortOrder.DESC
+            ? Sort.Direction.DESC
+            : Sort.Direction.ASC;
+
+    Sort sort = Sort.by(direction, normalizedFilter.getSort());
+    PageRequest pageRequest =
+        PageRequest.of(normalizedFilter.getPage(), normalizedFilter.getSize(), sort);
+    Page<Report> page = reportRepository.findAll(pageRequest);
+
+    List<ReportDTO> content = page.getContent().stream().map(this::convertToDTO).toList();
+    return new PageResponse<>(content, page.getNumber(), page.getSize(), page.getTotalElements());
   }
 
   @Override
@@ -134,5 +179,18 @@ class ReportServiceImpl implements ReportService {
 
   private ReportDTO convertToDTO(Report report) {
     return modelMapper.map(report, ReportDTO.class);
+  }
+
+  private FilterDTO normalizeFilter(FilterDTO filter) {
+    if (filter.getOrder() == null) {
+      filter.setOrder(FilterDTO.SortOrder.ASC);
+    }
+
+    if (filter.getSort() == null || filter.getSort().isBlank()) {
+      filter.setSort("timestamp");
+      filter.setOrder(FilterDTO.SortOrder.DESC);
+    }
+
+    return filter;
   }
 }

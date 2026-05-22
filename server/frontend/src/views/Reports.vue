@@ -10,7 +10,7 @@
           icon="bi bi-file-earmark-text"
         >
           <template #actions>
-            <button class="btn btn-outline-primary btn-sm" :disabled="loading" @click="fetchData">
+            <button class="btn btn-outline-primary btn-sm" :disabled="loading" @click="refreshPage">
               <i class="bi bi-arrow-clockwise"></i>
               <span class="d-none d-md-inline ms-1">Refresh</span>
             </button>
@@ -22,7 +22,7 @@
           <div class="col-12 col-sm-6 col-lg-3">
             <StatsCard
               label="Total Reports"
-              :value="reports.length"
+              :value="totalReports"
               icon="bi bi-file-earmark-text"
               color="var(--color-primary)"
             />
@@ -55,24 +55,23 @@
 
         <!-- Reports table -->
         <div>
-          <div class="mb-4">
-            <LabeledValuesFilter v-model="selectedStatus" label="Status:" :categories="statuses" />
-          </div>
           <PaginatedTable
             title="Recent Reports"
             :columns="columns"
             :items="tableRows"
-            :total-items="filteredReports.length"
+            :page="currentPage"
+            :page-size="pageSize"
+            :total-items="totalReports"
             :loading="loading"
             :error="error"
-            :paginate="false"
             item-key="id"
             item-label="reports"
             empty-text="No reports available"
             @row-click="openReport"
+            @page-change="changePage"
           >
             <template #header-meta>
-              <Badge :text="`${filteredReports.length} reports`" variant="secondary" size="small" />
+              <Badge :text="`${totalReports} reports`" variant="secondary" size="small" />
             </template>
 
             <template #cell-status="{ item, value }">
@@ -106,7 +105,6 @@
   import { CheckStatus } from '@/utils/qualityCheckUtils.js';
   import PageHeader from '@/components/ui/PageHeader.vue';
   import StatsCard from '@/components/ui/StatsCard.vue';
-  import LabeledValuesFilter from '@/components/ui/LabeledValuesFilter.vue';
   import PaginatedTable from '@/components/ui/PaginatedTable.vue';
   import Badge from '@/components/ui/Badge.vue';
 
@@ -122,17 +120,19 @@
     agents,
     loading,
     error,
-    selectedStatus,
-    statuses,
     reportStats,
     fetchData,
+    currentPage,
+    pageSize,
+    totalReports,
+    changePage,
+    refreshPage,
   } = useReportsOverview();
 
-  const { columns, filteredReports, tableRows } = useReportTableRows({
+  const { columns, tableRows } = useReportTableRows({
     reports,
     qualityCheckMap,
     agents,
-    selectedStatus,
   });
 
   const openReport = (report) => {
