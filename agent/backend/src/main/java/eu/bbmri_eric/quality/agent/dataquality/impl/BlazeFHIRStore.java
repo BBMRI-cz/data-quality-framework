@@ -6,7 +6,7 @@ import ca.uhn.fhir.rest.api.SummaryEnum;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.api.ServerValidationModeEnum;
 import ca.uhn.fhir.rest.client.interceptor.BasicAuthInterceptor;
-import eu.bbmri_eric.quality.agent.dataquality.FHIRStore;
+import eu.bbmri_eric.quality.agent.dataquality.FHIRServer;
 import eu.bbmri_eric.quality.agent.settings.DatabaseType;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
 import eu.bbmri_eric.quality.agent.settings.event.SettingsUpdatedEvent;
@@ -41,7 +41,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 @Component
-class BlazeFHIRStore implements FHIRStore {
+class BlazeFHIRStore implements FHIRServer {
   private static final Logger log = LoggerFactory.getLogger(BlazeFHIRStore.class);
   private volatile IGenericClient client;
   private volatile RestTemplate restTemplate;

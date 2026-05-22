@@ -11,7 +11,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import eu.bbmri_eric.quality.agent.dataquality.FHIRStore;
+import eu.bbmri_eric.quality.agent.dataquality.FHIRServer;
 import java.util.NoSuchElementException;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -21,7 +21,7 @@ class FhirDataStoreTest {
 
   @Test
   void returnsEntity_whenPatientFound() throws JSONException {
-    FHIRStore fhirStore = mock(FHIRStore.class);
+    FHIRServer fhirStore = mock(FHIRServer.class);
     FhirDataStore store = new FhirDataStore(fhirStore);
 
     String id = "123";
@@ -43,7 +43,7 @@ class FhirDataStoreTest {
 
   @Test
   void throwsNotFound_whenPatientMissing() {
-    FHIRStore fhirStore = mock(FHIRStore.class);
+    FHIRServer fhirStore = mock(FHIRServer.class);
     FhirDataStore store = new FhirDataStore(fhirStore);
 
     String id = "missing-1";
@@ -58,7 +58,7 @@ class FhirDataStoreTest {
 
   @Test
   void throwsBadRequest_onUnsupportedType() {
-    FHIRStore fhirStore = mock(FHIRStore.class);
+    FHIRServer fhirStore = mock(FHIRServer.class);
     FhirDataStore store = new FhirDataStore(fhirStore);
 
     IllegalArgumentException ex =

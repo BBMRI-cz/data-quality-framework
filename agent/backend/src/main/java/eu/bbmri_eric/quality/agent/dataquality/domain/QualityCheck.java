@@ -2,7 +2,7 @@ package eu.bbmri_eric.quality.agent.dataquality.domain;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.bbmri_eric.quality.agent.dataquality.FHIRStore;
+import eu.bbmri_eric.quality.agent.dataquality.FHIRServer;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -62,7 +62,7 @@ public class QualityCheck implements DataQualityCheck {
   private static final ObjectMapper mapper = new ObjectMapper();
 
   @Override
-  public ResultDTO execute(FHIRStore fhirStore) {
+  public ResultDTO execute(FHIRServer fhirStore) {
     try {
       String cqlData = Base64.getEncoder().encodeToString(query.getBytes());
       String libraryUri = java.util.UUID.randomUUID().toString().toLowerCase();

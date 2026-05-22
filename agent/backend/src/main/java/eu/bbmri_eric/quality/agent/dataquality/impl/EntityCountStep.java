@@ -1,6 +1,6 @@
 package eu.bbmri_eric.quality.agent.dataquality.impl;
 
-import eu.bbmri_eric.quality.agent.dataquality.FHIRStore;
+import eu.bbmri_eric.quality.agent.dataquality.FHIRServer;
 import eu.bbmri_eric.quality.agent.dataquality.ReportPipelineStep;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
 import lombok.extern.slf4j.Slf4j;
@@ -10,9 +10,9 @@ import org.springframework.stereotype.Component;
 @Component
 class EntityCountStep implements ReportPipelineStep {
 
-  private final FHIRStore fhirStore;
+  private final FHIRServer fhirStore;
 
-  EntityCountStep(FHIRStore fhirStore) {
+  EntityCountStep(FHIRServer fhirStore) {
     this.fhirStore = fhirStore;
   }
 

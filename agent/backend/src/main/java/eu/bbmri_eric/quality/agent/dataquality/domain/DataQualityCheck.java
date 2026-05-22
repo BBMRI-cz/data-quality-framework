@@ -1,6 +1,6 @@
 package eu.bbmri_eric.quality.agent.dataquality.domain;
 
-import eu.bbmri_eric.quality.agent.dataquality.FHIRStore;
+import eu.bbmri_eric.quality.agent.dataquality.FHIRServer;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
 
 /**
@@ -16,7 +16,7 @@ public interface DataQualityCheck {
    * @param fhirStore the FHIR store against which the data quality check should be executed
    * @return the result of the data quality check
    */
-  ResultDTO execute(FHIRStore fhirStore);
+  ResultDTO execute(FHIRServer fhirStore);
 
   /**
    * Returns the human-readable name of the data quality check.

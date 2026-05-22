@@ -2,7 +2,7 @@ package eu.bbmri_eric.quality.agent.dataquality.impl;
 
 import eu.bbmri_eric.ICD10Validator;
 import eu.bbmri_eric.ICDValidator;
-import eu.bbmri_eric.quality.agent.dataquality.FHIRStore;
+import eu.bbmri_eric.quality.agent.dataquality.FHIRServer;
 import eu.bbmri_eric.quality.agent.dataquality.domain.DataQualityCheck;
 import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
@@ -25,7 +25,7 @@ class InvalidConditionICDCheck implements DataQualityCheck {
   }
 
   @Override
-  public ResultDTO execute(FHIRStore fhirStore) {
+  public ResultDTO execute(FHIRServer fhirStore) {
     ICDValidator icdValidator = new ICD10Validator();
     try {
       List<Resource> conditions =

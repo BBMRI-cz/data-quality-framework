@@ -1,17 +1,18 @@
 package eu.bbmri_eric.quality.agent.dataquality.impl;
 
 import eu.bbmri_eric.quality.agent.dataquality.DataStore;
-import eu.bbmri_eric.quality.agent.dataquality.FHIRStore;
+import eu.bbmri_eric.quality.agent.dataquality.FHIRServer;
+import eu.bbmri_eric.quality.agent.dataquality.dto.DatabaseHealthDTO;
 import java.util.NoSuchElementException;
 import org.json.JSONObject;
 import org.springframework.stereotype.Component;
 
 @Component
 class FhirDataStore implements DataStore {
-  private final FHIRStore fhirStore;
+  private final FHIRServer fhirStore;
 
-  public FhirDataStore(FHIRStore fhirStore) {
-    this.fhirStore = fhirStore;
+  public FhirDataStore(FHIRServer fhirServer) {
+    this.fhirStore = fhirServer;
   }
 
   @Override
@@ -29,5 +30,15 @@ class FhirDataStore implements DataStore {
   @Override
   public JSONObject checkHealth() {
     return fhirStore.checkHealth();
+  }
+
+  @Override
+  public Object executeQuery(String query) {
+    return null;
+  }
+
+  @Override
+  public DatabaseHealthDTO checkHealthV2() {
+    return null;
   }
 }

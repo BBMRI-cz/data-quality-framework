@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 
 class CQLQueryTest {
 
-  private void stubMeasureSetup(FHIRStore store) throws Exception {
+  private void stubMeasureSetup(FHIRServer store) throws Exception {
     when(store.createLibrary(anyString(), anyString())).thenReturn(new JSONObject());
     when(store.postResource(eq("Library"), any(JSONObject.class))).thenReturn(new JSONObject());
     when(store.createMeasure(anyString(), anyString(), anyString()))
@@ -68,7 +68,7 @@ class CQLQueryTest {
 
   @Test
   void execute_returnsCorrectPatientIds() throws Exception {
-    FHIRStore mockStore = mock(FHIRStore.class);
+    FHIRServer mockStore = mock(FHIRServer.class);
     QualityCheck query = new QualityCheck("name", "desc", "query");
 
     stubMeasureSetup(mockStore);
@@ -102,7 +102,7 @@ class CQLQueryTest {
   @Test
   void execute_returnsEmptySet_whenPopulationCountIsZero_andDoesNotCallGetPatientList()
       throws Exception {
-    FHIRStore store = mock(FHIRStore.class);
+    FHIRServer store = mock(FHIRServer.class);
     QualityCheck query = new QualityCheck("name", "desc", "query");
     stubMeasureSetup(store);
 
@@ -117,7 +117,7 @@ class CQLQueryTest {
 
   @Test
   void execute_returnsEmptySet_whenListReferenceMissing_evenIfCountPositive() throws Exception {
-    FHIRStore store = mock(FHIRStore.class);
+    FHIRServer store = mock(FHIRServer.class);
     QualityCheck query = new QualityCheck("name", "desc", "query");
     stubMeasureSetup(store);
 

@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import eu.bbmri_eric.quality.agent.dataquality.dto.DatabaseHealthDTO;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +37,16 @@ public class DataStoreIntegrationTest {
         @Override
         public JSONObject checkHealth() throws Exception {
           return new JSONObject().put("status", "healthy");
+        }
+
+        @Override
+        public Object executeQuery(String query) {
+          return null;
+        }
+
+        @Override
+        public DatabaseHealthDTO checkHealthV2() {
+          return null;
         }
       };
     }

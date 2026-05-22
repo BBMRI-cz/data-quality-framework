@@ -1,6 +1,6 @@
 package eu.bbmri_eric.quality.agent.dataquality.impl;
 
-import eu.bbmri_eric.quality.agent.dataquality.FHIRStore;
+import eu.bbmri_eric.quality.agent.dataquality.FHIRServer;
 import eu.bbmri_eric.quality.agent.dataquality.ReportPipelineStep;
 import eu.bbmri_eric.quality.agent.dataquality.domain.DataQualityCheck;
 import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
@@ -22,11 +22,11 @@ import org.springframework.stereotype.Component;
 class QualityChecksStep implements ReportPipelineStep {
 
   private final QualityCheckRepository repository;
-  private final FHIRStore fhirStore;
+  private final FHIRServer fhirStore;
   private final ModelMapper modelMapper;
 
   QualityChecksStep(
-      QualityCheckRepository repository, FHIRStore fhirStore, ModelMapper modelMapper) {
+      QualityCheckRepository repository, FHIRServer fhirStore, ModelMapper modelMapper) {
     this.repository = repository;
     this.fhirStore = fhirStore;
     this.modelMapper = modelMapper;
