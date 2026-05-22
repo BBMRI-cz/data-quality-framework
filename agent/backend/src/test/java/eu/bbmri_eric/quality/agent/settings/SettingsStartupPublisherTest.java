@@ -28,15 +28,15 @@ class SettingsStartupPublisherTest {
   }
 
   private SettingsDTO mockSettings() {
-    SettingsDTO dto = new SettingsDTO();
-    dto.setFhirUrl("http://localhost:8080/fhir");
-    dto.setFhirUsername("testuser");
-    dto.setFhirPassword("dGVzdHBhc3M=");
-    dto.setEpsilon(2.0);
-    dto.setDelta(1.0E-9);
-    dto.setMinThreshold(20);
-    dto.setNoiseMechanism(NoiseMechanism.GAUSSIAN);
-    return dto;
+    return SettingsDTO.builder()
+        .fhirUrl("http://localhost:8080/fhir")
+        .fhirUsername("testuser")
+        .fhirPassword("dGVzdHBhc3M=")
+        .epsilon(2.0)
+        .delta(1.0E-9)
+        .minThreshold(20)
+        .noiseMechanism(NoiseMechanism.GAUSSIAN)
+        .build();
   }
 
   @Test

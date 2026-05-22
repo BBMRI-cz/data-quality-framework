@@ -7,6 +7,7 @@ import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.api.ServerValidationModeEnum;
 import ca.uhn.fhir.rest.client.interceptor.BasicAuthInterceptor;
 import eu.bbmri_eric.quality.agent.dataquality.FHIRStore;
+import eu.bbmri_eric.quality.agent.settings.DatabaseType;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
 import eu.bbmri_eric.quality.agent.settings.event.SettingsUpdatedEvent;
 import java.security.KeyManagementException;
@@ -15,6 +16,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Objects;
 import javax.net.ssl.SSLContext;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
@@ -80,7 +82,9 @@ class BlazeFHIRStore implements FHIRStore {
   @EventListener
   public void onSettingsUpdated(SettingsUpdatedEvent event) {
     log.info("Settings updated, reinitializing FHIR clients");
-    initializeClients(event.getSettings());
+    if (Objects.equals(event.getSettings().getDatabaseType(), DatabaseType.FHIR)) {
+      initializeClients(event.getSettings());
+    }
   }
 
   private synchronized void initializeClients(SettingsDTO settings) {

@@ -55,8 +55,8 @@
               :class="{ active: $route.path === '/settings' }"
               @click="closeMobileMenu"
             >
-              <i class="bi bi-fire"></i>
-              <span>FHIR® Server</span>
+              <i class="bi bi-database-fill-gear"></i>
+              <span>Database</span>
             </router-link>
             <router-link
               to="/privacy"
@@ -73,7 +73,7 @@
               :class="{ active: $route.path === '/servers' }"
               @click="closeMobileMenu"
             >
-              <i class="bi bi-database-fill-gear"></i>
+              <i class="bi bi-flag-fill"></i>
               <span>Reporting</span>
             </router-link>
           </div>

@@ -24,15 +24,29 @@ class SettingsControllerTest {
   @Autowired private ObjectMapper objectMapper;
 
   private SettingsDTO validSettingsDTO() {
-    SettingsDTO dto = new SettingsDTO();
-    dto.setFhirUrl("http://localhost:8080/fhir");
-    dto.setFhirUsername("testuser");
-    dto.setFhirPassword("dGVzdHBhc3M=");
-    dto.setEpsilon(2.0);
-    dto.setDelta(1.0E-8);
-    dto.setMinThreshold(20);
-    dto.setNoiseMechanism(NoiseMechanism.GAUSSIAN);
-    return dto;
+    return SettingsDTO.builder()
+        .fhirUrl("http://localhost:8080/fhir")
+        .fhirUsername("testuser")
+        .fhirPassword("dGVzdHBhc3M=")
+        .epsilon(2.0)
+        .delta(1.0E-8)
+        .minThreshold(20)
+        .noiseMechanism(NoiseMechanism.GAUSSIAN)
+        .databaseType(DatabaseType.FHIR)
+        .build();
+  }
+
+  private SettingsDTO validSqlSettingsDTO() {
+    return SettingsDTO.builder()
+        .databaseType(DatabaseType.SQL)
+        .sqlUrl("jdbc:postgresql://localhost:5432/quality")
+        .sqlUsername("dbuser")
+        .sqlPassword("c2VjcmV0")
+        .epsilon(2.0)
+        .delta(1.0E-8)
+        .minThreshold(20)
+        .noiseMechanism(NoiseMechanism.GAUSSIAN)
+        .build();
   }
 
   @Test
@@ -48,7 +62,8 @@ class SettingsControllerTest {
         .andExpect(jsonPath("$.epsilon").exists())
         .andExpect(jsonPath("$.delta").exists())
         .andExpect(jsonPath("$.minThreshold").exists())
-        .andExpect(jsonPath("$.noiseMechanism").exists());
+        .andExpect(jsonPath("$.noiseMechanism").exists())
+        .andExpect(jsonPath("$.databaseType").exists());
   }
 
   @Test
@@ -141,6 +156,75 @@ class SettingsControllerTest {
   void updateSettings_withNegativeMinThreshold_shouldReturn400() throws Exception {
     SettingsDTO dto = validSettingsDTO();
     dto.setMinThreshold(-1);
+
+    mockMvc
+        .perform(
+            put("/api/settings")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @WithMockUser(username = "admin")
+  void updateSettings_withSqlSettings_shouldReturn200() throws Exception {
+    mockMvc
+        .perform(
+            put("/api/settings")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(validSqlSettingsDTO())))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.databaseType").value("SQL"))
+        .andExpect(jsonPath("$.sqlUrl").value("jdbc:postgresql://localhost:5432/quality"));
+  }
+
+  @Test
+  @WithMockUser(username = "admin")
+  void updateSettings_withSqlInvalidUrl_shouldReturn400() throws Exception {
+    SettingsDTO dto = validSqlSettingsDTO();
+    dto.setSqlUrl("http://localhost:5432/quality");
+
+    mockMvc
+        .perform(
+            put("/api/settings")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @WithMockUser(username = "admin")
+  void updateSettings_withSqlEmptyUrl_shouldReturn400() throws Exception {
+    SettingsDTO dto = validSqlSettingsDTO();
+    dto.setSqlUrl("");
+
+    mockMvc
+        .perform(
+            put("/api/settings")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @WithMockUser(username = "admin")
+  void updateSettings_withSqlUsernameTooLong_shouldReturn400() throws Exception {
+    SettingsDTO dto = validSqlSettingsDTO();
+    dto.setSqlUsername("a".repeat(101));
+
+    mockMvc
+        .perform(
+            put("/api/settings")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @WithMockUser(username = "admin")
+  void updateSettings_withSqlPasswordTooLong_shouldReturn400() throws Exception {
+    SettingsDTO dto = validSqlSettingsDTO();
+    dto.setSqlPassword("a".repeat(101));
 
     mockMvc
         .perform(

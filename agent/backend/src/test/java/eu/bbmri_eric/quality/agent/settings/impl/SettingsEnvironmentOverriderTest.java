@@ -42,16 +42,16 @@ class SettingsEnvironmentOverriderTest {
   }
 
   private SettingsDTO defaultSettingsDTO() {
-    SettingsDTO dto = new SettingsDTO();
-    dto.setAgentId("agent-123");
-    dto.setFhirUrl("http://url.com");
-    dto.setFhirUsername("user");
-    dto.setFhirPassword("cGFzcw==");
-    dto.setEpsilon(1.0);
-    dto.setDelta(1e-8);
-    dto.setMinThreshold(10);
-    dto.setNoiseMechanism(NoiseMechanism.LAPLACE);
-    return dto;
+    return SettingsDTO.builder()
+        .agentId("agent-123")
+        .fhirUrl("http://url.com")
+        .fhirUsername("user")
+        .fhirPassword("cGFzcw==")
+        .epsilon(1.0)
+        .delta(1e-8)
+        .minThreshold(10)
+        .noiseMechanism(NoiseMechanism.LAPLACE)
+        .build();
   }
 
   @Test

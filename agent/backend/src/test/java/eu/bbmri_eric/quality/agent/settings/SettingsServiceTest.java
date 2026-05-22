@@ -40,15 +40,15 @@ class SettingsServiceTest {
       double delta,
       int minThreshold,
       NoiseMechanism noiseMechanism) {
-    SettingsDTO dto = new SettingsDTO();
-    dto.setFhirUrl(fhirUrl);
-    dto.setFhirUsername(fhirUsername);
-    dto.setFhirPassword(fhirPassword);
-    dto.setEpsilon(epsilon);
-    dto.setDelta(delta);
-    dto.setMinThreshold(minThreshold);
-    dto.setNoiseMechanism(noiseMechanism);
-    return dto;
+    return SettingsDTO.builder()
+        .fhirUrl(fhirUrl)
+        .fhirUsername(fhirUsername)
+        .fhirPassword(fhirPassword)
+        .epsilon(epsilon)
+        .delta(delta)
+        .minThreshold(minThreshold)
+        .noiseMechanism(noiseMechanism)
+        .build();
   }
 
   @Test
