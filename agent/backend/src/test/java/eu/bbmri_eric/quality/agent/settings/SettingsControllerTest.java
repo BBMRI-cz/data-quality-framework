@@ -87,9 +87,9 @@ class SettingsControllerTest {
 
   @Test
   @WithMockUser(username = "admin")
-  void updateSettings_withInvalidUrl_shouldReturn400() throws Exception {
+  void updateSettings_withNonHttpUrl_shouldReturn400() throws Exception {
     SettingsDTO dto = validSettingsDTO();
-    dto.setFhirUrl("");
+    dto.setFhirUrl("ftp://localhost:8080/fhir");
 
     mockMvc
         .perform(
@@ -101,16 +101,15 @@ class SettingsControllerTest {
 
   @Test
   @WithMockUser(username = "admin")
-  void updateSettings_withNonHttpUrl_shouldReturn400() throws Exception {
+  void updateSettings_withEmptyFhirUrl_shouldReturn200() throws Exception {
     SettingsDTO dto = validSettingsDTO();
-    dto.setFhirUrl("ftp://localhost:8080/fhir");
-
+    dto.setFhirUrl("");
     mockMvc
-        .perform(
-            put("/api/settings")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(dto)))
-        .andExpect(status().isBadRequest());
+            .perform(
+                    put("/api/settings")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(dto)))
+            .andExpect(status().isOk());
   }
 
   @Test

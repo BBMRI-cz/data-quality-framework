@@ -30,7 +30,7 @@ public class SettingsDTO {
   private String agentId;
 
   @Size(max = 500, message = "FHIR URL must not exceed 500 characters")
-  @Pattern(regexp = "^https?://.*", message = "FHIR URL must be a valid HTTP or HTTPS URL")
+  @Pattern(regexp = "^$|^https?://.*", message = "FHIR URL must be a valid HTTP or HTTPS URL")
   @Schema(
       description = "FHIR server URL",
       example = "http://localhost:8080/fhir",
