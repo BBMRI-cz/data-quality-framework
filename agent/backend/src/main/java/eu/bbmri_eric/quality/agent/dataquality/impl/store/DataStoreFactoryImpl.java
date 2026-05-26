@@ -11,6 +11,8 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
+import java.util.Objects;
+
 @Slf4j
 @Component
 class DataStoreFactoryImpl implements DataStoreFactory {
@@ -35,13 +37,22 @@ class DataStoreFactoryImpl implements DataStoreFactory {
   }
 
   @EventListener
-  public void onSettingsUpdated(SettingsUpdatedEvent event) {
+  void onSettingsUpdated(SettingsUpdatedEvent event) {
+    checkSettings(event);
+    SettingsDTO settings = event.getSettings();
     log.info("Settings updated, refreshing active data store");
-    this.currentDataStore = resolveFromSettings(event.getSettings());
-    if (event.getSettings().getDatabaseType() == DatabaseType.FHIR) {
+    this.currentDataStore = resolveFromSettings(settings);
+    if (settings.getDatabaseType() == DatabaseType.FHIR) {
       fhirDataStore.onSettingsUpdated(event);
     }
   }
+
+  private void checkSettings(SettingsUpdatedEvent event){
+    if (Objects.isNull(event.getSettings())){
+      throw new IllegalArgumentException("Event contained null values, skipping reinitialization");
+    }
+  }
+
 
   private DataStore resolveFromSettings(SettingsDTO settings) {
     DatabaseType databaseType = settings != null ? settings.getDatabaseType() : null;
