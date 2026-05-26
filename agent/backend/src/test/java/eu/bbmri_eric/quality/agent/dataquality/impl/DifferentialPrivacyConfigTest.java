@@ -13,11 +13,13 @@ class DifferentialPrivacyConfigTest {
   @Test
   void updateConfig_withProvidedValues_shouldUseProvidedValues() {
     DifferentialPrivacyConfig config = new DifferentialPrivacyConfig();
-    SettingsDTO settings = new SettingsDTO();
-    settings.setEpsilon(2.5);
-    settings.setDelta(1.0E-7);
-    settings.setMinThreshold(25);
-    settings.setNoiseMechanism(NoiseMechanism.LAPLACE);
+    SettingsDTO settings =
+        SettingsDTO.builder()
+            .epsilon(2.5)
+            .delta(1.0E-7)
+            .minThreshold(25)
+            .noiseMechanism(NoiseMechanism.LAPLACE)
+            .build();
 
     ReflectionTestUtils.invokeMethod(config, "updateConfig", new SettingsUpdatedEvent(settings));
 
@@ -30,7 +32,7 @@ class DifferentialPrivacyConfigTest {
   @Test
   void updateConfig_withNullDifferentialPrivacyValues_shouldUseDefaults() {
     DifferentialPrivacyConfig config = new DifferentialPrivacyConfig();
-    SettingsDTO settings = new SettingsDTO();
+    SettingsDTO settings = SettingsDTO.builder().build();
 
     ReflectionTestUtils.invokeMethod(config, "updateConfig", new SettingsUpdatedEvent(settings));
 

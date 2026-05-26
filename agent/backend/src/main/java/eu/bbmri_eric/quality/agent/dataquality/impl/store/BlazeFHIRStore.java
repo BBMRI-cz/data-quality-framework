@@ -1,4 +1,4 @@
-package eu.bbmri_eric.quality.agent.dataquality.impl;
+package eu.bbmri_eric.quality.agent.dataquality.impl.store;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.LenientErrorHandler;
@@ -6,7 +6,11 @@ import ca.uhn.fhir.rest.api.SummaryEnum;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.api.ServerValidationModeEnum;
 import ca.uhn.fhir.rest.client.interceptor.BasicAuthInterceptor;
-import eu.bbmri_eric.quality.agent.dataquality.FHIRStore;
+import eu.bbmri_eric.quality.agent.dataquality.FHIRServer;
+import eu.bbmri_eric.quality.agent.dataquality.dto.DatabaseHealthDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
+import eu.bbmri_eric.quality.agent.dataquality.impl.FhirCqlQueryExecutor;
+import eu.bbmri_eric.quality.agent.settings.DatabaseType;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
 import eu.bbmri_eric.quality.agent.settings.event.SettingsUpdatedEvent;
 import java.security.KeyManagementException;
@@ -15,6 +19,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Objects;
 import javax.net.ssl.SSLContext;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
@@ -34,19 +39,17 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-@Component
-class BlazeFHIRStore implements FHIRStore {
+class BlazeFHIRStore implements FHIRServer {
   private static final Logger log = LoggerFactory.getLogger(BlazeFHIRStore.class);
-  private volatile IGenericClient client;
-  private volatile RestTemplate restTemplate;
-  private volatile String fhirUrl;
   private final RestTemplateBuilder restTemplateBuilder;
   private final HttpHeaders headers;
   private final FhirContext ctx;
+  private volatile IGenericClient client;
+  private volatile RestTemplate restTemplate;
+  private volatile String fhirUrl;
 
   BlazeFHIRStore(RestTemplateBuilder restTemplateBuilder) {
     this.restTemplateBuilder = restTemplateBuilder;
@@ -77,10 +80,35 @@ class BlazeFHIRStore implements FHIRStore {
     headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
   }
 
+  private static JSONArray getJsonArray() {
+    JSONArray group = new JSONArray();
+    JSONObject groupEntry = new JSONObject();
+    JSONArray population = new JSONArray();
+    JSONObject populationEntry = new JSONObject();
+    JSONObject populationCode = new JSONObject();
+    JSONArray populationCoding = new JSONArray();
+    JSONObject populationCodingEntry = new JSONObject();
+    populationCodingEntry.put("system", "http://terminology.hl7.org/CodeSystem/measure-population");
+    populationCodingEntry.put("code", "initial-population");
+    populationCoding.put(populationCodingEntry);
+    populationCode.put("coding", populationCoding);
+    populationEntry.put("code", populationCode);
+    JSONObject criteria = new JSONObject();
+    criteria.put("language", "text/cql-identifier");
+    criteria.put("expression", "InInitialPopulation");
+    populationEntry.put("criteria", criteria);
+    population.put(populationEntry);
+    groupEntry.put("population", population);
+    group.put(groupEntry);
+    return group;
+  }
+
   @EventListener
   public void onSettingsUpdated(SettingsUpdatedEvent event) {
     log.info("Settings updated, reinitializing FHIR clients");
-    initializeClients(event.getSettings());
+    if (Objects.equals(event.getSettings().getDatabaseType(), DatabaseType.FHIR)) {
+      initializeClients(event.getSettings());
+    }
   }
 
   private synchronized void initializeClients(SettingsDTO settings) {
@@ -194,29 +222,6 @@ class BlazeFHIRStore implements FHIRStore {
     measure.put("group", group);
 
     return measure;
-  }
-
-  private static JSONArray getJsonArray() {
-    JSONArray group = new JSONArray();
-    JSONObject groupEntry = new JSONObject();
-    JSONArray population = new JSONArray();
-    JSONObject populationEntry = new JSONObject();
-    JSONObject populationCode = new JSONObject();
-    JSONArray populationCoding = new JSONArray();
-    JSONObject populationCodingEntry = new JSONObject();
-    populationCodingEntry.put("system", "http://terminology.hl7.org/CodeSystem/measure-population");
-    populationCodingEntry.put("code", "initial-population");
-    populationCoding.put(populationCodingEntry);
-    populationCode.put("coding", populationCoding);
-    populationEntry.put("code", populationCode);
-    JSONObject criteria = new JSONObject();
-    criteria.put("language", "text/cql-identifier");
-    criteria.put("expression", "InInitialPopulation");
-    populationEntry.put("criteria", criteria);
-    population.put(populationEntry);
-    groupEntry.put("population", population);
-    group.put(groupEntry);
-    return group;
   }
 
   public JSONObject createLibrary(String libraryUri, String cqlData) {
@@ -377,6 +382,11 @@ class BlazeFHIRStore implements FHIRStore {
     }
   }
 
+  @Override
+  public JSONObject getEntity(String entityType, String id) throws Exception {
+    return null;
+  }
+
   public JSONObject checkHealth() {
     JSONObject healthStatus = new JSONObject();
     try {
@@ -390,5 +400,15 @@ class BlazeFHIRStore implements FHIRStore {
       healthStatus.put("details", details);
     }
     return healthStatus;
+  }
+
+  @Override
+  public ResultDTO executeQuery(String query) {
+    return FhirCqlQueryExecutor.execute(this, query);
+  }
+
+  @Override
+  public DatabaseHealthDTO checkHealthV2() {
+    return null;
   }
 }

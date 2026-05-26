@@ -17,48 +17,19 @@
               <div>
                 <h2 class="section-title">
                   <i class="bi bi-database"></i>
-                  FHIR® Server
+                  Connection Settings
                 </h2>
                 <p class="text-muted mb-0">
-                  Configure your FHIR® server connection to access the data
+                  Choose the data source and configure the connection details
                 </p>
               </div>
             </div>
 
-            <form class="settings-form" @submit.prevent="saveFhirSettings">
-              <FormField
-                id="fhirUrl"
-                v-model="fhirSettings.url"
-                type="url"
-                label="Server URL"
-                icon="bi-link-45deg"
-                placeholder="https://fhir-server.example.com/fhir"
-                help-text="The base URL of your FHIR® server endpoint"
-                required
-              />
+            <form class="settings-form" @submit.prevent="saveSettings">
+              <DatabaseTypeSelect v-model="databaseType" :options="databaseTypeOptions" required />
 
-              <FormField
-                id="fhirUsername"
-                v-model="fhirSettings.username"
-                label="Username"
-                icon="bi-person"
-                placeholder="Enter username"
-                help-text="Username for authenticating with the FHIR® server"
-                required
-                autocomplete="username"
-              />
-
-              <FormField
-                id="fhirPassword"
-                v-model="fhirSettings.password"
-                type="password"
-                label="Password"
-                icon="bi-key"
-                placeholder="Enter password"
-                help-text="Password for authenticating with the FHIR® server"
-                required
-                autocomplete="current-password"
-              />
+              <FhirSettingsFields v-if="isFhir" :settings="fhirSettings" :required="isFhir" />
+              <SqlSettingsFields v-else :settings="sqlSettings" :required="isSql" />
 
               <FormActions
                 :loading="isSaving"
@@ -75,20 +46,38 @@
 </template>
 
 <script setup>
-  import { ref, reactive, onMounted } from 'vue';
+  import { ref, reactive, onMounted, computed } from 'vue';
   import { useSettingsStore } from '@/stores/settingsStore.js';
   import PageHeader from '@/components/PageHeader.vue';
   import HealthStatusBanner from '@/components/HealthStatusBanner.vue';
-  import { FormField, FormActions } from '@/components/forms';
+  import { FormActions } from '@/components/forms';
   import { useHealthStore } from '@/stores/healthStore.js';
   import { notificationService } from '@/services/notificationService.js';
+  import DatabaseTypeSelect from '@/components/settings/DatabaseTypeSelect.vue';
+  import FhirSettingsFields from '@/components/settings/FhirSettingsFields.vue';
+  import SqlSettingsFields from '@/components/settings/SqlSettingsFields.vue';
 
   const settingsStore = useSettingsStore();
   const healthStore = useHealthStore();
 
   const isSaving = ref(false);
+  const databaseType = ref('FHIR');
+
+  const databaseTypeOptions = [
+    { label: 'FHIR', value: 'FHIR' },
+    { label: 'SQL', value: 'SQL' },
+  ];
+
+  const isFhir = computed(() => databaseType.value === 'FHIR');
+  const isSql = computed(() => databaseType.value === 'SQL');
 
   const fhirSettings = reactive({
+    url: '',
+    username: '',
+    password: '',
+  });
+
+  const sqlSettings = reactive({
     url: '',
     username: '',
     password: '',
@@ -112,25 +101,29 @@
     }
   }
 
-  async function saveFhirSettings() {
+  async function saveSettings() {
     isSaving.value = true;
 
     try {
       const payload = {
         ...settingsStore.settings,
+        databaseType: databaseType.value,
         fhirUrl: fhirSettings.url,
         fhirUsername: fhirSettings.username,
         fhirPassword: encodeBase64(fhirSettings.password),
+        sqlUrl: sqlSettings.url,
+        sqlUsername: sqlSettings.username,
+        sqlPassword: encodeBase64(sqlSettings.password),
       };
 
       await settingsStore.updateSettings(payload);
       notificationService.success(
         'Settings Saved',
-        'Your FHIR® server settings have been updated successfully'
+        'Your connection settings have been updated successfully'
       );
       await healthStore.checkHealth();
     } catch (error) {
-      console.error('Error saving FHIR® settings:', error);
+      console.error('Error saving connection settings:', error);
       notificationService.error('Save Failed', 'Unable to save settings. Please try again.');
     } finally {
       isSaving.value = false;
@@ -141,9 +134,13 @@
     try {
       const data = await settingsStore.fetchSettings();
       if (data) {
+        databaseType.value = data.databaseType || 'FHIR';
         fhirSettings.url = data.fhirUrl || '';
         fhirSettings.username = data.fhirUsername || '';
         fhirSettings.password = data.fhirPassword ? decodeBase64(data.fhirPassword) : '';
+        sqlSettings.url = data.sqlUrl || '';
+        sqlSettings.username = data.sqlUsername || '';
+        sqlSettings.password = data.sqlPassword ? decodeBase64(data.sqlPassword) : '';
       }
     } catch (error) {
       console.error('Error loading settings:', error);

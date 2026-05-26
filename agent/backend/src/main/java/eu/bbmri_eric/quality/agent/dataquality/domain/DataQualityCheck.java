@@ -1,22 +1,22 @@
 package eu.bbmri_eric.quality.agent.dataquality.domain;
 
-import eu.bbmri_eric.quality.agent.dataquality.FHIRStore;
+import eu.bbmri_eric.quality.agent.dataquality.DataStore;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
 
 /**
  * Represents a singular executable query that determines a specific aspect of data quality.
  * Implementations of this interface encapsulate the logic for evaluating data quality against a
- * given FHIR data store.
+ * given data store.
  */
 public interface DataQualityCheck {
 
   /**
-   * Executes the data quality check against the specified FHIR store.
+   * Executes the data quality check against the specified data store.
    *
-   * @param fhirStore the FHIR store against which the data quality check should be executed
+   * @param dataStore the data store against which the data quality check should be executed
    * @return the result of the data quality check
    */
-  ResultDTO execute(FHIRStore fhirStore);
+  ResultDTO execute(DataStore dataStore);
 
   /**
    * Returns the human-readable name of the data quality check.

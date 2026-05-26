@@ -9,7 +9,7 @@ import org.json.JSONObject;
  * FHIR resources such as Libraries and Measures. It provides methods to interact with and query the
  * FHIR backend.
  */
-public interface FHIRStore {
+public interface FHIRServer extends DataStore {
 
   /**
    * Returns a base JSON template for creating a FHIR Library resource.

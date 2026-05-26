@@ -1,6 +1,7 @@
 package eu.bbmri_eric.quality.agent.dataquality.impl;
 
-import eu.bbmri_eric.quality.agent.dataquality.FHIRStore;
+import eu.bbmri_eric.quality.agent.dataquality.DataStore;
+import eu.bbmri_eric.quality.agent.dataquality.FHIRServer;
 import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
 import java.util.Arrays;
@@ -27,7 +28,10 @@ class SurvivalRateCheck implements StratifiedDataQualityCheck {
   }
 
   @Override
-  public ResultDTO execute(FHIRStore fhirStore) {
+  public ResultDTO execute(DataStore dataStore) {
+    if (!(dataStore instanceof FHIRServer fhirStore)) {
+      return new ResultDTO("FHIR data store required for " + getName());
+    }
     try {
       List<Resource> patients =
           fhirStore.fetchAllResources("Patient", List.of("id", "gender", "deceased"));
@@ -51,7 +55,7 @@ class SurvivalRateCheck implements StratifiedDataQualityCheck {
   }
 
   @Override
-  public Map<String, ResultDTO> executeWithStratification(FHIRStore fhirStore) {
+  public Map<String, ResultDTO> executeWithStratification(FHIRServer fhirStore) {
     Map<String, ResultDTO> results = new HashMap<>();
     try {
       List<Resource> patients =
