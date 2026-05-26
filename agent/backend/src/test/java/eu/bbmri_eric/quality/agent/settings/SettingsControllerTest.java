@@ -105,11 +105,11 @@ class SettingsControllerTest {
     SettingsDTO dto = validSettingsDTO();
     dto.setFhirUrl("");
     mockMvc
-            .perform(
-                    put("/api/settings")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
-            .andExpect(status().isOk());
+        .perform(
+            put("/api/settings")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+        .andExpect(status().isOk());
   }
 
   @Test

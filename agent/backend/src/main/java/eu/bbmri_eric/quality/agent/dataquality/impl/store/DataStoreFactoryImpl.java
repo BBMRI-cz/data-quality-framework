@@ -6,12 +6,11 @@ import eu.bbmri_eric.quality.agent.settings.DatabaseType;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
 import eu.bbmri_eric.quality.agent.settings.event.SettingsUpdatedEvent;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-
-import java.util.Objects;
 
 @Slf4j
 @Component
@@ -47,12 +46,11 @@ class DataStoreFactoryImpl implements DataStoreFactory {
     }
   }
 
-  private void checkSettings(SettingsUpdatedEvent event){
-    if (Objects.isNull(event.getSettings())){
+  private void checkSettings(SettingsUpdatedEvent event) {
+    if (Objects.isNull(event.getSettings())) {
       throw new IllegalArgumentException("Event contained null values, skipping reinitialization");
     }
   }
-
 
   private DataStore resolveFromSettings(SettingsDTO settings) {
     DatabaseType databaseType = settings != null ? settings.getDatabaseType() : null;
