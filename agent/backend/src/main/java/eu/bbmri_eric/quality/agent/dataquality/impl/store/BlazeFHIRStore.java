@@ -403,6 +403,16 @@ class BlazeFHIRStore implements FHIRServer {
   }
 
   @Override
+  public Integer countPatients() {
+    return countResources("Patient");
+  }
+
+  @Override
+  public Integer countSecondaryEntities() {
+    return countResources("Specimen");
+  }
+
+  @Override
   public ResultDTO executeQuery(String query) {
     return FhirCqlQueryExecutor.execute(this, query);
   }
