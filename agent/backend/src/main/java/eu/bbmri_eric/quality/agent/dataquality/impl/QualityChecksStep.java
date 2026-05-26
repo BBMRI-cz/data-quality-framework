@@ -10,6 +10,7 @@ import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheckType;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Result;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
+import eu.bbmri_eric.quality.agent.dataquality.impl.store.SqlDataStore;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

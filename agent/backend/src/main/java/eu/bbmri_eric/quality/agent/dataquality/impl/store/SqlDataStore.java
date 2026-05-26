@@ -1,4 +1,4 @@
-package eu.bbmri_eric.quality.agent.dataquality.impl;
+package eu.bbmri_eric.quality.agent.dataquality.impl.store;
 
 import eu.bbmri_eric.quality.agent.dataquality.DataStore;
 import eu.bbmri_eric.quality.agent.dataquality.dto.DBStatus;
@@ -6,10 +6,10 @@ import eu.bbmri_eric.quality.agent.dataquality.dto.DatabaseHealthDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
 import org.json.JSONObject;
 
-class SqlDataStore implements DataStore {
+public class SqlDataStore implements DataStore {
   private static final String NOT_IMPLEMENTED_MESSAGE = "SQL data store not implemented yet.";
 
-  public SqlDataStore() {}
+  SqlDataStore() {}
 
   @Override
   public JSONObject getEntity(String entityType, String id) {

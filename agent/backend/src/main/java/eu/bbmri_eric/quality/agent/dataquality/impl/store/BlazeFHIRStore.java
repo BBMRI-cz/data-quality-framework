@@ -1,4 +1,4 @@
-package eu.bbmri_eric.quality.agent.dataquality.impl;
+package eu.bbmri_eric.quality.agent.dataquality.impl.store;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.LenientErrorHandler;
@@ -9,6 +9,7 @@ import ca.uhn.fhir.rest.client.interceptor.BasicAuthInterceptor;
 import eu.bbmri_eric.quality.agent.dataquality.FHIRServer;
 import eu.bbmri_eric.quality.agent.dataquality.dto.DatabaseHealthDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
+import eu.bbmri_eric.quality.agent.dataquality.impl.FhirCqlQueryExecutor;
 import eu.bbmri_eric.quality.agent.settings.DatabaseType;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
 import eu.bbmri_eric.quality.agent.settings.event.SettingsUpdatedEvent;

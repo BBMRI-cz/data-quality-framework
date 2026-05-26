@@ -1,4 +1,4 @@
-package eu.bbmri_eric.quality.agent.dataquality.impl;
+package eu.bbmri_eric.quality.agent.dataquality.impl.store;
 
 import eu.bbmri_eric.quality.agent.dataquality.DataStore;
 import eu.bbmri_eric.quality.agent.dataquality.DataStoreFactory;
