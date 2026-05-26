@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 class DataStoreFactoryImpl implements DataStoreFactory {
   private final SettingsService settingsService;
   private final BlazeFHIRStore fhirDataStore;
-  private SqlDataStore sqlDataStore;
+  private OmopDataStore omopDataStore;
   private volatile DataStore currentDataStore;
 
   DataStoreFactoryImpl(SettingsService settingsService, RestTemplateBuilder restTemplateBuilder) {
@@ -61,13 +61,13 @@ class DataStoreFactoryImpl implements DataStoreFactory {
       return fhirDataStore;
     }
     if (databaseType == DatabaseType.SQL) {
-      this.sqlDataStore = createSqlDataStore(settings);
-      return sqlDataStore;
+      this.omopDataStore = createSqlDataStore(settings);
+      return omopDataStore;
     }
     return fhirDataStore;
   }
 
-  private SqlDataStore createSqlDataStore(SettingsDTO settings) {
+  private OmopDataStore createSqlDataStore(SettingsDTO settings) {
     DriverManagerDataSource dataSource = new DriverManagerDataSource();
     dataSource.setUrl(settings.getSqlUrl());
     dataSource.setUsername(settings.getSqlUsername());
@@ -85,6 +85,6 @@ class DataStoreFactoryImpl implements DataStoreFactory {
         settings.getSqlUrl(),
         settings.getSqlUsername());
     JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-    return new SqlDataStore(jdbcTemplate);
+    return new OmopDataStore(jdbcTemplate);
   }
 }

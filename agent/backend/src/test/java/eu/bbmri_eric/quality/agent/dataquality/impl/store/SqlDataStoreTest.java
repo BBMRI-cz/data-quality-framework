@@ -29,7 +29,7 @@ class SqlDataStoreTest {
   @Test
   void executeQuery_emptyResult_returnsZeroCount() {
     when(jdbcTemplate.queryForList(anyString())).thenReturn(Collections.emptyList());
-    SqlDataStore store = new SqlDataStore(jdbcTemplate);
+    OmopDataStore store = new OmopDataStore(jdbcTemplate);
 
     ResultDTO result = store.executeQuery("SELECT id FROM patients");
 
@@ -42,7 +42,7 @@ class SqlDataStoreTest {
   @Test
   void executeQuery_scalarResult_returnsCount() {
     when(jdbcTemplate.queryForList(anyString())).thenReturn(List.of(Map.of("count", 42L)));
-    SqlDataStore store = new SqlDataStore(jdbcTemplate);
+    OmopDataStore store = new OmopDataStore(jdbcTemplate);
 
     ResultDTO result = store.executeQuery("SELECT COUNT(*) AS count FROM patients");
 
@@ -55,7 +55,7 @@ class SqlDataStoreTest {
   void executeQuery_rowsResult_returnsIds() {
     when(jdbcTemplate.queryForList(anyString()))
         .thenReturn(List.of(Map.of("id", "p1"), Map.of("id", "p2")));
-    SqlDataStore store = new SqlDataStore(jdbcTemplate);
+    OmopDataStore store = new OmopDataStore(jdbcTemplate);
 
     ResultDTO result = store.executeQuery("SELECT id FROM patients");
 
@@ -67,7 +67,7 @@ class SqlDataStoreTest {
   @Test
   void executeQuery_error_returnsErrorResult() {
     when(jdbcTemplate.queryForList(anyString())).thenThrow(new RuntimeException("syntax error"));
-    SqlDataStore store = new SqlDataStore(jdbcTemplate);
+    OmopDataStore store = new OmopDataStore(jdbcTemplate);
 
     ResultDTO result = store.executeQuery("INVALID SQL");
 
@@ -77,7 +77,7 @@ class SqlDataStoreTest {
   @Test
   void checkHealth_success_returnsUp() throws Exception {
     doNothing().when(jdbcTemplate).execute(anyString());
-    SqlDataStore store = new SqlDataStore(jdbcTemplate);
+    OmopDataStore store = new OmopDataStore(jdbcTemplate);
 
     JSONObject health = store.checkHealth();
 
@@ -87,7 +87,7 @@ class SqlDataStoreTest {
   @Test
   void checkHealth_failure_returnsDown() throws Exception {
     doThrow(new RuntimeException("connection refused")).when(jdbcTemplate).execute(anyString());
-    SqlDataStore store = new SqlDataStore(jdbcTemplate);
+    OmopDataStore store = new OmopDataStore(jdbcTemplate);
 
     JSONObject health = store.checkHealth();
 
@@ -98,7 +98,7 @@ class SqlDataStoreTest {
   @Test
   void checkHealthV2_success_returnsUp() {
     doNothing().when(jdbcTemplate).execute(anyString());
-    SqlDataStore store = new SqlDataStore(jdbcTemplate);
+    OmopDataStore store = new OmopDataStore(jdbcTemplate);
 
     DatabaseHealthDTO health = store.checkHealthV2();
 
@@ -109,7 +109,7 @@ class SqlDataStoreTest {
   @Test
   void checkHealthV2_failure_returnsDown() {
     doThrow(new RuntimeException("connection refused")).when(jdbcTemplate).execute(anyString());
-    SqlDataStore store = new SqlDataStore(jdbcTemplate);
+    OmopDataStore store = new OmopDataStore(jdbcTemplate);
 
     DatabaseHealthDTO health = store.checkHealthV2();
 

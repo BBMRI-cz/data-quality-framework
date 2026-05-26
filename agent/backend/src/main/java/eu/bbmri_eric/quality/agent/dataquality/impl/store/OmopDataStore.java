@@ -14,17 +14,33 @@ import org.json.JSONObject;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 @Slf4j
-public class SqlDataStore implements DataStore {
+public class OmopDataStore implements DataStore {
 
   private final JdbcTemplate jdbcTemplate;
 
-  SqlDataStore(JdbcTemplate jdbcTemplate) {
+  OmopDataStore(JdbcTemplate jdbcTemplate) {
     this.jdbcTemplate = jdbcTemplate;
   }
 
   @Override
   public JSONObject getEntity(String entityType, String id) {
-    throw new UnsupportedOperationException("SQL data store does not support entity retrieval.");
+    if (jdbcTemplate == null) {
+      throw new IllegalStateException("SQL data store not initialized");
+    }
+    try {
+      Integer parsedId = Integer.valueOf(id);
+      String idColumn = "person_id";
+      List<Map<String, Object>> rows =
+          jdbcTemplate.queryForList(
+              "SELECT * FROM person" + " WHERE " + idColumn + " = ?", parsedId);
+      if (rows.isEmpty()) {
+        return null;
+      }
+      return new JSONObject(rows.getFirst());
+    } catch (Exception e) {
+      log.error("Failed to retrieve person with id {}: {}", id, e.getMessage(), e);
+      throw new RuntimeException("Failed to retrieve entity: " + e.getMessage(), e);
+    }
   }
 
   @Override
@@ -55,14 +71,14 @@ public class SqlDataStore implements DataStore {
     try {
       List<Map<String, Object>> rows = jdbcTemplate.queryForList(query);
       if (rows.isEmpty()) {
-        return new ResultDTO(0, "", Collections.emptySet());
+        return new ResultDTO(0, "Person", Collections.emptySet());
       }
       if (rows.size() == 1) {
         Map<String, Object> row = rows.get(0);
         if (row.size() == 1) {
           Object value = row.values().iterator().next();
           if (value instanceof Number number) {
-            return new ResultDTO(number.intValue(), "", Collections.emptySet());
+            return new ResultDTO(number.intValue(), "Person", Collections.emptySet());
           }
         }
       }
@@ -73,7 +89,7 @@ public class SqlDataStore implements DataStore {
           idSet.add(firstValue.toString());
         }
       }
-      return new ResultDTO(rows.size(), "", idSet);
+      return new ResultDTO(rows.size(), "Person", idSet);
     } catch (Exception e) {
       log.error("SQL query execution failed: {}", e.getMessage(), e);
       return new ResultDTO(e.getMessage());

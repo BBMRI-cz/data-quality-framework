@@ -184,7 +184,6 @@ VALUES
 
 -- Default SQL connection settings for OMOP development
 INSERT OR REPLACE INTO settings (setting_name, setting_value) VALUES
-    ('databaseType', 'SQL'),
     ('sqlUrl', 'jdbc:postgresql://localhost:5432/omop'),
     ('sqlUsername', 'postgres'),
     ('sqlPassword', 'cG9zdGdyZXM=');
