@@ -2,7 +2,6 @@ package eu.bbmri_eric.quality.agent.dataquality.impl;
 
 import eu.bbmri_eric.quality.agent.dataquality.DataStore;
 import eu.bbmri_eric.quality.agent.dataquality.DataStoreFactory;
-import eu.bbmri_eric.quality.agent.dataquality.FHIRServer;
 import eu.bbmri_eric.quality.agent.dataquality.ReportPipelineStep;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
 import lombok.extern.slf4j.Slf4j;
@@ -23,19 +22,15 @@ class EntityCountStep implements ReportPipelineStep {
     log.info("Counting entities for report id: {}", report.getId());
 
     DataStore dataStore = dataStoreFactory.resolveDataStore();
-    if (!(dataStore instanceof FHIRServer fhirStore)) {
-      log.info("Skipping entity count: not a FHIR data store");
-      return report;
-    }
 
-    Integer patientCount = fhirStore.countResources("Patient");
-    Integer sampleCount = fhirStore.countResources("Specimen");
+    Integer patientCount = dataStore.countPatients();
+    Integer sampleCount = dataStore.countSecondaryEntities();
 
     report.setNumberOfEntities(patientCount);
     report.setNumberOfSecondaryEntities(sampleCount);
 
     log.info(
-        "Completed entity count for report id: {} - patients: {}, specimens: {}",
+        "Completed entity count for report id: {} - patients: {}, secondary entities: {}",
         report.getId(),
         patientCount,
         sampleCount);

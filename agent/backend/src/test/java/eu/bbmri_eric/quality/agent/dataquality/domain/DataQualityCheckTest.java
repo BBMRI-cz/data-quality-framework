@@ -63,6 +63,16 @@ public class DataQualityCheckTest {
           public eu.bbmri_eric.quality.agent.dataquality.dto.DatabaseHealthDTO checkHealthV2() {
             return null;
           }
+
+          @Override
+          public Integer countPatients() {
+            return 0;
+          }
+
+          @Override
+          public Integer countSecondaryEntities() {
+            return 0;
+          }
         };
     assertDoesNotThrow(() -> check.execute(dataStore));
   }

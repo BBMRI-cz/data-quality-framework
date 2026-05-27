@@ -6,10 +6,13 @@ import eu.bbmri_eric.quality.agent.settings.DatabaseType;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
 import eu.bbmri_eric.quality.agent.settings.event.SettingsUpdatedEvent;
+import java.util.Base64;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.event.EventListener;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -17,13 +20,12 @@ import org.springframework.stereotype.Component;
 class DataStoreFactoryImpl implements DataStoreFactory {
   private final SettingsService settingsService;
   private final BlazeFHIRStore fhirDataStore;
-  private final SqlDataStore sqlDataStore;
+  private OmopDataStore omopDataStore;
   private volatile DataStore currentDataStore;
 
   DataStoreFactoryImpl(SettingsService settingsService, RestTemplateBuilder restTemplateBuilder) {
     this.settingsService = settingsService;
     this.fhirDataStore = new BlazeFHIRStore(restTemplateBuilder);
-    this.sqlDataStore = new SqlDataStore();
   }
 
   @Override
@@ -58,6 +60,31 @@ class DataStoreFactoryImpl implements DataStoreFactory {
       log.warn("Database type not configured, defaulting to FHIR data store.");
       return fhirDataStore;
     }
-    return databaseType == DatabaseType.SQL ? sqlDataStore : fhirDataStore;
+    if (databaseType == DatabaseType.SQL) {
+      this.omopDataStore = createSqlDataStore(settings);
+      return omopDataStore;
+    }
+    return fhirDataStore;
+  }
+
+  private OmopDataStore createSqlDataStore(SettingsDTO settings) {
+    DriverManagerDataSource dataSource = new DriverManagerDataSource();
+    dataSource.setUrl(settings.getSqlUrl());
+    dataSource.setUsername(settings.getSqlUsername());
+    String password = settings.getSqlPassword();
+    if (password != null && !password.isBlank()) {
+      try {
+        dataSource.setPassword(new String(Base64.getDecoder().decode(password)));
+      } catch (IllegalArgumentException e) {
+        log.warn("SQL password is not valid Base64, using raw value");
+        dataSource.setPassword(password);
+      }
+    }
+    log.info(
+        "Creating SQL data store for URL: {} with user: {}",
+        settings.getSqlUrl(),
+        settings.getSqlUsername());
+    JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+    return new OmopDataStore(jdbcTemplate);
   }
 }

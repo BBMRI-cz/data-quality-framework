@@ -33,4 +33,20 @@ public interface DataStore {
    *     current health status and metrics of the database connection
    */
   DatabaseHealthDTO checkHealthV2();
+
+  /**
+   * Counts the total number of patient records in the data store.
+   *
+   * @return the total number of patients, or {@code null} if the count could not be determined
+   */
+  Integer countPatients();
+
+  /**
+   * Counts the total number of secondary entity records (e.g., specimens, samples) in the data
+   * store.
+   *
+   * @return the total number of secondary entities, or {@code null} if the count could not be
+   *     determined
+   */
+  Integer countSecondaryEntities();
 }

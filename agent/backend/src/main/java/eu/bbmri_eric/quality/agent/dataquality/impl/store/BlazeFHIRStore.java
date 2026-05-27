@@ -384,7 +384,7 @@ class BlazeFHIRStore implements FHIRServer {
 
   @Override
   public JSONObject getEntity(String entityType, String id) throws Exception {
-    return null;
+    return getPatientEverything(id);
   }
 
   public JSONObject checkHealth() {
@@ -400,6 +400,16 @@ class BlazeFHIRStore implements FHIRServer {
       healthStatus.put("details", details);
     }
     return healthStatus;
+  }
+
+  @Override
+  public Integer countPatients() {
+    return countResources("Patient");
+  }
+
+  @Override
+  public Integer countSecondaryEntities() {
+    return countResources("Specimen");
   }
 
   @Override
