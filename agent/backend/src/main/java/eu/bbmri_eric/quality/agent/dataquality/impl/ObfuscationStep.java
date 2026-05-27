@@ -8,6 +8,7 @@ import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+/** This pipeline step takes care of adding noise to individual report results. */
 @Slf4j
 @Component
 class ObfuscationStep implements ReportPipelineStep {
@@ -28,6 +29,7 @@ class ObfuscationStep implements ReportPipelineStep {
             DifferentialPrivacyUtil.addLaplaceNoise(
                 result.getRawValue(), reportEpsilonBudget / numberOfResults, 1);
         result.setObfuscatedValue(noisyValue);
+        result.setEpsilon((float) (reportEpsilonBudget / numberOfResults));
       }
     }
     log.info("Completed obfuscation for report id: {}", report.getId());
