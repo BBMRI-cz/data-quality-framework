@@ -22,7 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 @ExtendWith(MockitoExtension.class)
-class SqlDataStoreTest {
+class OmopDataStoreTest {
 
   @Mock private JdbcTemplate jdbcTemplate;
 
@@ -34,7 +34,7 @@ class SqlDataStoreTest {
     ResultDTO result = store.executeQuery("SELECT id FROM patients");
 
     assertEquals(0, result.rawResult());
-    assertEquals("", result.entityType());
+    assertEquals("Person", result.entityType());
     assertTrue(result.idSet().isEmpty());
     assertNull(result.error());
   }
