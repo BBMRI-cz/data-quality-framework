@@ -37,7 +37,7 @@ public class QualityCheckDTO {
   private int errorThreshold;
 
   @Schema(description = "Epsilon budget for differential privacy", example = "1.0")
-  private float epsilonBudget;
+  private Float epsilonBudget;
 
   public QualityCheckDTO() {}
 

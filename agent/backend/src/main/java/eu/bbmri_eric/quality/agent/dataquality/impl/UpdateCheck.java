@@ -85,7 +85,7 @@ class UpdateCheck implements DataQualityCheck {
   }
 
   @Override
-  public float getEpsilonBudget() {
+  public Float getEpsilonBudget() {
     return config.getEpsilonBudget();
   }
 

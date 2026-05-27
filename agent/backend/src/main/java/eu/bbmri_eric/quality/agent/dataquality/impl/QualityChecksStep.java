@@ -107,7 +107,6 @@ class QualityChecksStep implements ReportPipelineStep {
       modelMapper.map(check, result);
       result.setStratum(check.getName() + " (%s)".formatted(stratum));
       result.setCheckName(check.getName() + " (%s)".formatted(stratum));
-      result.setEpsilon(check.getEpsilonBudget() / count);
       report.addResult(result);
     }
   }
