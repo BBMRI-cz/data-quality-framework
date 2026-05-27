@@ -115,71 +115,71 @@ SELECT name, id, NULL, NULL, 1004, warning_threshold, error_threshold, epsilon_b
 INSERT INTO quality_check (name, description, query, check_type, warning_threshold, error_threshold, epsilon_budget)
 VALUES
     ('OMOP: Missing birth year',
-     'Number of persons with missing or null year_of_birth in the OMOP PERSON table',
-     'SELECT COUNT(*) FROM person WHERE year_of_birth IS NULL',
+     'Persons with missing or null year_of_birth in the OMOP PERSON table',
+     'SELECT person_id FROM person WHERE year_of_birth IS NULL',
      'SQL', 10, 50, 0.2);
 
 INSERT INTO quality_check (name, description, query, check_type, warning_threshold, error_threshold, epsilon_budget)
 VALUES
     ('OMOP: Invalid gender concept',
-     'Number of persons with a gender_concept_id that is not a valid OMOP standard gender concept',
-     'SELECT COUNT(*) FROM person WHERE gender_concept_id NOT IN (8507, 8532, 8521, 8570, 8551) OR gender_concept_id IS NULL',
+     'Persons with a gender_concept_id that is not a valid OMOP standard gender concept',
+     'SELECT person_id FROM person WHERE gender_concept_id NOT IN (8507, 8532, 8521, 8570, 8551) OR gender_concept_id IS NULL',
      'SQL', 5, 20, 0.2);
 
 INSERT INTO quality_check (name, description, query, check_type, warning_threshold, error_threshold, epsilon_budget)
 VALUES
     ('OMOP: Conditions without concept',
-     'Number of persons who have at least one condition_occurrence record with missing or zero condition_concept_id',
-     'SELECT COUNT(*) FROM person p WHERE EXISTS (SELECT 1 FROM condition_occurrence c WHERE c.person_id = p.person_id AND (c.condition_concept_id IS NULL OR c.condition_concept_id = 0))',
+     'Persons who have at least one condition_occurrence record with missing or zero condition_concept_id',
+     'SELECT person_id FROM person p WHERE EXISTS (SELECT 1 FROM condition_occurrence c WHERE c.person_id = p.person_id AND (c.condition_concept_id IS NULL OR c.condition_concept_id = 0))',
      'SQL', 10, 100, 0.2);
 
 INSERT INTO quality_check (name, description, query, check_type, warning_threshold, error_threshold, epsilon_budget)
 VALUES
     ('OMOP: Measurements without result',
-     'Number of persons who have at least one measurement record with missing result (value_as_number IS NULL AND value_as_concept_id IS NULL)',
-     'SELECT COUNT(*) FROM person p WHERE EXISTS (SELECT 1 FROM measurement m WHERE m.person_id = p.person_id AND m.value_as_number IS NULL AND m.value_as_concept_id IS NULL)',
+     'Persons who have at least one measurement record with missing result (value_as_number IS NULL AND value_as_concept_id IS NULL)',
+     'SELECT person_id FROM person p WHERE EXISTS (SELECT 1 FROM measurement m WHERE m.person_id = p.person_id AND m.value_as_number IS NULL AND m.value_as_concept_id IS NULL)',
      'SQL', 20, 100, 0.2);
 
 INSERT INTO quality_check (name, description, query, check_type, warning_threshold, error_threshold, epsilon_budget)
 VALUES
     ('OMOP: Drug exposures without concept',
-     'Number of persons who have at least one drug_exposure record with missing or zero drug_concept_id',
-     'SELECT COUNT(*) FROM person p WHERE EXISTS (SELECT 1 FROM drug_exposure d WHERE d.person_id = p.person_id AND (d.drug_concept_id IS NULL OR d.drug_concept_id = 0))',
+     'Persons who have at least one drug_exposure record with missing or zero drug_concept_id',
+     'SELECT person_id FROM person p WHERE EXISTS (SELECT 1 FROM drug_exposure d WHERE d.person_id = p.person_id AND (d.drug_concept_id IS NULL OR d.drug_concept_id = 0))',
      'SQL', 10, 50, 0.2);
 
 INSERT INTO quality_check (name, description, query, check_type, warning_threshold, error_threshold, epsilon_budget)
 VALUES
     ('OMOP: Visits without end date',
-     'Number of persons who have at least one visit_occurrence record with missing visit_end_date',
-     'SELECT COUNT(*) FROM person p WHERE EXISTS (SELECT 1 FROM visit_occurrence v WHERE v.person_id = p.person_id AND v.visit_end_date IS NULL)',
+     'Persons who have at least one visit_occurrence record with missing visit_end_date',
+     'SELECT person_id FROM person p WHERE EXISTS (SELECT 1 FROM visit_occurrence v WHERE v.person_id = p.person_id AND v.visit_end_date IS NULL)',
      'SQL', 15, 50, 0.2);
 
 INSERT INTO quality_check (name, description, query, check_type, warning_threshold, error_threshold, epsilon_budget)
 VALUES
     ('OMOP: Observations without date',
-     'Number of persons who have at least one observation record with missing observation_date',
-     'SELECT COUNT(*) FROM person p WHERE EXISTS (SELECT 1 FROM observation o WHERE o.person_id = p.person_id AND o.observation_date IS NULL)',
+     'Persons who have at least one observation record with missing observation_date',
+     'SELECT person_id FROM person p WHERE EXISTS (SELECT 1 FROM observation o WHERE o.person_id = p.person_id AND o.observation_date IS NULL)',
      'SQL', 10, 50, 0.2);
 
 INSERT INTO quality_check (name, description, query, check_type, warning_threshold, error_threshold, epsilon_budget)
 VALUES
     ('OMOP: Death records without date',
-     'Number of persons who have a death record with missing death_date',
-     'SELECT COUNT(*) FROM person p WHERE EXISTS (SELECT 1 FROM death d WHERE d.person_id = p.person_id AND d.death_date IS NULL)',
+     'Persons who have a death record with missing death_date',
+     'SELECT person_id FROM person p WHERE EXISTS (SELECT 1 FROM death d WHERE d.person_id = p.person_id AND d.death_date IS NULL)',
      'SQL', 1, 5, 0.2);
 
 INSERT INTO quality_check (name, description, query, check_type, warning_threshold, error_threshold, epsilon_budget)
 VALUES
     ('OMOP: Procedures without concept',
-     'Number of persons who have at least one procedure_occurrence record with missing or zero procedure_concept_id',
-     'SELECT COUNT(*) FROM person p WHERE EXISTS (SELECT 1 FROM procedure_occurrence pr WHERE pr.person_id = p.person_id AND (pr.procedure_concept_id IS NULL OR pr.procedure_concept_id = 0))',
+     'Persons who have at least one procedure_occurrence record with missing or zero procedure_concept_id',
+     'SELECT person_id FROM person p WHERE EXISTS (SELECT 1 FROM procedure_occurrence pr WHERE pr.person_id = p.person_id AND (pr.procedure_concept_id IS NULL OR pr.procedure_concept_id = 0))',
      'SQL', 10, 50, 0.2);
 
 INSERT INTO quality_check (name, description, query, check_type, warning_threshold, error_threshold, epsilon_budget)
 VALUES
     ('OMOP: Persons without visits',
-     'Number of persons who have no associated visit_occurrence record',
-     'SELECT COUNT(*) FROM person WHERE person_id NOT IN (SELECT person_id FROM visit_occurrence)',
+     'Persons who have no associated visit_occurrence record',
+     'SELECT person_id FROM person WHERE person_id NOT IN (SELECT person_id FROM visit_occurrence)',
      'SQL', 5, 30, 0.2);
 
 -- Default SQL connection settings for OMOP development
