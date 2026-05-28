@@ -6,8 +6,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
-import java.util.HashMap;
-import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -111,7 +109,6 @@ class SettingsControllerTest {
                 .content(objectMapper.writeValueAsString(dto)))
         .andExpect(status().isOk());
   }
-
 
   @Test
   void updateSettings_withoutAuthentication_shouldReturn401() throws Exception {
