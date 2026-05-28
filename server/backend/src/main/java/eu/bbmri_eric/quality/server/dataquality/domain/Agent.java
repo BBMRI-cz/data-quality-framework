@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -83,6 +84,17 @@ public class Agent {
     }
     AgentInteraction interaction = new AgentInteraction(this.id, type);
     interactions.add(interaction);
+
+    if (type == AgentInteractionType.PING) {
+      long pingCount =
+          interactions.stream().filter(i -> i.getType() == AgentInteractionType.PING).count();
+      if (pingCount > 30) {
+        interactions.stream()
+            .filter(i -> i.getType() == AgentInteractionType.PING)
+            .min(Comparator.comparing(AgentInteraction::getTimestamp))
+            .ifPresent(interactions::remove);
+      }
+    }
   }
 
   public List<Report> getReports() {
