@@ -341,7 +341,7 @@ class ObfuscationStepTest {
   @Test
   void execute_withGaussianNoise_shouldSetObfuscatedValues() {
     settingsService.updateSettings(
-        SettingsDTO.builder().epsilon(100.0).noiseMechanism(NoiseMechanism.GAUSSIAN).build());
+        SettingsDTO.builder().epsilon(0.9).noiseMechanism(NoiseMechanism.GAUSSIAN).build());
 
     Report report = new Report();
     Result r1 = new Result("c1", 1L, 100, null, 80, 50, null, null, null);
@@ -375,7 +375,7 @@ class ObfuscationStepTest {
   @Test
   void execute_withGaussianNoise_shouldBeCloseToRawValue() {
     settingsService.updateSettings(
-        SettingsDTO.builder().epsilon(1_000_000.0).noiseMechanism(NoiseMechanism.GAUSSIAN).build());
+        SettingsDTO.builder().epsilon(1.0).noiseMechanism(NoiseMechanism.GAUSSIAN).build());
 
     Report report = new Report();
     Result r1 = new Result("c1", 1L, 100, null, 80, 50, null, null, null);
@@ -383,6 +383,6 @@ class ObfuscationStepTest {
 
     step.execute(report);
 
-    assertThat(r1.getObfuscatedValue()).isBetween(90.0, 110.0);
+    assertThat(r1.getObfuscatedValue()).isBetween(80.0, 120.0);
   }
 }

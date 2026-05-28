@@ -11,7 +11,7 @@ import java.security.SecureRandom;
 public class DifferentialPrivacyUtil {
 
   private static final SecureRandom SECURE_RANDOM = new SecureRandom();
-  private static double LOW_COUNT_THRESHOLD = 10.0;
+  private static volatile double LOW_COUNT_THRESHOLD = 10.0;
 
   /**
    * Sets the low-count suppression threshold.
@@ -64,8 +64,8 @@ public class DifferentialPrivacyUtil {
    */
   public static double addGaussianNoise(
       int count, double epsilon, double delta, double sensitivity) {
-    if (epsilon <= 0) {
-      throw new IllegalArgumentException("Epsilon must be positive, got: " + epsilon);
+    if (epsilon <= 0 || epsilon > 1.0) {
+      throw new IllegalArgumentException("Epsilon must be in (0, 1], got: " + epsilon);
     }
     if (delta <= 0 || delta >= 1) {
       throw new IllegalArgumentException("Delta must be in (0, 1), got: " + delta);

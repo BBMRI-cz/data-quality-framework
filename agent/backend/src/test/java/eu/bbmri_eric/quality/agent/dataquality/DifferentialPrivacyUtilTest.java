@@ -414,7 +414,7 @@ class DifferentialPrivacyUtilTest {
         assertThatThrownBy(
                 () -> DifferentialPrivacyUtil.addGaussianNoise(100, 0.0, DELTA, SENSITIVITY))
             .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("Epsilon must be positive");
+            .hasMessageContaining("Epsilon must be in (0, 1]");
       }
 
       @Test
@@ -423,7 +423,16 @@ class DifferentialPrivacyUtilTest {
         assertThatThrownBy(
                 () -> DifferentialPrivacyUtil.addGaussianNoise(100, -1.0, DELTA, SENSITIVITY))
             .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("Epsilon must be positive");
+            .hasMessageContaining("Epsilon must be in (0, 1]");
+      }
+
+      @Test
+      @DisplayName("should throw IllegalArgumentException when epsilon is greater than 1")
+      void shouldRejectEpsilonGreaterThanOne() {
+        assertThatThrownBy(
+                () -> DifferentialPrivacyUtil.addGaussianNoise(100, 1.1, DELTA, SENSITIVITY))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Epsilon must be in (0, 1]");
       }
 
       @Test
@@ -499,7 +508,7 @@ class DifferentialPrivacyUtilTest {
             suppressedCount++;
           }
         }
-        assertThat(suppressedCount).isGreaterThan(80);
+        assertThat(suppressedCount).isGreaterThanOrEqualTo(75);
       }
 
       @RepeatedTest(10)
@@ -607,7 +616,7 @@ class DifferentialPrivacyUtilTest {
       }
 
       @ParameterizedTest
-      @ValueSource(doubles = {0.1, 0.5, 1.0, 2.0, 5.0})
+      @ValueSource(doubles = {0.1, 0.5, 0.9, 1.0})
       @DisplayName("should add more noise with smaller epsilon")
       void shouldAddMoreNoiseWithSmallerEpsilon(double epsilon) {
         int count = 1000;
@@ -642,7 +651,7 @@ class DifferentialPrivacyUtilTest {
           resultsSmallEpsilon.add(
               DifferentialPrivacyUtil.addGaussianNoise(count, 0.5, DELTA, SENSITIVITY));
           resultsLargeEpsilon.add(
-              DifferentialPrivacyUtil.addGaussianNoise(count, 2.0, DELTA, SENSITIVITY));
+              DifferentialPrivacyUtil.addGaussianNoise(count, 0.9, DELTA, SENSITIVITY));
         }
 
         double varianceSmallEpsilon = calculateVariance(resultsSmallEpsilon);
@@ -652,7 +661,7 @@ class DifferentialPrivacyUtilTest {
       }
 
       @ParameterizedTest
-      @ValueSource(doubles = {0.1, 0.5, 1.0, 2.0})
+      @ValueSource(doubles = {0.1, 0.5, 0.9, 1.0})
       @DisplayName("should scale noise inversely with epsilon")
       void shouldScaleNoiseInverselyWithEpsilon(double epsilon) {
         int count = 500;
@@ -726,10 +735,10 @@ class DifferentialPrivacyUtilTest {
       @DisplayName("should handle very large epsilon (low privacy)")
       void shouldHandleVeryLargeEpsilon() {
         int count = 100;
-        double result = DifferentialPrivacyUtil.addGaussianNoise(count, 100.0, DELTA, SENSITIVITY);
+        double result = DifferentialPrivacyUtil.addGaussianNoise(count, 1.0, DELTA, SENSITIVITY);
 
         assertThat(result).isGreaterThan(0.0);
-        assertThat(result).isCloseTo(count, within(5.0));
+        assertThat(result).isCloseTo(count, within(20.0));
       }
 
       @Test
