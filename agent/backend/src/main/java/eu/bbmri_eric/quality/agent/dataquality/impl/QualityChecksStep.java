@@ -13,7 +13,6 @@ import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
 import eu.bbmri_eric.quality.agent.dataquality.impl.store.OmopDataStore;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
@@ -50,11 +49,7 @@ class QualityChecksStep implements ReportPipelineStep {
   private void runRelevantChecks(
       Report report, List<DataQualityCheck> dataQualityChecks, DataStore dataStore) {
     for (DataQualityCheck dataQualityCheck : dataQualityChecks) {
-      if (dataQualityCheck instanceof StratifiedDataQualityCheck stratifiedCheck) {
-        executeStratifiedCheck(stratifiedCheck, report, dataStore);
-      } else {
-        executeCheck(dataQualityCheck, report, dataStore);
-      }
+      executeCheck(dataQualityCheck, report, dataStore);
     }
   }
 
@@ -80,35 +75,11 @@ class QualityChecksStep implements ReportPipelineStep {
       return Optional.of(new DuplicateIdentifierCheck(config));
     } else if (InvalidConditionICDCheck.CHECK_ID.equals(id)) {
       return Optional.of(new InvalidConditionICDCheck(config));
-    } else if (SurvivalRateCheck.CHECK_ID.equals(id)) {
-      return Optional.of(new SurvivalRateCheck(config));
     } else if (UpdateCheck.CHECK_ID.equals(id)) {
       return Optional.of(new UpdateCheck(config));
     }
     log.warn("Unknown built-in check with id: {}", id);
     return Optional.empty();
-  }
-
-  private void executeStratifiedCheck(
-      StratifiedDataQualityCheck check, Report report, DataStore dataStore) {
-    if (!(dataStore instanceof FHIRServer fhirStore)) {
-      ResultDTO resultDTO = new ResultDTO("FHIR data store required for " + check.getName());
-      Result result = modelMapper.map(resultDTO, Result.class);
-      modelMapper.map(check, result);
-      report.addResult(result);
-      return;
-    }
-    Map<String, ResultDTO> results = check.executeWithStratification(fhirStore);
-    int count = results.size();
-    for (Map.Entry<String, ResultDTO> entry : results.entrySet()) {
-      String stratum = entry.getKey();
-      ResultDTO resultDTO = entry.getValue();
-      Result result = modelMapper.map(resultDTO, Result.class);
-      modelMapper.map(check, result);
-      result.setStratum(check.getName() + " (%s)".formatted(stratum));
-      result.setCheckName(check.getName() + " (%s)".formatted(stratum));
-      report.addResult(result);
-    }
   }
 
   private void executeCheck(DataQualityCheck check, Report report, DataStore dataStore) {
