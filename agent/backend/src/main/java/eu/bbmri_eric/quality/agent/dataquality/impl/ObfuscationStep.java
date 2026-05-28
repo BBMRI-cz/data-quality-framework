@@ -103,8 +103,6 @@ class ObfuscationStep implements ReportPipelineStep {
     double totalPreferredEpsilon =
         computeTotalPreferredEpsilon(resultsToObfuscate, preferredBudgetByCheckId);
     boolean ignorePreferences = totalPreferredEpsilon > totalEpsilon;
-    log.warn(String.valueOf(totalPreferredEpsilon));
-    log.warn(String.valueOf(totalEpsilon));
     long noPreferenceCount =
         countResultsWithoutPreference(resultsToObfuscate, preferredBudgetByCheckId);
     double baseEpsilon =

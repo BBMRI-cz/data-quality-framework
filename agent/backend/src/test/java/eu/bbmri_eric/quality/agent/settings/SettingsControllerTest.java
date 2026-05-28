@@ -26,7 +26,7 @@ class SettingsControllerTest {
         .fhirUrl("http://localhost:8080/fhir")
         .fhirUsername("testuser")
         .fhirPassword("dGVzdHBhc3M=")
-        .epsilon(2.0)
+        .epsilon(0.5)
         .delta(1.0E-8)
         .minThreshold(20)
         .noiseMechanism(NoiseMechanism.GAUSSIAN)
@@ -40,7 +40,7 @@ class SettingsControllerTest {
         .sqlUrl("jdbc:postgresql://localhost:5432/quality")
         .sqlUsername("dbuser")
         .sqlPassword("c2VjcmV0")
-        .epsilon(2.0)
+        .epsilon(0.5)
         .delta(1.0E-8)
         .minThreshold(20)
         .noiseMechanism(NoiseMechanism.GAUSSIAN)
@@ -79,8 +79,45 @@ class SettingsControllerTest {
                 .content(objectMapper.writeValueAsString(validSettingsDTO())))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.fhirUrl").value("http://localhost:8080/fhir"))
-        .andExpect(jsonPath("$.epsilon").value(2.0))
+        .andExpect(jsonPath("$.epsilon").value(validSettingsDTO().getEpsilon()))
         .andExpect(jsonPath("$.noiseMechanism").value("GAUSSIAN"));
+  }
+
+  @Test
+  @WithMockUser(username = "admin")
+  void updateSettings_withGaussianAndEpsilonAboveOne_shouldReturn400() throws Exception {
+    SettingsDTO dto = validSettingsDTO();
+    dto.setEpsilon(2.0);
+    mockMvc
+        .perform(
+            put("/api/settings")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+        .andExpect(status().isBadRequest());
+    mockMvc
+        .perform(get("/api/settings"))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.noiseMechanism").value("GAUSSIAN"))
+        .andExpect(jsonPath("$.epsilon").value(0.5));
+    dto.setNoiseMechanism(NoiseMechanism.LAPLACE);
+    mockMvc
+        .perform(
+            put("/api/settings")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.noiseMechanism").value("LAPLACE"))
+        .andExpect(jsonPath("$.epsilon").value(2.0));
+    ;
+    dto.setNoiseMechanism(NoiseMechanism.GAUSSIAN);
+    mockMvc
+        .perform(
+            put("/api/settings")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+        .andExpect(status().isBadRequest());
   }
 
   @Test

@@ -72,7 +72,7 @@ class SettingsServiceTest {
             "http://production:8080/fhir",
             "produser",
             base64Password,
-            3.0,
+            0.5,
             1.0E-10,
             50,
             NoiseMechanism.GAUSSIAN);
@@ -83,7 +83,7 @@ class SettingsServiceTest {
     assertEquals("http://production:8080/fhir", result.getFhirUrl());
     assertEquals("produser", result.getFhirUsername());
     assertEquals(base64Password, result.getFhirPassword());
-    assertEquals(3.0, result.getEpsilon());
+    assertEquals(0.5, result.getEpsilon());
     assertEquals(1.0E-10, result.getDelta());
     assertEquals(50, result.getMinThreshold());
     assertEquals(NoiseMechanism.GAUSSIAN, result.getNoiseMechanism());
@@ -207,5 +207,28 @@ class SettingsServiceTest {
             NoiseMechanism.LAPLACE);
 
     assertThrows(IllegalStateException.class, () -> settingsService.updateSettings(dto));
+  }
+
+  @Test
+  void updateSettings_shouldThrowException_whenDbGaussianAndEpsilonAboveOne() {
+    SettingsDTO first =
+        createSettingsDTO(
+            "http://localhost:8080/fhir",
+            "testuser",
+            "dGVzdHBhc3M=",
+            0.5,
+            1.0E-8,
+            10,
+            NoiseMechanism.GAUSSIAN);
+    settingsService.updateSettings(first);
+
+    SettingsDTO second = SettingsDTO.builder().epsilon(2.0).build();
+
+    IllegalArgumentException exception =
+        assertThrows(IllegalArgumentException.class, () -> settingsService.updateSettings(second));
+    assertTrue(
+        exception
+            .getMessage()
+            .contains("Epsilon must be less than or equal to 1.0 when using Gaussian noise"));
   }
 }

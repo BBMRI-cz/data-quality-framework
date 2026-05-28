@@ -10,12 +10,14 @@ import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Result;
 import eu.bbmri_eric.quality.agent.settings.NoiseMechanism;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
+import eu.bbmri_eric.quality.agent.settings.domain.Settings;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
 import eu.bbmri_eric.quality.agent.settings.impl.SettingsRepository;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -27,6 +29,11 @@ class ObfuscationStepTest {
   @Autowired private SettingsService settingsService;
   @Autowired private SettingsRepository settingsRepository;
   @Autowired private ObfuscationStep step;
+
+  @BeforeEach
+  void setUp() {
+    settingsRepository.save(new Settings("noiseMechanism", "LAPLACE"));
+  }
 
   @AfterEach
   void tearDown() {
