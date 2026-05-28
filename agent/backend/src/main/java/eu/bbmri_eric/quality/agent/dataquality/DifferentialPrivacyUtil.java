@@ -3,10 +3,10 @@ package eu.bbmri_eric.quality.agent.dataquality;
 import java.security.SecureRandom;
 
 /**
- * Applies differential privacy using the Laplace mechanism with low count suppression.
+ * Applies differential privacy using Laplace or Gaussian mechanisms with low count suppression.
  *
- * <p>Noise is always added to counts (scale λ = sensitivity/ε), then noisy counts below the
- * threshold are suppressed. This maintains ε-differential privacy while protecting low counts.
+ * <p>Noise is added to counts, then noisy counts below the threshold are suppressed. This maintains
+ * differential privacy while protecting low counts.
  */
 public class DifferentialPrivacyUtil {
 
@@ -50,6 +50,52 @@ public class DifferentialPrivacyUtil {
     }
 
     return noisyCount;
+  }
+
+  /**
+   * Adds Gaussian noise to a count for (ε, δ)-differential privacy, then suppresses if below
+   * threshold.
+   *
+   * @param count the original count
+   * @param epsilon the privacy budget (must be positive)
+   * @param delta the probability of privacy failure (must be positive and less than 1)
+   * @param sensitivity the query sensitivity (must be positive)
+   * @return noisy count clamped at 0, or 0 if below threshold
+   */
+  public static double addGaussianNoise(
+      int count, double epsilon, double delta, double sensitivity) {
+    if (epsilon <= 0) {
+      throw new IllegalArgumentException("Epsilon must be positive, got: " + epsilon);
+    }
+    if (delta <= 0 || delta >= 1) {
+      throw new IllegalArgumentException("Delta must be in (0, 1), got: " + delta);
+    }
+    if (sensitivity <= 0) {
+      throw new IllegalArgumentException("Sensitivity must be positive, got: " + sensitivity);
+    }
+
+    double standardDeviation = sensitivity * Math.sqrt(2.0 * Math.log(1.25 / delta)) / epsilon;
+    double noise = SECURE_RANDOM.nextGaussian() * standardDeviation;
+    double noisyCount = Math.max(0.0, count + noise);
+
+    if (noisyCount < LOW_COUNT_THRESHOLD) {
+      return 0.0;
+    }
+
+    return noisyCount;
+  }
+
+  /**
+   * Returns the standard deviation used by the Gaussian mechanism for the given parameters.
+   *
+   * @param epsilon the privacy budget
+   * @param delta the probability of privacy failure
+   * @param sensitivity the query sensitivity
+   * @return σ = sensitivity * sqrt(2 * ln(1.25/δ)) / ε
+   */
+  public static double calculateGaussianStandardDeviation(
+      double epsilon, double delta, double sensitivity) {
+    return sensitivity * Math.sqrt(2.0 * Math.log(1.25 / delta)) / epsilon;
   }
 
   /**
