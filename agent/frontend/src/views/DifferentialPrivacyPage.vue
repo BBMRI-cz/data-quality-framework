@@ -149,12 +149,12 @@
       );
     } catch (error) {
       console.error('Error saving privacy settings:', error);
+      const apiDetail = error.response?.data?.detail;
       notificationService.error(
         'Save Failed',
-        'Unable to save privacy settings. Please try again.'
+        apiDetail || 'Unable to save privacy settings. Please try again.'
       );
-    } finally {
-      isSaving.value = false;
+    } finally {      isSaving.value = false;
     }
   }
 
