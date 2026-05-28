@@ -3,8 +3,10 @@ package eu.bbmri_eric.quality.agent.dataquality.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Result;
+import eu.bbmri_eric.quality.agent.dataquality.impl.QualityCheckRepository;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
 import eu.bbmri_eric.quality.agent.settings.impl.SettingsRepository;
@@ -23,6 +25,7 @@ class ObfuscationStepTest {
   @Autowired private SettingsRepository settingsRepository;
   @Autowired private ObfuscationStep step;
   @Autowired private ReportRepository reportRepository;
+  @Autowired private QualityCheckRepository qualityCheckRepository;
 
   @Test
   void execute_withAllNonNullRawValues_shouldSetObfuscatedValues() {
@@ -171,5 +174,136 @@ class ObfuscationStepTest {
     step.execute(report);
 
     assertThat(r1.getObfuscatedValue()).isBetween(90.0, 110.0);
+  }
+
+  @Test
+  void execute_withPreferencesWithinBudget_shouldUsePreferredEpsilon() {
+    settingsService.updateSettings(SettingsDTO.builder().epsilon(1.0).build());
+
+    QualityCheck check1 = new QualityCheck("c1", "Check 1", "query1");
+    check1.setEpsilonBudget(0.3f);
+    qualityCheckRepository.save(check1);
+
+    QualityCheck check2 = new QualityCheck("c2", "Check 2", "query2");
+    check2.setEpsilonBudget(0.5f);
+    qualityCheckRepository.save(check2);
+
+    Report report = new Report();
+    Result r1 = new Result("c1", check1.getId(), 100, null, 80, 50, null, null, null);
+    Result r2 = new Result("c2", check2.getId(), 200, null, 150, 100, null, null, null);
+    report.setResults(new ArrayList<>(List.of(r1, r2)));
+
+    step.execute(report);
+
+    assertThat(r1.getEpsilon()).isEqualTo(0.3f);
+    assertThat(r2.getEpsilon()).isEqualTo(0.5f);
+  }
+
+  @Test
+  void execute_withPreferencesExceedingBudget_shouldUseEqualSplit() {
+    settingsService.updateSettings(SettingsDTO.builder().epsilon(2.0).build());
+
+    QualityCheck check1 = new QualityCheck("c1", "Check 1", "query1");
+    check1.setEpsilonBudget(1.5f);
+    qualityCheckRepository.save(check1);
+
+    QualityCheck check2 = new QualityCheck("c2", "Check 2", "query2");
+    check2.setEpsilonBudget(1.0f);
+    qualityCheckRepository.save(check2);
+
+    Report report = new Report();
+    Result r1 = new Result("c1", check1.getId(), 100, null, 80, 50, null, null, null);
+    Result r2 = new Result("c2", check2.getId(), 200, null, 150, 100, null, null, null);
+    report.setResults(new ArrayList<>(List.of(r1, r2)));
+
+    step.execute(report);
+
+    assertThat(r1.getEpsilon()).isEqualTo(1.0f);
+    assertThat(r2.getEpsilon()).isEqualTo(1.0f);
+  }
+
+  @Test
+  void execute_withMixedPreferencesWithinBudget_shouldDistributeRemainder() {
+    settingsService.updateSettings(SettingsDTO.builder().epsilon(1.0).build());
+
+    QualityCheck check1 = new QualityCheck("c1", "Check 1", "query1");
+    check1.setEpsilonBudget(0.4f);
+    qualityCheckRepository.save(check1);
+
+    Report report = new Report();
+    Result r1 = new Result("c1", check1.getId(), 100, null, 80, 50, null, null, null);
+    Result r2 = new Result("c2", 999L, 200, null, 150, 100, null, null, null);
+    report.setResults(new ArrayList<>(List.of(r1, r2)));
+
+    step.execute(report);
+
+    assertThat(r1.getEpsilon()).isEqualTo(0.4f);
+    assertThat(r2.getEpsilon()).isEqualTo(0.6f);
+  }
+
+  @Test
+  void execute_withAllResultsHavingPreferencesWithinBudget_shouldUsePreferredValues() {
+    settingsService.updateSettings(SettingsDTO.builder().epsilon(2.0).build());
+
+    QualityCheck check1 = new QualityCheck("c1", "Check 1", "query1");
+    check1.setEpsilonBudget(0.8f);
+    qualityCheckRepository.save(check1);
+
+    QualityCheck check2 = new QualityCheck("c2", "Check 2", "query2");
+    check2.setEpsilonBudget(0.7f);
+    qualityCheckRepository.save(check2);
+
+    Report report = new Report();
+    Result r1 = new Result("c1", check1.getId(), 100, null, 80, 50, null, null, null);
+    Result r2 = new Result("c2", check2.getId(), 200, null, 150, 100, null, null, null);
+    report.setResults(new ArrayList<>(List.of(r1, r2)));
+
+    step.execute(report);
+
+    assertThat(r1.getEpsilon()).isEqualTo(0.8f);
+    assertThat(r2.getEpsilon()).isEqualTo(0.7f);
+  }
+
+  @Test
+  void execute_withPreferencesSumEqualToBudget_shouldUsePreferredValues() {
+    settingsService.updateSettings(SettingsDTO.builder().epsilon(2.0).build());
+
+    QualityCheck check1 = new QualityCheck("c1", "Check 1", "query1");
+    check1.setEpsilonBudget(1.2f);
+    qualityCheckRepository.save(check1);
+
+    QualityCheck check2 = new QualityCheck("c2", "Check 2", "query2");
+    check2.setEpsilonBudget(0.8f);
+    qualityCheckRepository.save(check2);
+
+    Report report = new Report();
+    Result r1 = new Result("c1", check1.getId(), 100, null, 80, 50, null, null, null);
+    Result r2 = new Result("c2", check2.getId(), 200, null, 150, 100, null, null, null);
+    report.setResults(new ArrayList<>(List.of(r1, r2)));
+
+    step.execute(report);
+
+    assertThat(r1.getEpsilon()).isEqualTo(1.2f);
+    assertThat(r2.getEpsilon()).isEqualTo(0.8f);
+  }
+
+  @Test
+  void execute_withNullRawValueAndPreference_shouldNotConsumeEpsilon() {
+    settingsService.updateSettings(SettingsDTO.builder().epsilon(1.0).build());
+
+    QualityCheck check1 = new QualityCheck("c1", "Check 1", "query1");
+    check1.setEpsilonBudget(0.6f);
+    qualityCheckRepository.save(check1);
+
+    Report report = new Report();
+    Result r1 = new Result("c1", check1.getId(), null, null, 80, 50, null, null, null);
+    Result r2 = new Result("c2", 999L, 200, null, 150, 100, null, null, null);
+    report.setResults(new ArrayList<>(List.of(r1, r2)));
+
+    step.execute(report);
+
+    assertThat(r1.getObfuscatedValue()).isNull();
+    assertThat(r1.getEpsilon()).isNull();
+    assertThat(r2.getEpsilon()).isEqualTo(1.0f);
   }
 }
