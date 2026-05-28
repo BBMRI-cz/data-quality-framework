@@ -5,7 +5,6 @@ import eu.bbmri_eric.quality.agent.dataquality.domain.Result;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
 import jakarta.annotation.PostConstruct;
 import org.modelmapper.ModelMapper;
-import org.modelmapper.PropertyMap;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
@@ -19,14 +18,17 @@ public class ResultMapper {
 
   @PostConstruct
   public void addMappings() {
-    modelMapper.addMappings(
-        new PropertyMap<ResultDTO, Result>() {
-          @Override
-          protected void configure() {
-            map().setRawValue(source.rawResult());
-            map().setPatients(source.idSet());
-          }
-        });
+    modelMapper
+        .typeMap(ResultDTO.class, Result.class)
+        .setPostConverter(
+            context -> {
+              ResultDTO source = context.getSource();
+              Result destination = context.getDestination();
+              destination.setRawValue(source.rawResult());
+              destination.setPatients(source.idSet());
+              return destination;
+            });
+
     modelMapper
         .getConfiguration()
         .setPropertyCondition(

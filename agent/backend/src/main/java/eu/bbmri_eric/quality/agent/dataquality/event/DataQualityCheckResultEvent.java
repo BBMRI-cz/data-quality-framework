@@ -15,7 +15,7 @@ public class DataQualityCheckResultEvent {
   private final LocalDateTime finishedAt;
   private final int warningThreshold;
   private final int errorThreshold;
-  private final float epsilon;
+  private final double epsilon;
   private final String stratum;
 
   public DataQualityCheckResultEvent(
@@ -27,7 +27,7 @@ public class DataQualityCheckResultEvent {
       LocalDateTime finishedAt,
       int warningThreshold,
       int errorThreshold,
-      float epsilon,
+      double epsilon,
       String stratum) {
     this.checkId = checkId;
     this.checkName = checkName;

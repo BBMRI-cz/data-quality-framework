@@ -3,6 +3,7 @@ package eu.bbmri_eric.quality.agent.settings.impl;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.agent.common.EventPublisher;
+import eu.bbmri_eric.quality.agent.settings.NoiseMechanism;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import eu.bbmri_eric.quality.agent.settings.domain.Settings;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
@@ -44,14 +45,18 @@ public class SettingsServiceImpl implements SettingsService {
   @Override
   public SettingsDTO updateSettings(SettingsDTO dto) {
     updateSettingsFromDto(dto);
-    eventPublisher.publishEvent(new SettingsUpdatedEvent(dto));
+    SettingsDTO updated = getSettings();
+    if (updated.getNoiseMechanism() == NoiseMechanism.GAUSSIAN
+        && updated.getEpsilon() != null
+        && updated.getEpsilon() > 1.0) {
+      throw new IllegalArgumentException(
+          "Epsilon must be less than or equal to 1.0 when using Gaussian noise");
+    }
+    eventPublisher.publishEvent(new SettingsUpdatedEvent(updated));
     return dto;
   }
 
   private void updateSetting(String name, String value) {
-    if (value == null) {
-      return;
-    }
     Settings setting =
         settingsRepository
             .findById(name)

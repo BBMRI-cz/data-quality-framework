@@ -11,6 +11,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -35,7 +36,14 @@ public class QualityCheck implements DataQualityCheck {
 
   private int warningThreshold = 10;
   private int errorThreshold = 30;
-  private float epsilonBudget = 1.0f;
+
+  @Getter(AccessLevel.NONE)
+  private Double epsilonBudget;
+
+  @Override
+  public Double getEpsilonBudget() {
+    return epsilonBudget;
+  }
 
   protected QualityCheck() {}
 

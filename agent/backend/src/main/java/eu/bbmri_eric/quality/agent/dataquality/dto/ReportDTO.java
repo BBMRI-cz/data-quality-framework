@@ -12,7 +12,7 @@ public class ReportDTO {
   private Long id;
   private LocalDateTime generatedAt;
   private ReportStatus status;
-  private float epsilonBudget;
+  private double epsilonBudget;
   private Integer numberOfEntities;
   private Integer numberOfSecondaryEntities;
   private List<ReportResultDTO> results;

@@ -12,7 +12,7 @@ public class ReportResultDTO {
   private Double obfuscatedValue;
   private int warningThreshold;
   private int errorThreshold;
-  private float epsilon;
+  private double epsilon;
   private String error;
   private String stratum;
   private Set<String> patients;

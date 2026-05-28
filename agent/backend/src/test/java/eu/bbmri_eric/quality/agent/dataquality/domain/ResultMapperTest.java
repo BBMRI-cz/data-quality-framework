@@ -97,7 +97,7 @@ public class ResultMapperTest {
     Set<String> idSet = Set.of("patient-1");
     ResultDTO resultDTO = new ResultDTO(9, "ExistingTarget", idSet, null);
 
-    Result result = new Result("Preexisting Check", 42L, null, null, 10, 20, 1.0f, null, null);
+    Result result = new Result("Preexisting Check", 42L, null, null, 10, 20, 1.0, null, null);
 
     modelMapper.map(resultDTO, result);
 
@@ -105,7 +105,7 @@ public class ResultMapperTest {
         new QualityCheck(123L, "Age Check", "Checks ages", "define Age: true");
     qualityCheck.setWarningThreshold(17);
     qualityCheck.setErrorThreshold(31);
-    qualityCheck.setEpsilonBudget(0.75f);
+    qualityCheck.setEpsilonBudget(0.75);
 
     modelMapper.map(qualityCheck, result);
 
@@ -116,25 +116,25 @@ public class ResultMapperTest {
     assertEquals("Age Check", result.getCheckName());
     assertEquals(17, result.getWarningThreshold());
     assertEquals(31, result.getErrorThreshold());
-    assertEquals(0.75f, result.getEpsilon());
+    assertEquals(0.75, result.getEpsilon());
   }
 
   @Test
   void mapQualityCheck_doesNotMapErrorThresholdIntoErrorMessage() {
-    Result result = new Result("Preexisting Check", 42L, null, null, 10, 20, 1.0f, null, null);
+    Result result = new Result("Preexisting Check", 42L, null, null, 10, 20, 1.0, null, null);
 
     QualityCheck qualityCheck =
         new QualityCheck(123L, "Age Check", "Checks ages", "define Age: true");
     qualityCheck.setWarningThreshold(17);
     qualityCheck.setErrorThreshold(31);
-    qualityCheck.setEpsilonBudget(0.75f);
+    qualityCheck.setEpsilonBudget(0.75);
 
     modelMapper.map(qualityCheck, result);
 
     assertNull(result.getError());
     assertEquals(17, result.getWarningThreshold());
     assertEquals(31, result.getErrorThreshold());
-    assertEquals(0.75f, result.getEpsilon());
+    assertEquals(0.75, result.getEpsilon());
   }
 
   @Test

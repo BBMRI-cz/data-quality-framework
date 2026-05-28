@@ -39,7 +39,7 @@ public class Report {
   @Enumerated(EnumType.STRING)
   private ReportStatus status = ReportStatus.GENERATING;
 
-  private float epsilonBudget = 2.0f;
+  private double epsilonBudget = 2.0;
 
   private Integer numberOfEntities;
 

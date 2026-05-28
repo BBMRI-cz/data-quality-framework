@@ -80,13 +80,6 @@
       fallback: 'N/A',
     },
     {
-      key: 'epsilonBudget',
-      label: 'Budget',
-      headerClass: 'center hide-sm',
-      cellClass: 'center hide-sm',
-      format: 'decimal',
-    },
-    {
       key: 'epsilonUsed',
       label: 'Used',
       headerClass: 'center hide-sm',
@@ -136,8 +129,7 @@
 
   const getEpsilonCellClass = (item) => {
     const used = calculateEpsilonUsed(item);
-    const budget = item.epsilonBudget || 0;
-    return used > budget ? 'center hide-sm danger' : 'center hide-sm';
+    return used > 3.0 ? 'center hide-sm danger' : 'center hide-sm';
   };
 </script>
 
