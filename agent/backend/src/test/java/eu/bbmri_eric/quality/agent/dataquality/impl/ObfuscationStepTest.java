@@ -94,7 +94,7 @@ class ObfuscationStepTest {
     report.setResults(new ArrayList<>(List.of(r1)));
     step.execute(report);
     assertThat(r1.getObfuscatedValue()).isNotNull().isNotNegative();
-    assertThat(report.getResults().getFirst().getEpsilon()).isEqualTo(1.0F);
+    assertThat(report.getResults().getFirst().getEpsilon()).isEqualTo(1.0);
   }
 
   @Test
