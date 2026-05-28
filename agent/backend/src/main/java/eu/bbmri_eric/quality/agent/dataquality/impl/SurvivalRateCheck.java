@@ -114,7 +114,7 @@ class SurvivalRateCheck implements StratifiedDataQualityCheck {
   }
 
   @Override
-  public Float getEpsilonBudget() {
+  public Double getEpsilonBudget() {
     return config.getEpsilonBudget();
   }
 

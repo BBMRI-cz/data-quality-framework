@@ -35,7 +35,7 @@ public class QualityCheck implements DataQualityCheck {
 
   private int warningThreshold = 10;
   private int errorThreshold = 30;
-  private Float epsilonBudget;
+  private Double epsilonBudget;
 
   protected QualityCheck() {}
 

@@ -37,7 +37,7 @@ public class Result {
   private Double obfuscatedValue;
   private int warningThreshold;
   private int errorThreshold;
-  private Float epsilon;
+  private Double epsilon;
   private String error;
   private String stratum;
 
@@ -55,7 +55,7 @@ public class Result {
       Double obfuscatedValue,
       int warningThreshold,
       int errorThreshold,
-      Float epsilon,
+      Double epsilon,
       String error,
       String stratum) {
     this.checkName = checkName;

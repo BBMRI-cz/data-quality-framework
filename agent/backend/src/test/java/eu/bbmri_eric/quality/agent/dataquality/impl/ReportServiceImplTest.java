@@ -82,7 +82,7 @@ class ReportServiceImplTest {
       Double obfuscatedValue,
       String stratum) {
     Result result =
-        new Result(checkName, checkId, rawValue, obfuscatedValue, 10, 30, 1.0f, null, stratum);
+        new Result(checkName, checkId, rawValue, obfuscatedValue, 10, 30, 1.0, null, stratum);
     report.addResult(result);
   }
 

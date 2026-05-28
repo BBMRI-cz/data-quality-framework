@@ -39,7 +39,7 @@ public class QualityCheckUpdateDTO {
 
   @Positive(message = "Epsilon budget must be positive")
   @Schema(description = "Epsilon budget for differential privacy", example = "1.0")
-  private Float epsilonBudget;
+  private Double epsilonBudget;
 
   public QualityCheckUpdateDTO() {}
 
@@ -49,7 +49,7 @@ public class QualityCheckUpdateDTO {
       String query,
       Integer warningThreshold,
       Integer errorThreshold,
-      Float epsilonBudget) {
+      Double epsilonBudget) {
     this.name = name;
     this.description = description;
     this.query = query;

@@ -25,7 +25,7 @@ public class ReportMapperTest {
     report.setId(101L);
     report.setGeneratedAt(LocalDateTime.of(2025, 5, 12, 14, 30));
     report.setStatus(ReportStatus.GENERATED);
-    report.setEpsilonBudget(1.5f);
+    report.setEpsilonBudget(1.5);
     report.setNumberOfEntities(250);
     report.setNumberOfSecondaryEntities(42);
     report.setResults(
@@ -38,7 +38,7 @@ public class ReportMapperTest {
                     12.5,
                     10,
                     30,
-                    0.4f,
+                    0.4,
                     null,
                     null,
                     Set.of("patient-1", "patient-2")),
@@ -49,7 +49,7 @@ public class ReportMapperTest {
                     0.0,
                     10,
                     30,
-                    0.4f,
+                    0.4,
                     "There is no error message",
                     "stratum_a",
                     Set.of("patient-3")))));
@@ -59,7 +59,7 @@ public class ReportMapperTest {
     assertEquals(101L, reportDTO.getId());
     assertEquals(LocalDateTime.of(2025, 5, 12, 14, 30), reportDTO.getGeneratedAt());
     assertEquals(ReportStatus.GENERATED, reportDTO.getStatus());
-    assertEquals(1.5f, reportDTO.getEpsilonBudget());
+    assertEquals(1.5, reportDTO.getEpsilonBudget());
     assertEquals(250, reportDTO.getNumberOfEntities());
     assertEquals(42, reportDTO.getNumberOfSecondaryEntities());
     assertEquals(2, reportDTO.getResults().size());
@@ -71,7 +71,7 @@ public class ReportMapperTest {
     assertEquals(12.5, firstResult.getObfuscatedValue());
     assertEquals(10, firstResult.getWarningThreshold());
     assertEquals(30, firstResult.getErrorThreshold());
-    assertEquals(0.4f, firstResult.getEpsilon());
+    assertEquals(0.4, firstResult.getEpsilon());
     assertNull(firstResult.getError());
     assertNull(firstResult.getStratum());
     assertTrue(firstResult.getPatients().containsAll(Set.of("patient-1", "patient-2")));
@@ -83,7 +83,7 @@ public class ReportMapperTest {
     assertEquals(0.0, secondResult.getObfuscatedValue());
     assertEquals(10, secondResult.getWarningThreshold());
     assertEquals(30, secondResult.getErrorThreshold());
-    assertEquals(0.4f, secondResult.getEpsilon());
+    assertEquals(0.4, secondResult.getEpsilon());
     assertEquals("There is no error message", secondResult.getError());
     assertEquals("stratum_a", secondResult.getStratum());
     assertEquals(Set.of("patient-3"), secondResult.getPatients());
@@ -139,14 +139,14 @@ public class ReportMapperTest {
     report.setId(105L);
     report.setGeneratedAt(LocalDateTime.of(2024, 1, 15, 9, 45));
     report.setStatus(ReportStatus.GENERATED);
-    report.setEpsilonBudget(2.5f);
+    report.setEpsilonBudget(2.5);
     report.setNumberOfEntities(500);
     report.setNumberOfSecondaryEntities(17);
     report.setResults(
         new ArrayList<>(
             List.of(
                 createResult(
-                    "Check A", 21L, 7, 7.5, 10, 30, 0.5f, null, null, Set.of("patient-x")))));
+                    "Check A", 21L, 7, 7.5, 10, 30, 0.5, null, null, Set.of("patient-x")))));
 
     ReportDTO reportDTO = modelMapper.map(report, ReportDTO.class);
 
@@ -154,7 +154,7 @@ public class ReportMapperTest {
     assertEquals(105L, reportDTO.getId());
     assertEquals(LocalDateTime.of(2024, 1, 15, 9, 45), report.getGeneratedAt());
     assertEquals(ReportStatus.GENERATED, report.getStatus());
-    assertEquals(2.5f, report.getEpsilonBudget());
+    assertEquals(2.5, report.getEpsilonBudget());
     assertEquals(500, report.getNumberOfEntities());
     assertEquals(17, report.getNumberOfSecondaryEntities());
     assertEquals(1, report.getResults().size());
@@ -168,7 +168,7 @@ public class ReportMapperTest {
       Double obfuscatedValue,
       int warningThreshold,
       int errorThreshold,
-      float epsilon,
+      double epsilon,
       String error,
       String stratum,
       Set<String> patients) {

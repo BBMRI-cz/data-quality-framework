@@ -93,7 +93,7 @@ class DuplicateIdentifierCheck implements DataQualityCheck {
   }
 
   @Override
-  public Float getEpsilonBudget() {
+  public Double getEpsilonBudget() {
     return config.getEpsilonBudget();
   }
 

@@ -49,7 +49,7 @@ class QualityCheckIntegrationTests {
             "define Test: true",
             10,
             30,
-            1.0f);
+            1.0);
 
     String location =
         mockMvc
@@ -87,7 +87,7 @@ class QualityCheckIntegrationTests {
   @Test
   void create_invalidQualityCheck_blankName_returnsBadRequest() throws Exception {
     QualityCheckCreateDTO createDTO =
-        new QualityCheckCreateDTO("", "Description", "define Test: true", 10, 30, 1.0f);
+        new QualityCheckCreateDTO("", "Description", "define Test: true", 10, 30, 1.0);
 
     mockMvc
         .perform(
@@ -166,7 +166,7 @@ class QualityCheckIntegrationTests {
 
     QualityCheckUpdateDTO updateDTO =
         new QualityCheckUpdateDTO(
-            "Updated Name", "Updated Description", "define Test: false", 20, 50, 2.0f);
+            "Updated Name", "Updated Description", "define Test: false", 20, 50, 2.0);
 
     mockMvc
         .perform(
@@ -189,7 +189,7 @@ class QualityCheckIntegrationTests {
   void update_nonExistingQualityCheck_returnsNotFound() throws Exception {
     QualityCheckUpdateDTO updateDTO =
         new QualityCheckUpdateDTO(
-            "Updated Name", "Updated Description", "define Test: false", 20, 50, 2.0f);
+            "Updated Name", "Updated Description", "define Test: false", 20, 50, 2.0);
 
     mockMvc
         .perform(
@@ -207,7 +207,7 @@ class QualityCheckIntegrationTests {
 
     QualityCheckUpdateDTO updateDTO =
         new QualityCheckUpdateDTO(
-            "Updated Name", "Updated Description", "define Test: false", 150, -10, 2.0f);
+            "Updated Name", "Updated Description", "define Test: false", 150, -10, 2.0);
 
     mockMvc
         .perform(
@@ -258,7 +258,7 @@ class QualityCheckIntegrationTests {
             "Invalid ICD-10 Codes", "How many conditions have invalid ICD-10 codes", null);
     builtInCheck.setWarningThreshold(10);
     builtInCheck.setErrorThreshold(30);
-    builtInCheck.setEpsilonBudget(0.2f);
+    builtInCheck.setEpsilonBudget(0.2);
     QualityCheck savedCheck = qualityCheckRepository.save(builtInCheck);
     Long checkId = savedCheck.getId();
 
@@ -269,7 +269,7 @@ class QualityCheckIntegrationTests {
             null, // Keep query as null for built-in check
             15,
             40,
-            0.5f);
+            0.5);
 
     mockMvc
         .perform(
@@ -288,6 +288,6 @@ class QualityCheckIntegrationTests {
     assertThat(updatedCheck.getName()).isEqualTo("Invalid ICD-10 Codes - Updated");
     assertThat(updatedCheck.getWarningThreshold()).isEqualTo(15);
     assertThat(updatedCheck.getErrorThreshold()).isEqualTo(40);
-    assertThat(updatedCheck.getEpsilonBudget()).isEqualTo(0.5f);
+    assertThat(updatedCheck.getEpsilonBudget()).isEqualTo(0.5);
   }
 }

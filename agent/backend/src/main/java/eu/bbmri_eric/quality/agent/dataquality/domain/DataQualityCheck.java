@@ -53,7 +53,7 @@ public interface DataQualityCheck {
    *
    * @return the epsilon budget
    */
-  Float getEpsilonBudget();
+  Double getEpsilonBudget();
 
   /**
    * Returns the unique identifier of this data quality check, if applicable.

@@ -30,14 +30,14 @@ class ObfuscationStep implements ReportPipelineStep {
   }
 
   private static double computeTotalPreferredEpsilon(
-      List<Result> results, Map<Long, Float> preferredBudgetByCheckId) {
+      List<Result> results, Map<Long, Double> preferredBudgetByCheckId) {
     return results.stream()
-        .mapToDouble(r -> preferredBudgetByCheckId.getOrDefault(r.getCheckId(), 0.0f))
+        .mapToDouble(r -> preferredBudgetByCheckId.getOrDefault(r.getCheckId(), 0.0))
         .sum();
   }
 
   private static long countResultsWithoutPreference(
-      List<Result> results, Map<Long, Float> preferredBudgetByCheckId) {
+      List<Result> results, Map<Long, Double> preferredBudgetByCheckId) {
     return results.stream()
         .filter(r -> !preferredBudgetByCheckId.containsKey(r.getCheckId()))
         .count();
@@ -50,25 +50,22 @@ class ObfuscationStep implements ReportPipelineStep {
       long noPreferenceCount,
       boolean ignorePreferences) {
     if (ignorePreferences) return totalEpsilon / resultCount;
-    return noPreferenceCount > 0
-        ? (totalEpsilon - totalPreferredEpsilon) / noPreferenceCount
-        : 0;
+    return noPreferenceCount > 0 ? (totalEpsilon - totalPreferredEpsilon) / noPreferenceCount : 0;
   }
 
   private static double resolveEpsilon(
       Result result,
-      Map<Long, Float> preferredBudgetByCheckId,
+      Map<Long, Double> preferredBudgetByCheckId,
       double baseEpsilon,
       boolean ignorePreferences) {
     if (ignorePreferences) return baseEpsilon;
-    return preferredBudgetByCheckId.getOrDefault(result.getCheckId(), (float) baseEpsilon);
+    return preferredBudgetByCheckId.getOrDefault(result.getCheckId(), baseEpsilon);
   }
 
   private static void applyNoise(Result result, double epsilon) {
-    double noisyValue =
-        DifferentialPrivacyUtil.addLaplaceNoise(result.getRawValue(), epsilon, 1);
+    double noisyValue = DifferentialPrivacyUtil.addLaplaceNoise(result.getRawValue(), epsilon, 1);
     result.setObfuscatedValue(noisyValue);
-    result.setEpsilon((float) epsilon);
+    result.setEpsilon(epsilon);
   }
 
   @Override
@@ -82,7 +79,7 @@ class ObfuscationStep implements ReportPipelineStep {
   private void obfuscateResults(Report report) {
     List<Result> results = report.getResults();
     double totalEpsilon = settingsService.getSettings().getEpsilon();
-    Map<Long, Float> preferredBudgetByCheckId = getPreferredBudgetByCheckId();
+    Map<Long, Double> preferredBudgetByCheckId = getPreferredBudgetByCheckId();
     List<Result> resultsToObfuscate = resultsWithNonNullValues(results);
 
     if (resultsToObfuscate.isEmpty()) return;
@@ -102,7 +99,10 @@ class ObfuscationStep implements ReportPipelineStep {
             noPreferenceCount,
             ignorePreferences);
     logAllocation(
-        totalEpsilon, totalPreferredEpsilon, resultsToObfuscate.size(), noPreferenceCount,
+        totalEpsilon,
+        totalPreferredEpsilon,
+        resultsToObfuscate.size(),
+        noPreferenceCount,
         ignorePreferences);
     for (Result result : results) {
       if (result.getRawValue() == null) continue;
@@ -112,7 +112,7 @@ class ObfuscationStep implements ReportPipelineStep {
     }
   }
 
-  private Map<Long, Float> getPreferredBudgetByCheckId() {
+  private Map<Long, Double> getPreferredBudgetByCheckId() {
     return qualityCheckService.findAll().stream()
         .filter(qc -> qc.getEpsilonBudget() != null)
         .collect(Collectors.toMap(QualityCheckDTO::getId, QualityCheckDTO::getEpsilonBudget));
@@ -126,7 +126,10 @@ class ObfuscationStep implements ReportPipelineStep {
       boolean ignorePreferences) {
     log.debug(
         "Epsilon budget: total={}, preferredTotal={}, totalResults={}, noPreferenceCount={}",
-        totalEpsilon, totalPreferredEpsilon, totalResults, noPreferenceCount);
+        totalEpsilon,
+        totalPreferredEpsilon,
+        totalResults,
+        noPreferenceCount);
     log.debug("Using {} epsilon allocation", ignorePreferences ? "equal" : "preference-aware");
   }
 
