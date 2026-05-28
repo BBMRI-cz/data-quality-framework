@@ -112,19 +112,6 @@ class SettingsControllerTest {
         .andExpect(status().isOk());
   }
 
-  @Test
-  @WithMockUser(username = "admin")
-  void updateSettings_withMissingRequiredFields_shouldReturn400() throws Exception {
-    Map<String, String> incomplete = new HashMap<>();
-    incomplete.put("fhirUrl", "http://localhost:8080/fhir");
-
-    mockMvc
-        .perform(
-            put("/api/settings")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(incomplete)))
-        .andExpect(status().isBadRequest());
-  }
 
   @Test
   void updateSettings_withoutAuthentication_shouldReturn401() throws Exception {

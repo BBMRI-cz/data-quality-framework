@@ -56,14 +56,6 @@
           <StatCard :number="countPassed()" label="Passed" number-class="text-success" />
         </div>
 
-        <!-- Epsilon Warning Alert -->
-        <div v-if="isOverBudget()" class="alert alert-warning mb-4">
-          <i class="bi bi-exclamation-triangle me-2"></i>
-          <strong>Warning:</strong> Epsilon budget exceeded! Total epsilon used ({{
-            calculateEpsilonUsed().toFixed(2)
-          }}) exceeds budget ({{ report.epsilonBudget.toFixed(2) }})
-        </div>
-
         <div class="mb-4">
           <div class="filter-label">Status:</div>
           <FilterComponent v-model="selectedStatus" :elements="statuses" />

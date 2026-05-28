@@ -51,23 +51,18 @@ public class SettingsDTO {
       requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   private String fhirPassword;
 
-  @NotNull(message = "Epsilon is required")
   @Positive(message = "Epsilon must be positive")
   @Schema(
       description = "Privacy budget (ε)",
-      example = "3.0",
-      requiredMode = Schema.RequiredMode.REQUIRED)
+      example = "3.0")
   private Double epsilon;
 
-  @NotNull(message = "Delta is required")
   @Positive(message = "Delta must be positive")
   @Schema(
       description = "Delta parameter (δ) - probability of privacy failure",
-      example = "1e-8",
-      requiredMode = Schema.RequiredMode.REQUIRED)
+      example = "1e-8")
   private Double delta;
 
-  @NotNull(message = "Minimum threshold is required")
   @Min(value = 0, message = "Minimum threshold must be non-negative")
   @Schema(
       description = "Minimum threshold for low count suppression",
@@ -75,18 +70,14 @@ public class SettingsDTO {
       requiredMode = Schema.RequiredMode.REQUIRED)
   private Integer minThreshold;
 
-  @NotNull(message = "Noise mechanism is required")
   @Schema(
       description = "Noise mechanism (LAPLACE or GAUSSIAN)",
-      example = "LAPLACE",
-      requiredMode = Schema.RequiredMode.REQUIRED)
+      example = "LAPLACE")
   private NoiseMechanism noiseMechanism;
 
-  @NotNull(message = "Database type is required")
   @Schema(
       description = "Database type (FHIR or SQL)",
-      example = "FHIR",
-      requiredMode = Schema.RequiredMode.REQUIRED)
+      example = "FHIR")
   private DatabaseType databaseType;
 
   @Size(max = 500, message = "SQL URL must not exceed 500 characters")
