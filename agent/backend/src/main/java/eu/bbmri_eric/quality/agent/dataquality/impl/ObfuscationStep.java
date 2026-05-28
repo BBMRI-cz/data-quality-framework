@@ -84,6 +84,8 @@ class ObfuscationStep implements ReportPipelineStep {
     log.info("Adding obfuscated values for report id: {}", report.getId());
     List<Result> results = report.getResults();
     double totalEpsilon = settingsService.getSettings().getEpsilon();
+    int threshold = settingsService.getSettings().getMinThreshold();
+    DifferentialPrivacyUtil.setLowCountThreshold(threshold);
     Map<Long, Double> preferredBudgetByCheckId = getPreferredBudgetByCheckId();
     List<Result> resultsToObfuscate = resultsWithNonNullValues(results);
     if (resultsToObfuscate.isEmpty()) return;

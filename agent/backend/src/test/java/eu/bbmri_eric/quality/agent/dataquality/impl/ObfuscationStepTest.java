@@ -1,8 +1,10 @@
 package eu.bbmri_eric.quality.agent.dataquality.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import eu.bbmri_eric.quality.agent.dataquality.DifferentialPrivacyUtil;
 import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Result;
@@ -12,6 +14,7 @@ import eu.bbmri_eric.quality.agent.settings.impl.SettingsRepository;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -23,6 +26,12 @@ class ObfuscationStepTest {
   @Autowired private SettingsService settingsService;
   @Autowired private SettingsRepository settingsRepository;
   @Autowired private ObfuscationStep step;
+
+  @AfterEach
+  void tearDown() {
+    DifferentialPrivacyUtil.setLowCountThreshold(10.0);
+  }
+
   @Autowired private ReportRepository reportRepository;
   @Autowired private QualityCheckRepository qualityCheckRepository;
 
@@ -287,22 +296,44 @@ class ObfuscationStepTest {
   }
 
   @Test
-  void execute_withNullRawValueAndPreference_shouldNotConsumeEpsilon() {
-    settingsService.updateSettings(SettingsDTO.builder().epsilon(1.0).build());
-
-    QualityCheck check1 = new QualityCheck("c1", "Check 1", "query1");
-    check1.setEpsilonBudget(0.6);
-    qualityCheckRepository.save(check1);
+  void execute_withHighMinThreshold_shouldSuppressLowCounts() {
+    settingsService.updateSettings(
+        SettingsDTO.builder().epsilon(1_000_000.0).minThreshold(200).build());
 
     Report report = new Report();
-    Result r1 = new Result("c1", check1.getId(), null, null, 80, 50, null, null, null);
-    Result r2 = new Result("c2", 999L, 200, null, 150, 100, null, null, null);
-    report.setResults(new ArrayList<>(List.of(r1, r2)));
+    Result r1 = new Result("c1", 1L, 100, null, 80, 50, null, null, null);
+    report.setResults(new ArrayList<>(List.of(r1)));
 
     step.execute(report);
 
-    assertThat(r1.getObfuscatedValue()).isNull();
-    assertThat(r1.getEpsilon()).isNull();
-    assertThat(r2.getEpsilon()).isEqualTo(1.0);
+    assertThat(r1.getObfuscatedValue()).isEqualTo(0.0);
+  }
+
+  @Test
+  void execute_withZeroMinThreshold_shouldPreserveCounts() {
+    settingsService.updateSettings(
+        SettingsDTO.builder().epsilon(1_000_000.0).minThreshold(0).build());
+
+    Report report = new Report();
+    Result r1 = new Result("c1", 1L, 100, null, 80, 50, null, null, null);
+    report.setResults(new ArrayList<>(List.of(r1)));
+
+    step.execute(report);
+
+    assertThat(r1.getObfuscatedValue()).isCloseTo(100.0, within(0.1));
+  }
+
+  @Test
+  void execute_shouldApplyMinThresholdFromSettings() {
+    settingsService.updateSettings(
+        SettingsDTO.builder().epsilon(1_000_000.0).minThreshold(500).build());
+
+    Report report = new Report();
+    Result r1 = new Result("c1", 1L, 300, null, 80, 50, null, null, null);
+    report.setResults(new ArrayList<>(List.of(r1)));
+
+    step.execute(report);
+
+    assertThat(r1.getObfuscatedValue()).isEqualTo(0.0);
   }
 }

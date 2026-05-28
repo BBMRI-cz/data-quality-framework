@@ -11,7 +11,19 @@ import java.security.SecureRandom;
 public class DifferentialPrivacyUtil {
 
   private static final SecureRandom SECURE_RANDOM = new SecureRandom();
-  private static final double LOW_COUNT_THRESHOLD = 10.0;
+  private static double LOW_COUNT_THRESHOLD = 10.0;
+
+  /**
+   * Sets the low-count suppression threshold.
+   *
+   * @param threshold the new threshold (must be non-negative)
+   */
+  public static synchronized void setLowCountThreshold(double threshold) {
+    if (threshold < 0) {
+      throw new IllegalArgumentException("Threshold must be non-negative, got: " + threshold);
+    }
+    LOW_COUNT_THRESHOLD = threshold;
+  }
 
   /**
    * Adds Laplace noise to a count, then suppresses if below threshold.

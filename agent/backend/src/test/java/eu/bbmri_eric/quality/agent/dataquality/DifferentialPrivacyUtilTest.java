@@ -65,6 +65,37 @@ class DifferentialPrivacyUtilTest {
   }
 
   @Nested
+  @DisplayName("Threshold Configuration")
+  class ThresholdConfiguration {
+
+    @Test
+    @DisplayName("should allow setting a custom low count threshold")
+    void shouldAllowSettingCustomThreshold() {
+      DifferentialPrivacyUtil.setLowCountThreshold(25.0);
+      double result = DifferentialPrivacyUtil.addLaplaceNoise(20, EPSILON, SENSITIVITY);
+      assertThat(result).isEqualTo(0.0);
+      DifferentialPrivacyUtil.setLowCountThreshold(10.0);
+    }
+
+    @Test
+    @DisplayName("should throw IllegalArgumentException for negative threshold")
+    void shouldRejectNegativeThreshold() {
+      assertThatThrownBy(() -> DifferentialPrivacyUtil.setLowCountThreshold(-1.0))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("Threshold must be non-negative");
+    }
+
+    @Test
+    @DisplayName("should accept zero threshold")
+    void shouldAcceptZeroThreshold() {
+      DifferentialPrivacyUtil.setLowCountThreshold(0.0);
+      double result = DifferentialPrivacyUtil.addLaplaceNoise(1, EPSILON, SENSITIVITY);
+      assertThat(result).isGreaterThanOrEqualTo(0.0);
+      DifferentialPrivacyUtil.setLowCountThreshold(10.0);
+    }
+  }
+
+  @Nested
   @DisplayName("Low Count Suppression")
   class LowCountSuppression {
 
