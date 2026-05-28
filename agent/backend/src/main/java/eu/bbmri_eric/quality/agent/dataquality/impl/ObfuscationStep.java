@@ -6,6 +6,7 @@ import eu.bbmri_eric.quality.agent.dataquality.ReportPipelineStep;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Result;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
+import eu.bbmri_eric.quality.agent.settings.NoiseMechanism;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import java.util.List;
 import java.util.Map;
@@ -74,8 +75,15 @@ class ObfuscationStep implements ReportPipelineStep {
     return preferredBudgetByCheckId.getOrDefault(result.getCheckId(), baseEpsilon);
   }
 
-  private void applyNoise(Result result, double epsilon) {
-    double noisyValue = DifferentialPrivacyUtil.addLaplaceNoise(result.getRawValue(), epsilon, 1);
+  private void applyNoise(
+      Result result, double epsilon, NoiseMechanism noiseMechanism, double delta) {
+    double noisyValue;
+    if (noiseMechanism == NoiseMechanism.GAUSSIAN) {
+      noisyValue =
+          DifferentialPrivacyUtil.addGaussianNoise(result.getRawValue(), epsilon, delta, 1);
+    } else {
+      noisyValue = DifferentialPrivacyUtil.addLaplaceNoise(result.getRawValue(), epsilon, 1);
+    }
     result.setObfuscatedValue(noisyValue);
     result.setEpsilon(epsilon);
   }
@@ -83,8 +91,11 @@ class ObfuscationStep implements ReportPipelineStep {
   private void obfuscateResults(Report report) {
     log.info("Adding obfuscated values for report id: {}", report.getId());
     List<Result> results = report.getResults();
-    double totalEpsilon = settingsService.getSettings().getEpsilon();
-    int threshold = settingsService.getSettings().getMinThreshold();
+    var settings = settingsService.getSettings();
+    double totalEpsilon = settings.getEpsilon();
+    double delta = settings.getDelta();
+    NoiseMechanism noiseMechanism = settings.getNoiseMechanism();
+    int threshold = settings.getMinThreshold();
     DifferentialPrivacyUtil.setLowCountThreshold(threshold);
     Map<Long, Double> preferredBudgetByCheckId = getPreferredBudgetByCheckId();
     List<Result> resultsToObfuscate = resultsWithNonNullValues(results);
@@ -113,7 +124,7 @@ class ObfuscationStep implements ReportPipelineStep {
       if (result.getRawValue() == null) continue;
       double epsilon =
           resolveEpsilon(result, preferredBudgetByCheckId, baseEpsilon, ignorePreferences);
-      applyNoise(result, epsilon);
+      applyNoise(result, epsilon, noiseMechanism, delta);
     }
   }
 

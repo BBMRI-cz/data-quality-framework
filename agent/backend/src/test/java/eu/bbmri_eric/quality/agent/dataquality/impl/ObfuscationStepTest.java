@@ -8,6 +8,7 @@ import eu.bbmri_eric.quality.agent.dataquality.DifferentialPrivacyUtil;
 import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Result;
+import eu.bbmri_eric.quality.agent.settings.NoiseMechanism;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
 import eu.bbmri_eric.quality.agent.settings.impl.SettingsRepository;
@@ -335,5 +336,53 @@ class ObfuscationStepTest {
     step.execute(report);
 
     assertThat(r1.getObfuscatedValue()).isEqualTo(0.0);
+  }
+
+  @Test
+  void execute_withGaussianNoise_shouldSetObfuscatedValues() {
+    settingsService.updateSettings(
+        SettingsDTO.builder().epsilon(100.0).noiseMechanism(NoiseMechanism.GAUSSIAN).build());
+
+    Report report = new Report();
+    Result r1 = new Result("c1", 1L, 100, null, 80, 50, null, null, null);
+    Result r2 = new Result("c2", 2L, 200, null, 150, 100, null, null, null);
+    report.setResults(new ArrayList<>(List.of(r1, r2)));
+
+    Report result = step.execute(report);
+
+    assertThat(result).isSameAs(report);
+    assertThat(r1.getObfuscatedValue()).isNotNull().isNotNegative();
+    assertThat(r2.getObfuscatedValue()).isNotNull().isNotNegative();
+  }
+
+  @Test
+  void execute_withLaplaceNoise_shouldSetObfuscatedValues() {
+    settingsService.updateSettings(
+        SettingsDTO.builder().epsilon(100.0).noiseMechanism(NoiseMechanism.LAPLACE).build());
+
+    Report report = new Report();
+    Result r1 = new Result("c1", 1L, 100, null, 80, 50, null, null, null);
+    Result r2 = new Result("c2", 2L, 200, null, 150, 100, null, null, null);
+    report.setResults(new ArrayList<>(List.of(r1, r2)));
+
+    Report result = step.execute(report);
+
+    assertThat(result).isSameAs(report);
+    assertThat(r1.getObfuscatedValue()).isNotNull().isNotNegative();
+    assertThat(r2.getObfuscatedValue()).isNotNull().isNotNegative();
+  }
+
+  @Test
+  void execute_withGaussianNoise_shouldBeCloseToRawValue() {
+    settingsService.updateSettings(
+        SettingsDTO.builder().epsilon(1_000_000.0).noiseMechanism(NoiseMechanism.GAUSSIAN).build());
+
+    Report report = new Report();
+    Result r1 = new Result("c1", 1L, 100, null, 80, 50, null, null, null);
+    report.setResults(new ArrayList<>(List.of(r1)));
+
+    step.execute(report);
+
+    assertThat(r1.getObfuscatedValue()).isBetween(90.0, 110.0);
   }
 }
