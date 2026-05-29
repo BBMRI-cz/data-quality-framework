@@ -1,6 +1,7 @@
 package eu.bbmri_eric.quality.server.setting;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -55,5 +56,13 @@ class SettingsControllerTest {
         .perform(get(API_V1_SETTINGS))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+  }
+
+  @Test
+  @WithMockUser(roles = "USER")
+  void patchSettings_withUserRole_shouldReturn403() throws Exception {
+    mockMvc
+        .perform(patch(API_V1_SETTINGS).contentType(MediaType.APPLICATION_JSON).content("{}"))
+        .andExpect(status().isForbidden());
   }
 }
