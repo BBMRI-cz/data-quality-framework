@@ -35,6 +35,7 @@ public class UserControllerTest {
   @Autowired private ObjectMapper objectMapper;
   @Autowired private UserRepository userRepository;
   @Autowired private PasswordEncoder passwordEncoder;
+  @Autowired private LoginAttemptServiceImpl loginAttemptService;
 
   @AfterEach
   void tearDown() {
@@ -42,6 +43,7 @@ public class UserControllerTest {
         userRepository.findByUsername(ADMIN_USER).orElseThrow(EntityNotFoundException::new);
     adminUser.setPassword(passwordEncoder.encode(ADMIN_PASS));
     userRepository.save(adminUser);
+    loginAttemptService.clear();
   }
 
   @Test
@@ -243,6 +245,56 @@ public class UserControllerTest {
                     objectMapper.writeValueAsString(
                         new PasswordChangeRequest("current", "newPass123!", "newPass123!"))))
         .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  void login_afterMaxFailedAttempts_returnsTooManyRequests() throws Exception {
+    LoginRequest loginRequest = new LoginRequest(ADMIN_USER, "wrongpassword");
+
+    for (int i = 0; i < 5; i++) {
+      mockMvc
+          .perform(
+              post(AUTH_LOGIN_ENDPOINT)
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(objectMapper.writeValueAsString(loginRequest)))
+          .andExpect(status().isUnauthorized());
+    }
+
+    mockMvc
+        .perform(
+            post(AUTH_LOGIN_ENDPOINT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loginRequest)))
+        .andExpect(status().isTooManyRequests());
+  }
+
+  @Test
+  void login_successfulLoginAfterFewFailures_resetsCounter() throws Exception {
+    LoginRequest badRequest = new LoginRequest(ADMIN_USER, "wrongpassword");
+    LoginRequest goodRequest = new LoginRequest(ADMIN_USER, ADMIN_PASS);
+
+    for (int i = 0; i < 4; i++) {
+      mockMvc
+          .perform(
+              post(AUTH_LOGIN_ENDPOINT)
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(objectMapper.writeValueAsString(badRequest)))
+          .andExpect(status().isUnauthorized());
+    }
+
+    mockMvc
+        .perform(
+            post(AUTH_LOGIN_ENDPOINT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(goodRequest)))
+        .andExpect(status().isOk());
+
+    mockMvc
+        .perform(
+            post(AUTH_LOGIN_ENDPOINT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(goodRequest)))
+        .andExpect(status().isOk());
   }
 
   /** Helper method to authenticate and extract JWT token from response */
