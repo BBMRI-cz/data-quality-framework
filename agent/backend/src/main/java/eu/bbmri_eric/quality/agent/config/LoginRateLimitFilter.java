@@ -19,6 +19,11 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * Prevents brute-force login attempts on the login endpoint. Blocks requests from IPs that have
  * exceeded the threshold of failed attempts and records outcomes based on the HTTP response status
  * after the request has been processed.
+ *
+ * <p>This filter uses {@code getRemoteAddr()} to identify clients. If the application runs behind a
+ * reverse proxy, configure the embedded server to handle forwarded headers (e.g. {@code
+ * server.forward-headers-strategy=native} in Spring Boot) so that {@code getRemoteAddr()} reflects
+ * the original client IP.
  */
 @Component
 class LoginRateLimitFilter extends OncePerRequestFilter {
@@ -40,7 +45,7 @@ class LoginRateLimitFilter extends OncePerRequestFilter {
       return;
     }
 
-    String ip = getClientIp(req);
+    String ip = req.getRemoteAddr() != null ? req.getRemoteAddr() : "unknown";
     if (loginAttemptService.isBlocked(ip)) {
       ProblemDetail problemDetail = buildResponse(req);
       res.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
@@ -71,14 +76,5 @@ class LoginRateLimitFilter extends OncePerRequestFilter {
   private boolean isLoginRequest(HttpServletRequest req) {
     return "/api/auth/login".equals(req.getRequestURI())
         && "POST".equalsIgnoreCase(req.getMethod());
-  }
-
-  private String getClientIp(HttpServletRequest req) {
-    String xfHeader = req.getHeader("X-Forwarded-For");
-    if (xfHeader != null && !xfHeader.isBlank()) {
-      return xfHeader.split(",")[0].trim();
-    }
-    String remoteAddr = req.getRemoteAddr();
-    return remoteAddr != null ? remoteAddr : "unknown";
   }
 }
