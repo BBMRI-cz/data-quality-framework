@@ -28,14 +28,17 @@ class SecurityConfig {
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
   private final AuthenticationEntryPoint authenticationEntryPoint;
   private final HttpRequestLoggingFilter httpRequestLoggingFilter;
+  private final LoginRateLimitFilter loginRateLimitFilter;
 
   SecurityConfig(
       JwtAuthenticationFilter jwtAuthenticationFilter,
       AuthenticationEntryPoint authenticationEntryPoint,
-      HttpRequestLoggingFilter httpRequestLoggingFilter) {
+      HttpRequestLoggingFilter httpRequestLoggingFilter,
+      LoginRateLimitFilter loginRateLimitFilter) {
     this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     this.authenticationEntryPoint = authenticationEntryPoint;
     this.httpRequestLoggingFilter = httpRequestLoggingFilter;
+    this.loginRateLimitFilter = loginRateLimitFilter;
   }
 
   @Bean
@@ -52,6 +55,7 @@ class SecurityConfig {
                     .httpStrictTransportSecurity(hsts -> hsts.maxAgeInSeconds(31536000)))
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
         .addFilterBefore(httpRequestLoggingFilter, JwtAuthenticationFilter.class)
+        .addFilterBefore(loginRateLimitFilter, UsernamePasswordAuthenticationFilter.class)
         .authorizeHttpRequests(
             auth ->
                 auth.requestMatchers(HttpMethod.OPTIONS, "/**")
