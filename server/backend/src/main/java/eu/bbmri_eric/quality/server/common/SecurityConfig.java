@@ -106,7 +106,7 @@ class SecurityConfig {
                     .requestMatchers(HttpMethod.GET, "/api/v1/settings/oidc")
                     .permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/settings")
-                    .authenticated()
+                    .hasRole("ADMIN")
                     .requestMatchers(HttpMethod.PATCH, "/api/v1/settings/oidc")
                     .hasRole("ADMIN")
                     .requestMatchers(HttpMethod.PATCH, "/api/v1/settings")
