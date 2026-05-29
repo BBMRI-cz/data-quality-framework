@@ -55,6 +55,49 @@ class AgentTest {
   }
 
   @Test
+  void addInteraction_shouldKeepAtMost30MostRecentPingInteractions() {
+    Agent agent = new Agent(UUID.randomUUID().toString());
+    int initialCount = agent.getInteractions().size(); // 1 (REGISTRATION)
+
+    for (int i = 0; i < 30; i++) {
+      agent.addInteraction(AgentInteractionType.PING);
+    }
+
+    assertEquals(initialCount + 30, agent.getInteractions().size());
+
+    agent.addInteraction(AgentInteractionType.PING);
+
+    assertEquals(initialCount + 30, agent.getInteractions().size());
+    long pingCount =
+        agent.getInteractions().stream()
+            .filter(i -> i.getType() == AgentInteractionType.PING)
+            .count();
+    assertEquals(30, pingCount);
+  }
+
+  @Test
+  void addInteraction_shouldNotRemoveNonPingInteractionsWhenExceedingPingLimit() {
+    Agent agent = new Agent(UUID.randomUUID().toString());
+
+    for (int i = 0; i < 35; i++) {
+      agent.addInteraction(AgentInteractionType.PING);
+    }
+
+    agent.addInteraction(AgentInteractionType.REPORT);
+
+    List<AgentInteraction> interactions = agent.getInteractions();
+    long pingCount =
+        interactions.stream().filter(i -> i.getType() == AgentInteractionType.PING).count();
+    long reportCount =
+        interactions.stream().filter(i -> i.getType() == AgentInteractionType.REPORT).count();
+
+    assertEquals(30, pingCount);
+    assertEquals(1, reportCount);
+    assertTrue(
+        interactions.stream().anyMatch(i -> i.getType() == AgentInteractionType.REGISTRATION));
+  }
+
+  @Test
   void addInteraction_shouldAddNewInteraction() {
     Agent agent = new Agent(UUID.randomUUID().toString());
     int initialCount = agent.getInteractions().size();

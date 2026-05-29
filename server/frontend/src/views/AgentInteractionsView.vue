@@ -94,6 +94,10 @@
               </div>
             </div>
             <div class="card-body p-0">
+              <div class="alert alert-info d-flex align-items-center py-2 mb-0 rounded-0 border-0 border-bottom small" role="alert">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                <span>Only the 30 most recent PING interactions are retained per agent.</span>
+              </div>
               <div class="table-responsive">
                 <table class="table table-hover mb-0 align-middle">
                   <thead class="table-light">

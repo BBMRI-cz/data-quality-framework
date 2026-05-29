@@ -375,6 +375,82 @@ class AgentControllerIntegrationTest {
 
   @Test
   @WithUserDetails("admin")
+  void findById_shouldReturnAtMost30MostRecentPingInteractions_whenExpandIsRequested()
+      throws Exception {
+    String agentId = UUID.randomUUID().toString();
+    Agent agent = new Agent(agentId);
+    for (int i = 0; i < 30; i++) {
+      agent.addInteraction(AgentInteractionType.PING);
+    }
+    agentRepository.save(agent);
+
+    mockMvc
+        .perform(get(API_V_1_AGENTS_ID, agentId).param("expand", "interactions"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.interactions").isArray())
+        .andExpect(jsonPath("$.interactions.length()").value(31));
+
+    agent.addInteraction(AgentInteractionType.PING);
+    agentRepository.save(agent);
+
+    mockMvc
+        .perform(get(API_V_1_AGENTS_ID, agentId).param("expand", "interactions"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.interactions").isArray())
+        .andExpect(jsonPath("$.interactions.length()").value(31));
+
+    long pingCount =
+        agentRepository.findById(agentId).orElseThrow().getInteractions().stream()
+            .filter(i -> i.getType() == AgentInteractionType.PING)
+            .count();
+    assertEquals(30, pingCount);
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void findById_shouldPreserveNonPingInteractions_whenPingLimitExceeded() throws Exception {
+    String agentId = UUID.randomUUID().toString();
+    Agent agent = new Agent(agentId);
+    for (int i = 0; i < 30; i++) {
+      agent.addInteraction(AgentInteractionType.PING);
+    }
+    agent.addInteraction(AgentInteractionType.REPORT);
+    agent.addInteraction(AgentInteractionType.REPORT);
+    agent.setVersion("1.0.0");
+    agentRepository.save(agent);
+
+    mockMvc
+        .perform(get(API_V_1_AGENTS_ID, agentId).param("expand", "interactions"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.interactions").isArray())
+        .andExpect(jsonPath("$.interactions.length()").value(34));
+
+    Agent savedAgent = agentRepository.findById(agentId).orElseThrow();
+    long pingCount =
+        savedAgent.getInteractions().stream()
+            .filter(i -> i.getType() == AgentInteractionType.PING)
+            .count();
+    long reportCount =
+        savedAgent.getInteractions().stream()
+            .filter(i -> i.getType() == AgentInteractionType.REPORT)
+            .count();
+    long versionUpdateCount =
+        savedAgent.getInteractions().stream()
+            .filter(i -> i.getType() == AgentInteractionType.VERSION_UPDATE)
+            .count();
+    long registrationCount =
+        savedAgent.getInteractions().stream()
+            .filter(i -> i.getType() == AgentInteractionType.REGISTRATION)
+            .count();
+
+    assertEquals(30, pingCount);
+    assertEquals(2, reportCount);
+    assertEquals(1, versionUpdateCount);
+    assertEquals(1, registrationCount);
+  }
+
+  @Test
+  @WithUserDetails("admin")
   void delete_shouldDeleteAgentWhenUserIsAdmin() throws Exception {
     String agentId = UUID.randomUUID().toString();
     Agent agent = new Agent(agentId);

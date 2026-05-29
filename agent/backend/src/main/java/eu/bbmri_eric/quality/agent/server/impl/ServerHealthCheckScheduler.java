@@ -22,6 +22,8 @@ class ServerHealthCheckScheduler {
 
   private static final Logger log = LoggerFactory.getLogger(ServerHealthCheckScheduler.class);
 
+  private static final long ONE_DAY_MS = 86400000L;
+
   private final ServerRepository serverRepository;
   private final SettingsService settingsService;
   private final CentralServerClientFactory clientFactory;
@@ -51,9 +53,13 @@ class ServerHealthCheckScheduler {
 
   /**
    * Periodically checks the registration status of all servers. Updates server status based on the
-   * health check results. Runs every hour.
+   * health check results. Runs once a day with a randomized initial delay to distribute load and
+   * avoid overwhelming the central server.
    */
-  @Scheduled(fixedRate = 3600000)
+  @Scheduled(
+      fixedDelay = ONE_DAY_MS,
+      initialDelayString =
+          "#{T(java.util.concurrent.ThreadLocalRandom).current().nextLong(86400000)}")
   @Transactional
   public void checkAllServerStatuses() {
     String agentId = settingsService.getSettings().getAgentId();
