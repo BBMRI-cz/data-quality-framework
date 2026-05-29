@@ -93,6 +93,15 @@
               <span>Profile</span>
             </router-link>
             <router-link
+              to="/settings"
+              class="nav-link nav-subitem"
+              :class="{ active: $route.name === 'Settings' }"
+              @click="closeMobileMenu"
+            >
+              <i class="bi bi-sliders"></i>
+              <span>General</span>
+            </router-link>
+            <router-link
               to="/oidc-settings"
               class="nav-link nav-subitem"
               :class="{ active: $route.name === 'OidcSettings' }"
