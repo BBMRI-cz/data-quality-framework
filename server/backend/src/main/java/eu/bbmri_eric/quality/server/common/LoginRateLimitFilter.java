@@ -1,14 +1,13 @@
-package eu.bbmri_eric.quality.agent.config;
+package eu.bbmri_eric.quality.server.common;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.bbmri_eric.quality.agent.user.LoginAttemptService;
+import eu.bbmri_eric.quality.server.user.LoginAttemptService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URI;
-import org.jspecify.annotations.NonNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
@@ -42,7 +41,11 @@ class LoginRateLimitFilter extends OncePerRequestFilter {
 
     String ip = getClientIp(req);
     if (loginAttemptService.isBlocked(ip)) {
-      ProblemDetail problemDetail = buildResponse(req);
+      ProblemDetail problemDetail =
+          ProblemDetail.forStatusAndDetail(
+              HttpStatus.TOO_MANY_REQUESTS, "Too many failed attempts. Try again later.");
+      problemDetail.setTitle("Too Many Requests");
+      problemDetail.setInstance(URI.create(req.getRequestURI()));
       res.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
       res.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
       res.getWriter().write(objectMapper.writeValueAsString(problemDetail));
@@ -57,15 +60,6 @@ class LoginRateLimitFilter extends OncePerRequestFilter {
     } else if (status >= HttpStatus.OK.value() && status < HttpStatus.MULTIPLE_CHOICES.value()) {
       loginAttemptService.recordSuccess(ip);
     }
-  }
-
-  private static @NonNull ProblemDetail buildResponse(HttpServletRequest req) {
-    ProblemDetail problemDetail =
-        ProblemDetail.forStatusAndDetail(
-            HttpStatus.TOO_MANY_REQUESTS, "Too many failed attempts. Try again later.");
-    problemDetail.setTitle("Too Many Requests");
-    problemDetail.setInstance(URI.create(req.getRequestURI()));
-    return problemDetail;
   }
 
   private boolean isLoginRequest(HttpServletRequest req) {

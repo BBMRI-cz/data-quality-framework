@@ -29,14 +29,17 @@ class SecurityConfig {
   private final AuthenticationEntryPoint authenticationEntryPoint;
   private final HttpRequestLoggingFilter httpRequestLoggingFilter;
   private final AuthenticationManagerResolver<HttpServletRequest> authenticationManagerResolver;
+  private final LoginRateLimitFilter loginRateLimitFilter;
 
   public SecurityConfig(
       AuthenticationEntryPoint authenticationEntryPoint,
       HttpRequestLoggingFilter httpRequestLoggingFilter,
-      AuthenticationManagerResolver<HttpServletRequest> authenticationManagerResolver) {
+      AuthenticationManagerResolver<HttpServletRequest> authenticationManagerResolver,
+      LoginRateLimitFilter loginRateLimitFilter) {
     this.authenticationEntryPoint = authenticationEntryPoint;
     this.httpRequestLoggingFilter = httpRequestLoggingFilter;
     this.authenticationManagerResolver = authenticationManagerResolver;
+    this.loginRateLimitFilter = loginRateLimitFilter;
   }
 
   @Bean
@@ -46,6 +49,7 @@ class SecurityConfig {
         .cors(Customizer.withDefaults())
         .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
         .addFilterBefore(httpRequestLoggingFilter, UsernamePasswordAuthenticationFilter.class)
+        .addFilterBefore(loginRateLimitFilter, UsernamePasswordAuthenticationFilter.class)
         .authorizeHttpRequests(
             auth ->
                 auth.requestMatchers(HttpMethod.OPTIONS, "/**")

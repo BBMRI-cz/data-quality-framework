@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Base64;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,9 +35,15 @@ class AuthControllerTest {
 
   @Autowired private MockMvc mockMvc;
   @Autowired private ObjectMapper objectMapper;
+  @Autowired private LoginAttemptServiceImpl loginAttemptService;
 
   @Value("${app.jwt.expiration:3600000}")
   private long jwtExpiration;
+
+  @AfterEach
+  void tearDown() {
+    loginAttemptService.clear();
+  }
 
   @Test
   @DisplayName("Should return unauthorized for invalid credentials")
@@ -76,6 +83,53 @@ class AuthControllerTest {
 
     String token = extractTokenFromResponse(result);
     validateJwtToken(token, loginTime);
+  }
+
+  @Test
+  @DisplayName("Should block login after max failed attempts")
+  void login_afterMaxFailedAttempts_returnsTooManyRequests() throws Exception {
+    for (int i = 0; i < 5; i++) {
+      mockMvc
+          .perform(
+              post(LOGIN_ENDPOINT)
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(createLoginJson(ADMIN_USERNAME, "wrongpassword")))
+          .andExpect(status().isUnauthorized());
+    }
+
+    mockMvc
+        .perform(
+            post(LOGIN_ENDPOINT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(createLoginJson(ADMIN_USERNAME, "wrongpassword")))
+        .andExpect(status().isTooManyRequests());
+  }
+
+  @Test
+  @DisplayName("Should reset failure counter after successful login")
+  void login_successfulLoginAfterFewFailures_resetsCounter() throws Exception {
+    for (int i = 0; i < 4; i++) {
+      mockMvc
+          .perform(
+              post(LOGIN_ENDPOINT)
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(createLoginJson(ADMIN_USERNAME, "wrongpassword")))
+          .andExpect(status().isUnauthorized());
+    }
+
+    mockMvc
+        .perform(
+            post(LOGIN_ENDPOINT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(createLoginJson(ADMIN_USERNAME, ADMIN_PASSWORD)))
+        .andExpect(status().isOk());
+
+    mockMvc
+        .perform(
+            post(LOGIN_ENDPOINT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(createLoginJson(ADMIN_USERNAME, ADMIN_PASSWORD)))
+        .andExpect(status().isOk());
   }
 
   @Test
