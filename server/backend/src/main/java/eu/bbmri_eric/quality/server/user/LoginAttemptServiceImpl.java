@@ -11,6 +11,10 @@ import org.springframework.stereotype.Service;
 /**
  * In-memory implementation of login attempt tracking. Enforces temporary lockout after a threshold
  * of consecutive failures and purges stale entries every hour to prevent memory leaks.
+ *
+ * <p>This implementation uses immutable {@link Attempt} values stored in a {@link
+ * ConcurrentHashMap}, updated atomically via {@code compute}, to remain safe under concurrent
+ * requests from the same IP.
  */
 @Service
 class LoginAttemptServiceImpl implements LoginAttemptService {
@@ -24,9 +28,14 @@ class LoginAttemptServiceImpl implements LoginAttemptService {
 
   @Override
   public void recordFailure(String ip) {
-    Attempt a = attempts.computeIfAbsent(ip, k -> new Attempt());
-    a.count++;
-    a.lastFailTime = System.currentTimeMillis();
+    attempts.compute(
+        ip,
+        (k, v) -> {
+          if (v == null) {
+            return new Attempt(1, System.currentTimeMillis());
+          }
+          return new Attempt(v.count + 1, System.currentTimeMillis());
+        });
   }
 
   @Override
@@ -61,7 +70,12 @@ class LoginAttemptServiceImpl implements LoginAttemptService {
   }
 
   private static class Attempt {
-    int count;
-    long lastFailTime;
+    final int count;
+    final long lastFailTime;
+
+    Attempt(int count, long lastFailTime) {
+      this.count = count;
+      this.lastFailTime = lastFailTime;
+    }
   }
 }
