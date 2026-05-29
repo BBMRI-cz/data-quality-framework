@@ -98,8 +98,12 @@ services:
     image: ghcr.io/bbmri-cz/data-quality-agent:0.1
     container_name: quality-agent
     restart: unless-stopped
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     ports:
-      - "8081:8081"
+      - "127.0.0.1:8081:8081"
     volumes:
       - agent-data:/app/data
     extra_hosts:
