@@ -2,6 +2,7 @@ package eu.bbmri_eric.quality.server.dataquality.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -12,6 +13,8 @@ import eu.bbmri_eric.quality.server.dataquality.domain.AgentStatus;
 import eu.bbmri_eric.quality.server.dataquality.domain.Report;
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentRegistrationRequest;
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentUpdateRequest;
+import eu.bbmri_eric.quality.server.user.UserCreateDTO;
+import eu.bbmri_eric.quality.server.user.UserService;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,6 +40,8 @@ class AgentControllerIntegrationTest {
   @Autowired private ObjectMapper objectMapper;
 
   @Autowired private AgentRepository agentRepository;
+
+  @Autowired private UserService userService;
 
   @BeforeEach
   void setUp() {
@@ -108,6 +113,18 @@ class AgentControllerIntegrationTest {
   }
 
   @Test
+  void findById_shouldReturnOkWhenAgentUserChecksOwnStatus() throws Exception {
+    String agentId = UUID.randomUUID().toString();
+    agentRepository.save(new Agent(agentId));
+    userService.createUser(new UserCreateDTO("agent-" + agentId, agentId));
+
+    mockMvc
+        .perform(get(API_V_1_AGENTS_ID, agentId).with(user("agent-" + agentId)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(agentId));
+  }
+
+  @Test
   @WithMockUser(roles = "ADMIN")
   void findById_shouldReturnNotFoundWhenAgentDoesNotExist() throws Exception {
     String nonExistentAgentId = UUID.randomUUID().toString();
@@ -141,6 +158,12 @@ class AgentControllerIntegrationTest {
         .andExpect(jsonPath("$._links.self.href").value("http://localhost/api/v1/agents"))
         .andExpect(jsonPath("$._embedded.agents[0]._links.self.href").exists())
         .andExpect(jsonPath("$._embedded.agents[1]._links.self.href").exists());
+  }
+
+  @Test
+  @WithMockUser(roles = {})
+  void listAll_shouldReturnForbiddenWhenUserHasNoRole() throws Exception {
+    mockMvc.perform(get(API_V_1_AGENTS)).andExpect(status().isForbidden());
   }
 
   @Test
