@@ -31,10 +31,11 @@ class LoginAttemptServiceImpl implements LoginAttemptService {
     attempts.compute(
         ip,
         (k, v) -> {
-          if (v == null) {
-            return new Attempt(1, System.currentTimeMillis());
+          long now = System.currentTimeMillis();
+          if (v == null || now - v.lastFailTime > BLOCK_MILLIS) {
+            return new Attempt(1, now);
           }
-          return new Attempt(v.count + 1, System.currentTimeMillis());
+          return new Attempt(v.count + 1, now);
         });
   }
 
@@ -50,7 +51,7 @@ class LoginAttemptServiceImpl implements LoginAttemptService {
       return false;
     }
     if (System.currentTimeMillis() - a.lastFailTime > BLOCK_MILLIS) {
-      attempts.remove(ip);
+      attempts.remove(ip, a);
       return false;
     }
     logger.info("Login blocked for IP {} after {} failed attempts", ip, a.count);
