@@ -172,6 +172,12 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
+  @Transactional
+  public void deleteUser(String agentId) {
+    userRepository.findByAgentId(agentId).ifPresent(userRepository::delete);
+  }
+
+  @Override
   public boolean exists(Long id) {
     throw new NotImplementedException("Not yet implemented");
   }

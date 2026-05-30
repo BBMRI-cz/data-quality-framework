@@ -132,6 +132,7 @@ class AgentServiceImpl implements AgentService {
             .findById(id)
             .orElseThrow(
                 () -> new EntityNotFoundException("Agent with ID %s not found".formatted(id)));
+    userService.deleteUser(id);
     agentRepository.delete(agent);
   }
 
