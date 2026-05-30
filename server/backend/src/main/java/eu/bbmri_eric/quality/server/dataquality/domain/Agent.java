@@ -106,6 +106,10 @@ public class Agent {
     reports.add(report);
   }
 
+  public void removeReport(Report report) {
+    reports.remove(report);
+  }
+
   public List<Group> getGroups() {
     return groups.stream().toList();
   }
