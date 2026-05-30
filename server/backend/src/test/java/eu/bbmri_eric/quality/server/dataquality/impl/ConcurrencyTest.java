@@ -56,6 +56,7 @@ class ConcurrencyTest {
 
     try {
       for (int i = 0; i < THREAD_COUNT; i++) {
+        int finalI = i;
         executorService.submit(
             () -> {
               try {
@@ -66,6 +67,12 @@ class ConcurrencyTest {
                 mockMvc
                     .perform(
                         post("/api/v1/agents")
+                            .with(
+                                mockHttpServletRequest -> {
+                                  mockHttpServletRequest.setRemoteAddr(
+                                      "192.168.1.%d".formatted(finalI));
+                                  return mockHttpServletRequest;
+                                })
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isCreated());

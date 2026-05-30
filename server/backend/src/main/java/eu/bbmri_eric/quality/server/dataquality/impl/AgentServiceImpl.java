@@ -2,6 +2,7 @@ package eu.bbmri_eric.quality.server.dataquality.impl;
 
 import eu.bbmri_eric.quality.server.common.EntityAlreadyExistsException;
 import eu.bbmri_eric.quality.server.common.EntityNotFoundException;
+import eu.bbmri_eric.quality.server.common.TooManyRequestsException;
 import eu.bbmri_eric.quality.server.dataquality.AgentService;
 import eu.bbmri_eric.quality.server.dataquality.domain.Agent;
 import eu.bbmri_eric.quality.server.dataquality.domain.AgentInteractionType;
@@ -43,12 +44,16 @@ class AgentServiceImpl implements AgentService {
   }
 
   @Override
-  public AgentRegistration create(AgentRegistrationRequest createAgentDto) {
+  public AgentRegistration create(AgentRegistrationRequest createAgentDto, String ipAddress) {
     if (agentRepository.existsById(createAgentDto.getId())) {
       throw new EntityAlreadyExistsException(
           "Agent %s already exists".formatted(createAgentDto.getId()));
     }
-    Agent agent = new Agent(createAgentDto.getId());
+    if (ipAddress != null && agentRepository.existsByIpAddress(ipAddress)) {
+      throw new TooManyRequestsException(
+          "An agent is already registered from IP address %s".formatted(ipAddress));
+    }
+    Agent agent = new Agent(createAgentDto.getId(), ipAddress);
     agent.setVersion(createAgentDto.getVersion());
     Agent savedAgent = agentRepository.save(agent);
     UserDTO agentUser =

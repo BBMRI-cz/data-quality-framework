@@ -181,6 +181,25 @@ class AgentControllerIntegrationTest {
   }
 
   @Test
+  void create_shouldReturnTooManyRequestsForDuplicateIpAddress() throws Exception {
+    String agentId = UUID.randomUUID().toString();
+    Agent existingAgent = new Agent(agentId, "192.168.1.1");
+    agentRepository.save(existingAgent);
+    AgentRegistrationRequest createDto = new AgentRegistrationRequest(UUID.randomUUID().toString());
+    mockMvc
+        .perform(
+            post(API_V_1_AGENTS)
+                .with(
+                    request -> {
+                      request.setRemoteAddr("192.168.1.1");
+                      return request;
+                    })
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDto)))
+        .andExpect(status().isTooManyRequests());
+  }
+
+  @Test
   @WithUserDetails("admin")
   void endToEndFlow_createAndRetrieveAgent() throws Exception {
     String agentId = UUID.randomUUID().toString();

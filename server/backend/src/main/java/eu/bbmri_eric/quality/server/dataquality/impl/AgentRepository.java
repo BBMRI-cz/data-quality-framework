@@ -5,4 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-interface AgentRepository extends JpaRepository<Agent, String> {}
+interface AgentRepository extends JpaRepository<Agent, String> {
+  boolean existsByIpAddress(String ipAddress);
+}

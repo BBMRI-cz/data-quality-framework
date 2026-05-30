@@ -18,8 +18,31 @@ class AgentTest {
     assertEquals(AgentStatus.PENDING, agent.getStatus());
     assertEquals("Unknown", agent.getVersion());
     assertNull(agent.getName());
+    assertNull(agent.getIpAddress());
     assertEquals(1, agent.getInteractions().size());
     assertEquals(AgentInteractionType.REGISTRATION, agent.getInteractions().get(0).getType());
+  }
+
+  @Test
+  void constructorWithIpAddress_shouldCreateAgentWithIpAddress() {
+    String agentId = UUID.randomUUID().toString();
+    String ipAddress = "192.168.1.1";
+
+    Agent agent = new Agent(agentId, ipAddress);
+
+    assertEquals(agentId, agent.getId());
+    assertEquals(ipAddress, agent.getIpAddress());
+    assertEquals(1, agent.getInteractions().size());
+    assertEquals(AgentInteractionType.REGISTRATION, agent.getInteractions().get(0).getType());
+  }
+
+  @Test
+  void setIpAddress_shouldUpdateIpAddress() {
+    Agent agent = new Agent(UUID.randomUUID().toString());
+
+    agent.setIpAddress("10.0.0.1");
+
+    assertEquals("10.0.0.1", agent.getIpAddress());
   }
 
   @Test
@@ -189,6 +212,26 @@ class AgentTest {
   }
 
   @Test
+  void equals_shouldReturnFalseForAgentsWithSameIdAndInteractionsButDifferentIpAddress() {
+    String agentId = UUID.randomUUID().toString();
+    Agent agent1 = new Agent(agentId, "192.168.1.1");
+    Agent agent2 = new Agent(agentId, "192.168.1.2");
+
+    assertNotEquals(agent1, agent2);
+  }
+
+  @Test
+  void equals_shouldReturnFalseForAgentsWithSameIdAndIpAddressButDifferentInteractions() {
+    String agentId = UUID.randomUUID().toString();
+    Agent agent1 = new Agent(agentId, "192.168.1.1");
+    Agent agent2 = new Agent(agentId, "192.168.1.1");
+
+    // Even with the same ID and IP, agents have different timestamps for their REGISTRATION
+    // interaction
+    assertNotEquals(agent1, agent2);
+  }
+
+  @Test
   void equals_shouldReturnFalseForNull() {
     Agent agent = new Agent(UUID.randomUUID().toString());
 
@@ -213,6 +256,15 @@ class AgentTest {
   void hashCode_shouldBeDifferentForDifferentAgents() {
     Agent agent1 = new Agent(UUID.randomUUID().toString());
     Agent agent2 = new Agent(UUID.randomUUID().toString());
+
+    assertNotEquals(agent1.hashCode(), agent2.hashCode());
+  }
+
+  @Test
+  void hashCode_shouldBeDifferentForAgentsWithDifferentIpAddresses() {
+    String agentId = UUID.randomUUID().toString();
+    Agent agent1 = new Agent(agentId, "192.168.1.1");
+    Agent agent2 = new Agent(agentId, "192.168.1.2");
 
     assertNotEquals(agent1.hashCode(), agent2.hashCode());
   }

@@ -25,6 +25,8 @@ public class Agent {
 
   private String version = "Unknown";
 
+  private String ipAddress;
+
   @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
   @JoinColumn(name = "agent_id", nullable = false)
   private List<AgentInteraction> interactions = new ArrayList<>();
@@ -38,6 +40,12 @@ public class Agent {
 
   public Agent(String id) {
     this.id = id;
+    addInteraction(AgentInteractionType.REGISTRATION);
+  }
+
+  public Agent(String id, String ipAddress) {
+    this.id = id;
+    this.ipAddress = ipAddress;
     addInteraction(AgentInteractionType.REGISTRATION);
   }
 
@@ -61,6 +69,14 @@ public class Agent {
 
   public void setName(String name) {
     this.name = name;
+  }
+
+  public String getIpAddress() {
+    return ipAddress;
+  }
+
+  public void setIpAddress(String ipAddress) {
+    this.ipAddress = ipAddress;
   }
 
   public String getVersion() {
@@ -126,11 +142,12 @@ public class Agent {
         && status == agent.status
         && Objects.equals(name, agent.name)
         && Objects.equals(version, agent.version)
+        && Objects.equals(ipAddress, agent.ipAddress)
         && Objects.equals(interactions, agent.interactions);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, status, name, version, interactions);
+    return Objects.hash(id, status, name, version, ipAddress, interactions);
   }
 }

@@ -214,6 +214,22 @@ public class GlobalRestExceptionHandler {
     return problemDetail;
   }
 
+  @ExceptionHandler(TooManyRequestsException.class)
+  @ApiResponse(
+      responseCode = "429",
+      description = "Too Many Requests",
+      content =
+          @Content(
+              mediaType = "application/problem+json",
+              schema = @Schema(implementation = ProblemDetail.class)))
+  public ProblemDetail handleTooManyRequests(TooManyRequestsException ex) {
+    logger.debug("Too many requests: {}", ex.getMessage());
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
+    problemDetail.setTitle("Too Many Requests");
+    return problemDetail;
+  }
+
   @ExceptionHandler(SQLException.class)
   @ApiResponse(
       responseCode = "500",
