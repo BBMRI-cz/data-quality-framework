@@ -14,6 +14,7 @@ import eu.bbmri_eric.quality.server.dataquality.domain.Report;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckResultDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.ReportCreateRequest;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -806,6 +807,45 @@ class ReportControllerTest {
         .andExpect(jsonPath("$._embedded.reports.length()").value(2))
         .andExpect(jsonPath("$._embedded.reports[0].id").value(newerReport.getId()))
         .andExpect(jsonPath("$._embedded.reports[1].id").value(olderReport.getId()));
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void create_shouldApplyRetentionPolicyAndRemoveMiddleReports() throws Exception {
+    seedReportCountForAgent(testAgent, 5);
+
+    Agent agent = agentRepository.findById(testAgentId).get();
+    List<Report> reportsBefore =
+        agent.getReports().stream().sorted(Comparator.comparing(Report::getTimestamp)).toList();
+    assertEquals(5, reportsBefore.size());
+    String oldestReportId = reportsBefore.get(0).getId();
+    String secondOldestReportId = reportsBefore.get(1).getId();
+
+    List<QualityCheckResultDTO> results = List.of(new QualityCheckResultDTO("hash1", 0.95));
+    ReportCreateRequest createRequest = new ReportCreateRequest(results);
+    mockMvc
+        .perform(
+            post(API_V1_AGENTS_REPORTS, testAgentId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createRequest)))
+        .andExpect(status().isCreated());
+
+    agent = agentRepository.findById(testAgentId).get();
+    List<Report> reportsAfter =
+        agent.getReports().stream().sorted(Comparator.comparing(Report::getTimestamp)).toList();
+    assertEquals(5, reportsAfter.size());
+    assertEquals(oldestReportId, reportsAfter.get(0).getId());
+    assertTrue(
+        reportsAfter.stream().noneMatch(r -> r.getId().equals(secondOldestReportId)),
+        "Second oldest report should have been deleted by retention policy");
+  }
+
+  private void seedReportCountForAgent(Agent agent, int count) {
+    for (int i = 0; i < count; i++) {
+      Report report = new Report();
+      agent.addReport(report);
+    }
+    agentRepository.saveAndFlush(agent);
   }
 
   private void seedReportsWithTotals(int... totals) {

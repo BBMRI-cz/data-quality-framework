@@ -11,12 +11,17 @@ import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckResultDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.ReportCreateRequest;
 import eu.bbmri_eric.quality.server.dataquality.dto.ReportDTO;
 import eu.bbmri_eric.quality.server.dataquality.event.ReportSubmittedEvent;
+import eu.bbmri_eric.quality.server.setting.SettingService;
 import eu.bbmri_eric.quality.server.user.AuthenticationContextService;
 import eu.bbmri_eric.quality.server.user.UserDTO;
 import eu.bbmri_eric.quality.server.user.UserRole;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import org.jspecify.annotations.NonNull;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -29,12 +34,16 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional
 class ReportServiceImpl implements ReportService {
+  private static final Logger logger = LoggerFactory.getLogger(ReportServiceImpl.class);
+  private static final int DEFAULT_RETENTION = 3;
+
   private final AgentRepository agentRepository;
   private final ReportRepository reportRepository;
   private final QualityCheckRepository qualityCheckRepository;
   private final AuthenticationContextService authenticationContextService;
   private final ApplicationEventPublisher eventPublisher;
   private final ModelMapper modelMapper;
+  private final SettingService settingService;
 
   public ReportServiceImpl(
       AgentRepository agentRepository,
@@ -42,13 +51,15 @@ class ReportServiceImpl implements ReportService {
       QualityCheckRepository qualityCheckRepository,
       AuthenticationContextService authenticationContextService,
       ApplicationEventPublisher eventPublisher,
-      ModelMapper modelMapper) {
+      ModelMapper modelMapper,
+      SettingService settingService) {
     this.agentRepository = agentRepository;
     this.reportRepository = reportRepository;
     this.qualityCheckRepository = qualityCheckRepository;
     this.authenticationContextService = authenticationContextService;
     this.eventPublisher = eventPublisher;
     this.modelMapper = modelMapper;
+    this.settingService = settingService;
   }
 
   @Override
@@ -65,6 +76,42 @@ class ReportServiceImpl implements ReportService {
     agent.addReport(report);
     agentRepository.saveAndFlush(agent);
     eventPublisher.publishEvent(new ReportSubmittedEvent(this, agentId, report.getId()));
+    applyRetentionPolicy(agent);
+  }
+
+  private void applyRetentionPolicy(Agent agent) {
+    int retention = getReportRetention();
+    int maxReports = retention + 2; // oldest + latest + n additional latest reports
+
+    List<Report> reports =
+        agent.getReports().stream().sorted(Comparator.comparing(Report::getTimestamp)).toList();
+
+    if (reports.size() <= maxReports) {
+      return;
+    }
+
+    int deleteCount = reports.size() - maxReports;
+    List<Report> toDelete = new ArrayList<>();
+    for (int i = 1; i <= deleteCount; i++) {
+      toDelete.add(reports.get(i));
+    }
+
+    toDelete.forEach(agent::removeReport);
+    reportRepository.deleteAll(toDelete);
+
+    logger.info(
+        "Applied retention policy for agent {}: deleted {} reports, keeping {} reports",
+        agent.getId(),
+        deleteCount,
+        maxReports);
+  }
+
+  private int getReportRetention() {
+    var settings = settingService.getSettings();
+    if (settings != null && settings.getReportRetention() != null) {
+      return settings.getReportRetention();
+    }
+    return DEFAULT_RETENTION;
   }
 
   private @NonNull Report parseReportDTO(ReportCreateRequest createRequest) {

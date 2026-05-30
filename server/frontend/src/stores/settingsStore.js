@@ -11,6 +11,9 @@ const settings = ref({
   oidcAuthorityLogo: '',
   oidcSwaggerRedirectUrl: '',
 });
+const generalSettings = ref({
+  reportRetention: 3,
+});
 const loading = ref(false);
 const error = ref(null);
 
@@ -42,10 +45,40 @@ async function updateOidcSettings() {
   }
 }
 
+async function fetchGeneralSettings() {
+  loading.value = true;
+  error.value = null;
+  try {
+    const response = await api.get('/v1/settings');
+    generalSettings.value = response.data;
+  } catch (err) {
+    error.value = 'Failed to load general settings. Please try again.';
+    console.error('Failed to load general settings:', err);
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function updateGeneralSettings() {
+  loading.value = true;
+  error.value = null;
+  try {
+    await api.patch('/v1/settings', generalSettings.value);
+  } catch (err) {
+    error.value = err.response?.data?.message || 'Failed to save general settings. Please try again.';
+    console.error('Failed to save general settings:', err);
+  } finally {
+    loading.value = false;
+  }
+}
+
 export default {
   settings,
+  generalSettings,
   loading,
   error,
   fetchOidcSettings,
   updateOidcSettings,
+  fetchGeneralSettings,
+  updateGeneralSettings,
 };
