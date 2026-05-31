@@ -287,6 +287,26 @@ class ReportControllerTest {
   }
 
   @Test
+  @WithMockUser(roles = "USER")
+  void findAll_shouldReturnForbiddenForUserWithoutAdminRole() throws Exception {
+    mockMvc.perform(get(API_V1_REPORTS)).andExpect(status().isForbidden());
+  }
+
+  @Test
+  @WithMockUser(roles = "USER")
+  void findById_shouldReturnForbiddenForUserWithoutHumanUserOrAdminRole() throws Exception {
+    Report report = new Report();
+    reportRepository.save(report);
+    mockMvc.perform(get(API_V1_REPORTS_ID, report.getId())).andExpect(status().isForbidden());
+  }
+
+  @Test
+  @WithMockUser(roles = "USER")
+  void findByAgentId_shouldReturnForbiddenForUserWithoutHumanUserOrAdminRole() throws Exception {
+    mockMvc.perform(get(API_V1_AGENTS_REPORTS, testAgentId)).andExpect(status().isForbidden());
+  }
+
+  @Test
   @WithMockUser(roles = "ADMIN")
   void findById_shouldAllowAdminRole() throws Exception {
     Report report = new Report();
