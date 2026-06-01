@@ -39,11 +39,7 @@ class AgentController {
   }
 
   private String getClientIpAddress(HttpServletRequest request) {
-    String xfHeader = request.getHeader("X-Forwarded-For");
-    if (xfHeader != null && !xfHeader.isBlank()) {
-      return xfHeader.split(",")[0].trim();
-    }
-    return request.getRemoteAddr();
+    return request.getRemoteAddr() != null ? request.getRemoteAddr() : "unknown";
   }
 
   @PatchMapping("/{id}")

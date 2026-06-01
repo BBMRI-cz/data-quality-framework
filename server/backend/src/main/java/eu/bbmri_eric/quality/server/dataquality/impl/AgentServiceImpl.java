@@ -19,6 +19,7 @@ import eu.bbmri_eric.quality.server.user.UserService;
 import java.util.List;
 import java.util.Objects;
 import org.modelmapper.ModelMapper;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,7 +56,13 @@ class AgentServiceImpl implements AgentService {
     }
     Agent agent = new Agent(createAgentDto.getId(), ipAddress);
     agent.setVersion(createAgentDto.getVersion());
-    Agent savedAgent = agentRepository.save(agent);
+    Agent savedAgent;
+    try {
+      savedAgent = agentRepository.save(agent);
+    } catch (DataIntegrityViolationException ex) {
+      throw new EntityAlreadyExistsException(
+          "Agent %s already exists".formatted(createAgentDto.getId()));
+    }
     UserDTO agentUser =
         userService.createUser(
             new UserCreateDTO("Agent %s".formatted(savedAgent.getId()), savedAgent.getId()));
