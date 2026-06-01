@@ -14,7 +14,7 @@ public interface AgentService {
    * @param createAgentDto the agent registration request containing agent details
    * @return the created agent registration with agent and user information
    */
-  AgentRegistration create(AgentRegistrationRequest createAgentDto);
+  AgentRegistration create(AgentRegistrationRequest createAgentDto, String ipAddress);
 
   /**
    * Updates an existing agent's information.

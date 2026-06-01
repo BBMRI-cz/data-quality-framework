@@ -2,6 +2,7 @@ package eu.bbmri_eric.quality.server.dataquality.impl;
 
 import eu.bbmri_eric.quality.server.common.EntityAlreadyExistsException;
 import eu.bbmri_eric.quality.server.common.EntityNotFoundException;
+import eu.bbmri_eric.quality.server.common.TooManyRequestsException;
 import eu.bbmri_eric.quality.server.dataquality.AgentService;
 import eu.bbmri_eric.quality.server.dataquality.domain.Agent;
 import eu.bbmri_eric.quality.server.dataquality.domain.AgentInteractionType;
@@ -18,6 +19,7 @@ import eu.bbmri_eric.quality.server.user.UserService;
 import java.util.List;
 import java.util.Objects;
 import org.modelmapper.ModelMapper;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,14 +45,24 @@ class AgentServiceImpl implements AgentService {
   }
 
   @Override
-  public AgentRegistration create(AgentRegistrationRequest createAgentDto) {
+  public AgentRegistration create(AgentRegistrationRequest createAgentDto, String ipAddress) {
     if (agentRepository.existsById(createAgentDto.getId())) {
       throw new EntityAlreadyExistsException(
           "Agent %s already exists".formatted(createAgentDto.getId()));
     }
-    Agent agent = new Agent(createAgentDto.getId());
+    if (ipAddress != null && agentRepository.existsByIpAddress(ipAddress)) {
+      throw new TooManyRequestsException(
+          "An agent is already registered from IP address %s".formatted(ipAddress));
+    }
+    Agent agent = new Agent(createAgentDto.getId(), ipAddress);
     agent.setVersion(createAgentDto.getVersion());
-    Agent savedAgent = agentRepository.save(agent);
+    Agent savedAgent;
+    try {
+      savedAgent = agentRepository.save(agent);
+    } catch (DataIntegrityViolationException ex) {
+      throw new EntityAlreadyExistsException(
+          "Agent %s already exists".formatted(createAgentDto.getId()));
+    }
     UserDTO agentUser =
         userService.createUser(
             new UserCreateDTO("Agent %s".formatted(savedAgent.getId()), savedAgent.getId()));
@@ -127,6 +139,7 @@ class AgentServiceImpl implements AgentService {
             .findById(id)
             .orElseThrow(
                 () -> new EntityNotFoundException("Agent with ID %s not found".formatted(id)));
+    userService.deleteUser(id);
     agentRepository.delete(agent);
   }
 

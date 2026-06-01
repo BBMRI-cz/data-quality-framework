@@ -32,4 +32,11 @@ public interface UserService extends CRUDService<UserDTO, UserCreateDTO, UserDTO
    * @param passwordChangeRequest dto containing current password, new password, and confirmation
    */
   void changePassword(Long userId, PasswordChangeRequest passwordChangeRequest);
+
+  /**
+   * Delete a user by agent ID.
+   *
+   * @param agentId the agent ID associated with the user
+   */
+  void deleteUser(String agentId);
 }

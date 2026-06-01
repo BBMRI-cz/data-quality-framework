@@ -1,0 +1,2 @@
+ALTER TABLE agent
+    ADD COLUMN ip_address TEXT UNIQUE;

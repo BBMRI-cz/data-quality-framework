@@ -7,6 +7,7 @@ import eu.bbmri_eric.quality.server.dataquality.dto.AgentRegistrationRequest;
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentUpdateRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.hateoas.CollectionModel;
@@ -31,9 +32,14 @@ class AgentController {
   @Schema(name = "Register an agent")
   @SecurityRequirements
   public ResponseEntity<EntityModel<AgentRegistration>> create(
-      @Valid @RequestBody AgentRegistrationRequest createAgentDto) {
-    AgentRegistration createdAgentDto = agentService.create(createAgentDto);
+      @Valid @RequestBody AgentRegistrationRequest createAgentDto, HttpServletRequest request) {
+    String ipAddress = getClientIpAddress(request);
+    AgentRegistration createdAgentDto = agentService.create(createAgentDto, ipAddress);
     return ResponseEntity.status(HttpStatus.CREATED).body(EntityModel.of(createdAgentDto));
+  }
+
+  private String getClientIpAddress(HttpServletRequest request) {
+    return request.getRemoteAddr() != null ? request.getRemoteAddr() : "unknown";
   }
 
   @PatchMapping("/{id}")

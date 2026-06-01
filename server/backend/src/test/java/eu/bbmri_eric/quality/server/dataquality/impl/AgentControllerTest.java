@@ -14,6 +14,7 @@ import eu.bbmri_eric.quality.server.dataquality.domain.Report;
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentRegistrationRequest;
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentUpdateRequest;
 import eu.bbmri_eric.quality.server.user.UserCreateDTO;
+import eu.bbmri_eric.quality.server.user.UserRepository;
 import eu.bbmri_eric.quality.server.user.UserService;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,6 +43,7 @@ class AgentControllerIntegrationTest {
   @Autowired private AgentRepository agentRepository;
 
   @Autowired private UserService userService;
+  @Autowired private UserRepository userRepository;
 
   @BeforeEach
   void setUp() {
@@ -178,6 +180,25 @@ class AgentControllerIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createDto)))
         .andExpect(status().isConflict());
+  }
+
+  @Test
+  void create_shouldReturnTooManyRequestsForDuplicateIpAddress() throws Exception {
+    String agentId = UUID.randomUUID().toString();
+    Agent existingAgent = new Agent(agentId, "192.168.1.1");
+    agentRepository.save(existingAgent);
+    AgentRegistrationRequest createDto = new AgentRegistrationRequest(UUID.randomUUID().toString());
+    mockMvc
+        .perform(
+            post(API_V_1_AGENTS)
+                .with(
+                    request -> {
+                      request.setRemoteAddr("192.168.1.1");
+                      return request;
+                    })
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDto)))
+        .andExpect(status().isTooManyRequests());
   }
 
   @Test
@@ -478,12 +499,14 @@ class AgentControllerIntegrationTest {
     String agentId = UUID.randomUUID().toString();
     Agent agent = new Agent(agentId);
     agentRepository.save(agent);
+    userService.createUser(new UserCreateDTO("agent-" + agentId, agentId));
 
     assertTrue(agentRepository.findById(agentId).isPresent());
 
     mockMvc.perform(delete(API_V_1_AGENTS_ID, agentId)).andExpect(status().isNoContent());
 
     assertTrue(agentRepository.findById(agentId).isEmpty());
+    assertTrue(userRepository.findByAgentId(agentId).isEmpty());
   }
 
   @Test
@@ -495,6 +518,7 @@ class AgentControllerIntegrationTest {
     agent.addInteraction(AgentInteractionType.REPORT);
     agent.addReport(new Report());
     agentRepository.save(agent);
+    userService.createUser(new UserCreateDTO("agent-" + agentId, agentId));
 
     Agent savedAgent = agentRepository.findById(agentId).orElseThrow();
     assertEquals(3, savedAgent.getInteractions().size()); // REGISTRATION + PING + REPORT
@@ -502,6 +526,7 @@ class AgentControllerIntegrationTest {
     mockMvc.perform(delete(API_V_1_AGENTS_ID, agentId)).andExpect(status().isNoContent());
     mockMvc.perform(get(API_V1_AGENTS_REPORTS, agentId)).andExpect(status().isNotFound());
     assertTrue(agentRepository.findById(agentId).isEmpty());
+    assertTrue(userRepository.findByAgentId(agentId).isEmpty());
   }
 
   @Test
@@ -541,9 +566,11 @@ class AgentControllerIntegrationTest {
     String agentId = UUID.randomUUID().toString();
     Agent agent = new Agent(agentId);
     agentRepository.save(agent);
+    userService.createUser(new UserCreateDTO("agent-" + agentId, agentId));
 
     mockMvc.perform(delete(API_V_1_AGENTS_ID, agentId)).andExpect(status().isNoContent());
     assertTrue(agentRepository.findById(agentId).isEmpty());
+    assertTrue(userRepository.findByAgentId(agentId).isEmpty());
 
     mockMvc.perform(delete(API_V_1_AGENTS_ID, agentId)).andExpect(status().isNotFound());
   }
@@ -574,5 +601,22 @@ class AgentControllerIntegrationTest {
     mockMvc.perform(delete(API_V_1_AGENTS_ID, agentId)).andExpect(status().isNoContent());
 
     assertTrue(agentRepository.findById(agentId).isEmpty());
+    assertTrue(userRepository.findByAgentId(agentId).isEmpty());
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void delete_shouldDeleteAssociatedUserWhenAgentIsDeleted() throws Exception {
+    String agentId = UUID.randomUUID().toString();
+    agentRepository.save(new Agent(agentId));
+    userService.createUser(new UserCreateDTO("agent-" + agentId, agentId));
+
+    assertTrue(agentRepository.findById(agentId).isPresent());
+    assertTrue(userRepository.findByAgentId(agentId).isPresent());
+
+    mockMvc.perform(delete(API_V_1_AGENTS_ID, agentId)).andExpect(status().isNoContent());
+
+    assertTrue(agentRepository.findById(agentId).isEmpty());
+    assertTrue(userRepository.findByAgentId(agentId).isEmpty());
   }
 }
