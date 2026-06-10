@@ -72,6 +72,7 @@
             color: #9ca3af;
             font-weight: 600;
             margin-bottom: 2px;
+            white-space: nowrap;
         }
         .meta-value {
             font-size: 10px;
@@ -194,10 +195,25 @@
             font-weight: 700;
             color: #111827;
         }
-        .result-thresholds {
-            font-size: 8px;
-            color: #9ca3af;
-            margin-top: 2px;
+        .result-explanation {
+            font-size: 9px;
+            color: #6b7280;
+            margin-top: 3px;
+        }
+        .privacy-note {
+            font-size: 9px;
+            color: #4b5563;
+            margin-top: 16px;
+            padding: 12px 16px;
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 6px;
+            line-height: 1.5;
+        }
+        .privacy-note a {
+            color: #097dc5;
+            text-decoration: none;
+            font-weight: 600;
         }
         .footer {
             position: running(footer);
@@ -230,24 +246,24 @@
                     <div class="meta-value" th:text="${agentId}">ID</div>
                 </td>
                 <td>
-                    <div class="meta-label">Version</div>
-                    <div class="meta-value" th:text="${agentVersion}">v1.0</div>
+                    <div class="meta-label">Agent Version</div>
+                    <div class="meta-value" th:text="${agentVersion}">N/A</div>
                 </td>
                 <td>
-                    <div class="meta-label">Received</div>
+                    <div class="meta-label">Report Received</div>
                     <div class="meta-value" th:text="${reportTimestamp}">Date</div>
                 </td>
                 <td>
-                    <div class="meta-label">Generated</div>
+                    <div class="meta-label">PDF Generated</div>
                     <div class="meta-value" th:text="${generatedAt}">Date</div>
                 </td>
                 <td>
                     <div class="meta-label">Patients</div>
-                    <div class="meta-value" th:text="${totalPatients} != null ? ${totalPatients} : 'unknown'">0</div>
+                    <div class="meta-value" th:text="${totalPatients} != null ? ${totalPatients} : 'N/A'">0</div>
                 </td>
                 <td>
                     <div class="meta-label">Samples</div>
-                    <div class="meta-value" th:text="${totalSamples} != null ? ${totalSamples} : 'unknown'">0</div>
+                    <div class="meta-value" th:text="${totalSamples} != null ? ${totalSamples} : 'N/A'">0</div>
                 </td>
             </tr>
         </table>
@@ -284,7 +300,7 @@
                 <tr>
                     <th style="width: 45%;">Check</th>
                     <th style="width: 15%;">Status</th>
-                    <th style="width: 40%;">Result</th>
+                    <th style="width: 40%;">Result*</th>
                 </tr>
             </thead>
             <tbody>
@@ -298,14 +314,15 @@
                         <span class="status-badge" th:classappend="${'status-' + r.status}" th:text="${r.status == 'FAILED' ? 'Error' : r.status}">Status</span>
                     </td>
                     <td>
-                        <div class="result-num" th:text="${r.resultDisplay}">1.0%</div>
-                        <div class="result-thresholds">
-                            Warning ≤ <span th:text="${r.warningThresholdDisplay}">10.0%</span> · Error ≤ <span th:text="${r.errorThresholdDisplay}">5.0%</span>
-                        </div>
+                        <div class="result-num" th:text="${r.resultDisplay} != 'N/A' ? '~' + ${r.resultDisplay} : ${r.resultDisplay}">~1.0%</div>
+                        <div class="result-explanation" th:if="${r.resultDisplay} != 'N/A'">of records have this problem</div>
+                        <div class="result-explanation" th:if="${r.resultDisplay} == 'N/A'" style="color:#991b1b;font-weight:600;">Result unavailable</div>
                     </td>
                 </tr>
             </tbody>
         </table>
+        <div class="privacy-note">* These results have been obfuscated using Differential Privacy to protect privacy, and are therefore approximations. Please interpret statistical significance accordingly.
+            To learn more, please visit <a href="https://fdqf.bbmri-eric.eu/">https://fdqf.bbmri-eric.eu/</a>.</div>
     </div>
 
     <div class="footer">
