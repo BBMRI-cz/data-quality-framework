@@ -1,6 +1,7 @@
 package eu.bbmri_eric.quality.server.dataquality.controller;
 
 import eu.bbmri_eric.quality.server.common.dto.FilterDTO;
+import eu.bbmri_eric.quality.server.dataquality.ReportPdfService;
 import eu.bbmri_eric.quality.server.dataquality.ReportService;
 import eu.bbmri_eric.quality.server.dataquality.dto.ReportCreateRequest;
 import eu.bbmri_eric.quality.server.dataquality.dto.ReportDTO;
@@ -10,7 +11,9 @@ import jakarta.validation.Valid;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.PagedModel;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,10 +24,15 @@ import org.springframework.web.bind.annotation.*;
 class ReportController {
 
   private final ReportService reportService;
+  private final ReportPdfService reportPdfService;
   private final ReportLinkBuilder linkBuilder;
 
-  public ReportController(ReportService reportService, ReportLinkBuilder linkBuilder) {
+  public ReportController(
+      ReportService reportService,
+      ReportPdfService reportPdfService,
+      ReportLinkBuilder linkBuilder) {
     this.reportService = reportService;
+    this.reportPdfService = reportPdfService;
     this.linkBuilder = linkBuilder;
   }
 
@@ -68,5 +76,18 @@ class ReportController {
       @Valid @ParameterObject FilterDTO filter) {
     // TODO: Add support for filtering
     return ResponseEntity.ok(linkBuilder.toPagedModel(reportService.findAll(filter), filter));
+  }
+
+  @GetMapping("/reports/{id}/summary")
+  @Operation(
+      summary = "Get report summary as PDF",
+      description = "Generates a PDF summary for a specific report")
+  public ResponseEntity<byte[]> generateSummary(
+      @PathVariable String id, @RequestParam(defaultValue = "pdf") String format) {
+    byte[] pdf = reportPdfService.generateReportSummary(id);
+    return ResponseEntity.ok()
+        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"report-summary.pdf\"")
+        .contentType(MediaType.APPLICATION_PDF)
+        .body(pdf);
   }
 }

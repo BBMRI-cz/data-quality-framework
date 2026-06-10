@@ -73,6 +73,21 @@ class ApiService {
     return response.data;
   }
 
+  async downloadReportSummary(reportId) {
+    const response = await api.get(`/v1/reports/${reportId}/summary?format=pdf`, {
+      responseType: 'blob',
+    });
+    const blob = new Blob([response.data], { type: 'application/pdf' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `report-${reportId}-summary.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }
+
   async updateQualityCheck(hash, data) {
     const response = await api.put(`/v1/quality-checks/${hash}`, data);
     return response.data;

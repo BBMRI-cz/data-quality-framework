@@ -39,6 +39,7 @@ class ReportControllerTest {
   public static final String API_V1_AGENTS_REPORTS = "/api/v1/agents/{agentId}/reports";
   public static final String API_V1_REPORTS_ID = "/api/v1/reports/{id}";
   public static final String API_V1_REPORTS = "/api/v1/reports";
+  public static final String API_V1_REPORTS_ID_SUMMARY = "/api/v1/reports/{id}/summary";
 
   @Autowired private MockMvc mockMvc;
   @Autowired private ObjectMapper objectMapper;
@@ -858,6 +859,55 @@ class ReportControllerTest {
     assertTrue(
         reportsAfter.stream().noneMatch(r -> r.getId().equals(secondOldestReportId)),
         "Second oldest report should have been deleted by retention policy");
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void generateSummary_shouldReturnEmptyPdfWhenAuthenticatedAsAdmin() throws Exception {
+    Report report = new Report();
+    reportRepository.save(report);
+
+    mockMvc
+        .perform(get(API_V1_REPORTS_ID_SUMMARY, report.getId()).param("format", "pdf"))
+        .andExpect(status().isOk())
+        .andExpect(header().string("Content-Type", "application/pdf"))
+        .andExpect(header().exists("Content-Disposition"))
+        .andExpect(content().bytes(new byte[0]));
+  }
+
+  @Test
+  @WithMockUser(roles = "HUMAN_USER")
+  void generateSummary_shouldReturnEmptyPdfWhenAuthenticatedAsHumanUser() throws Exception {
+    Report report = new Report();
+    reportRepository.save(report);
+
+    mockMvc
+        .perform(get(API_V1_REPORTS_ID_SUMMARY, report.getId()).param("format", "pdf"))
+        .andExpect(status().isOk())
+        .andExpect(header().string("Content-Type", "application/pdf"))
+        .andExpect(header().exists("Content-Disposition"))
+        .andExpect(content().bytes(new byte[0]));
+  }
+
+  @Test
+  void generateSummary_shouldRequireAuthentication() throws Exception {
+    Report report = new Report();
+    reportRepository.save(report);
+
+    mockMvc
+        .perform(get(API_V1_REPORTS_ID_SUMMARY, report.getId()).param("format", "pdf"))
+        .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  @WithMockUser(roles = "USER")
+  void generateSummary_shouldReturnForbiddenForUserWithoutHumanUserOrAdminRole() throws Exception {
+    Report report = new Report();
+    reportRepository.save(report);
+
+    mockMvc
+        .perform(get(API_V1_REPORTS_ID_SUMMARY, report.getId()).param("format", "pdf"))
+        .andExpect(status().isForbidden());
   }
 
   private void seedReportCountForAgent(Agent agent, int count) {

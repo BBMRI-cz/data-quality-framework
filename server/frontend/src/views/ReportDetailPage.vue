@@ -8,10 +8,20 @@
     />
 
     <div class="page-content">
-      <!-- Back button -->
-      <div class="mb-3">
+      <!-- Back button and actions -->
+      <div class="mb-3 d-flex gap-2">
         <button class="btn btn-outline-secondary btn-sm" @click="goBack">
           <i class="bi bi-arrow-left me-2"></i>Back to Reports
+        </button>
+        <button
+          v-if="report"
+          class="btn btn-outline-primary btn-sm"
+          :disabled="isDownloading"
+          @click="downloadSummary"
+        >
+          <i class="bi bi-file-earmark-pdf me-2"></i>
+          <span v-if="isDownloading">Downloading...</span>
+          <span v-else>Download as PDF</span>
         </button>
       </div>
 
@@ -143,6 +153,7 @@
   const error = ref(null);
   const report = ref(null);
   const agent = ref(null);
+  const isDownloading = ref(false);
   useHead({
     title: computed(() => (report.value?.id ? `Report ${report.value.id}` : 'Report Detail')),
   });
@@ -205,6 +216,18 @@
 
   const goBack = () => {
     router.go(-1);
+  };
+
+  const downloadSummary = async () => {
+    if (!report.value?.id) return;
+    isDownloading.value = true;
+    try {
+      await apiService.downloadReportSummary(report.value.id);
+    } catch (err) {
+      alert('Failed to download report summary: ' + (err.message || 'Unknown error'));
+    } finally {
+      isDownloading.value = false;
+    }
   };
 
   const navigateToCheckDetail = (result) => {
