@@ -65,7 +65,8 @@ async function updateGeneralSettings() {
   try {
     await api.patch('/v1/settings', generalSettings.value);
   } catch (err) {
-    error.value = err.response?.data?.message || 'Failed to save general settings. Please try again.';
+    error.value =
+      err.response?.data?.message || 'Failed to save general settings. Please try again.';
     console.error('Failed to save general settings:', err);
   } finally {
     loading.value = false;
