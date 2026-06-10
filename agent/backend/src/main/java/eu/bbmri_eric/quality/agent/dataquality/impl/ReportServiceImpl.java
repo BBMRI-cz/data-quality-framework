@@ -16,6 +16,7 @@ import eu.bbmri_eric.quality.agent.dataquality.dto.ReportDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportUpdateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.event.NewReportEvent;
 import eu.bbmri_eric.quality.agent.dataquality.exception.ReportNotFoundException;
+import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
@@ -37,16 +38,19 @@ class ReportServiceImpl implements ReportService {
 
   private final ReportRepository reportRepository;
   private final QualityCheckService qualityCheckService;
+  private final SettingsService settingsService;
   private final ModelMapper modelMapper;
   private final EventPublisher publisher;
 
   ReportServiceImpl(
       ReportRepository reportRepository,
       QualityCheckService qualityCheckService,
+      SettingsService settingsService,
       ModelMapper modelMapper,
       EventPublisher publisher) {
     this.reportRepository = reportRepository;
     this.qualityCheckService = qualityCheckService;
+    this.settingsService = settingsService;
     this.modelMapper = modelMapper;
     this.publisher = publisher;
   }
@@ -55,6 +59,7 @@ class ReportServiceImpl implements ReportService {
   @Transactional
   public ReportDTO create(ReportCreateDTO createDTO) {
     Report report = new Report();
+    report.setEpsilonBudget(settingsService.getSettings().getEpsilon());
     report = reportRepository.save(report);
     publisher.publishEvent(new NewReportEvent(report.getId()));
     return modelMapper.map(report, ReportDTO.class);

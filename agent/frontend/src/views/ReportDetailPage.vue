@@ -54,6 +54,16 @@
           <StatCard :number="countErrors()" label="Errors" number-class="text-danger" />
           <StatCard :number="countWarnings()" label="Warnings" number-class="text-warning" />
           <StatCard :number="countPassed()" label="Passed" number-class="text-success" />
+          <StatCard
+            :number="formatEpsilon(report.epsilonBudget)"
+            label="Privacy Budget Allocated"
+            number-class="text-primary"
+          />
+          <StatCard
+            :number="formatEpsilon(calculateEpsilonUsed())"
+            label="Privacy Budget Used"
+            :number-class="isOverBudget() ? 'text-danger' : 'text-success'"
+          />
         </div>
 
         <div class="mb-4">
@@ -97,6 +107,14 @@
                           <span class="detail-value">{{
                             formatOccurrenceRate(report, result)
                           }}</span>
+                        </div>
+                        <div v-if="formatPatientCount(result)" class="detail-row">
+                          <span class="detail-label">Number of patients:</span>
+                          <span class="detail-value">{{ formatPatientCount(result) }}</span>
+                        </div>
+                        <div v-if="formatObfuscatedCount(result)" class="detail-row">
+                          <span class="detail-label">Obfuscated:</span>
+                          <span class="detail-value">{{ formatObfuscatedCount(result) }}</span>
                         </div>
                         <div v-if="getResultError(report, result)" class="detail-row">
                           <span class="detail-label text-danger">Error:</span>
@@ -264,9 +282,31 @@
     return result.checkId + '_' + (result.stratum || 'all');
   }
 
+  function formatPatientCount(result) {
+    if (result?.rawValue == null) return null;
+    const val = Number(result.rawValue);
+    return Number.isFinite(val) ? val.toLocaleString() : null;
+  }
+
+  function formatObfuscatedCount(result) {
+    if (result?.obfuscatedValue == null) return null;
+    const val = Number(result.obfuscatedValue);
+    return Number.isFinite(val) ? Math.round(val).toLocaleString() : null;
+  }
+
   const calculateEpsilonUsed = () => {
     if (!report.value?.results) return 0;
-    return report.value.results.reduce((sum, result) => sum + result.epsilon, 0);
+    return report.value.results.reduce((sum, result) => sum + (result.epsilon || 0), 0);
+  };
+
+  const formatEpsilon = (value) => {
+    if (value == null) return '0.00';
+    const num = Number(value);
+    if (!Number.isFinite(num)) return '0.00';
+    return num.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
   };
 
   const isOverBudget = () => {
