@@ -863,30 +863,30 @@ class ReportControllerTest {
 
   @Test
   @WithUserDetails("admin")
-  void generateSummary_shouldReturnEmptyPdfWhenAuthenticatedAsAdmin() throws Exception {
+  void generateSummary_shouldReturnPdfWhenAuthenticatedAsAdmin() throws Exception {
     Report report = new Report();
-    reportRepository.save(report);
+    testAgent.addReport(report);
+    agentRepository.saveAndFlush(testAgent);
 
     mockMvc
         .perform(get(API_V1_REPORTS_ID_SUMMARY, report.getId()).param("format", "pdf"))
         .andExpect(status().isOk())
         .andExpect(header().string("Content-Type", "application/pdf"))
-        .andExpect(header().exists("Content-Disposition"))
-        .andExpect(content().bytes(new byte[0]));
+        .andExpect(header().exists("Content-Disposition"));
   }
 
   @Test
   @WithMockUser(roles = "HUMAN_USER")
-  void generateSummary_shouldReturnEmptyPdfWhenAuthenticatedAsHumanUser() throws Exception {
+  void generateSummary_shouldReturnPdfWhenAuthenticatedAsHumanUser() throws Exception {
     Report report = new Report();
-    reportRepository.save(report);
+    testAgent.addReport(report);
+    agentRepository.saveAndFlush(testAgent);
 
     mockMvc
         .perform(get(API_V1_REPORTS_ID_SUMMARY, report.getId()).param("format", "pdf"))
         .andExpect(status().isOk())
         .andExpect(header().string("Content-Type", "application/pdf"))
-        .andExpect(header().exists("Content-Disposition"))
-        .andExpect(content().bytes(new byte[0]));
+        .andExpect(header().exists("Content-Disposition"));
   }
 
   @Test
