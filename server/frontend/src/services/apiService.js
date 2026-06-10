@@ -77,7 +77,7 @@ class ApiService {
     const response = await api.get(`/v1/reports/${reportId}/summary?format=pdf`, {
       responseType: 'blob',
     });
-    const blob = new Blob([response.data], { type: 'application/pdf' });
+    const blob = new window.Blob([response.data], { type: 'application/pdf' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
