@@ -93,7 +93,7 @@ export default defineConfig({
         },
 
         footer: {
-            message: 'Licensed under the GNU GPL v3.0 | Built with <a href="https://vitepress.dev/" target="_blank" rel="noopener noreferrer">VitePress</a> | Please cite <a href="https://doi.org/10.1186/s12911-025-03328-6" target="_blank" rel="noopener noreferrer">Tomášik et al. (2026)</a>',
+            message: 'Licensed under the GNU AGPL v3.0 | Built with <a href="https://vitepress.dev/" target="_blank" rel="noopener noreferrer">VitePress</a> | Please cite <a href="https://doi.org/10.1186/s12911-025-03328-6" target="_blank" rel="noopener noreferrer">Tomášik et al. (2026)</a>',
             copyright: 'Copyright © 2026 BBMRI-ERIC® & Masaryk Memorial Cancer Institute'
         },
 

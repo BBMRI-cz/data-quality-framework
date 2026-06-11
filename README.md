@@ -49,7 +49,7 @@ docker compose up -d
 
 ## License
 
-Licensed under the [GNU General Public License v3.0](LICENSE)
+Licensed under the [GNU AFFERO GENERAL PUBLIC LICENSE v3.0](LICENSE)
 
 ---
 

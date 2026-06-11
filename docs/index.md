@@ -19,7 +19,7 @@ hero:
 features:
   - icon: <i class="bi bi-code-slash"></i>
     title: Open-Source
-    details: Fully open-source framework released under the GNU GPL v3.0 License, enabling transparency, collaboration, and community-driven development.
+    details: Fully open-source framework released under the GNU AGPL v3.0 License, enabling transparency, collaboration, and community-driven development.
     link: /developer/contributing
     linkText: Learn More
 
