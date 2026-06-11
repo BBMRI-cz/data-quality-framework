@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Report Summary</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm 2cm;
+            @bottom-center {
+                content: element(footer);
+                font-size: 8px;
+                color: #9ca3af;
+                font-family: 'Open Sans', 'Segoe UI', system-ui, sans-serif;
+            }
+        }
+        body {
+            font-family: 'Open Sans', 'Segoe UI', system-ui, sans-serif;
+            font-size: 10.5px;
+            color: #374151;
+            line-height: 1.6;
+            margin: 0;
+        }
+        .header {
+            width: 100%;
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1.5px solid #e5e7eb;
+        }
+        .header td {
+            vertical-align: middle;
+        }
+        .header-left {
+            width: 70%;
+        }
+        .header-right {
+            width: 30%;
+            text-align: right;
+        }
+        .doc-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #111827;
+            letter-spacing: -0.5px;
+            margin-bottom: 6px;
+        }
+        .doc-subtitle {
+            font-size: 12px;
+            color: #4b5563;
+            font-weight: 500;
+        }
+        .logo-img {
+            width: 60px;
+            height: auto;
+        }
+        .meta-strip {
+            margin-bottom: 24px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .meta-table {
+            width: 100%;
+        }
+        .meta-table td {
+            vertical-align: top;
+            padding-right: 16px;
+        }
+        .meta-label {
+            font-size: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #9ca3af;
+            font-weight: 600;
+            margin-bottom: 2px;
+            white-space: nowrap;
+        }
+        .meta-value {
+            font-size: 10px;
+            color: #4b5563;
+            font-weight: 500;
+        }
+        .summary-section {
+            margin-bottom: 28px;
+        }
+        .section-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+        .summary-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 8px 0;
+        }
+        .summary-table td {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 12px 16px;
+            text-align: center;
+            width: 25%;
+        }
+        .summary-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 2px;
+        }
+        .summary-value.p-count { color: #198754; }
+        .summary-value.w-count { color: #ca8a04; }
+        .summary-value.f-count { color: #dc2626; }
+        .summary-label {
+            font-size: 9px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .results-title {
+            font-size: 10px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .results-table thead th {
+            background: #f3f4f6;
+            color: #4b5563;
+            font-size: 9px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .results-table thead th:last-child {
+            text-align: right;
+        }
+        .results-table tbody td {
+            padding: 14px 12px;
+            border-bottom: 1px solid #f3f4f6;
+            vertical-align: middle;
+        }
+        .results-table tbody td:last-child {
+            text-align: right;
+        }
+        .check-name {
+            font-size: 11px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 3px;
+        }
+        .check-desc {
+            font-size: 9px;
+            color: #6b7280;
+            margin-bottom: 4px;
+            line-height: 1.4;
+        }
+        .check-hash {
+            font-size: 8px;
+            color: #d1d5db;
+            font-family: monospace;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .status-PASSED {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .status-WARNING {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .status-FAILED {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .result-num {
+            font-size: 14px;
+            font-weight: 700;
+            color: #111827;
+        }
+        .result-explanation {
+            font-size: 9px;
+            color: #6b7280;
+            margin-top: 3px;
+        }
+        .privacy-note {
+            font-size: 9px;
+            color: #4b5563;
+            margin-top: 16px;
+            padding: 12px 16px;
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 6px;
+            line-height: 1.5;
+        }
+        .privacy-note a {
+            color: #097dc5;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .footer {
+            position: running(footer);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <table class="header">
+        <tr>
+            <td class="header-left">
+                <div class="doc-title">Data Quality Report</div>
+                <div class="doc-subtitle" th:text="${agentName}">Agent Name</div>
+            </td>
+            <td class="header-right">
+                <img class="logo-img" th:src="|data:image/png;base64,${logoBase64}|" alt="Logo"/>
+            </td>
+        </tr>
+    </table>
+
+    <div class="meta-strip">
+        <table class="meta-table">
+            <tr>
+                <td>
+                    <div class="meta-label">Report ID</div>
+                    <div class="meta-value" th:text="${reportId}">ID</div>
+                </td>
+                <td>
+                    <div class="meta-label">Agent ID</div>
+                    <div class="meta-value" th:text="${agentId}">ID</div>
+                </td>
+                <td>
+                    <div class="meta-label">Agent Version</div>
+                    <div class="meta-value" th:text="${agentVersion}">N/A</div>
+                </td>
+                <td>
+                    <div class="meta-label">Report Received</div>
+                    <div class="meta-value" th:text="${reportTimestamp}">Date</div>
+                </td>
+                <td>
+                    <div class="meta-label">PDF Generated</div>
+                    <div class="meta-value" th:text="${generatedAt}">Date</div>
+                </td>
+                <td>
+                    <div class="meta-label">Patients</div>
+                    <div class="meta-value" th:text="${totalPatients} != null ? ${totalPatients} : 'N/A'">0</div>
+                </td>
+                <td>
+                    <div class="meta-label">Samples</div>
+                    <div class="meta-value" th:text="${totalSamples} != null ? ${totalSamples} : 'N/A'">0</div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="summary-section">
+        <div class="section-label">Summary</div>
+        <table class="summary-table">
+            <tr>
+                <td>
+                    <div class="summary-value" th:text="${totalChecks}">0</div>
+                    <div class="summary-label">Total Checks</div>
+                </td>
+                <td>
+                    <div class="summary-value p-count" th:text="${passedCount}">0</div>
+                    <div class="summary-label">Passed</div>
+                </td>
+                <td>
+                    <div class="summary-value w-count" th:text="${warningCount}">0</div>
+                    <div class="summary-label">Warnings</div>
+                </td>
+                <td>
+                    <div class="summary-value f-count" th:text="${failedCount}">0</div>
+                    <div class="summary-label">Errors</div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="results-section">
+        <div class="results-title">Quality Check Results</div>
+        <table class="results-table">
+            <thead>
+                <tr>
+                    <th style="width: 45%;">Check</th>
+                    <th style="width: 15%;">Status</th>
+                    <th style="width: 40%;">Result*</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="r : ${results}">
+                    <td>
+                        <div class="check-name" th:text="${r.name}">Check Name</div>
+                        <div class="check-desc" th:if="${r.description != null and !r.description.isBlank()}" th:text="${r.description}">Description</div>
+                        <div class="check-hash" th:text="${r.hash}">hash</div>
+                    </td>
+                    <td>
+                        <span class="status-badge" th:classappend="${'status-' + r.status}" th:text="${r.status == 'FAILED' ? 'Error' : r.status}">Status</span>
+                    </td>
+                    <td>
+                        <div class="result-num" th:text="${r.resultDisplay} != 'N/A' ? '~' + ${r.resultDisplay} : ${r.resultDisplay}">~1.0%</div>
+                        <div class="result-explanation" th:if="${r.resultDisplay} != 'N/A'">of records have this problem</div>
+                        <div class="result-explanation" th:if="${r.resultDisplay} == 'N/A'" style="color:#991b1b;font-weight:600;">Result unavailable</div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="privacy-note">* These results have been obfuscated using Differential Privacy to protect privacy, and are therefore approximations. Please interpret statistical significance accordingly.
+            To learn more, please visit <a href="https://fdqf.bbmri-eric.eu/">https://fdqf.bbmri-eric.eu/</a>.</div>
+    </div>
+
+    <div class="footer">
+        This report was generated using the FDQF platform version <span th:text="${platformVersion}">unknown</span>.
+    </div>
+</body>
+</html>

@@ -27,9 +27,7 @@
 
             <form v-else @submit.prevent="saveSettings">
               <div class="mb-3">
-                <label for="reportRetention" class="form-label">
-                  Report Retention
-                </label>
+                <label for="reportRetention" class="form-label"> Report Retention </label>
                 <input
                   id="reportRetention"
                   v-model.number="generalSettings.reportRetention"

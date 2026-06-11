@@ -13,6 +13,7 @@ import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.server.dataquality.domain.Report;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckResultDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.ReportCreateRequest;
+import eu.bbmri_eric.quality.server.util.IntegrationTest;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -21,24 +22,20 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.test.context.support.WithUserDetails;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@ActiveProfiles("test")
+@IntegrationTest
 @Transactional
 class ReportControllerTest {
 
   public static final String API_V1_AGENTS_REPORTS = "/api/v1/agents/{agentId}/reports";
   public static final String API_V1_REPORTS_ID = "/api/v1/reports/{id}";
   public static final String API_V1_REPORTS = "/api/v1/reports";
+  public static final String API_V1_REPORTS_ID_SUMMARY = "/api/v1/reports/{id}/summary";
 
   @Autowired private MockMvc mockMvc;
   @Autowired private ObjectMapper objectMapper;
@@ -858,6 +855,55 @@ class ReportControllerTest {
     assertTrue(
         reportsAfter.stream().noneMatch(r -> r.getId().equals(secondOldestReportId)),
         "Second oldest report should have been deleted by retention policy");
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void generateSummary_shouldReturnPdfWhenAuthenticatedAsAdmin() throws Exception {
+    Report report = new Report();
+    testAgent.addReport(report);
+    agentRepository.saveAndFlush(testAgent);
+
+    mockMvc
+        .perform(get(API_V1_REPORTS_ID_SUMMARY, report.getId()).param("format", "pdf"))
+        .andExpect(status().isOk())
+        .andExpect(header().string("Content-Type", "application/pdf"))
+        .andExpect(header().exists("Content-Disposition"));
+  }
+
+  @Test
+  @WithMockUser(roles = "HUMAN_USER")
+  void generateSummary_shouldReturnPdfWhenAuthenticatedAsHumanUser() throws Exception {
+    Report report = new Report();
+    testAgent.addReport(report);
+    agentRepository.saveAndFlush(testAgent);
+
+    mockMvc
+        .perform(get(API_V1_REPORTS_ID_SUMMARY, report.getId()).param("format", "pdf"))
+        .andExpect(status().isOk())
+        .andExpect(header().string("Content-Type", "application/pdf"))
+        .andExpect(header().exists("Content-Disposition"));
+  }
+
+  @Test
+  void generateSummary_shouldRequireAuthentication() throws Exception {
+    Report report = new Report();
+    reportRepository.save(report);
+
+    mockMvc
+        .perform(get(API_V1_REPORTS_ID_SUMMARY, report.getId()).param("format", "pdf"))
+        .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  @WithMockUser(roles = "USER")
+  void generateSummary_shouldReturnForbiddenForUserWithoutHumanUserOrAdminRole() throws Exception {
+    Report report = new Report();
+    reportRepository.save(report);
+
+    mockMvc
+        .perform(get(API_V1_REPORTS_ID_SUMMARY, report.getId()).param("format", "pdf"))
+        .andExpect(status().isForbidden());
   }
 
   private void seedReportCountForAgent(Agent agent, int count) {
