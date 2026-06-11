@@ -21,12 +21,8 @@ metrics with a central coordination server.
 
 ## Project Status
 
-**Technology Readiness Level 7** - Stable enough for experimentation and pilot deployments against HL7 FHIR endpoints
-implementing the [BBMRI.de FHIR profiles](https://simplifier.net/BBMRI.de).
+**Technology Readiness Level 7** - Stable enough for experimentation and pilot deployments against HL7 FHIR stores or OMOP CDM databases.
 
-The Current implementation focuses on clinical data exposed via HL7 FHIR. Additional connectors for OMOP, SQL databases,
-and
-other research formats are planned based on community needs.
 
 ## Quick Start
 
