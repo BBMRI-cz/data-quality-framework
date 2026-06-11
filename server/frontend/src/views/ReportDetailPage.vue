@@ -224,7 +224,11 @@
     try {
       await apiService.downloadReportSummary(report.value.id);
     } catch (err) {
-      alert('Failed to download report summary: ' + (err.message || 'Unknown error'));
+      const { notificationService } = await import('@/services/notificationService.js');
+      notificationService.error(
+        'Download Failed',
+        `Failed to download report summary: ${err?.message || 'Unknown error'}`
+      );
     } finally {
       isDownloading.value = false;
     }
