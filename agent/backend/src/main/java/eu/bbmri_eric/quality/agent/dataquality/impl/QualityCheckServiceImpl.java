@@ -10,6 +10,8 @@ import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckUpdateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.exception.QualityCheckNotFoundException;
 import java.util.List;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -23,6 +25,7 @@ class QualityCheckServiceImpl implements QualityCheckService {
 
   private final QualityCheckRepository qualityCheckRepository;
   private final ModelMapper modelMapper;
+  private static final Logger logger = LoggerFactory.getLogger(QualityCheckServiceImpl.class);
 
   QualityCheckServiceImpl(QualityCheckRepository qualityCheckRepository, ModelMapper modelMapper) {
     this.qualityCheckRepository = qualityCheckRepository;
@@ -88,26 +91,8 @@ class QualityCheckServiceImpl implements QualityCheckService {
         qualityCheckRepository
             .findById(id)
             .orElseThrow(() -> new QualityCheckNotFoundException(id));
-
-    if (updateDTO.getName() != null) {
-      qualityCheck.setName(updateDTO.getName());
-    }
-    if (updateDTO.getDescription() != null) {
-      qualityCheck.setDescription(updateDTO.getDescription());
-    }
-    if (updateDTO.getQuery() != null) {
-      qualityCheck.setQuery(updateDTO.getQuery());
-    }
-    if (updateDTO.getWarningThreshold() != null) {
-      qualityCheck.setWarningThreshold(updateDTO.getWarningThreshold());
-    }
-    if (updateDTO.getErrorThreshold() != null) {
-      qualityCheck.setErrorThreshold(updateDTO.getErrorThreshold());
-    }
-    if (updateDTO.getEpsilonBudget() != null) {
-      qualityCheck.setEpsilonBudget(updateDTO.getEpsilonBudget());
-    }
-
+    qualityCheck = modelMapper.map(updateDTO, QualityCheck.class);
+    qualityCheck.setId(id);
     qualityCheck = qualityCheckRepository.save(qualityCheck);
     return modelMapper.map(qualityCheck, QualityCheckDTO.class);
   }

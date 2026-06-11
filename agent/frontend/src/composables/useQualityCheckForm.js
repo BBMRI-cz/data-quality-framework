@@ -10,7 +10,7 @@ export function useQualityCheckForm() {
     type: 'CQL',
     warningThreshold: 10,
     errorThreshold: 30,
-    epsilonBudget: 1.0,
+    epsilonBudget: null,
   });
 
   const errors = ref({});

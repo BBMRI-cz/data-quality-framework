@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.agent.dataquality.dto;
 
+import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheckType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -27,6 +28,9 @@ public class QualityCheckUpdateDTO {
   @Schema(description = "Query string", example = "library PatientAgeValidation version '1.0.0'...")
   private String query;
 
+  @Schema(description = "Type of quality check", example = "CQL")
+  private QualityCheckType type;
+
   @Min(value = 0, message = "Warning threshold must be at least 0")
   @Max(value = 100, message = "Warning threshold must not exceed 100")
   @Schema(description = "Warning threshold percentage", example = "10")
@@ -47,12 +51,14 @@ public class QualityCheckUpdateDTO {
       String name,
       String description,
       String query,
+      QualityCheckType type,
       Integer warningThreshold,
       Integer errorThreshold,
       Double epsilonBudget) {
     this.name = name;
     this.description = description;
     this.query = query;
+    this.type = type;
     this.warningThreshold = warningThreshold;
     this.errorThreshold = errorThreshold;
     this.epsilonBudget = epsilonBudget;

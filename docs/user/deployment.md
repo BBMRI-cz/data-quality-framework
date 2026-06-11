@@ -16,7 +16,7 @@ Before deploying, ensure your system meets the following requirements:
 
 - **Docker Engine**: Version 20.10 or later ([Installation Guide](https://docs.docker.com/engine/install/))
 - **Docker Compose**: Version 2.0 or later (included with Docker Desktop, or install separately)
-- **Available Memory**: Minimum 2GB RAM per component
+- **Available Memory**: Approximately 1GB RAM per component
 - **Storage**: At least 10GB available disk space
 - **Network**: Internet access for image downloads and updates
 
@@ -95,7 +95,7 @@ version: '3.8'
 
 services:
   quality-agent:
-    image: ghcr.io/bbmri-cz/data-quality-agent:0.1
+    image: ghcr.io/bbmri-cz/data-quality-agent:0
     container_name: quality-agent
     restart: unless-stopped
     cap_drop:
@@ -176,12 +176,24 @@ For security, change the default admin password immediately after first login:
 ### Step 7: Configure Database Connection
 
 To connect to data sources:
-1. In the web interface, navigate to **Settings > FHIR Server**
-2. Configure connection until you see a positive confirmation
-3. For services running on your host machine, use `host.docker.internal` as the hostname
 
-::: tip BBMRI-ERIC Federated Search Platform
-If you are deploying this agent as part of the **BBMRI-ERIC Federated Search Platform**, use the following configuration:
+1. In the web interface, navigate to **Settings > Connection Settings**
+2. Select your **Database Type**:
+   - **FHIR**: For FHIR-based data sources (e.g., Bridgehead FHIR stores)
+   - **SQL**: For OMOP CDM databases via JDBC
+3. Configure the connection details and verify until you see a positive confirmation
+4. For services running on your host machine, use `host.docker.internal` as the hostname
+
+#### FHIR Configuration
+
+Enter the FHIR server URL, username, and password.
+
+#### OMOP CDM (SQL) Configuration
+
+Enter the JDBC URL (e.g., `jdbc:postgresql://host.docker.internal:5432/omop`), username, and password for your OMOP CDM database.
+
+::: tip BBMRI-ERIC Federated Search Platform (FHIR)
+If you are deploying this agent as part of the **BBMRI-ERIC Federated Search Platform** and using a FHIR data source, use the following configuration:
 
 - **FHIR Server URL**: `https://host.docker.internal/bbmri-localdatamanagement/fhir/`
 - **Username**: `bbmri`
@@ -220,7 +232,7 @@ Create `/etc/systemd/system/data-quality-agent-updater.timer`:
 Description=Run Data Quality Agent updater daily
 
 [Timer]
-OnCalendar=hourly
+OnCalendar=daily
 Persistent=true
 
 [Install]
@@ -266,7 +278,7 @@ version: '3.8'
 
 services:
   quality-server:
-    image: ghcr.io/bbmri-cz/data-quality-server:latest
+    image: ghcr.io/bbmri-cz/data-quality-server:0
     container_name: quality-server
     restart: unless-stopped
     environment:
@@ -412,7 +424,7 @@ Create `/etc/systemd/system/data-quality-server-updater.timer`:
 Description=Run Data Quality Server updater daily
 
 [Timer]
-OnCalendar=hourly
+OnCalendar=daily
 Persistent=true
 
 [Install]
