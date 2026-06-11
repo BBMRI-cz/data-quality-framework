@@ -14,11 +14,13 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 /** A data quality check utilizing the Hl7 Clinical Quality Language queries for evaluation. */
 @Entity(name = "quality_check")
 @Getter
 @Setter
+@ToString
 public class QualityCheck implements DataQualityCheck {
 
   @Id

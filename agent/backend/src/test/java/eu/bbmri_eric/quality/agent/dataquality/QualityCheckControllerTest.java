@@ -5,7 +5,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
+import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheckType;
+import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckCreateDTO;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -27,8 +28,9 @@ class QualityCheckControllerTest {
   @Test
   @WithUserDetails("admin")
   void post_validQualityCheck_createdAndRetrievable() throws Exception {
-    QualityCheck check =
-        new QualityCheck("Test Check", "Checks patients with diabetes", "define Test: true");
+    QualityCheckCreateDTO check =
+        new QualityCheckCreateDTO(
+            "Test Check", "Checks patients with diabetes", "define Test: true", 50, 80, 1.0);
 
     String location =
         mockMvc
@@ -53,8 +55,43 @@ class QualityCheckControllerTest {
 
   @Test
   @WithUserDetails("admin")
+  void post_validSQLQualityCheck_createdAndRetrievable() throws Exception {
+    QualityCheckCreateDTO check =
+        new QualityCheckCreateDTO(
+            "Test Check",
+            "Checks patients with diabetes",
+            "SELECT * FROM person;",
+            QualityCheckType.SQL,
+            50,
+            80,
+            1.0);
+    String location =
+        mockMvc
+            .perform(
+                post(QualityCheckEndpoint)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(check)))
+            .andExpect(status().isCreated())
+            .andReturn()
+            .getResponse()
+            .getHeader("Location");
+
+    assertThat(location).isNotNull();
+
+    mockMvc
+        .perform(get(location))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.name").value("Test Check"))
+        .andExpect(jsonPath("$.type").value("SQL"))
+        .andExpect(jsonPath("$.description").value("Checks patients with diabetes"))
+        .andExpect(jsonPath("$.query").value("SELECT * FROM person;"));
+  }
+
+  @Test
+  @WithUserDetails("admin")
   void put_existingQualityCheck_updatedSuccessfully() throws Exception {
-    QualityCheck check = new QualityCheck("UpdateTest", "Initial", "define Test: false");
+    QualityCheckCreateDTO check =
+        new QualityCheckCreateDTO("UpdateTest", "Initial", "define Test: false", 50, 80, 1.0);
 
     String location =
         mockMvc
@@ -85,8 +122,9 @@ class QualityCheckControllerTest {
   @Test
   @WithUserDetails("admin")
   void delete_existingQualityCheck_deletedSuccessfully() throws Exception {
-    QualityCheck check =
-        new QualityCheck("DeleteTest", "To be deleted", "define Test: exists [Patient]");
+    QualityCheckCreateDTO check =
+        new QualityCheckCreateDTO(
+            "DeleteTest", "To be deleted", "define Test: exists [Patient]", 50, 80, 1.0);
 
     String location =
         mockMvc
@@ -116,7 +154,8 @@ class QualityCheckControllerTest {
   @Test
   @WithUserDetails("admin")
   void put_nonExistingQualityCheck_returnsNotFound() throws Exception {
-    QualityCheck check = new QualityCheck(9999L, "Nonexistent", "No such ID", "define Test: false");
+    QualityCheckCreateDTO check =
+        new QualityCheckCreateDTO("Nonexistent", "No such ID", "define Test: false", 50, 80, 1.0);
 
     mockMvc
         .perform(

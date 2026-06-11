@@ -44,6 +44,7 @@
             :rows="2"
             placeholder="Enter a brief description of what this check validates"
             help-text="Optional: Helps others understand the purpose of this check"
+            required
           />
 
           <FormSelect
@@ -52,10 +53,10 @@
             v-model="formData.type"
             label="Check Type"
             icon="bi-diagram-3"
-            help-text="CQL checks use Clinical Quality Language queries. Java checks are built-in implementations."
             help-icon="bi-info-circle"
             :options="[
               { value: 'CQL', label: 'CQL (Clinical Quality Language)' },
+              { value: 'SQL', label: 'SQL (Structured Query Language)' },
               { value: 'JAVA', label: 'Java (Built-in Check)' },
             ]"
           />
@@ -83,8 +84,8 @@
             label="Query"
             icon="bi-terminal"
             :rows="8"
-            placeholder="Enter your CQL query here..."
-            help-text="Write a CQL query to validate data quality"
+            placeholder="Enter your query here..."
+            help-text="Write a query to validate data quality"
             help-icon="bi-lightbulb"
             :error="errors.query"
             required
@@ -119,7 +120,6 @@
               step="0.1"
               label="Epsilon Budget"
               icon="bi-shield-check"
-              placeholder="1.0"
               help-text="Privacy budget allocation"
             />
           </FormRow>
