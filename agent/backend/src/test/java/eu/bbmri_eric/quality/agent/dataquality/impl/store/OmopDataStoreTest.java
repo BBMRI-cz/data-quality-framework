@@ -65,6 +65,18 @@ class OmopDataStoreTest {
   }
 
   @Test
+  void executeQuery_singleRowNumericNonCount_returnsId() {
+    when(jdbcTemplate.queryForList(anyString())).thenReturn(List.of(Map.of("person_id", 42L)));
+    OmopDataStore store = new OmopDataStore(jdbcTemplate);
+
+    ResultDTO result = store.executeQuery("SELECT person_id FROM person");
+
+    assertEquals(1, result.rawResult());
+    assertTrue(result.idSet().contains("42"));
+    assertNull(result.error());
+  }
+
+  @Test
   void executeQuery_error_returnsErrorResult() {
     when(jdbcTemplate.queryForList(anyString())).thenThrow(new RuntimeException("syntax error"));
     OmopDataStore store = new OmopDataStore(jdbcTemplate);

@@ -76,8 +76,9 @@ public class OmopDataStore implements DataStore {
       if (rows.size() == 1) {
         Map<String, Object> row = rows.get(0);
         if (row.size() == 1) {
-          Object value = row.values().iterator().next();
-          if (value instanceof Number number) {
+          Map.Entry<String, Object> entry = row.entrySet().iterator().next();
+          Object value = entry.getValue();
+          if (value instanceof Number number && entry.getKey().toLowerCase().startsWith("count")) {
             return new ResultDTO(number.intValue(), "Person", Collections.emptySet());
           }
         }
