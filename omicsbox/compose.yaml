@@ -1,0 +1,32 @@
+services:
+  omicsbox:
+    build: .
+    image: omicsbox:latest
+    container_name: omicsbox-sandbox
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - isolated
+    volumes:
+      - /Users/radovan.tomasik/Repositories/wsi-sandbox/wsi:/sandbox/data/wsi:ro
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100m
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+    restart: "no"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+networks:
+  isolated:
+    internal: true
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.42.0/24
