@@ -1,4 +1,5 @@
 import os
+import signal
 import subprocess
 import sys
 import tempfile
@@ -7,6 +8,7 @@ import time
 from dataclasses import asdict, dataclass
 
 from flask import Flask, jsonify, request
+from werkzeug.exceptions import InternalServerError
 from werkzeug.serving import make_server
 
 HOST = "0.0.0.0"
@@ -14,6 +16,7 @@ PORT = 8000
 MAX_SIZE = 5 * 1024 * 1024
 TIMEOUT = 60
 DATA_DIR = "/sandbox/data"
+MAX_OUTPUT_SIZE = 1024 * 1024
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = MAX_SIZE
@@ -48,6 +51,14 @@ def _read_body() -> bytes:
     return request.get_data()
 
 
+def _truncate_output(data: bytes) -> str:
+    text = data.decode("utf-8", errors="replace")
+    if len(text) > MAX_OUTPUT_SIZE:
+        truncated = text[:MAX_OUTPUT_SIZE]
+        return truncated + f"\n[output truncated: {len(text) - MAX_OUTPUT_SIZE} additional characters]"
+    return text
+
+
 def _run_script(body: bytes) -> RunResult:
     os.makedirs(DATA_DIR, exist_ok=True)
     with tempfile.NamedTemporaryFile(
@@ -56,34 +67,61 @@ def _run_script(body: bytes) -> RunResult:
         f.write(body)
         script_path = f.name
 
+    stdout_fd, stdout_path = tempfile.mkstemp(suffix=".out", dir="/tmp")
+    stderr_fd, stderr_path = tempfile.mkstemp(suffix=".err", dir="/tmp")
     try:
         start = time.time()
-        proc = subprocess.run(
-            [sys.executable, script_path],
-            capture_output=True,
-            text=True,
-            timeout=TIMEOUT,
+        proc = subprocess.Popen(
+            [sys.executable, "-I", script_path],
+            stdout=stdout_fd,
+            stderr=stderr_fd,
+            stdin=subprocess.DEVNULL,
             cwd=DATA_DIR,
+            start_new_session=True,
         )
-        duration_ms = round((time.time() - start) * 1000)
+        os.close(stdout_fd)
+        stdout_fd = -1
+        os.close(stderr_fd)
+        stderr_fd = -1
+        try:
+            returncode = proc.wait(timeout=TIMEOUT)
+            duration_ms = round((time.time() - start) * 1000)
+        except subprocess.TimeoutExpired:
+            try:
+                os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            proc.wait()
+            duration_ms = round((time.time() - start) * 1000)
+            return RunResult(
+                stdout="",
+                stderr="execution timed out",
+                returncode=-1,
+                duration_ms=duration_ms,
+            )
+
+        with open(stdout_path, "rb") as out, open(stderr_path, "rb") as err:
+            stdout_data = out.read(MAX_OUTPUT_SIZE + 1)
+            stderr_data = err.read(MAX_OUTPUT_SIZE + 1)
+
         return RunResult(
-            stdout=proc.stdout,
-            stderr=proc.stderr,
-            returncode=proc.returncode,
+            stdout=_truncate_output(stdout_data),
+            stderr=_truncate_output(stderr_data),
+            returncode=returncode,
             duration_ms=duration_ms,
         )
-    except subprocess.TimeoutExpired:
-        return RunResult(
-            stdout="",
-            stderr="execution timed out",
-            returncode=-1,
-            duration_ms=round((time.time() - start) * 1000),
-        )
     finally:
-        try:
-            os.unlink(script_path)
-        except OSError:
-            pass
+        for fd in (stdout_fd, stderr_fd):
+            if fd != -1:
+                try:
+                    os.close(fd)
+                except OSError:
+                    pass
+        for path in (script_path, stdout_path, stderr_path):
+            try:
+                os.unlink(path)
+            except OSError:
+                pass
 
 
 @app.route("/run", methods=["POST"])
@@ -116,10 +154,10 @@ def too_large(_):
     return jsonify(asdict(ErrorResponse("payload too large"))), 413
 
 
-@app.errorhandler(Exception)
-def server_error(e):
+@app.errorhandler(InternalServerError)
+def server_error(_):
     _schedule_shutdown()
-    return jsonify(asdict(ErrorResponse(str(e)))), 500
+    return jsonify(asdict(ErrorResponse("internal server error"))), 500
 
 
 def main():

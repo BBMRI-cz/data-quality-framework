@@ -11,17 +11,14 @@ services:
     networks:
       - isolated
     volumes:
-      - /Users/radovan.tomasik/Repositories/wsi-sandbox/wsi:/sandbox/data/wsi:ro
+      - ${OMICSBOX_DATA_PATH:-./data/wsi}:/sandbox/data/wsi:ro
     tmpfs:
       - /tmp:noexec,nosuid,size=100m
     environment:
       - PYTHONDONTWRITEBYTECODE=1
     restart: "no"
-    deploy:
-      resources:
-        limits:
-          cpus: '2'
-          memory: 2G
+    cpus: '2'
+    mem_limit: 2G
 networks:
   isolated:
     internal: true
