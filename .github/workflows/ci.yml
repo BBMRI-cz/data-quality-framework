@@ -335,6 +335,44 @@ jobs:
           name: server-image
           path: /tmp/server-image.tar
 
+  build-omicsbox-image:
+    name: Docker Image Build (OmicsBox)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@06116385d9baf250c9f4dcb4858b16962ea869c3 # v4.1.0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
+
+      - uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
+        name: Build new image
+        with:
+          context: ./omicsbox
+          file: ./omicsbox/Dockerfile
+          tags: ghcr.io/bbmri-cz/omicsbox:latest
+          load: true
+          outputs: type=docker
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
+        name: Build new image artifact
+        with:
+          context: ./omicsbox
+          file: ./omicsbox/Dockerfile
+          tags: ghcr.io/bbmri-cz/omicsbox:latest
+          outputs: type=docker,dest=/tmp/omicsbox-image.tar
+          cache-from: type=gha
+
+      - name: Upload omicsbox image artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: omicsbox-image
+          path: /tmp/omicsbox-image.tar
+
   test-server-migration:
     name: Server DB Migration Test
     runs-on: ubuntu-latest
@@ -535,6 +573,76 @@ jobs:
           TAGS: ${{ steps.meta.outputs.tags }}
         run: |
           LOADED_IMAGE="ghcr.io/bbmri-cz/data-quality-server:latest"
+          # Tag and push each generated tag
+          echo "$TAGS" | while read -r tag; do
+            if [ -n "$tag" ]; then
+              echo "Tagging and pushing: $tag"
+              docker tag "$LOADED_IMAGE" "$tag"
+              docker push "$tag"
+            fi
+          done
+
+      - name: Sign images with Cosign
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          # Sign each pushed image
+          echo "$TAGS" | while read -r tag; do
+            if [ -n "$tag" ]; then
+              echo "Signing: $tag"
+              cosign sign --yes "$tag"
+            fi
+          done
+
+  publish-omicsbox-image:
+    name: OmicsBox Image Publishing
+    runs-on: ubuntu-latest
+    needs:
+      - build-omicsbox-image
+      - integration-test
+      - otel-metrics-push-test
+    permissions:
+      packages: write
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+
+      - name: Download omicsbox image artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: omicsbox-image
+          path: /tmp
+
+      - name: Load Docker image
+        run: docker load -i /tmp/omicsbox-image.tar
+
+      - id: meta
+        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6.1.0
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/omicsbox
+          tags: |
+            type=sha
+            type=raw,value=${{ github.head_ref }},event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'master') }}
+
+      - uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tag and push images
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          LOADED_IMAGE="ghcr.io/bbmri-cz/omicsbox:latest"
           # Tag and push each generated tag
           echo "$TAGS" | while read -r tag; do
             if [ -n "$tag" ]; then
