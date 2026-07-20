@@ -11,22 +11,22 @@
     "format": "prettier --write \"src/**/*.{js,vue,css,scss}\""
   },
   "dependencies": {
-    "@fontsource/open-sans": "^5.2.7",
-    "@fontsource/source-code-pro": "^5.2.7",
-    "axios": "^1.16.0",
-    "bootstrap": "^5.3.6",
+    "@fontsource/open-sans": "^5.3.0",
+    "@fontsource/source-code-pro": "^5.3.0",
+    "axios": "^1.18.1",
+    "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.11.1",
-    "pinia": "^3.0.4",
-    "vue": "^3.5.33",
-    "vue-router": "^5.0.6"
+    "pinia": "^4.0.2",
+    "vue": "^3.5.40",
+    "vue-router": "^5.2.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.2",
-    "@vitejs/plugin-vue": "^6.0.6",
-    "eslint": "^9.39.2",
+    "@eslint/js": "^10.0.1",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "eslint": "^10.7.0",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-vue": "^10.9.0",
-    "prettier": "^3.8.3",
-    "vite": "^8.1.4"
+    "eslint-plugin-vue": "^10.9.2",
+    "prettier": "^3.9.5",
+    "vite": "^8.1.5"
   }
 }
