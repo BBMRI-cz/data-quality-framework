@@ -9,6 +9,15 @@
     <packaging>jar</packaging>
     <name>Data Quality Metrics Server</name>
     <description>A data quality central server</description>
+
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/bbmri-cz/data-quality-framework</url>
+        </repository>
+    </distributionManagement>
+
     <properties>
         <java.version>21</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>

@@ -664,6 +664,46 @@ jobs:
             fi
           done
 
+  publish-jar:
+    if: github.event_name == 'push' && github.ref_type == 'tag'
+    name: Publish JAR files
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    needs:
+      - test
+      - test-server
+      - integration-test
+      - otel-metrics-push-test
+    steps:
+      - name: Checkout codebase
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up JDK
+        uses: actions/setup-java@1bcf9fb12cf4aa7d266a90ae39939e61372fe520 # v5.4.0
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: 'maven'
+
+      - name: Set artifact version
+        env:
+          ARTIFACT_VERSION: ${{ github.ref_name }}
+        run: |
+          mvn -f agent/backend --quiet -B versions:set -DnewVersion="${ARTIFACT_VERSION//v}"
+          mvn -f server/backend --quiet -B versions:set -DnewVersion="${ARTIFACT_VERSION//v}"
+
+      - name: Publish agent package
+        run: mvn -f agent/backend --batch-mode deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish server package
+        run: mvn -f server/backend --batch-mode deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   integration-test:
     name: System Test
     runs-on: ubuntu-latest
