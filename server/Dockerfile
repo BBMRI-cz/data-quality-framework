@@ -1,11 +1,11 @@
-FROM node:20-alpine AS frontend-builder
+FROM node:26-alpine AS frontend-builder
 WORKDIR /app/frontend
 COPY server/frontend/package*.json ./
 RUN npm install --silent
 COPY server/frontend/ .
 RUN npm run build --silent
 
-FROM maven:3.9.9-eclipse-temurin-21@sha256:3a4ab3276a087bf276f79cae96b1af04f53731bec53fb2e651aca79e4b10211e AS backend-builder
+FROM maven:3.9.15-eclipse-temurin-26@sha256:029a8e2838ae68238ffb8be407cddbb3f07d4d839c60c6f26c619a69fd184531 AS backend-builder
 ARG ARTIFACT_VERSION=unknown
 WORKDIR /app
 COPY .git ./.git
@@ -17,7 +17,7 @@ COPY --from=frontend-builder /app/frontend/dist ./src/main/resources/static
 RUN mvn --quiet -B versions:set -DnewVersion=$ARTIFACT_VERSION
 RUN mvn package --quiet -DskipTests
 
-FROM eclipse-temurin:21-jre-jammy@sha256:daebe9ae03913ec4b2dadd8df60f3ea3df1aa6108fecd5d324d000bdd5c4c816
+FROM eclipse-temurin:25-jre-jammy@sha256:b8ba5fca9d88b6ecc3a46c8e75b744f84aca9a9d08587901b5ab480baf641ab5
 RUN groupadd -r appuser && useradd -r -g appuser -u 1001 appuser
 WORKDIR /app
 RUN mkdir -p /app/data && \
