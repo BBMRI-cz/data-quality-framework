@@ -6,7 +6,7 @@ Welcome! This guide covers everything you need to know to contribute to the Data
 
 ### Prerequisites
 
-- **Java 21+** (OpenJDK or Oracle JDK)
+- **Java 25+** (OpenJDK or Oracle JDK)
 - **Maven 3.9+**
 - **Node.js 20+**
 - **Docker** (for testing and local deployment)
