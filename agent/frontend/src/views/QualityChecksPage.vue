@@ -34,7 +34,7 @@
   import ActionButton from '@/components/ActionButton.vue';
   import { useQualityChecks } from '@/composables/useQualityChecks.js';
 
-  const { totalChecks, totalEpsilonBudget, fetchChecks } = useQualityChecks();
+  const { totalChecks, fetchChecks } = useQualityChecks();
 
   onMounted(fetchChecks);
 </script>

@@ -22,7 +22,6 @@
   import { useAuth } from 'vue3-oidc';
   import { authStore } from '@/stores/authStore.js';
   import { notificationService } from '@/services/notificationService.js';
-  import { initializeOidc } from '@/utils/oidc.js';
 
   const router = useRouter();
 

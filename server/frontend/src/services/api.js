@@ -48,7 +48,7 @@ api.interceptors.response.use(
         } else {
           isHandling401 = false;
         }
-      } catch (err) {
+      } catch {
         isHandling401 = false;
       }
 

@@ -1,6 +1,6 @@
 <script setup>
   import { computed, onMounted, ref } from 'vue';
-  import { useRoute, useRouter } from 'vue-router';
+  import { useRoute } from 'vue-router';
   import { useHead } from '@unhead/vue';
   import Sidebar from '@/components/layout/Sidebar.vue';
   import TopNavbar from '@/components/layout/TopNavbar.vue';
@@ -10,7 +10,6 @@
   import { notificationService } from '@/services/notificationService.js';
   import { initializeOidc } from '@/utils/oidc.js';
 
-  const router = useRouter();
   const route = useRoute();
   const notificationContainer = ref(null);
 
