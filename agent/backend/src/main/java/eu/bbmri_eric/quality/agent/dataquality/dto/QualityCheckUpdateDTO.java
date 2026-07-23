@@ -45,6 +45,9 @@ public class QualityCheckUpdateDTO {
   @Schema(description = "Epsilon budget for differential privacy", example = "1.0")
   private Double epsilonBudget;
 
+  @Schema(description = "Category ID for grouping quality checks", example = "1")
+  private Long categoryId;
+
   public QualityCheckUpdateDTO() {}
 
   public QualityCheckUpdateDTO(
@@ -62,5 +65,24 @@ public class QualityCheckUpdateDTO {
     this.warningThreshold = warningThreshold;
     this.errorThreshold = errorThreshold;
     this.epsilonBudget = epsilonBudget;
+  }
+
+  public QualityCheckUpdateDTO(
+      String name,
+      String description,
+      String query,
+      QualityCheckType type,
+      Integer warningThreshold,
+      Integer errorThreshold,
+      Double epsilonBudget,
+      Long categoryId) {
+    this.name = name;
+    this.description = description;
+    this.query = query;
+    this.type = type;
+    this.warningThreshold = warningThreshold;
+    this.errorThreshold = errorThreshold;
+    this.epsilonBudget = epsilonBudget;
+    this.categoryId = categoryId;
   }
 }

@@ -2,7 +2,9 @@ package eu.bbmri_eric.quality.agent.dataquality.impl;
 
 import eu.bbmri_eric.quality.agent.common.dto.FilterDTO;
 import eu.bbmri_eric.quality.agent.common.dto.PageResponse;
+import eu.bbmri_eric.quality.agent.common.exception.EntityNotFoundException;
 import eu.bbmri_eric.quality.agent.dataquality.QualityCheckService;
+import eu.bbmri_eric.quality.agent.dataquality.domain.Category;
 import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
@@ -24,11 +26,16 @@ import org.springframework.transaction.annotation.Transactional;
 class QualityCheckServiceImpl implements QualityCheckService {
 
   private final QualityCheckRepository qualityCheckRepository;
+  private final CategoryRepository categoryRepository;
   private final ModelMapper modelMapper;
   private static final Logger logger = LoggerFactory.getLogger(QualityCheckServiceImpl.class);
 
-  QualityCheckServiceImpl(QualityCheckRepository qualityCheckRepository, ModelMapper modelMapper) {
+  QualityCheckServiceImpl(
+      QualityCheckRepository qualityCheckRepository,
+      CategoryRepository categoryRepository,
+      ModelMapper modelMapper) {
     this.qualityCheckRepository = qualityCheckRepository;
+    this.categoryRepository = categoryRepository;
     this.modelMapper = modelMapper;
   }
 
@@ -36,6 +43,9 @@ class QualityCheckServiceImpl implements QualityCheckService {
   @Transactional
   public QualityCheckDTO create(QualityCheckCreateDTO createDTO) {
     QualityCheck qualityCheck = modelMapper.map(createDTO, QualityCheck.class);
+    qualityCheck.setId(null);
+    qualityCheck.setCategory(null);
+    setCategory(createDTO.getCategoryId(), qualityCheck);
     qualityCheck = qualityCheckRepository.save(qualityCheck);
     return modelMapper.map(qualityCheck, QualityCheckDTO.class);
   }
@@ -93,8 +103,23 @@ class QualityCheckServiceImpl implements QualityCheckService {
             .orElseThrow(() -> new QualityCheckNotFoundException(id));
     qualityCheck = modelMapper.map(updateDTO, QualityCheck.class);
     qualityCheck.setId(id);
+    qualityCheck.setCategory(null);
+    setCategory(updateDTO.getCategoryId(), qualityCheck);
     qualityCheck = qualityCheckRepository.save(qualityCheck);
     return modelMapper.map(qualityCheck, QualityCheckDTO.class);
+  }
+
+  private void setCategory(Long categoryId, QualityCheck qualityCheck) {
+    if (categoryId == null) {
+      qualityCheck.setCategory(null);
+      return;
+    }
+    Category category =
+        categoryRepository
+            .findById(categoryId)
+            .orElseThrow(
+                () -> new EntityNotFoundException("Category not found with ID: " + categoryId));
+    qualityCheck.setCategory(category);
   }
 
   @Override
