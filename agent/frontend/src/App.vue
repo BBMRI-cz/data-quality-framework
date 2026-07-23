@@ -14,7 +14,7 @@
 
 <script setup>
   import { onMounted, ref, watch } from 'vue';
-  import { useRouter, useRoute } from 'vue-router';
+  import { useRoute } from 'vue-router';
   import Sidebar from './components/Sidebar.vue';
   import TopNavbar from './components/TopNavbar.vue';
   import NotificationContainer from './components/NotificationContainer.vue';

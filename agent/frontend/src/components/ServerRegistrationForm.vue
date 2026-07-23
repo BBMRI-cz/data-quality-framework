@@ -133,36 +133,6 @@
     error: null,
   });
 
-  async function validateUrl() {
-    const url = formData.url.trim();
-
-    // Reset validation if URL is empty or invalid
-    if (!url || !isValidUrlFormat(url)) {
-      resetValidation();
-      return;
-    }
-
-    // Remove trailing slash before validation
-    const normalizedUrl = url.replace(/\/+$/, '');
-
-    urlValidation.validating = true;
-    urlValidation.checked = false;
-
-    try {
-      const result = await validateServerUrl(normalizedUrl);
-      urlValidation.validating = false;
-      urlValidation.checked = true;
-      urlValidation.valid = result.valid;
-      urlValidation.version = result.version || null;
-      urlValidation.error = result.error || 'Invalid server';
-    } catch (error) {
-      urlValidation.validating = false;
-      urlValidation.checked = true;
-      urlValidation.valid = false;
-      urlValidation.error = 'Validation failed';
-    }
-  }
-
   async function testConnection() {
     const url = formData.url.trim();
 
@@ -188,7 +158,7 @@
       urlValidation.valid = result.valid;
       urlValidation.version = result.version || null;
       urlValidation.error = result.error || 'Invalid server';
-    } catch (error) {
+    } catch {
       urlValidation.validating = false;
       urlValidation.checked = true;
       urlValidation.valid = false;

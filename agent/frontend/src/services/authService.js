@@ -112,7 +112,7 @@ export async function getAppInfo() {
       gitCommit: response.data?.git?.commit?.id?.abbrev || 'unknown',
       buildTime: response.data?.build?.time || null,
     };
-  } catch (error) {
+  } catch {
     return {
       version: 'unknown',
       gitCommit: 'unknown',

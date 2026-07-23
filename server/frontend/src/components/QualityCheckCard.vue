@@ -111,12 +111,10 @@
     },
     reports: {
       type: Array,
-      required: true,
       default: () => [],
     },
     agents: {
       type: Array,
-      required: true,
       default: () => [],
     },
   });

@@ -141,7 +141,6 @@
   import { useHead } from '@unhead/vue';
   import PageHeader from '@/components/ui/PageHeader.vue';
   import StatsCard from '@/components/ui/StatsCard.vue';
-  import AppCallout from '@/components/AppCallout.vue';
   import ValuesFilter from '@/components/ui/ValuesFilter.vue';
   import { apiService } from '@/services/apiService.js';
   import { getCheckStatus, CheckStatus, getStatusIcon } from '@/utils/qualityCheckUtils.js';

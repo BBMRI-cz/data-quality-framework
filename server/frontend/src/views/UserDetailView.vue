@@ -178,8 +178,6 @@
     username: '',
   });
 
-  const isEditMode = computed(() => !isNew.value);
-
   const hasChanges = computed(() => {
     if (isNew.value) return true;
     if (!user.value) return false;

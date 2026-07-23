@@ -31,7 +31,7 @@ This is a federated data quality framework with a decentralized architecture:
 
 ## Technology Stack
 
-- **Java**: 21 (target and source)
+- **Java**: 25 (target and source)
 - **Backend**: Spring Boot 3.5.7, Spring Modulith for modular architecture
 - **Frontend**: Vue 3 with Composition API, Pinia for state management, Bootstrap 5 for styling
 - **Build**: Maven for Java, npm/Vite for frontends
