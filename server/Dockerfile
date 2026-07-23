@@ -1,7 +1,7 @@
-FROM node:20-alpine AS frontend-builder
+FROM node:24.18.0@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059 AS frontend-builder
 WORKDIR /app/frontend
 COPY server/frontend/package*.json ./
-RUN npm install --silent
+RUN npm ci --silent
 COPY server/frontend/ .
 RUN npm run build --silent
 
