@@ -8,6 +8,7 @@ import eu.bbmri_eric.quality.agent.dataquality.domain.Category;
 import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckFilterDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckUpdateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.exception.QualityCheckNotFoundException;
 import java.util.List;
@@ -71,6 +72,21 @@ class QualityCheckServiceImpl implements QualityCheckService {
   @Override
   @Transactional(readOnly = true)
   public PageResponse<QualityCheckDTO> findAll(FilterDTO filter) {
+    if (filter instanceof QualityCheckFilterDTO qualityCheckFilter) {
+      return findAll(qualityCheckFilter);
+    }
+    return findAllInternal(filter, qualityCheckRepository::findAll);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public PageResponse<QualityCheckDTO> findAll(QualityCheckFilterDTO filter) {
+    PageRequest pageRequest = createPageRequest(filter);
+    Page<QualityCheck> page = fetchFilteredPage(filter, pageRequest);
+    return mapToPageResponse(page);
+  }
+
+  private PageRequest createPageRequest(FilterDTO filter) {
     Sort.Direction direction =
         filter.getOrder() == null || filter.getOrder().name().equalsIgnoreCase("ASC")
             ? Sort.Direction.ASC
@@ -83,9 +99,29 @@ class QualityCheckServiceImpl implements QualityCheckService {
     }
 
     Sort sort = Sort.by(direction, sortProperty);
-    PageRequest pageRequest = PageRequest.of(filter.getPage(), filter.getSize(), sort);
-    Page<QualityCheck> page = qualityCheckRepository.findAll(pageRequest);
+    return PageRequest.of(filter.getPage(), filter.getSize(), sort);
+  }
 
+  private Page<QualityCheck> fetchFilteredPage(
+      QualityCheckFilterDTO filter, PageRequest pageRequest) {
+    String categoryName = filter.getCategoryName();
+    if (categoryName == null) {
+      return qualityCheckRepository.findAll(pageRequest);
+    }
+    if (categoryName.isBlank()) {
+      return qualityCheckRepository.findByCategoryIsNull(pageRequest);
+    }
+    return qualityCheckRepository.findByCategoryName(categoryName, pageRequest);
+  }
+
+  private PageResponse<QualityCheckDTO> findAllInternal(
+      FilterDTO filter, java.util.function.Function<PageRequest, Page<QualityCheck>> fetcher) {
+    PageRequest pageRequest = createPageRequest(filter);
+    Page<QualityCheck> page = fetcher.apply(pageRequest);
+    return mapToPageResponse(page);
+  }
+
+  private PageResponse<QualityCheckDTO> mapToPageResponse(Page<QualityCheck> page) {
     List<QualityCheckDTO> content =
         page.getContent().stream()
             .map(qualityCheck -> modelMapper.map(qualityCheck, QualityCheckDTO.class))

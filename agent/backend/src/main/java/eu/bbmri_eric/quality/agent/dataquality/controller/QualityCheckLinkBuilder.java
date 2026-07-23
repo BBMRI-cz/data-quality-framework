@@ -4,9 +4,9 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 import eu.bbmri_eric.quality.agent.common.LinkBuilder;
-import eu.bbmri_eric.quality.agent.common.dto.FilterDTO;
 import eu.bbmri_eric.quality.agent.common.dto.PageResponse;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckFilterDTO;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.hateoas.EntityModel;
@@ -25,12 +25,14 @@ class QualityCheckLinkBuilder {
         .add(
             linkTo(
                     methodOn(QualityCheckController.class)
-                        .findAll(new FilterDTO(0, 20, null, FilterDTO.SortOrder.ASC)))
+                        .findAll(
+                            new QualityCheckFilterDTO(
+                                0, 20, null, QualityCheckFilterDTO.SortOrder.ASC)))
                 .withRel("quality-checks"));
   }
 
   public PagedModel<EntityModel<QualityCheckDTO>> toPagedModel(
-      PageResponse<QualityCheckDTO> pageResponse, FilterDTO filter) {
+      PageResponse<QualityCheckDTO> pageResponse, QualityCheckFilterDTO filter) {
     List<EntityModel<QualityCheckDTO>> models =
         pageResponse.getContent().stream().map(this::toModel).collect(Collectors.toList());
 

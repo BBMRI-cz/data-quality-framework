@@ -451,4 +451,77 @@ class QualityCheckIntegrationTests {
     QualityCheck updatedCheck = qualityCheckRepository.findById(savedCheck.getId()).orElseThrow();
     assertThat(updatedCheck.getCategory()).isNull();
   }
+
+  @Test
+  void findAll_withCategoryNameFilter_returnsMatchingQualityChecks() throws Exception {
+    Category category = categoryRepository.save(new Category("Data Completeness", "#FF5733"));
+    QualityCheck categorizedCheck =
+        qualityCheckRepository.save(
+            new QualityCheck("Categorized Check", "With category", "define Test: true"));
+    categorizedCheck.setCategory(category);
+    qualityCheckRepository.save(categorizedCheck);
+    qualityCheckRepository.save(
+        new QualityCheck("Uncategorized Check", "Without category", "define Test: false"));
+
+    mockMvc
+        .perform(get(API_QUALITY_CHECKS).param("categoryName", "Data Completeness"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$._embedded.quality-checks").isArray())
+        .andExpect(jsonPath("$._embedded.quality-checks.length()").value(1))
+        .andExpect(jsonPath("$._embedded.quality-checks[0].name").value("Categorized Check"))
+        .andExpect(
+            jsonPath("$._embedded.quality-checks[0].category.name").value("Data Completeness"))
+        .andExpect(jsonPath("$.page.totalElements").value(1));
+  }
+
+  @Test
+  void findAll_withNonExistingCategoryNameFilter_returnsEmptyPage() throws Exception {
+    qualityCheckRepository.save(
+        new QualityCheck("Uncategorized Check", "Without category", "define Test: true"));
+
+    mockMvc
+        .perform(get(API_QUALITY_CHECKS).param("categoryName", "Non Existing"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$._embedded").doesNotExist())
+        .andExpect(jsonPath("$.page.totalElements").value(0));
+  }
+
+  @Test
+  void findAll_withoutCategoryNameFilter_returnsAllQualityChecks() throws Exception {
+    Category category = categoryRepository.save(new Category("Data Completeness", "#FF5733"));
+    QualityCheck categorizedCheck =
+        qualityCheckRepository.save(
+            new QualityCheck("Categorized Check", "With category", "define Test: true"));
+    categorizedCheck.setCategory(category);
+    qualityCheckRepository.save(categorizedCheck);
+    qualityCheckRepository.save(
+        new QualityCheck("Uncategorized Check", "Without category", "define Test: false"));
+
+    mockMvc
+        .perform(get(API_QUALITY_CHECKS))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$._embedded.quality-checks").isArray())
+        .andExpect(jsonPath("$._embedded.quality-checks.length()").value(2))
+        .andExpect(jsonPath("$.page.totalElements").value(2));
+  }
+
+  @Test
+  void findAll_withEmptyCategoryNameFilter_returnsUncategorizedQualityChecks() throws Exception {
+    Category category = categoryRepository.save(new Category("Data Completeness", "#FF5733"));
+    QualityCheck categorizedCheck =
+        qualityCheckRepository.save(
+            new QualityCheck("Categorized Check", "With category", "define Test: true"));
+    categorizedCheck.setCategory(category);
+    qualityCheckRepository.save(categorizedCheck);
+    qualityCheckRepository.save(
+        new QualityCheck("Uncategorized Check", "Without category", "define Test: false"));
+
+    mockMvc
+        .perform(get(API_QUALITY_CHECKS).param("categoryName", ""))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$._embedded.quality-checks").isArray())
+        .andExpect(jsonPath("$._embedded.quality-checks.length()").value(1))
+        .andExpect(jsonPath("$._embedded.quality-checks[0].name").value("Uncategorized Check"))
+        .andExpect(jsonPath("$.page.totalElements").value(1));
+  }
 }

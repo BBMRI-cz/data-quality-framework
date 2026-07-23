@@ -47,6 +47,21 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/categories',
+      component: () => import('@/views/CategoriesPage.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/categories/new',
+      component: () => import('@/views/CategoryEditPage.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/categories/:id/edit',
+      component: () => import('@/views/CategoryEditPage.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/settings',
       component: () => import('@/views/SettingsPage.vue'),
       meta: { requiresAuth: true },

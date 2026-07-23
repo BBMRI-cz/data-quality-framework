@@ -12,7 +12,7 @@
       title="Quality Checks"
       :loading="loading"
       :columns="columns"
-      :items="qualityChecks"
+      :items="displayedChecks"
       :total-elements="pagination.totalElements"
       :total-pages="pagination.totalPages"
       :current-page="pagination.page"
@@ -26,6 +26,9 @@
         <i class="bi bi-check-square icon"></i>
         {{ item.name }}
       </template>
+      <template #category="{ item }">
+        <CategoryBadge :category="item.category" />
+      </template>
       <template #query="{ value }">
         {{ truncateText(value, 30) }}
       </template>
@@ -34,18 +37,50 @@
 </template>
 
 <script setup>
-  import { onMounted, watch } from 'vue';
-  import { useRouter, useRoute } from 'vue-router';
+  import { computed } from 'vue';
+  import { useRouter } from 'vue-router';
   import BaseTable from '@/components/BaseTable.vue';
-  import { useQualityChecks } from '@/composables/useQualityChecks.js';
+  import CategoryBadge from '@/components/CategoryBadge.vue';
   import { truncateText } from '@/utils/stringUtils.js';
 
+  const props = defineProps({
+    items: {
+      type: Array,
+      default: () => [],
+    },
+    loading: {
+      type: Boolean,
+      default: false,
+    },
+    error: {
+      type: String,
+      default: null,
+    },
+    pagination: {
+      type: Object,
+      default: () => ({
+        page: 0,
+        size: 10,
+        totalElements: 0,
+        totalPages: 0,
+      }),
+    },
+  });
+
+  const emit = defineEmits(['page-change']);
+
   const router = useRouter();
-  const route = useRoute();
-  const { qualityChecks, loading, error, pagination, fetchChecks } = useQualityChecks();
+
+  const displayedChecks = computed(() => props.items);
 
   const columns = [
     { key: 'name', label: 'Name' },
+    {
+      key: 'category',
+      label: 'Category',
+      headerClass: 'hide-md',
+      cellClass: 'hide-md',
+    },
     {
       key: 'description',
       label: 'Description',
@@ -80,25 +115,8 @@
   };
 
   const handlePageChange = (page) => {
-    router.replace({ query: { ...route.query, page: page.toString() } });
+    emit('page-change', page);
   };
-
-  const getPageFromUrl = () => {
-    const pageParam = route.query.page;
-    const page = parseInt(pageParam, 10);
-    return isNaN(page) || page < 0 ? 0 : page;
-  };
-
-  watch(
-    () => route.query.page,
-    () => {
-      fetchChecks({ page: getPageFromUrl(), size: pagination.value.size });
-    }
-  );
-
-  onMounted(() => {
-    fetchChecks({ page: getPageFromUrl(), size: pagination.value.size });
-  });
 </script>
 
 <style scoped>

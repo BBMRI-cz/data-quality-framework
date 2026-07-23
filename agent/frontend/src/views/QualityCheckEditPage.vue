@@ -92,6 +92,15 @@
             monospace
           />
 
+          <FormSelect
+            id="checkCategory"
+            v-model="formData.categoryId"
+            label="Category"
+            icon="bi-tags"
+            :options="categoryOptions"
+            help-text="Optional: Group this check under a category"
+          />
+
           <FormRow :cols="3">
             <FormField
               id="checkWarningThreshold"
@@ -140,17 +149,29 @@
 </template>
 
 <script setup>
-  import { onMounted } from 'vue';
+  import { ref, computed, onMounted } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import PageHeader from '@/components/PageHeader.vue';
   import { FormField, FormTextarea, FormSelect, FormRow, FormActions } from '@/components/forms';
   import { useQualityCheckForm } from '@/composables/useQualityCheckForm.js';
+  import { categoryService } from '@/services/categoryService.js';
+  import { notificationService } from '@/services/notificationService.js';
 
   const route = useRoute();
   const router = useRouter();
 
+  const categories = ref([]);
+
   const { formData, errors, saving, isEditing, isJavaType, loadCheck, saveCheck, deleteCheck } =
     useQualityCheckForm();
+
+  const categoryOptions = computed(() => [
+    { value: null, label: 'No Category' },
+    ...categories.value.map((category) => ({
+      value: category.id,
+      label: category.name,
+    })),
+  ]);
 
   const onSave = async () => {
     const success = await saveCheck();
@@ -176,7 +197,17 @@
     }
   };
 
+  const loadCategories = async () => {
+    try {
+      categories.value = await categoryService.getAll();
+    } catch (error) {
+      console.error('Failed to load categories:', error);
+      notificationService.error('Load Failed', 'Unable to load categories. Please try again.');
+    }
+  };
+
   onMounted(() => {
+    loadCategories();
     if (route.params.id) {
       loadCheck(route.params.id);
     }
