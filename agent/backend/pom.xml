@@ -23,20 +23,20 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <spring-boot.version>3.5.7</spring-boot.version>
-        <spring-modulith.version>1.4.4</spring-modulith.version>
-        <spring-doc.version>2.8.14</spring-doc.version>
-        <json.version>20251224</json.version>
-        <hapi.fhir.version>8.8.1</hapi.fhir.version>
-        <hapi.fhir.structures.version>8.8.1</hapi.fhir.structures.version>
+        <spring-boot.version>4.1.0</spring-boot.version>
+        <spring-modulith.version>2.1.0</spring-modulith.version>
+        <spring-doc.version>3.0.3</spring-doc.version>
+        <json.version>20260719</json.version>
+        <hapi.fhir.version>8.10.1</hapi.fhir.version>
+        <hapi.fhir.structures.version>8.10.1</hapi.fhir.structures.version>
         <icd.validator.version>0.1.0</icd.validator.version>
-        <commons.compress.version>1.26.1</commons.compress.version>
+        <commons.compress.version>1.28.0</commons.compress.version>
         <modelmapper.version>3.2.6</modelmapper.version>
         <jjwt.version>0.13.0</jjwt.version>
-        <bouncycastle.version>1.84</bouncycastle.version>
+        <bouncycastle.version>1.85</bouncycastle.version>
         <fmt.plugin.version>2.29</fmt.plugin.version>
-        <jacoco.plugin.version>0.8.14</jacoco.plugin.version>
-        <git-commit-id.plugin.version>9.1.0</git-commit-id.plugin.version>
+        <jacoco.plugin.version>0.8.15</jacoco.plugin.version>
+        <git-commit-id.plugin.version>10.0.0</git-commit-id.plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -246,12 +246,12 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.5.5</version>
+                    <version>3.5.6</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-failsafe-plugin</artifactId>
-                    <version>3.5.5</version>
+                    <version>3.5.6</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -261,7 +261,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.5.0</version>
+                    <version>3.5.1</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -269,7 +269,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.6.2</version>
+                <version>3.6.3</version>
                 <executions>
                     <execution>
                         <id>enforce</id>
