@@ -22,7 +22,7 @@ public class QualityCheckFilterDTO extends FilterDTO {
 
   @Schema(
       description =
-          "Category name to filter by. When blank or omitted, no category filter is applied.",
+          "Category name to filter by. When omitted, no category filter is applied. When blank, only uncategorized quality checks are returned.",
       example = "Data Completeness")
   private String categoryName;
 

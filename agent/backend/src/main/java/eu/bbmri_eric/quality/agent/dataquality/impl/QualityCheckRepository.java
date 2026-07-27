@@ -14,7 +14,7 @@ interface QualityCheckRepository extends JpaRepository<QualityCheck, Long> {
    * @param pageable pagination and sorting information
    * @return a page of matching quality checks
    */
-  Page<QualityCheck> findByCategoryName(String categoryName, Pageable pageable);
+  Page<QualityCheck> findByCategory_Name(String categoryName, Pageable pageable);
 
   /**
    * Finds quality checks that have no category assigned.

@@ -39,7 +39,7 @@
       required: true,
     },
     modelValue: {
-      type: [String, null],
+      type: String,
       default: null,
     },
   });
@@ -61,7 +61,7 @@
 
   const getChipStyle = (category) => {
     const isActive = isActiveCategory(category);
-    const color = category.colorHex || 'var(--color-gray-500)';
+    const color = category.colorHex || '#6b7280';
 
     if (isActive) {
       return {
@@ -80,7 +80,7 @@
 
   const getNoCategoryChipStyle = () => {
     const isActive = isNoCategory(selectedCategory.value);
-    const color = 'var(--color-gray-500)';
+    const color = '#6b7280';
 
     if (isActive) {
       return {

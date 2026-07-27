@@ -15,7 +15,7 @@
   });
 
   const badgeStyle = computed(() => {
-    const color = props.category?.colorHex || 'var(--color-gray-500)';
+    const color = props.category?.colorHex || '#6b7280';
     return {
       backgroundColor: `${color}15`,
       borderColor: `${color}40`,

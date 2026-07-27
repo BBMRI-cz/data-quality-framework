@@ -111,7 +111,7 @@ class QualityCheckServiceImpl implements QualityCheckService {
     if (categoryName.isBlank()) {
       return qualityCheckRepository.findByCategoryIsNull(pageRequest);
     }
-    return qualityCheckRepository.findByCategoryName(categoryName, pageRequest);
+    return qualityCheckRepository.findByCategory_Name(categoryName, pageRequest);
   }
 
   private PageResponse<QualityCheckDTO> findAllInternal(
