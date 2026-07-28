@@ -104,14 +104,8 @@ class QualityCheckServiceImpl implements QualityCheckService {
 
   private Page<QualityCheck> fetchFilteredPage(
       QualityCheckFilterDTO filter, PageRequest pageRequest) {
-    String categoryName = filter.getCategoryName();
-    if (categoryName == null) {
-      return qualityCheckRepository.findAll(pageRequest);
-    }
-    if (categoryName.isBlank()) {
-      return qualityCheckRepository.findByCategoryIsNull(pageRequest);
-    }
-    return qualityCheckRepository.findByCategory_Name(categoryName, pageRequest);
+    return qualityCheckRepository.findAll(
+        QualityCheckSpecification.withCategoryName(filter.getCategoryName()), pageRequest);
   }
 
   private PageResponse<QualityCheckDTO> findAllInternal(
@@ -137,9 +131,7 @@ class QualityCheckServiceImpl implements QualityCheckService {
         qualityCheckRepository
             .findById(id)
             .orElseThrow(() -> new QualityCheckNotFoundException(id));
-    qualityCheck = modelMapper.map(updateDTO, QualityCheck.class);
-    qualityCheck.setId(id);
-    qualityCheck.setCategory(null);
+    modelMapper.map(updateDTO, qualityCheck);
     setCategory(updateDTO.getCategoryId(), qualityCheck);
     qualityCheck = qualityCheckRepository.save(qualityCheck);
     return modelMapper.map(qualityCheck, QualityCheckDTO.class);
