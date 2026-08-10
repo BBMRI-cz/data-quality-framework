@@ -41,6 +41,15 @@
           <i class="bi bi-file-earmark-text-fill"></i>
           <span>Reports</span>
         </router-link>
+        <router-link
+          to="/categories"
+          class="nav-link"
+          :class="{ active: $route.path.startsWith('/categories') }"
+          @click="closeMobileMenu"
+        >
+          <i class="bi bi-tags-fill"></i>
+          <span>Categories</span>
+        </router-link>
 
         <!-- Settings Section (non-clickable parent) -->
         <div class="nav-section">

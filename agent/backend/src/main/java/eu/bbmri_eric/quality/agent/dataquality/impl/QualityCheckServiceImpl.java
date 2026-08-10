@@ -2,10 +2,13 @@ package eu.bbmri_eric.quality.agent.dataquality.impl;
 
 import eu.bbmri_eric.quality.agent.common.dto.FilterDTO;
 import eu.bbmri_eric.quality.agent.common.dto.PageResponse;
+import eu.bbmri_eric.quality.agent.common.exception.EntityNotFoundException;
 import eu.bbmri_eric.quality.agent.dataquality.QualityCheckService;
+import eu.bbmri_eric.quality.agent.dataquality.domain.Category;
 import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckFilterDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckUpdateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.exception.QualityCheckNotFoundException;
 import java.util.List;
@@ -24,11 +27,16 @@ import org.springframework.transaction.annotation.Transactional;
 class QualityCheckServiceImpl implements QualityCheckService {
 
   private final QualityCheckRepository qualityCheckRepository;
+  private final CategoryRepository categoryRepository;
   private final ModelMapper modelMapper;
   private static final Logger logger = LoggerFactory.getLogger(QualityCheckServiceImpl.class);
 
-  QualityCheckServiceImpl(QualityCheckRepository qualityCheckRepository, ModelMapper modelMapper) {
+  QualityCheckServiceImpl(
+      QualityCheckRepository qualityCheckRepository,
+      CategoryRepository categoryRepository,
+      ModelMapper modelMapper) {
     this.qualityCheckRepository = qualityCheckRepository;
+    this.categoryRepository = categoryRepository;
     this.modelMapper = modelMapper;
   }
 
@@ -36,6 +44,9 @@ class QualityCheckServiceImpl implements QualityCheckService {
   @Transactional
   public QualityCheckDTO create(QualityCheckCreateDTO createDTO) {
     QualityCheck qualityCheck = modelMapper.map(createDTO, QualityCheck.class);
+    qualityCheck.setId(null);
+    qualityCheck.setCategory(null);
+    setCategory(createDTO.getCategoryId(), qualityCheck);
     qualityCheck = qualityCheckRepository.save(qualityCheck);
     return modelMapper.map(qualityCheck, QualityCheckDTO.class);
   }
@@ -61,6 +72,21 @@ class QualityCheckServiceImpl implements QualityCheckService {
   @Override
   @Transactional(readOnly = true)
   public PageResponse<QualityCheckDTO> findAll(FilterDTO filter) {
+    if (filter instanceof QualityCheckFilterDTO qualityCheckFilter) {
+      return findAll(qualityCheckFilter);
+    }
+    return findAllInternal(filter, qualityCheckRepository::findAll);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public PageResponse<QualityCheckDTO> findAll(QualityCheckFilterDTO filter) {
+    PageRequest pageRequest = createPageRequest(filter);
+    Page<QualityCheck> page = fetchFilteredPage(filter, pageRequest);
+    return mapToPageResponse(page);
+  }
+
+  private PageRequest createPageRequest(FilterDTO filter) {
     Sort.Direction direction =
         filter.getOrder() == null || filter.getOrder().name().equalsIgnoreCase("ASC")
             ? Sort.Direction.ASC
@@ -73,9 +99,23 @@ class QualityCheckServiceImpl implements QualityCheckService {
     }
 
     Sort sort = Sort.by(direction, sortProperty);
-    PageRequest pageRequest = PageRequest.of(filter.getPage(), filter.getSize(), sort);
-    Page<QualityCheck> page = qualityCheckRepository.findAll(pageRequest);
+    return PageRequest.of(filter.getPage(), filter.getSize(), sort);
+  }
 
+  private Page<QualityCheck> fetchFilteredPage(
+      QualityCheckFilterDTO filter, PageRequest pageRequest) {
+    return qualityCheckRepository.findAll(
+        QualityCheckSpecification.withCategoryName(filter.getCategoryName()), pageRequest);
+  }
+
+  private PageResponse<QualityCheckDTO> findAllInternal(
+      FilterDTO filter, java.util.function.Function<PageRequest, Page<QualityCheck>> fetcher) {
+    PageRequest pageRequest = createPageRequest(filter);
+    Page<QualityCheck> page = fetcher.apply(pageRequest);
+    return mapToPageResponse(page);
+  }
+
+  private PageResponse<QualityCheckDTO> mapToPageResponse(Page<QualityCheck> page) {
     List<QualityCheckDTO> content =
         page.getContent().stream()
             .map(qualityCheck -> modelMapper.map(qualityCheck, QualityCheckDTO.class))
@@ -91,10 +131,23 @@ class QualityCheckServiceImpl implements QualityCheckService {
         qualityCheckRepository
             .findById(id)
             .orElseThrow(() -> new QualityCheckNotFoundException(id));
-    qualityCheck = modelMapper.map(updateDTO, QualityCheck.class);
-    qualityCheck.setId(id);
+    modelMapper.map(updateDTO, qualityCheck);
+    setCategory(updateDTO.getCategoryId(), qualityCheck);
     qualityCheck = qualityCheckRepository.save(qualityCheck);
     return modelMapper.map(qualityCheck, QualityCheckDTO.class);
+  }
+
+  private void setCategory(Long categoryId, QualityCheck qualityCheck) {
+    if (categoryId == null) {
+      qualityCheck.setCategory(null);
+      return;
+    }
+    Category category =
+        categoryRepository
+            .findById(categoryId)
+            .orElseThrow(
+                () -> new EntityNotFoundException("Category not found with ID: " + categoryId));
+    qualityCheck.setCategory(category);
   }
 
   @Override

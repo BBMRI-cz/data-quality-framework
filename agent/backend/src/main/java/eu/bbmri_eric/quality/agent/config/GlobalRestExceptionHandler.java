@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.agent.config;
 
+import eu.bbmri_eric.quality.agent.common.exception.EntityAlreadyExistsException;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -76,6 +77,21 @@ class GlobalRestExceptionHandler {
     ProblemDetail problemDetail =
         ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, "Entity not found");
     problemDetail.setTitle("Entity Not Found");
+    return problemDetail;
+  }
+
+  @ExceptionHandler(EntityAlreadyExistsException.class)
+  @ApiResponse(
+      responseCode = "409",
+      description = "Entity Already Exists",
+      content =
+          @Content(
+              mediaType = "application/problem+json",
+              schema = @Schema(implementation = ProblemDetail.class)))
+  public ProblemDetail handleEntityAlreadyExists(EntityAlreadyExistsException ex) {
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+    problemDetail.setTitle("Entity Already Exists");
     return problemDetail;
   }
 

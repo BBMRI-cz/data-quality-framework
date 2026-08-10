@@ -154,7 +154,8 @@
         'Save Failed',
         apiDetail || 'Unable to save privacy settings. Please try again.'
       );
-    } finally {      isSaving.value = false;
+    } finally {
+      isSaving.value = false;
     }
   }
 

@@ -1,9 +1,9 @@
 package eu.bbmri_eric.quality.agent.dataquality.controller;
 
-import eu.bbmri_eric.quality.agent.common.dto.FilterDTO;
 import eu.bbmri_eric.quality.agent.dataquality.QualityCheckService;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckFilterDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckUpdateDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -85,7 +85,7 @@ class QualityCheckController {
         @ApiResponse(responseCode = "200", description = "List of quality checks retrieved")
       })
   public ResponseEntity<PagedModel<EntityModel<QualityCheckDTO>>> findAll(
-      @ParameterObject FilterDTO filter) {
+      @ParameterObject QualityCheckFilterDTO filter) {
     return ResponseEntity.ok(linkBuilder.toPagedModel(qualityCheckService.findAll(filter), filter));
   }
 

@@ -37,12 +37,12 @@ export function useQualityChecks() {
     qualityChecks.value.reduce((sum, check) => sum + (check.epsilonBudget || 0), 0)
   );
 
-  const fetchChecks = async ({ page = 0, size = 10 } = {}) => {
+  const fetchChecks = async ({ page = 0, size = 10, categoryName = null } = {}) => {
     loading.value = true;
     error.value = null;
 
     try {
-      const result = await qualityCheckService.getAll({ page, size });
+      const result = await qualityCheckService.getAll({ page, size, categoryName });
       qualityChecks.value = result.items;
       pagination.value = {
         page: result.page.number ?? page,

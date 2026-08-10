@@ -11,6 +11,7 @@ export function useQualityCheckForm() {
     warningThreshold: 10,
     errorThreshold: 30,
     epsilonBudget: null,
+    categoryId: null,
   });
 
   const errors = ref({});
@@ -40,7 +41,11 @@ export function useQualityCheckForm() {
 
     loading.value = true;
     try {
-      formData.value = await qualityCheckService.get(id);
+      const data = await qualityCheckService.get(id);
+      formData.value = {
+        ...data,
+        categoryId: data.category?.id || null,
+      };
     } catch (error) {
       console.error('Failed to load check:', error);
       errors.value.general = 'Failed to load check';
@@ -57,10 +62,21 @@ export function useQualityCheckForm() {
 
     saving.value = true;
     try {
+      const payload = {
+        name: formData.value.name,
+        description: formData.value.description,
+        query: formData.value.query,
+        type: formData.value.type,
+        warningThreshold: formData.value.warningThreshold,
+        errorThreshold: formData.value.errorThreshold,
+        epsilonBudget: formData.value.epsilonBudget,
+        categoryId: formData.value.categoryId,
+      };
+
       if (isEditing.value) {
-        await qualityCheckService.update(formData.value.id, formData.value);
+        await qualityCheckService.update(formData.value.id, payload);
       } else {
-        await qualityCheckService.create(formData.value);
+        await qualityCheckService.create(payload);
       }
       return true;
     } catch (error) {

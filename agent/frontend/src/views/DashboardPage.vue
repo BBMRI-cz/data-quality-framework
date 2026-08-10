@@ -106,6 +106,15 @@
           </template>
         </div>
 
+        <!-- Category Filter -->
+        <div v-if="categories.length > 0" class="filter-section">
+          <label class="filter-label">
+            <i class="bi bi-funnel"></i>
+            Filter by Category
+          </label>
+          <CategoryFilter v-model="selectedCategoryName" :categories="categories" />
+        </div>
+
         <!-- Quality Checks Grid -->
         <div v-if="latestReport?.results" class="quality-checks-grid">
           <QualityCheckCard
@@ -133,9 +142,16 @@
   import { useReportStore } from '@/stores/reportStore.js';
   import { getResultPriority, getResultSummary } from '@/utils/reportResultUtils.js';
   import { ref, watch, computed, onMounted } from 'vue';
+  import CategoryFilter from '@/components/CategoryFilter.vue';
+  import { categoryService } from '@/services/categoryService.js';
+  import { qualityCheckService } from '@/services/qualityCheckService.js';
+  import { notificationService } from '@/services/notificationService.js';
 
   const showPasswordModal = ref(false);
   const isLoading = ref(true);
+  const categories = ref([]);
+  const qualityChecks = ref([]);
+  const selectedCategoryName = ref(null);
 
   const userStore = useUserStore();
   const healthStore = useHealthStore();
@@ -155,7 +171,12 @@
   onMounted(async () => {
     isLoading.value = true;
     try {
-      await Promise.all([reportStore.fetchLatestReport(), healthStore.checkHealth()]);
+      await Promise.all([
+        reportStore.fetchLatestReport(),
+        healthStore.checkHealth(),
+        loadCategories(),
+        loadQualityChecks(),
+      ]);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
     } finally {
@@ -163,9 +184,43 @@
     }
   });
 
+  const loadCategories = async () => {
+    try {
+      categories.value = await categoryService.getAll();
+    } catch (error) {
+      console.error('Failed to load categories:', error);
+    }
+  };
+
+  const loadQualityChecks = async () => {
+    try {
+      const result = await qualityCheckService.getAll({ page: 0, size: 1000 });
+      qualityChecks.value = result.items;
+    } catch (error) {
+      console.error('Failed to load quality checks:', error);
+      notificationService.error('Load Failed', 'Unable to load quality checks. Please try again.');
+    }
+  };
+
+  const categoryNameByCheckId = computed(() => {
+    const map = {};
+    qualityChecks.value.forEach((check) => {
+      map[check.id] = check.category?.name || null;
+    });
+    return map;
+  });
+
   const latestReport = computed(() => reportStore.latestReport);
 
-  const resultSummary = computed(() => getResultSummary(latestReport.value));
+  const filteredReport = computed(() => {
+    if (!latestReport.value) return null;
+    return {
+      ...latestReport.value,
+      results: filteredResults.value,
+    };
+  });
+
+  const resultSummary = computed(() => getResultSummary(filteredReport.value));
 
   const successfulChecks = computed(() => {
     return resultSummary.value.passed;
@@ -179,11 +234,32 @@
     return resultSummary.value.warnings;
   });
 
-  const sortedResults = computed(() => {
+  const filteredResults = computed(() => {
     if (!latestReport.value?.results) return [];
 
-    return [...latestReport.value.results].sort((a, b) => {
-      return getResultPriority(latestReport.value, a) - getResultPriority(latestReport.value, b);
+    if (!selectedCategoryName.value) {
+      return latestReport.value.results;
+    }
+
+    if (selectedCategoryName.value === 'none') {
+      return latestReport.value.results.filter(
+        (result) => !categoryNameByCheckId.value[result.checkId]
+      );
+    }
+
+    return latestReport.value.results.filter((result) => {
+      const categoryName = categoryNameByCheckId.value[result.checkId];
+      return categoryName === selectedCategoryName.value;
+    });
+  });
+
+  const sortedResults = computed(() => {
+    if (!filteredResults.value.length) return [];
+
+    return [...filteredResults.value].sort((a, b) => {
+      return (
+        getResultPriority(filteredReport.value, a) - getResultPriority(filteredReport.value, b)
+      );
     });
   });
 
@@ -232,6 +308,28 @@
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: var(--spacing-lg);
     margin-bottom: var(--spacing-xl);
+  }
+
+  .filter-section {
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-md);
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .filter-label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-gray-600);
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .filter-label i {
+    color: var(--color-primary);
   }
 
   .quality-checks-grid {

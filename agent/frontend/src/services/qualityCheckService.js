@@ -10,8 +10,12 @@ export const qualityCheckService = {
    * @param {number} options.size - Page size (default: 10)
    * @returns {Promise<{items: Array, page: object}>}
    */
-  async getAll({ page = 0, size = 10 } = {}) {
-    const response = await api.get(BASE_URL, { params: { page, size } });
+  async getAll({ page = 0, size = 10, categoryName = null } = {}) {
+    const params = { page, size };
+    if (categoryName !== null && categoryName !== undefined) {
+      params.categoryName = categoryName;
+    }
+    const response = await api.get(BASE_URL, { params });
     return {
       items: response.data._embedded?.['quality-checks'] || [],
       page: response.data.page || { number: 0, size, totalElements: 0, totalPages: 0 },
