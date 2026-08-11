@@ -247,12 +247,17 @@ class BlazeFHIRStore implements FHIRServer {
 
   public JSONObject postResource(String resourceType, JSONObject resource) {
     HttpEntity<String> entity = new HttpEntity<>(resource.toString(), headers);
+    String url = getFhirUrl() + "/" + resourceType;
     try {
       ResponseEntity<String> response =
-          restTemplate.exchange(
-              getFhirUrl() + "/" + resourceType, HttpMethod.POST, entity, String.class);
+          restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+      log.debug(
+          "Posted {} resource to FHIR server, received status: {}",
+          resourceType,
+          response.getStatusCode());
       return new JSONObject(response.getBody());
     } catch (HttpClientErrorException e) {
+      log.warn("Failed to post {} resource to FHIR server: {}", resourceType, e.getStatusCode());
       throw new RuntimeException("HTTP error: " + e.getStatusCode(), e);
     }
   }
@@ -264,9 +269,11 @@ class BlazeFHIRStore implements FHIRServer {
             + measureId
             + "/$evaluate-measure?periodStart=2000&periodEnd=2030";
     try {
+      log.debug("Evaluating measure {} on FHIR server", measureId);
       ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
       return new JSONObject(response.getBody());
     } catch (HttpClientErrorException e) {
+      log.warn("Failed to evaluate measure {} on FHIR server: {}", measureId, e.getStatusCode());
       throw new RuntimeException("HTTP error: " + e.getStatusCode(), e);
     }
   }
@@ -292,6 +299,7 @@ class BlazeFHIRStore implements FHIRServer {
     HttpEntity<String> entity = new HttpEntity<>(payload.toString(), headers);
 
     try {
+      log.debug("Evaluating measure {} with subject-list on FHIR server", measureId);
       ResponseEntity<String> response =
           restTemplate.exchange(
               getFhirUrl() + "/Measure/" + measureId + "/$evaluate-measure",
@@ -300,6 +308,7 @@ class BlazeFHIRStore implements FHIRServer {
               String.class);
       return new JSONObject(response.getBody());
     } catch (HttpClientErrorException e) {
+      log.warn("Failed to evaluate measure {} with subject-list: {}", measureId, e.getStatusCode());
       throw new RuntimeException("HTTP error: " + e.getStatusCode(), e);
     }
   }
@@ -307,9 +316,11 @@ class BlazeFHIRStore implements FHIRServer {
   public JSONObject getPatientList(String listId) {
     String url = getFhirUrl() + "/List/" + listId;
     try {
+      log.debug("Fetching patient list {} from FHIR server", listId);
       ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
       return new JSONObject(response.getBody());
     } catch (HttpClientErrorException e) {
+      log.warn("Failed to fetch patient list {} from FHIR server: {}", listId, e.getStatusCode());
       throw new RuntimeException("HTTP error: " + e.getStatusCode(), e);
     }
   }
@@ -317,9 +328,14 @@ class BlazeFHIRStore implements FHIRServer {
   public JSONObject getPatientEverything(String patientId) {
     String url = getFhirUrl() + "/Patient/" + patientId + "/$everything";
     try {
+      log.debug("Fetching everything for patient {} from FHIR server", patientId);
       ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
       return new JSONObject(response.getBody());
     } catch (HttpClientErrorException e) {
+      log.warn(
+          "Failed to fetch everything for patient {} from FHIR server: {}",
+          patientId,
+          e.getStatusCode());
       throw new RuntimeException("HTTP error: " + e.getStatusCode(), e);
     }
   }
@@ -377,6 +393,7 @@ class BlazeFHIRStore implements FHIRServer {
       }
       return resources;
     } catch (Exception e) {
+      log.warn("Error fetching resources of type {}: {}", resourceType, e.getMessage(), e);
       throw new RuntimeException(
           "Error fetching resources of type " + resourceType + ": " + e.getMessage(), e);
     }

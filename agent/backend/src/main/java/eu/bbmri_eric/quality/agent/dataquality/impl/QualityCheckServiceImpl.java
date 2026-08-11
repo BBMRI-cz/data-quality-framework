@@ -48,6 +48,7 @@ class QualityCheckServiceImpl implements QualityCheckService {
     qualityCheck.setCategory(null);
     setCategory(createDTO.getCategoryId(), qualityCheck);
     qualityCheck = qualityCheckRepository.save(qualityCheck);
+    logger.info("Created quality check id: {}", qualityCheck.getId());
     return modelMapper.map(qualityCheck, QualityCheckDTO.class);
   }
 
@@ -134,6 +135,7 @@ class QualityCheckServiceImpl implements QualityCheckService {
     modelMapper.map(updateDTO, qualityCheck);
     setCategory(updateDTO.getCategoryId(), qualityCheck);
     qualityCheck = qualityCheckRepository.save(qualityCheck);
+    logger.info("Updated quality check id: {}", id);
     return modelMapper.map(qualityCheck, QualityCheckDTO.class);
   }
 
@@ -163,6 +165,7 @@ class QualityCheckServiceImpl implements QualityCheckService {
       throw new QualityCheckNotFoundException(id);
     }
     qualityCheckRepository.deleteById(id);
+    logger.info("Deleted quality check id: {}", id);
   }
 
   @Override

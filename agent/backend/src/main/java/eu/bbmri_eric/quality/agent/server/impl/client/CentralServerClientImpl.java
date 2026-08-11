@@ -63,10 +63,13 @@ class CentralServerClientImpl implements CentralServerClient {
         new AgentRegistrationRequest(agentId, buildProperties.getVersion());
     HttpEntity<AgentRegistrationRequest> requestEntity = createJsonHttpEntity(request);
     String registrationUrl = buildApiUrl(AGENTS_ENDPOINT);
+    log.info("Registering agent {} with central server {}", agentId, serverUrl);
     ResponseEntity<AgentRegistrationResponse> response =
         restTemplate.exchange(
             registrationUrl, HttpMethod.POST, requestEntity, AgentRegistrationResponse.class);
-    return parseRegistrationResponse(response);
+    RegistrationCredentials credentials = parseRegistrationResponse(response);
+    log.info("Successfully registered agent {} with central server {}", agentId, serverUrl);
+    return credentials;
   }
 
   /**

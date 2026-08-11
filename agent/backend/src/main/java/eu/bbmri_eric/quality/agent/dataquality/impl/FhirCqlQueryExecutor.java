@@ -8,13 +8,17 @@ import java.util.Base64;
 import java.util.HashSet;
 import java.util.Set;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class FhirCqlQueryExecutor {
+  private static final Logger log = LoggerFactory.getLogger(FhirCqlQueryExecutor.class);
   private static final ObjectMapper mapper = new ObjectMapper();
 
   private FhirCqlQueryExecutor() {}
 
   public static ResultDTO execute(FHIRServer fhirStore, String query) {
+    log.debug("Executing CQL query: {}", query);
     try {
       String cqlData = Base64.getEncoder().encodeToString(query.getBytes());
       String libraryUri = java.util.UUID.randomUUID().toString().toLowerCase();
@@ -48,6 +52,7 @@ public final class FhirCqlQueryExecutor {
 
       return new ResultDTO(count, "Patient", idSet);
     } catch (Exception | NoSuchMethodError e) {
+      log.warn("CQL query execution failed: {}", e.getMessage());
       return new ResultDTO(e.getMessage());
     }
   }

@@ -12,6 +12,8 @@ import eu.bbmri_eric.quality.agent.dataquality.dto.CategoryUpdateDTO;
 import java.util.List;
 import java.util.Objects;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional
 class CategoryServiceImpl implements CategoryService {
+
+  private static final Logger log = LoggerFactory.getLogger(CategoryServiceImpl.class);
 
   private final CategoryRepository categoryRepository;
   private final ModelMapper modelMapper;
@@ -39,6 +43,7 @@ class CategoryServiceImpl implements CategoryService {
 
     Category category = new Category(categoryCreateDTO.getName(), categoryCreateDTO.getColorHex());
     Category savedCategory = categoryRepository.save(category);
+    log.info("Created category id: {} name: {}", savedCategory.getId(), savedCategory.getName());
     return modelMapper.map(savedCategory, CategoryDTO.class);
   }
 
@@ -88,6 +93,7 @@ class CategoryServiceImpl implements CategoryService {
     category.setColorHex(categoryUpdateDTO.getColorHex());
 
     Category updatedCategory = categoryRepository.save(category);
+    log.info("Updated category id: {} name: {}", id, updatedCategory.getName());
     return modelMapper.map(updatedCategory, CategoryDTO.class);
   }
 
@@ -104,6 +110,7 @@ class CategoryServiceImpl implements CategoryService {
       throw new EntityNotFoundException("Category not found with ID: " + id);
     }
     categoryRepository.deleteById(id);
+    log.info("Deleted category with id: {}", id);
   }
 
   @Override

@@ -81,6 +81,8 @@ class ServerHealthCheckScheduler {
 
   private void updateServerStatus(Server server, ServerConnectionStatus newStatus) {
     if (newStatus != server.getStatus()) {
+      log.info(
+          "Server {} status changed from {} to {}", server.getUrl(), server.getStatus(), newStatus);
       server.setStatus(newStatus);
     }
   }
