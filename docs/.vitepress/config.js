@@ -57,8 +57,18 @@ export default defineConfig({
                         {text: 'Hands‑On Guide', link: '/user/hands‑on_guide'},
                         {text: 'Privacy and Security', link: '/user/privacy'},
                         {text: 'Deployment', link: '/user/deployment'},
-                        {text: 'Configuration', link: '/user/configuration'},
-                        {text: 'OIDC Configuration', link: '/user/oidc-configuration'},
+                        {
+                            text: 'Data Quality Agent',
+                            items: [
+                                {text: 'Configuration', link: '/user/configuration'},
+                            ]
+                        },
+                        {
+                            text: 'Data Quality Server',
+                            items: [
+                                {text: 'OIDC Configuration', link: '/user/oidc-configuration'},
+                            ]
+                        },
                         {
                             text: 'Troubleshooting',
                             items: [
