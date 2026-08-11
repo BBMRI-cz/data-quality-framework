@@ -70,10 +70,28 @@ The following are standard environment variables recognized by the Data Quality 
 | `OTEL_EXPORTER_OTLP_AUTHORIZATION`    | Optional Authorization header value (for example `Bearer <token>`) sent with OTLP metrics requests. | (Not set)                                       |
 You can also define additional labels with `MANAGEMENT_METRICS_TAGS_<LABEL_NAME>`.
 
-Additionally, as described above, you can override any internal setting using the `APP_SETTING_` prefix. Common settings include:
+Additionally, as described above, you can override any internal application setting using the `APP_SETTING_` prefix. The complete set of application settings supported by the Data Quality Agent is:
 
-*   `fhirUrl`: The URL of the FHIR server to connect to.
-*   `fhirUsername`: Username for FHIR server authentication.
-*   `fhirPassword`: Password for FHIR server authentication (Base64 encoded).
+| Setting          | Description                                                                                       | Default                     |
+|:-----------------|:--------------------------------------------------------------------------------------------------|:----------------------------|
+| `fhirUrl`        | The URL of the FHIR server to connect to.                                                         | `http://localhost:8080/fhir` |
+| `fhirUsername`   | Username for FHIR server authentication.                                                          | `fhiruser`                  |
+| `fhirPassword`   | Password for FHIR server authentication (Base64 encoded).                                         | (Base64 of `fhirpass`)      |
+| `epsilon`        | Privacy budget (ε). Must be positive. When using `GAUSSIAN` noise it must be `<= 1.0`.           | `3.0`                       |
+| `delta`          | Delta parameter (δ) - probability of privacy failure. Must be positive.                           | `1e-8`                      |
+| `minThreshold`   | Minimum threshold for low count suppression.                                                      | `50`                        |
+| `noiseMechanism` | Noise mechanism used for differential privacy. One of `LAPLACE` or `GAUSSIAN`.                    | `LAPLACE`                   |
+| `databaseType`   | Type of source database the agent connects to. One of `FHIR` or `SQL`.                            | `FHIR`                      |
+| `sqlUrl`         | SQL database JDBC URL (used when `databaseType` is `SQL`).                                        | (Empty)                     |
+| `sqlUsername`    | SQL database username.                                                                            | (Empty)                     |
+| `sqlPassword`    | SQL database password (Base64 encoded).                                                           | (Empty)                     |
+| `agentId`        | Agent identifier (read-only, auto-generated at initial setup).                                    | (Auto-generated)            |
+
+::: info Environment Variable Examples
+*   Override `fhirUrl`: `APP_SETTING_FHIR_URL=http://fhir.example.com`
+*   Override `noiseMechanism`: `APP_SETTING_NOISE_MECHANISM=GAUSSIAN`
+*   Override `minThreshold`: `APP_SETTING_MIN_THRESHOLD=100`
+*   Override `databaseType`: `APP_SETTING_DATABASE_TYPE=SQL`
+:::
 
 By using environment variables, you can fully automate the configuration of your Data Quality Agent during deployment.
