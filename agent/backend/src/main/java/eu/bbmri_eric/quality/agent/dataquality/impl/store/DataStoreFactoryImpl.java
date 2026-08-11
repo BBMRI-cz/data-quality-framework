@@ -41,7 +41,7 @@ class DataStoreFactoryImpl implements DataStoreFactory {
   void onSettingsUpdated(SettingsUpdatedEvent event) {
     checkSettings(event);
     SettingsDTO settings = event.getSettings();
-    log.info("Settings updated, refreshing active data store");
+    log.debug("Settings updated, refreshing active data store");
     this.currentDataStore = resolveFromSettings(settings);
     if (settings.getDatabaseType() == DatabaseType.FHIR) {
       fhirDataStore.onSettingsUpdated(event);

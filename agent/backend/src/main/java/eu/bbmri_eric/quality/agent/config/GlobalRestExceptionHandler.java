@@ -42,7 +42,7 @@ class GlobalRestExceptionHandler {
               mediaType = "application/problem+json",
               schema = @Schema(implementation = ProblemDetail.class)))
   public ProblemDetail handleStaleState(org.hibernate.StaleStateException ex) {
-    logger.debug("Stale state exception: {}", ex.getMessage());
+    logger.error("Stale state exception: {}", ex.getMessage(), ex);
     ProblemDetail problemDetail =
         ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, "Entity not found");
     problemDetail.setTitle("Entity Not Found");
@@ -306,7 +306,7 @@ class GlobalRestExceptionHandler {
               mediaType = "application/problem+json",
               schema = @Schema(implementation = ProblemDetail.class)))
   public ProblemDetail handleDataIntegrityViolation(DataIntegrityViolationException ex) {
-    logger.debug("Data integrity violation: {}", ex.getMessage());
+    logger.error("Data integrity violation: {}", ex.getMessage(), ex);
     ProblemDetail problemDetail =
         ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, "Data integrity constraint violated");
     problemDetail.setTitle("Data Integrity Violation");

@@ -11,6 +11,8 @@ import eu.bbmri_eric.quality.agent.settings.event.SettingsUpdatedEvent;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional
 public class SettingsServiceImpl implements SettingsService {
+
+  private static final Logger log = LoggerFactory.getLogger(SettingsServiceImpl.class);
 
   private final ObjectMapper objectMapper;
   private final SettingsRepository settingsRepository;
@@ -53,6 +57,13 @@ public class SettingsServiceImpl implements SettingsService {
           "Epsilon must be less than or equal to 1.0 when using Gaussian noise");
     }
     eventPublisher.publishEvent(new SettingsUpdatedEvent(updated));
+    log.info(
+        "Settings updated: databaseType={}, noiseMechanism={}, epsilon={}, delta={}, minThreshold={}",
+        updated.getDatabaseType(),
+        updated.getNoiseMechanism(),
+        updated.getEpsilon(),
+        updated.getDelta(),
+        updated.getMinThreshold());
     return dto;
   }
 

@@ -62,6 +62,6 @@ class UserServiceImpl implements UserService {
     }
     String encodedPassword = passwordEncoder.encode(passwordChangeRequest.getNewPassword());
     user.setPassword(encodedPassword);
-    logger.debug("Password successfully changed for user: {}", username);
+    logger.info("Password successfully changed for user: {}", username);
   }
 }

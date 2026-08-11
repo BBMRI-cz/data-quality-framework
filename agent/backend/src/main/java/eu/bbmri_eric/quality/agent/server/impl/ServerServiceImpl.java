@@ -13,6 +13,8 @@ import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.stream.StreamSupport;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional
 class ServerServiceImpl implements ServerService {
+
+  private static final Logger log = LoggerFactory.getLogger(ServerServiceImpl.class);
 
   private final ServerRepository serverRepository;
   private final ModelMapper modelMapper;
@@ -64,6 +68,7 @@ class ServerServiceImpl implements ServerService {
     Server savedServer = serverRepository.save(server);
     String agentId = settingsService.getSettings().getAgentId();
     eventPublisher.publishEvent(new ServerRegistrationEvent(agentId, savedServer.getUrl()));
+    log.info("Registered server {} ({})", savedServer.getName(), savedServer.getUrl());
     return modelMapper.map(savedServer, ServerDto.class);
   }
 
@@ -88,6 +93,7 @@ class ServerServiceImpl implements ServerService {
     }
 
     Server updatedServer = serverRepository.save(server);
+    log.info("Updated server {}", id);
     return modelMapper.map(updatedServer, ServerDto.class);
   }
 
@@ -97,5 +103,6 @@ class ServerServiceImpl implements ServerService {
       throw new EntityNotFoundException("Server not found with id: " + id);
     }
     serverRepository.deleteById(id);
+    log.info("Deleted server {}", id);
   }
 }

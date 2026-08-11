@@ -27,6 +27,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import org.jspecify.annotations.NonNull;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -35,6 +37,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 class ReportServiceImpl implements ReportService {
+
+  private static final Logger log = LoggerFactory.getLogger(ReportServiceImpl.class);
 
   private final ReportRepository reportRepository;
   private final QualityCheckService qualityCheckService;
@@ -61,6 +65,7 @@ class ReportServiceImpl implements ReportService {
     Report report = new Report();
     report.setEpsilonBudget(settingsService.getSettings().getEpsilon());
     report = reportRepository.save(report);
+    log.info("Created report with id: {}", report.getId());
     publisher.publishEvent(new NewReportEvent(report.getId()));
     return modelMapper.map(report, ReportDTO.class);
   }
@@ -125,6 +130,7 @@ class ReportServiceImpl implements ReportService {
     }
 
     report = reportRepository.save(report);
+    log.info("Updated report {} - status: {}", id, report.getStatus());
     return modelMapper.map(report, ReportDTO.class);
   }
 
@@ -135,6 +141,7 @@ class ReportServiceImpl implements ReportService {
       throw new EntityNotFoundException("Report not found with id: " + id);
     }
     reportRepository.deleteById(id);
+    log.info("Deleted report with id: {}", id);
   }
 
   @Override
@@ -152,6 +159,7 @@ class ReportServiceImpl implements ReportService {
     Integer rounderSampleCount = roundEntityCount(report.getNumberOfSecondaryEntities());
     List<QualityCheckDTO> qualityCheckDTOS = qualityCheckService.findAll();
     var results = prepareObfuscatedResults(report, roundedPatientCount, qualityCheckDTOS);
+    log.debug("Prepared obfuscated report {} with {} results", id, results.size());
     return new ObfuscatedReportDTO(results, roundedPatientCount, rounderSampleCount);
   }
 

@@ -25,7 +25,7 @@ public class SettingsStartupPublisher {
 
   @EventListener(ApplicationReadyEvent.class)
   public void publishSettingsOnStartup() {
-    log.info("Application ready, publishing initial settings event");
+    log.debug("Application ready, publishing initial settings event");
     SettingsDTO settings = settingsService.getSettings();
     eventPublisher.publishEvent(new SettingsUpdatedEvent(settings));
   }
