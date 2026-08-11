@@ -116,7 +116,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(log, index) in sortedLogs" :key="index">
+                <tr v-for="log in sortedLogs" :key="log.id">
                   <td class="text-nowrap text-muted log-time">{{ formatTime(log.timestamp) }}</td>
                   <td>
                     <span class="badge level-badge" :class="levelClass(log.level)">

@@ -37,12 +37,14 @@ class LogControllerTest {
   @Test
   void getRecentLogs_withValidToken_returnsLatestLogs() throws Exception {
     String token = authenticateAndGetToken();
-    logger.info("LogControllerTest marker message for log capture");
+    String marker = "LogControllerTest marker message for log capture";
+    logger.info(marker);
 
     mockMvc
         .perform(get("/api/logs").header("Authorization", "Bearer " + token))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$").isArray());
+        .andExpect(jsonPath("$").isArray())
+        .andExpect(jsonPath("$[?(@.message == '" + marker + "')]").isNotEmpty());
   }
 
   private String authenticateAndGetToken() throws Exception {

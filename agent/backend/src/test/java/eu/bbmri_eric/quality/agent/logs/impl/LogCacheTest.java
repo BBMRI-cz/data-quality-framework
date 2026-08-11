@@ -1,6 +1,7 @@
 package eu.bbmri_eric.quality.agent.logs.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import eu.bbmri_eric.quality.agent.logs.dto.LogEntryDTO;
 import java.time.Instant;
@@ -9,8 +10,16 @@ import org.junit.jupiter.api.Test;
 
 class LogCacheTest {
 
+  private static long id = 0;
+
   private static LogEntryDTO entry(String message) {
-    return new LogEntryDTO(Instant.now(), "INFO", "test", message);
+    return new LogEntryDTO(++id, Instant.now(), "INFO", "test", message);
+  }
+
+  @Test
+  void constructor_withNonPositiveMaxSize_throws() {
+    assertThrows(IllegalArgumentException.class, () -> new LogCache(0));
+    assertThrows(IllegalArgumentException.class, () -> new LogCache(-1));
   }
 
   @Test

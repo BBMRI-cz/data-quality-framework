@@ -15,6 +15,9 @@ final class LogCache {
   private final Deque<LogEntryDTO> entries = new ArrayDeque<>();
 
   LogCache(int maxSize) {
+    if (maxSize <= 0) {
+      throw new IllegalArgumentException("maxSize must be positive, but was " + maxSize);
+    }
     this.maxSize = maxSize;
   }
 
