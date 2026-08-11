@@ -91,15 +91,16 @@ class StartupMessagePrinter implements ApplicationListener<ApplicationReadyEvent
       return STATUS_FAILED;
     }
   }
+
   private String apiStatus() {
-      try {
-          URL url = new URL("http://localhost:8081/api/health");
-          HttpURLConnection con = (HttpURLConnection) url.openConnection();
-          con.setRequestMethod("GET");
-          return con.getResponseCode() == 200 ? STATUS_OK : STATUS_FAILED;
-      } catch (IOException e) {
-          return STATUS_FAILED;
-      }
+    try {
+      URL url = new URL("http://localhost:8081/api/health");
+      HttpURLConnection con = (HttpURLConnection) url.openConnection();
+      con.setRequestMethod("GET");
+      return con.getResponseCode() == 200 ? STATUS_OK : STATUS_FAILED;
+    } catch (IOException e) {
+      return STATUS_FAILED;
+    }
   }
 
   private String uiStatus() {
