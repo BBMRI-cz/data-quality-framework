@@ -105,7 +105,7 @@ class BlazeFHIRStore implements FHIRServer {
 
   @EventListener
   public void onSettingsUpdated(SettingsUpdatedEvent event) {
-    log.info("Settings updated, reinitializing FHIR clients");
+    log.debug("Settings updated, reinitializing FHIR clients");
     if (Objects.equals(event.getSettings().getDatabaseType(), DatabaseType.FHIR)) {
       initializeClients(event.getSettings());
     }
@@ -126,7 +126,7 @@ class BlazeFHIRStore implements FHIRServer {
     this.restTemplate = newRestTemplate;
     this.fhirUrl = settings.getFhirUrl();
 
-    log.info("FHIR clients reinitialized with URL: {}", settings.getFhirUrl());
+    log.debug("FHIR clients reinitialized with URL: {}", settings.getFhirUrl());
   }
 
   private String getFhirUrl() {
