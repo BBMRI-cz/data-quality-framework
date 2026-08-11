@@ -6,6 +6,7 @@ export {
   changePassword,
 } from './authService.js';
 export { categoryService } from './categoryService.js';
+export { diagnosticsService } from './diagnosticsService.js';
 export { healthService } from './healthService.js';
 export { notificationService } from './notificationService.js';
 export { patientService } from './patientService.js';

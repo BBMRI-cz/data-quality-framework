@@ -85,6 +85,15 @@
               <i class="bi bi-flag-fill"></i>
               <span>Reporting</span>
             </router-link>
+            <router-link
+              to="/diagnostics"
+              class="nav-link nav-sublink"
+              :class="{ active: $route.path === '/diagnostics' }"
+              @click="closeMobileMenu"
+            >
+              <i class="bi bi-activity"></i>
+              <span>Diagnostics</span>
+            </router-link>
           </div>
         </div>
       </nav>
