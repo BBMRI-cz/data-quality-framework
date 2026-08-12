@@ -837,8 +837,8 @@ jobs:
       - name: Load agent image
         run: docker load -i /tmp/agent-image.tar
 
-      - name: Docker Compose Up (Agent + Tinyproxy + OTEL Collector)
-        run: docker compose -f compose.yaml -f .github/compose.proxy.override.yaml up -d quality-agent tinyproxy otel-collector
+      - name: Docker Compose Up (Agent + Tinyproxy + Blaze + OTEL Collector)
+        run: docker compose -f compose.yaml -f .github/compose.proxy.override.yaml up -d quality-agent tinyproxy blaze otel-collector
 
       - name: Run HTTP proxy test
         run: bash .github/workflows/scripts/test-proxy.sh

@@ -25,6 +25,12 @@ services:
       LOG_LEVEL: Info
       TIMEOUT: 900
 
+  blaze:
+    container_name: blaze
+    image: samply/blaze:latest
+    ports:
+      - "8080:8080"
+
   otel-collector:
     container_name: otel-collector
     image: otel/opentelemetry-collector:0.102.1
