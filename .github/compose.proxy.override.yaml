@@ -1,0 +1,39 @@
+services:
+  quality-agent:
+    environment:
+      # Route all outbound JVM HTTP traffic through the tinyproxy forward proxy.
+      - JAVA_TOOL_OPTIONS=-Dhttp.proxyHost=tinyproxy -Dhttp.proxyPort=8888 -Dhttp.nonProxyHosts=localhost|127.0.0.1
+      - OTEL_METRICS_EXPORT_ENABLED=true
+      - OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=http://otel-collector:4318/v1/metrics
+      - OTEL_EXPORTER_OTLP_AUTHORIZATION=Bearer ci-test-token
+      - MANAGEMENT_OTLP_METRICS_EXPORT_STEP=5s
+
+  tinyproxy:
+    container_name: tinyproxy
+    image: docker.io/kalaksi/tinyproxy
+    cap_drop:
+      - ALL
+    ports:
+      - "8888:8888"
+    environment:
+      DISABLE_VIA_HEADER: 'yes'
+      STAT_HOST: tinyproxy.stats
+      MAX_CLIENTS: 100
+      # Allow the agent container (compose network) to use the proxy.
+      ALLOWED_NETWORKS: 0.0.0.0/0
+      # Info level logs each proxied request so the test can assert proxy usage.
+      LOG_LEVEL: Info
+      TIMEOUT: 900
+
+  blaze:
+    container_name: blaze
+    image: samply/blaze:latest
+    ports:
+      - "8080:8080"
+
+  otel-collector:
+    container_name: otel-collector
+    image: otel/opentelemetry-collector:0.102.1
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      - ./.github/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro

@@ -70,10 +70,74 @@ The following are standard environment variables recognized by the Data Quality 
 | `OTEL_EXPORTER_OTLP_AUTHORIZATION`    | Optional Authorization header value (for example `Bearer <token>`) sent with OTLP metrics requests. | (Not set)                                       |
 You can also define additional labels with `MANAGEMENT_METRICS_TAGS_<LABEL_NAME>`.
 
-Additionally, as described above, you can override any internal setting using the `APP_SETTING_` prefix. Common settings include:
+Additionally, as described above, you can override any internal application setting using the `APP_SETTING_` prefix. The complete set of application settings supported by the Data Quality Agent is:
 
-*   `fhirUrl`: The URL of the FHIR server to connect to.
-*   `fhirUsername`: Username for FHIR server authentication.
-*   `fhirPassword`: Password for FHIR server authentication (Base64 encoded).
+| Setting          | Description                                                                                       | Default                     |
+|:-----------------|:--------------------------------------------------------------------------------------------------|:----------------------------|
+| `fhirUrl`        | The URL of the FHIR server to connect to.                                                         | `http://localhost:8080/fhir` |
+| `fhirUsername`   | Username for FHIR server authentication.                                                          | `fhiruser`                  |
+| `fhirPassword`   | Password for FHIR server authentication (Base64 encoded).                                         | (Base64 of `fhirpass`)      |
+| `epsilon`        | Privacy budget (ε). Must be positive. When using `GAUSSIAN` noise it must be `<= 1.0`.           | `3.0`                       |
+| `delta`          | Delta parameter (δ) - probability of privacy failure. Must be positive.                           | `1e-8`                      |
+| `minThreshold`   | Minimum threshold for low count suppression.                                                      | `50`                        |
+| `noiseMechanism` | Noise mechanism used for differential privacy. One of `LAPLACE` or `GAUSSIAN`.                    | `LAPLACE`                   |
+| `databaseType`   | Type of source database the agent connects to. One of `FHIR` or `SQL`.                            | `FHIR`                      |
+| `sqlUrl`         | SQL database JDBC URL (used when `databaseType` is `SQL`).                                        | (Empty)                     |
+| `sqlUsername`    | SQL database username.                                                                            | (Empty)                     |
+| `sqlPassword`    | SQL database password (Base64 encoded).                                                           | (Empty)                     |
+| `agentId`        | Agent identifier (read-only, auto-generated at initial setup).                                    | (Auto-generated)            |
+
+::: info Environment Variable Examples
+*   Override `fhirUrl`: `APP_SETTING_FHIR_URL=http://fhir.example.com`
+*   Override `noiseMechanism`: `APP_SETTING_NOISE_MECHANISM=GAUSSIAN`
+*   Override `minThreshold`: `APP_SETTING_MIN_THRESHOLD=100`
+*   Override `databaseType`: `APP_SETTING_DATABASE_TYPE=SQL`
+:::
 
 By using environment variables, you can fully automate the configuration of your Data Quality Agent during deployment.
+
+## Proxy Configuration
+
+If the agent must reach external services through an HTTP/HTTPS proxy (for example a corporate firewall that governs access to the FHIR server, the central reporting server, or the OTLP metrics endpoint), you can configure the Java Virtual Machine to route outbound connections through the proxy.
+
+Because the agent runs as a JVM application, proxy settings are supplied as JVM system properties. When running with Docker, pass them through the `JAVA_TOOL_OPTIONS` environment variable, which the JVM reads automatically at startup:
+
+```yaml
+services:
+  quality-agent:
+    image: ghcr.io/bbmri-cz/data-quality-agent:latest
+    environment:
+      - JAVA_TOOL_OPTIONS=-Dhttp.proxyHost=proxy.example.com -Dhttp.proxyPort=8080 -Dhttps.proxyHost=proxy.example.com -Dhttps.proxyPort=8080
+```
+
+### Proxy Properties
+
+::: warning Authenticating Proxies
+When the proxy requires authentication (`http.proxyUser` / `http.proxyPassword`), treat the credentials as sensitive. Store them securely using Docker secrets or an env file rather than committing them to the repository, and consider whether your proxy is able to route requests without exposing these credentials in transit.
+:::
+
+| JVM property            | Description                                                                     |
+|:------------------------|:--------------------------------------------------------------------------------|
+| `http.proxyHost`        | Hostname of the proxy for plain `http://` connections.                          |
+| `http.proxyPort`        | Port of the proxy for plain `http://` connections (default `80`).               |
+| `https.proxyHost`       | Hostname of the proxy for `https://` connections.                               |
+| `https.proxyPort`       | Port of the proxy for `https://` connections (default `443`).                   |
+| `http.nonProxyHosts`    | Pipe-separated list of hosts that should bypass the proxy, e.g. `localhost\|127.0.0.1\|*.internal`. |
+| `http.proxyUser`        | Username for proxy authentication (if required).                                |
+| `http.proxyPassword`    | Password for proxy authentication (if required).                                |
+
+### Bypassing the Proxy for Internal Hosts
+
+Internal services (for example a FHIR server on your local network) do not need to go through the proxy. Use `http.nonProxyHosts` to exclude them:
+
+```yaml
+services:
+  quality-agent:
+    image: ghcr.io/bbmri-cz/data-quality-agent:latest
+    environment:
+      - JAVA_TOOL_OPTIONS=-Dhttp.proxyHost=proxy.example.com -Dhttp.proxyPort=8080 -Dhttps.proxyHost=proxy.example.com -Dhttps.proxyPort=8080 -Dhttp.nonProxyHosts=localhost\|127.0.0.1\|fhir.internal\|*.bbmri-eric.eu
+```
+
+::: tip Proxy and HTTPS/TLS
+The proxy configuration only controls which host/port outbound requests are routed through. Any TLS termination, certificate trust, or HTTPS handshake is still performed by the agent as usual. If the proxy itself uses a custom CA for HTTPS interception, you may need to configure the agent's trust store separately.
+:::

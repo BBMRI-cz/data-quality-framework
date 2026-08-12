@@ -13,6 +13,7 @@ import eu.bbmri_eric.quality.agent.dataquality.impl.FhirCqlQueryExecutor;
 import eu.bbmri_eric.quality.agent.settings.DatabaseType;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
 import eu.bbmri_eric.quality.agent.settings.event.SettingsUpdatedEvent;
+import java.net.ProxySelector;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -25,6 +26,7 @@ import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.SystemDefaultRoutePlanner;
 import org.apache.http.ssl.SSLContexts;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Resource;
@@ -67,7 +69,10 @@ class BlazeFHIRStore implements FHIRServer {
           new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE);
 
       CloseableHttpClient httpClient =
-          HttpClients.custom().setSSLSocketFactory(socketFactory).build();
+          HttpClients.custom()
+              .setSSLSocketFactory(socketFactory)
+              .setRoutePlanner(new SystemDefaultRoutePlanner(ProxySelector.getDefault()))
+              .build();
 
       ctx.getRestfulClientFactory().setHttpClient(httpClient);
 
@@ -155,6 +160,9 @@ class BlazeFHIRStore implements FHIRServer {
       org.apache.hc.client5.http.impl.classic.CloseableHttpClient httpClient =
           org.apache.hc.client5.http.impl.classic.HttpClients.custom()
               .setConnectionManager(connectionManager)
+              .setRoutePlanner(
+                  new org.apache.hc.client5.http.impl.routing.SystemDefaultRoutePlanner(
+                      null, ProxySelector.getDefault()))
               .build();
 
       HttpComponentsClientHttpRequestFactory requestFactory =
