@@ -11,8 +11,16 @@ import java.util.List;
  */
 final class LogCache {
 
+  private static final int DEFAULT_MAX_SIZE = 500;
+  private static final LogCache SHARED = new LogCache(DEFAULT_MAX_SIZE);
+
   private final int maxSize;
   private final Deque<LogEntryDTO> entries = new ArrayDeque<>();
+
+  /** Returns the single cache shared by every Spring context and the log appender. */
+  static LogCache getShared() {
+    return SHARED;
+  }
 
   LogCache(int maxSize) {
     if (maxSize <= 0) {
