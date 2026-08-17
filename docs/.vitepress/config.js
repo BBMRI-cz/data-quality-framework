@@ -61,6 +61,7 @@ export default defineConfig({
                             text: 'Data Quality Agent',
                             items: [
                                 {text: 'Configuration', link: '/user/configuration'},
+                                {text: 'Data Sources', link: '/user/data-sources'},
                             ]
                         },
                         {
