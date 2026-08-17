@@ -13,6 +13,7 @@ import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckResultDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.ReportResultDetailDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportUpdateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.event.NewReportEvent;
 import eu.bbmri_eric.quality.agent.dataquality.exception.ReportNotFoundException;
@@ -75,7 +76,17 @@ class ReportServiceImpl implements ReportService {
   public ReportDTO findById(Long id) {
     return reportRepository
         .findById(id)
-        .map(report -> modelMapper.map(report, ReportDTO.class))
+        .map(
+            report -> {
+              ReportDTO dto = modelMapper.map(report, ReportDTO.class);
+              dto.setResults(
+                  report.getResults() == null
+                      ? null
+                      : report.getResults().stream()
+                          .map(result -> modelMapper.map(result, ReportResultDetailDTO.class))
+                          .collect(Collectors.toList()));
+              return dto;
+            })
         .orElseThrow(() -> new EntityNotFoundException("Report not found with id: " + id));
   }
 
