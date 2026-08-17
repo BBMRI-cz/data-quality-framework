@@ -1,10 +1,13 @@
 package eu.bbmri_eric.quality.agent.dataquality.domain;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.ReportResultDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.ReportResultDetailDTO;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -74,7 +77,6 @@ public class ReportMapperTest {
     assertEquals(0.4, firstResult.getEpsilon());
     assertNull(firstResult.getError());
     assertNull(firstResult.getStratum());
-    assertTrue(firstResult.getPatients().containsAll(Set.of("patient-1", "patient-2")));
 
     var secondResult = reportDTO.getResults().get(1);
     assertEquals("Missing Birth Date", secondResult.getCheckName());
@@ -86,7 +88,53 @@ public class ReportMapperTest {
     assertEquals(0.4, secondResult.getEpsilon());
     assertEquals("There is no error message", secondResult.getError());
     assertEquals("stratum_a", secondResult.getStratum());
-    assertEquals(Set.of("patient-3"), secondResult.getPatients());
+  }
+
+  @Test
+  void mapReport_patientsAreNotMappedIntoBaseResultDto() {
+    Report report = new Report();
+    report.setId(106L);
+    report.setResults(
+        new ArrayList<>(
+            List.of(
+                createResult(
+                    "Duplicate Identifier",
+                    31L,
+                    2,
+                    2.0,
+                    10,
+                    30,
+                    0.4,
+                    null,
+                    null,
+                    Set.of("patient-1", "patient-2")))));
+
+    ReportDTO reportDTO = modelMapper.map(report, ReportDTO.class);
+
+    assertThat(reportDTO.getResults().getFirst()).isInstanceOf(ReportResultDTO.class);
+    assertThat(reportDTO.getResults().getFirst()).isNotInstanceOf(ReportResultDetailDTO.class);
+  }
+
+  @Test
+  void mapResult_patientsAreMappedIntoDetailResultDto() {
+    Result result =
+        createResult(
+            "Duplicate Identifier",
+            31L,
+            2,
+            2.0,
+            10,
+            30,
+            0.4,
+            null,
+            null,
+            Set.of("patient-1", "patient-2"));
+
+    ReportResultDetailDTO detailDTO = modelMapper.map(result, ReportResultDetailDTO.class);
+
+    assertEquals("Duplicate Identifier", detailDTO.getCheckName());
+    assertEquals(31L, detailDTO.getCheckId());
+    assertTrue(detailDTO.getPatients().containsAll(Set.of("patient-1", "patient-2")));
   }
 
   @Test

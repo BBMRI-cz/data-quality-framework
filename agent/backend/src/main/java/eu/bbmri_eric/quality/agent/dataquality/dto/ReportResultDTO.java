@@ -1,6 +1,5 @@
 package eu.bbmri_eric.quality.agent.dataquality.dto;
 
-import java.util.Set;
 import lombok.Data;
 
 @Data
@@ -15,5 +14,4 @@ public class ReportResultDTO {
   private double epsilon;
   private String error;
   private String stratum;
-  private Set<String> patients;
 }
