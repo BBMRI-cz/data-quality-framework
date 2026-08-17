@@ -3,6 +3,7 @@ package eu.bbmri_eric.quality.agent.settings.controller;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/settings")
 @Tag(name = "Settings", description = "Application settings management")
+@SecurityRequirement(name = "bearerAuth")
 class SettingsController {
 
   private final SettingsService settingsService;
