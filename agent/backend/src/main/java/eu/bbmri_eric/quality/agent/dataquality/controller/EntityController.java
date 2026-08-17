@@ -2,6 +2,8 @@ package eu.bbmri_eric.quality.agent.dataquality.controller;
 
 import eu.bbmri_eric.quality.agent.dataquality.DataStore;
 import eu.bbmri_eric.quality.agent.dataquality.DataStoreFactory;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.NoSuchElementException;
 import org.json.JSONObject;
 import org.springframework.http.MediaType;
@@ -13,6 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/entities")
+@Tag(name = "Entities", description = "API for retrieving FHIR entities")
+@SecurityRequirement(name = "bearerAuth")
 class EntityController {
   private final DataStoreFactory dataStoreFactory;
 

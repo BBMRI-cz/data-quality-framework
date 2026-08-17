@@ -4,6 +4,7 @@ import eu.bbmri_eric.quality.agent.user.UserService;
 import eu.bbmri_eric.quality.agent.user.dto.PasswordChangeRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @Tag(name = "User Management", description = "APIs for user authentication and password management")
+@SecurityRequirement(name = "bearerAuth")
 class UserController {
 
   private final UserService userService;

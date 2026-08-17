@@ -10,6 +10,7 @@ import eu.bbmri_eric.quality.agent.server.dto.ServerDto;
 import eu.bbmri_eric.quality.agent.server.dto.ServerUpdateDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.net.URI;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/servers")
 @Tag(name = "Server Management", description = "APIs for managing servers")
+@SecurityRequirement(name = "bearerAuth")
 class ServerController {
 
   private final ServerService serverService;
