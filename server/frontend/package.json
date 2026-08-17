@@ -15,24 +15,24 @@
     "format": "prettier --write \"src/**/*.{js,vue,css,scss}\""
   },
   "dependencies": {
-    "@fontsource/open-sans": "^5.2.7",
-    "@fontsource/source-code-pro": "^5.2.7",
-    "@unhead/vue": "^2.1.13",
-    "axios": "^1.16.0",
-    "bootstrap": "^5.3.3",
+    "@fontsource/open-sans": "^5.3.0",
+    "@fontsource/source-code-pro": "^5.3.0",
+    "@unhead/vue": "^3.3.2",
+    "axios": "^1.19.0",
+    "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
-    "vue": "^3.5.32",
-    "vue-router": "^5.0.4",
+    "vue": "^3.5.41",
+    "vue-router": "^5.2.0",
     "vue3-oidc": "^1.0.2"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.2",
-    "@vitejs/plugin-vue": "^6.0.6",
-    "eslint": "^9.39.2",
+    "@eslint/js": "^10.0.1",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "eslint": "^10.8.1",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-vue": "^10.8.0",
-    "prettier": "^3.8.3",
-    "vite": "^8.0.16",
-    "vite-plugin-vue-devtools": "^8.1.1"
+    "eslint-plugin-vue": "^10.10.0",
+    "prettier": "^3.9.6",
+    "vite": "^8.2.1",
+    "vite-plugin-vue-devtools": "^8.2.1"
   }
 }
