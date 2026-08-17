@@ -62,6 +62,7 @@ export default defineConfig({
                             items: [
                                 {text: 'Configuration', link: '/user/configuration'},
                                 {text: 'Data Sources', link: '/user/data-sources'},
+                                {text: 'Privacy Configuration', link: '/user/privacy-configuration'},
                             ]
                         },
                         {
