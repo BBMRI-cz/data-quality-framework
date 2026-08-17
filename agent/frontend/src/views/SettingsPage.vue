@@ -22,6 +22,15 @@
                 <p class="text-muted mb-0">
                   Choose the data source and configure the connection details
                 </p>
+                <a
+                  class="docs-link"
+                  href="https://fdqf.bbmri-eric.eu/user/data-sources"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Documentation
+                  <i class="bi bi-box-arrow-up-right"></i>
+                </a>
               </div>
             </div>
 
@@ -197,6 +206,21 @@
 
   .section-title i {
     color: var(--color-primary);
+  }
+
+  .docs-link {
+    color: var(--color-primary);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.875rem;
+    margin-top: var(--spacing-xs);
+    flex-shrink: 0;
+  }
+
+  .docs-link:hover {
+    text-decoration: underline;
   }
 
   .settings-form {
