@@ -26,7 +26,7 @@ final class CalciteConnectionFactory {
 
   JdbcTemplate createJdbcTemplate(String url) {
     String resolvedUrl = resolveUrl(url);
-    log.info("Creating Calcite data store for URL: {}", resolvedUrl);
+    log.debug("Creating Calcite data store for URL: {}", url.trim());
     DriverManagerDataSource dataSource = new DriverManagerDataSource();
     dataSource.setUrl(resolvedUrl);
     return new JdbcTemplate(dataSource);
