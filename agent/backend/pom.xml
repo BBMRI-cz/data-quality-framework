@@ -154,6 +154,7 @@
             <artifactId>calcite-csv</artifactId>
             <version>${calcite.version}</version>
             <exclusions>
+                <!-- Exclude protobuf-java pulled transitively by calcite-csv (e.g., to avoid an unused/vulnerable transitive dependency). -->
                 <exclusion>
                     <groupId>com.google.protobuf</groupId>
                     <artifactId>protobuf-java</artifactId>
