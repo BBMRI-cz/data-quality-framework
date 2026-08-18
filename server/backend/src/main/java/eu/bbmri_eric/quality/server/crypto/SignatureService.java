@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.server.crypto;
 
+import java.security.GeneralSecurityException;
 import java.security.PublicKey;
 
 /** Service for creating and verifying cryptographic signatures. */
@@ -10,9 +11,9 @@ public interface SignatureService {
    *
    * @param data the data to sign
    * @return the signature
-   * @throws Exception if signing fails
+   * @throws GeneralSecurityException if signing fails
    */
-  byte[] sign(byte[] data) throws Exception;
+  byte[] sign(byte[] data) throws GeneralSecurityException;
 
   /**
    * Verifies that the given signature is valid for the data using the provided public key.
@@ -21,7 +22,8 @@ public interface SignatureService {
    * @param signature the signature to verify
    * @param publicKey the public key used for verification
    * @return {@code true} if the signature is valid, {@code false} otherwise
-   * @throws Exception if verification fails
+   * @throws GeneralSecurityException if verification fails
    */
-  boolean verify(byte[] data, byte[] signature, PublicKey publicKey) throws Exception;
+  boolean verify(byte[] data, byte[] signature, PublicKey publicKey)
+      throws GeneralSecurityException;
 }

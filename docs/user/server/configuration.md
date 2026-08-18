@@ -45,9 +45,10 @@ keys are loaded from a keystore on the filesystem.
 | `CENTRAL_SERVER_KEY_PASSWORD` | Password of the keystore / key entry.                    | (Empty)                     |
 | `CENTRAL_SERVER_KEY_ALIAS`    | Alias of the key within the keystore.                    | `central-server-key`        |
 
-::: warning Crypto Not Configured If `CENTRAL_SERVER_KEY_PATH` is not set (or blank), the server starts successfully but
-cryptographic functionality (e.g., key signing) is not enabled. A warning is logged at startup. Configure a valid
-keystore path if you need signature functionality, for example the public key endpoint `/api/v1/crypto/public-key`.
+::: warning Crypto Not Configured
+If `CENTRAL_SERVER_KEY_PATH` is not set (or blank), the server starts successfully but cryptographic functionality
+(e.g., key signing) is not enabled. A warning is logged at startup. Configure a valid keystore path if you need
+signature functionality, for example the public key endpoint `/api/v1/public-key`.
 :::
 
 The key path and password map to the underlying Spring properties `app.crypto.key-path`, `app.crypto.key-password`, and

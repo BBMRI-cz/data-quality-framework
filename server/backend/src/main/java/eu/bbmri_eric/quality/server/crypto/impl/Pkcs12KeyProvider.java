@@ -79,6 +79,9 @@ class Pkcs12KeyProvider implements KeyProvider {
 
   @Override
   public PrivateKey getPrivateKey() {
+    if (privateKey == null) {
+      throw new EntityNotFoundException("Cryptographic functionality is not setup");
+    }
     return privateKey;
   }
 
@@ -92,6 +95,9 @@ class Pkcs12KeyProvider implements KeyProvider {
 
   @Override
   public String getKeyId() {
+    if (keyId == null) {
+      throw new EntityNotFoundException("Cryptographic functionality is not setup");
+    }
     return keyId;
   }
 }
