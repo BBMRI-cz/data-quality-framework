@@ -96,6 +96,27 @@ Additionally, as described above, you can override any internal application sett
 
 By using environment variables, you can fully automate the configuration of your Data Quality Agent during deployment.
 
+## Connecting to CSV files (Apache Calcite)
+
+When `sqlUrl` points to a directory of CSV files (see [Data Sources](./data-sources.md)), the agent reads them from a path **inside the container**. You must therefore mount the folder that contains the CSV files into the agent container so that the JDBC URL resolves to a valid location.
+
+For example, to make `/opt/omop/csv` on the host available at the same path inside the container:
+
+```yaml
+services:
+  quality-agent:
+    image: ghcr.io/bbmri-cz/data-quality-agent:latest
+    volumes:
+      - /opt/omop/csv:/opt/omop/csv:ro
+    environment:
+      - APP_SETTING_DATABASE_TYPE=SQL
+      - APP_SETTING_SQL_URL=jdbc:calcite:directory=/opt/omop/csv
+```
+
+Then place your CSV files (one table per file, with a header row) directly in the mounted folder, e.g. `person.csv`, `specimen.csv`.
+
+The folder can be mounted read-only (`:ro`) since the agent only reads the files. Choose any mount path, but it must match the directory referenced after `jdbc:calcite:directory=` in `sqlUrl`.
+
 ## Proxy Configuration
 
 If the agent must reach external services through an HTTP/HTTPS proxy (for example a corporate firewall that governs access to the FHIR server, the central reporting server, or the OTLP metrics endpoint), you can configure the Java Virtual Machine to route outbound connections through the proxy.

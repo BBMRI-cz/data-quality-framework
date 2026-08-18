@@ -68,6 +68,11 @@ class DataStoreFactoryImpl implements DataStoreFactory {
   }
 
   private OmopDataStore createSqlDataStore(SettingsDTO settings) {
+    String url = settings.getSqlUrl();
+    String trimmedUrl = url != null ? url.trim() : null;
+    if (trimmedUrl != null && trimmedUrl.startsWith("jdbc:calcite:")) {
+      return new OmopDataStore(new CalciteConnectionFactory().createJdbcTemplate(trimmedUrl));
+    }
     DriverManagerDataSource dataSource = new DriverManagerDataSource();
     dataSource.setUrl(settings.getSqlUrl());
     dataSource.setUsername(settings.getSqlUsername());

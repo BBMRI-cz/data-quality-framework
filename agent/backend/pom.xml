@@ -31,6 +31,7 @@
         <hapi.fhir.structures.version>8.8.1</hapi.fhir.structures.version>
         <icd.validator.version>0.1.0</icd.validator.version>
         <commons.compress.version>1.26.1</commons.compress.version>
+        <calcite.version>1.42.0</calcite.version>
         <modelmapper.version>3.2.6</modelmapper.version>
         <jjwt.version>0.13.0</jjwt.version>
         <bouncycastle.version>1.84</bouncycastle.version>
@@ -147,6 +148,11 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
             <version>${commons.compress.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.calcite</groupId>
+            <artifactId>calcite-csv</artifactId>
+            <version>${calcite.version}</version>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>

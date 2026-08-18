@@ -5,7 +5,7 @@
     label="SQL JDBC URL"
     icon="bi-link-45deg"
     placeholder="jdbc:postgresql://localhost:5432/quality"
-    help-text="The JDBC connection string for the SQL database"
+    help-text="JDBC connection string (e.g. Postgres). To query CSV files instead, use jdbc:calcite:directory=/path/to/csvs"
     :required="required"
   />
 
@@ -15,8 +15,8 @@
     label="SQL Username"
     icon="bi-person"
     placeholder="Enter username"
-    help-text="Username for authenticating with the SQL database"
-    :required="required"
+    help-text="Not required for CSV (Calcite) connections"
+    :required="required && !isCalcite"
     autocomplete="username"
   />
 
@@ -27,14 +27,14 @@
     label="SQL Password"
     icon="bi-key"
     placeholder="Enter password"
-    help-text="Password for authenticating with the SQL database"
-    :required="required"
+    help-text="Not required for CSV (Calcite) connections"
+    :required="required && !isCalcite"
     autocomplete="current-password"
   />
 </template>
 
 <script setup>
-  import { toRef } from 'vue';
+  import { computed, toRef } from 'vue';
   import { FormField } from '@/components/forms';
 
   const props = defineProps({
@@ -49,4 +49,6 @@
   });
 
   const settings = toRef(props, 'settings');
+
+  const isCalcite = computed(() => (settings.value.url || '').startsWith('jdbc:calcite:'));
 </script>
