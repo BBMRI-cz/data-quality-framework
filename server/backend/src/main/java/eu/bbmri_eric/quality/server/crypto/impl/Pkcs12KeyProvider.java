@@ -74,6 +74,7 @@ class Pkcs12KeyProvider implements KeyProvider {
         | UnrecoverableKeyException e) {
       throw new IllegalStateException("Failed to load key store from '%s'".formatted(keyPath), e);
     }
+    log.info("Successfully loaded the keypair for crypto functionality");
   }
 
   @Override

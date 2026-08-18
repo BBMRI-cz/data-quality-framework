@@ -3,6 +3,7 @@ package eu.bbmri_eric.quality.server.crypto.controller;
 import eu.bbmri_eric.quality.server.crypto.KeyProvider;
 import eu.bbmri_eric.quality.server.crypto.dto.PublicKeyDTO;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.security.PublicKey;
 import java.util.Base64;
@@ -27,6 +28,7 @@ class CryptoController {
   @Operation(
       summary = "Get the public key",
       description = "Retrieves the server's public key used for verifying signatures")
+  @SecurityRequirements
   public ResponseEntity<PublicKeyDTO> getPublicKey() {
     PublicKey publicKey = keyProvider.getPublicKey();
     PublicKeyDTO dto =
