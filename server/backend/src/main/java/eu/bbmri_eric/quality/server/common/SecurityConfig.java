@@ -118,6 +118,7 @@ class SecurityConfig {
                     .requestMatchers(HttpMethod.GET, "/api/v1/users/**")
                     .hasRole("ADMIN")
                     .requestMatchers(
+                        "/api/v1/public-key",
                         "/api/health",
                         "/api/info",
                         "/api/counts",

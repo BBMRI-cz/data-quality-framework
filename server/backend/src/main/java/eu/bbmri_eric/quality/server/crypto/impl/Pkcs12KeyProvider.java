@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.server.crypto.impl;
 
+import eu.bbmri_eric.quality.server.common.EntityNotFoundException;
 import eu.bbmri_eric.quality.server.crypto.KeyProvider;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
@@ -82,6 +83,9 @@ class Pkcs12KeyProvider implements KeyProvider {
 
   @Override
   public PublicKey getPublicKey() {
+    if (publicKey == null) {
+      throw new EntityNotFoundException("Cryptographic functionality is not setup");
+    }
     return publicKey;
   }
 
