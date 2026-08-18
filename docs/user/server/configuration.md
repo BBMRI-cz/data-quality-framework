@@ -99,5 +99,5 @@ example above). The keystore file should match the key type expected by the serv
 
 ## See Also
 
-- [Deployment Guide](./deployment.md)
-- [OIDC Configuration](./oidc-configuration.md)
+- [Deployment Guide](../deployment.md)
+- [OIDC Configuration](../oidc-configuration.md)
