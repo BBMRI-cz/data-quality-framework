@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.server.dataquality;
 
+import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckCreateDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckUpdateDTO;
 import java.util.List;
@@ -7,6 +8,14 @@ import java.util.Set;
 
 /** Service interface for managing quality checks. */
 public interface QualityCheckService {
+
+  /**
+   * Creates a new quality check.
+   *
+   * @param createDTO the create data
+   * @return the created quality check DTO
+   */
+  QualityCheckDTO create(QualityCheckCreateDTO createDTO);
 
   /**
    * Finds a quality check by its ID (hash).

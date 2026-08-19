@@ -2,6 +2,7 @@ package eu.bbmri_eric.quality.server.dataquality.controller;
 
 import eu.bbmri_eric.quality.server.dataquality.QualityCheckService;
 import eu.bbmri_eric.quality.server.dataquality.dto.KeywordsDTO;
+import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckCreateDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckUpdateDTO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,6 +12,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -50,6 +52,18 @@ class QualityCheckController {
     CollectionModel<EntityModel<QualityCheckDTO>> qualityChecksModel =
         linkBuilder.toCollectionModel(qualityChecks);
     return ResponseEntity.ok(qualityChecksModel);
+  }
+
+  @PostMapping("/quality-checks")
+  @Operation(
+      summary = "Create quality check",
+      description = "Creates a new quality check definition")
+  @SecurityRequirement(name = "bearerAuth")
+  public ResponseEntity<EntityModel<QualityCheckDTO>> create(
+      @Valid @RequestBody QualityCheckCreateDTO createDTO) {
+    QualityCheckDTO createdQualityCheck = qualityCheckService.create(createDTO);
+    EntityModel<QualityCheckDTO> qualityCheckModel = linkBuilder.toModel(createdQualityCheck);
+    return ResponseEntity.status(HttpStatus.CREATED).body(qualityCheckModel);
   }
 
   @PutMapping("/quality-checks/{id}")
