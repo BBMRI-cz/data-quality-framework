@@ -27,6 +27,9 @@ public class QualityCheckDTO {
       example = "Validates that patient count is within expected range")
   private String description;
 
+  @Schema(description = "Query associated with the quality check", example = "SELECT count(*) ...")
+  private String query;
+
   @Schema(description = "When this quality check was registered", example = "2023-10-13T10:30:00Z")
   private Instant registeredAt;
 
@@ -95,6 +98,14 @@ public class QualityCheckDTO {
 
   public void setDescription(String description) {
     this.description = description;
+  }
+
+  public String getQuery() {
+    return query;
+  }
+
+  public void setQuery(String query) {
+    this.query = query;
   }
 
   public Instant getRegisteredAt() {

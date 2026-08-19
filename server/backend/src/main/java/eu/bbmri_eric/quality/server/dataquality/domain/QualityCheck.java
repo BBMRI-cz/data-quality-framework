@@ -23,6 +23,7 @@ public class QualityCheck {
   private final Instant registeredAt = Instant.now();
   @NotNull private String name;
   private String description;
+  private String query;
   private double warningThreshold = 0.0;
 
   private double errorThreshold = 0.0;
@@ -83,9 +84,32 @@ public class QualityCheck {
       double warningThreshold,
       double errorThreshold,
       Category category) {
+    this(hash, name, description, null, warningThreshold, errorThreshold, category);
+  }
+
+  /**
+   * Creates a new quality check with a query.
+   *
+   * @param hash the unique hash identifying this check
+   * @param name the name of the check
+   * @param description the description of what the check validates
+   * @param query the query associated with the check, or null
+   * @param warningThreshold the threshold value for warnings
+   * @param errorThreshold the threshold value for errors
+   * @param category the category this check belongs to, or null
+   */
+  public QualityCheck(
+      String hash,
+      String name,
+      String description,
+      String query,
+      double warningThreshold,
+      double errorThreshold,
+      Category category) {
     this.hash = hash;
     this.name = name;
     this.description = description;
+    this.query = query;
     this.warningThreshold = warningThreshold;
     this.errorThreshold = errorThreshold;
     this.category = category;
@@ -134,6 +158,24 @@ public class QualityCheck {
    */
   public void setDescription(String description) {
     this.description = description;
+  }
+
+  /**
+   * Gets the query associated with this quality check.
+   *
+   * @return the query, or null if not set
+   */
+  public String getQuery() {
+    return query;
+  }
+
+  /**
+   * Sets the query associated with this quality check.
+   *
+   * @param query the query to set, or null to clear
+   */
+  public void setQuery(String query) {
+    this.query = query;
   }
 
   /**

@@ -22,6 +22,9 @@ public class QualityCheckUpdateDTO {
       example = "Validates that patient count is within expected range")
   private String description;
 
+  @Schema(description = "Query associated with the quality check", example = "SELECT count(*) ...")
+  private String query;
+
   @Schema(description = "Threshold value for warnings", example = "0.8")
   private double warningThreshold;
 
@@ -56,6 +59,31 @@ public class QualityCheckUpdateDTO {
     this.categoryId = categoryId;
   }
 
+  /**
+   * Constructor with all fields.
+   *
+   * @param name the name of the quality check
+   * @param description the description of what the check validates
+   * @param query the query associated with the check
+   * @param warningThreshold threshold value for warnings
+   * @param errorThreshold threshold value for errors
+   * @param categoryId the category ID for grouping quality checks
+   */
+  public QualityCheckUpdateDTO(
+      String name,
+      String description,
+      String query,
+      double warningThreshold,
+      double errorThreshold,
+      Long categoryId) {
+    this.name = name;
+    this.description = description;
+    this.query = query;
+    this.warningThreshold = warningThreshold;
+    this.errorThreshold = errorThreshold;
+    this.categoryId = categoryId;
+  }
+
   public String getName() {
     return name;
   }
@@ -70,6 +98,14 @@ public class QualityCheckUpdateDTO {
 
   public void setDescription(String description) {
     this.description = description;
+  }
+
+  public String getQuery() {
+    return query;
+  }
+
+  public void setQuery(String query) {
+    this.query = query;
   }
 
   public double getWarningThreshold() {

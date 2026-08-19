@@ -58,6 +58,7 @@ class QualityCheckServiceImpl implements QualityCheckService {
                 () -> new EntityNotFoundException("Quality check not found with ID: " + id));
     qualityCheck.setName(updateDTO.getName());
     qualityCheck.setDescription(updateDTO.getDescription());
+    qualityCheck.setQuery(updateDTO.getQuery());
     qualityCheck.setWarningThreshold(updateDTO.getWarningThreshold());
     qualityCheck.setErrorThreshold(updateDTO.getErrorThreshold());
     setCategory(updateDTO, qualityCheck);
