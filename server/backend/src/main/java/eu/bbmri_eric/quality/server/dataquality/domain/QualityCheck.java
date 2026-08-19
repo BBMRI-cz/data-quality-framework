@@ -1,7 +1,10 @@
 package eu.bbmri_eric.quality.server.dataquality.domain;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -24,6 +27,11 @@ public class QualityCheck {
   @NotNull private String name;
   private String description;
   private String query;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "check_type")
+  private QualityCheckType type;
+
   private double warningThreshold = 0.0;
 
   private double errorThreshold = 0.0;
@@ -84,7 +92,7 @@ public class QualityCheck {
       double warningThreshold,
       double errorThreshold,
       Category category) {
-    this(hash, name, description, null, warningThreshold, errorThreshold, category);
+    this(hash, name, description, null, null, warningThreshold, errorThreshold, category);
   }
 
   /**
@@ -94,6 +102,7 @@ public class QualityCheck {
    * @param name the name of the check
    * @param description the description of what the check validates
    * @param query the query associated with the check, or null
+   * @param type the type of query used by the check, or null
    * @param warningThreshold the threshold value for warnings
    * @param errorThreshold the threshold value for errors
    * @param category the category this check belongs to, or null
@@ -103,6 +112,7 @@ public class QualityCheck {
       String name,
       String description,
       String query,
+      QualityCheckType type,
       double warningThreshold,
       double errorThreshold,
       Category category) {
@@ -110,6 +120,7 @@ public class QualityCheck {
     this.name = name;
     this.description = description;
     this.query = query;
+    this.type = type;
     this.warningThreshold = warningThreshold;
     this.errorThreshold = errorThreshold;
     this.category = category;
@@ -176,6 +187,24 @@ public class QualityCheck {
    */
   public void setQuery(String query) {
     this.query = query;
+  }
+
+  /**
+   * Gets the type of query used by this quality check.
+   *
+   * @return the type, or null if not set
+   */
+  public QualityCheckType getType() {
+    return type;
+  }
+
+  /**
+   * Sets the type of query used by this quality check.
+   *
+   * @param type the type to set, or null to clear
+   */
+  public void setType(QualityCheckType type) {
+    this.type = type;
   }
 
   /**

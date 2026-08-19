@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.server.dataquality.dto;
 
+import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheckType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import java.util.List;
@@ -29,6 +30,9 @@ public class QualityCheckDTO {
 
   @Schema(description = "Query associated with the quality check", example = "SELECT count(*) ...")
   private String query;
+
+  @Schema(description = "Type of query used by the quality check", example = "SQL")
+  private QualityCheckType type;
 
   @Schema(description = "When this quality check was registered", example = "2023-10-13T10:30:00Z")
   private Instant registeredAt;
@@ -106,6 +110,14 @@ public class QualityCheckDTO {
 
   public void setQuery(String query) {
     this.query = query;
+  }
+
+  public QualityCheckType getType() {
+    return type;
+  }
+
+  public void setType(QualityCheckType type) {
+    this.type = type;
   }
 
   public Instant getRegisteredAt() {

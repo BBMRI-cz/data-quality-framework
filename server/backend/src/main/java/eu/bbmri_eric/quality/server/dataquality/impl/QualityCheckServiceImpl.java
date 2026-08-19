@@ -59,6 +59,7 @@ class QualityCheckServiceImpl implements QualityCheckService {
     qualityCheck.setName(updateDTO.getName());
     qualityCheck.setDescription(updateDTO.getDescription());
     qualityCheck.setQuery(updateDTO.getQuery());
+    qualityCheck.setType(updateDTO.getType());
     qualityCheck.setWarningThreshold(updateDTO.getWarningThreshold());
     qualityCheck.setErrorThreshold(updateDTO.getErrorThreshold());
     setCategory(updateDTO, qualityCheck);

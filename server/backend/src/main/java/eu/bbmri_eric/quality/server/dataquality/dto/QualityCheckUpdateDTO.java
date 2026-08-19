@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.server.dataquality.dto;
 
+import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheckType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -24,6 +25,9 @@ public class QualityCheckUpdateDTO {
 
   @Schema(description = "Query associated with the quality check", example = "SELECT count(*) ...")
   private String query;
+
+  @Schema(description = "Type of query used by the quality check", example = "SQL")
+  private QualityCheckType type;
 
   @Schema(description = "Threshold value for warnings", example = "0.8")
   private double warningThreshold;
@@ -65,6 +69,7 @@ public class QualityCheckUpdateDTO {
    * @param name the name of the quality check
    * @param description the description of what the check validates
    * @param query the query associated with the check
+   * @param type the type of query used by the check
    * @param warningThreshold threshold value for warnings
    * @param errorThreshold threshold value for errors
    * @param categoryId the category ID for grouping quality checks
@@ -73,12 +78,14 @@ public class QualityCheckUpdateDTO {
       String name,
       String description,
       String query,
+      QualityCheckType type,
       double warningThreshold,
       double errorThreshold,
       Long categoryId) {
     this.name = name;
     this.description = description;
     this.query = query;
+    this.type = type;
     this.warningThreshold = warningThreshold;
     this.errorThreshold = errorThreshold;
     this.categoryId = categoryId;
@@ -106,6 +113,14 @@ public class QualityCheckUpdateDTO {
 
   public void setQuery(String query) {
     this.query = query;
+  }
+
+  public QualityCheckType getType() {
+    return type;
+  }
+
+  public void setType(QualityCheckType type) {
+    this.type = type;
   }
 
   public double getWarningThreshold() {
