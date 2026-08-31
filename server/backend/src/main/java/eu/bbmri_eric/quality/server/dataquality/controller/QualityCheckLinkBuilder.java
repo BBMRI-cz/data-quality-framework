@@ -15,7 +15,7 @@ final class QualityCheckLinkBuilder {
   public EntityModel<QualityCheckDTO> toModel(QualityCheckDTO qualityCheckDto) {
     return EntityModel.of(qualityCheckDto)
         .add(
-            linkTo(methodOn(QualityCheckController.class).findById(qualityCheckDto.getHash()))
+            linkTo(methodOn(QualityCheckController.class).findById(qualityCheckDto.getId()))
                 .withSelfRel())
         .add(linkTo(methodOn(QualityCheckController.class).findAll()).withRel("quality-checks"));
   }

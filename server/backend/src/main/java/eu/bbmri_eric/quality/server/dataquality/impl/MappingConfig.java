@@ -38,6 +38,7 @@ public class MappingConfig {
         new PropertyMap<QualityCheck, QualityCheckDTO>() {
           @Override
           protected void configure() {
+            map(source.getId(), destination.getId());
             using(qualityCheckKeywordsConverter)
                 .map(source.getKeywords(), destination.getKeywords());
           }

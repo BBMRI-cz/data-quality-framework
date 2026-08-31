@@ -352,7 +352,7 @@ class ReportControllerTest {
                 .content(objectMapper.writeValueAsString(createRequest)))
         .andExpect(status().isCreated());
 
-    assertTrue(qualityCheckRepository.findById(newHash).isPresent());
+    assertTrue(qualityCheckRepository.findByHash(newHash).isPresent());
   }
 
   @Test
@@ -471,7 +471,7 @@ class ReportControllerTest {
         .andExpect(jsonPath("$.results[0].result").value(0.85));
 
     // Verify the quality check name was not updated in the database
-    QualityCheck savedCheck = qualityCheckRepository.findById("existing-check").orElseThrow();
+    QualityCheck savedCheck = qualityCheckRepository.findByHash("existing-check").orElseThrow();
     assertEquals("Original Name", savedCheck.getName());
     assertNotEquals("Updated Name", savedCheck.getName());
   }
@@ -635,9 +635,9 @@ class ReportControllerTest {
         .andExpect(jsonPath("$.results[?(@.hash == 'consistency-check')].result").value(0.85))
         .andExpect(jsonPath("$.results[?(@.hash == 'accuracy-check')].result").value(0.92));
 
-    assertTrue(qualityCheckRepository.findById("completeness-check").isPresent());
-    assertTrue(qualityCheckRepository.findById("consistency-check").isPresent());
-    assertTrue(qualityCheckRepository.findById("accuracy-check").isPresent());
+    assertTrue(qualityCheckRepository.findByHash("completeness-check").isPresent());
+    assertTrue(qualityCheckRepository.findByHash("consistency-check").isPresent());
+    assertTrue(qualityCheckRepository.findByHash("accuracy-check").isPresent());
   }
 
   @Test

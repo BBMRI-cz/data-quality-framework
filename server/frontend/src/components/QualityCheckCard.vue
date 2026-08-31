@@ -33,7 +33,7 @@
 
           <div class="action-buttons">
             <router-link
-              :to="{ name: 'QualityCheckDetail', params: { hash: qualityCheck.hash } }"
+              :to="{ name: 'QualityCheckDetail', params: { id: qualityCheck.id } }"
               class="action-btn"
               title="Edit quality check"
               @click.stop

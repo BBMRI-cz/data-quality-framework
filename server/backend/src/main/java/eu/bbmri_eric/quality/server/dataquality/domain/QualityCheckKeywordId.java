@@ -6,11 +6,11 @@ import java.util.Objects;
 /**
  * Composite ID class for QualityCheckKeyword entity.
  *
- * <p>Represents the composite primary key consisting of quality check hash and keyword.
+ * <p>Represents the composite primary key consisting of quality check id and keyword.
  */
 class QualityCheckKeywordId implements Serializable {
 
-  private String qualityCheckHash;
+  private Long qualityCheckId;
   private String keyword;
 
   /** Default constructor for JPA. */
@@ -19,20 +19,20 @@ class QualityCheckKeywordId implements Serializable {
   /**
    * Creates a new composite ID.
    *
-   * @param qualityCheckHash the quality check hash
+   * @param qualityCheckId the quality check id
    * @param keyword the keyword
    */
-  public QualityCheckKeywordId(String qualityCheckHash, String keyword) {
-    this.qualityCheckHash = qualityCheckHash;
+  public QualityCheckKeywordId(Long qualityCheckId, String keyword) {
+    this.qualityCheckId = qualityCheckId;
     this.keyword = keyword;
   }
 
-  public String getQualityCheckHash() {
-    return qualityCheckHash;
+  public Long getQualityCheckId() {
+    return qualityCheckId;
   }
 
-  public void setQualityCheckHash(String qualityCheckHash) {
-    this.qualityCheckHash = qualityCheckHash;
+  public void setQualityCheckId(Long qualityCheckId) {
+    this.qualityCheckId = qualityCheckId;
   }
 
   public String getKeyword() {
@@ -47,12 +47,12 @@ class QualityCheckKeywordId implements Serializable {
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
     QualityCheckKeywordId that = (QualityCheckKeywordId) o;
-    return Objects.equals(qualityCheckHash, that.qualityCheckHash)
+    return Objects.equals(qualityCheckId, that.qualityCheckId)
         && Objects.equals(keyword, that.keyword);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(qualityCheckHash, keyword);
+    return Objects.hash(qualityCheckId, keyword);
   }
 }

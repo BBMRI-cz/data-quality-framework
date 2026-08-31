@@ -257,7 +257,7 @@
   const route = useRoute();
   const router = useRouter();
 
-  const hash = ref(route.params.hash);
+  const checkId = ref(route.params.id);
   const qualityCheck = ref(null);
 
   useHead({
@@ -323,7 +323,7 @@
         categoriesData._embedded?.categories ||
         (Array.isArray(categoriesData) ? categoriesData : []);
 
-      qualityCheck.value = checks.find((check) => check.hash === hash.value);
+      qualityCheck.value = checks.find((check) => check.id === Number(checkId.value));
 
       if (!qualityCheck.value) {
         error.value = 'Quality check not found';
@@ -384,10 +384,10 @@
     error.value = null;
 
     try {
-      await apiService.updateQualityCheck(hash.value, editForm);
+      await apiService.updateQualityCheck(checkId.value, editForm);
 
       // Save keywords
-      await apiService.setKeywords(hash.value, keywords.value);
+      await apiService.setKeywords(checkId.value, keywords.value);
 
       notificationService.success(
         'Quality Check Updated',

@@ -296,7 +296,7 @@
   }
 
   function navigateToCheckDetail(check) {
-    router.push({ name: 'QualityCheckDetail', params: { hash: check.hash } });
+    router.push({ name: 'QualityCheckDetail', params: { id: check.qualityCheck.id } });
   }
 </script>
 

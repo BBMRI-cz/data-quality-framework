@@ -7,13 +7,13 @@ import java.util.Objects;
 /**
  * Composite primary key for QualityCheckResult.
  *
- * <p>This ID combines the report ID and quality check hash to uniquely identify a quality check
+ * <p>This ID combines the report ID and quality check id to uniquely identify a quality check
  * result.
  */
 @Embeddable
 class QualityCheckResultId implements Serializable {
   private String reportId;
-  private String qualityCheckHash;
+  private Long qualityCheckId;
 
   /** Default constructor for JPA. */
   protected QualityCheckResultId() {}
@@ -22,11 +22,11 @@ class QualityCheckResultId implements Serializable {
    * Creates a new composite ID.
    *
    * @param reportId the report ID
-   * @param qualityCheckHash the quality check hash
+   * @param qualityCheckId the quality check id
    */
-  QualityCheckResultId(String reportId, String qualityCheckHash) {
+  QualityCheckResultId(String reportId, Long qualityCheckId) {
     this.reportId = reportId;
-    this.qualityCheckHash = qualityCheckHash;
+    this.qualityCheckId = qualityCheckId;
   }
 
   /**
@@ -39,12 +39,12 @@ class QualityCheckResultId implements Serializable {
   }
 
   /**
-   * Gets the quality check hash.
+   * Gets the quality check id.
    *
-   * @return the quality check hash
+   * @return the quality check id
    */
-  public String getQualityCheckHash() {
-    return qualityCheckHash;
+  public Long getQualityCheckId() {
+    return qualityCheckId;
   }
 
   @Override
@@ -52,11 +52,11 @@ class QualityCheckResultId implements Serializable {
     if (o == null || getClass() != o.getClass()) return false;
     QualityCheckResultId that = (QualityCheckResultId) o;
     return Objects.equals(reportId, that.reportId)
-        && Objects.equals(qualityCheckHash, that.qualityCheckHash);
+        && Objects.equals(qualityCheckId, that.qualityCheckId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(reportId, qualityCheckHash);
+    return Objects.hash(reportId, qualityCheckId);
   }
 }

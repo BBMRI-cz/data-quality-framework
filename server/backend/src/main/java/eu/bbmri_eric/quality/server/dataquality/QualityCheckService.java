@@ -9,12 +9,12 @@ import java.util.Set;
 public interface QualityCheckService {
 
   /**
-   * Finds a quality check by its ID (hash).
+   * Finds a quality check by its ID.
    *
-   * @param id the quality check ID (hash)
+   * @param id the quality check id
    * @return the quality check DTO
    */
-  QualityCheckDTO findById(String id);
+  QualityCheckDTO findById(Long id);
 
   /**
    * Finds all quality checks.
@@ -26,20 +26,20 @@ public interface QualityCheckService {
   /**
    * Updates an existing quality check.
    *
-   * @param id the quality check ID (hash)
+   * @param id the quality check id
    * @param updateDTO the update data
    * @return the updated quality check DTO
    */
-  QualityCheckDTO update(String id, QualityCheckUpdateDTO updateDTO);
+  QualityCheckDTO update(Long id, QualityCheckUpdateDTO updateDTO);
 
   /**
    * Sets the keywords for a quality check, replacing all existing keywords.
    *
-   * @param id the quality check ID (hash)
+   * @param id the quality check id
    * @param keywords the new set of keywords to assign
    * @return the updated quality check DTO
    * @throws eu.bbmri_eric.quality.server.common.EntityNotFoundException if the keyword is not
    *     associated with the quality check
    */
-  QualityCheckDTO setKeywords(String id, Set<String> keywords);
+  QualityCheckDTO setKeywords(Long id, Set<String> keywords);
 }

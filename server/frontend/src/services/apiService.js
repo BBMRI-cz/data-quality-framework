@@ -88,13 +88,13 @@ class ApiService {
     window.URL.revokeObjectURL(url);
   }
 
-  async updateQualityCheck(hash, data) {
-    const response = await api.put(`/v1/quality-checks/${hash}`, data);
+  async updateQualityCheck(id, data) {
+    const response = await api.put(`/v1/quality-checks/${id}`, data);
     return response.data;
   }
 
-  async setKeywords(hash, keywords) {
-    const response = await api.put(`/v1/quality-checks/${hash}/keywords`, { keywords });
+  async setKeywords(id, keywords) {
+    const response = await api.put(`/v1/quality-checks/${id}/keywords`, { keywords });
     return response.data;
   }
 

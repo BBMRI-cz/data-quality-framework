@@ -62,7 +62,7 @@ class QualityCheckControllerTest {
   @WithMockUser(roles = "HUMAN_USER")
   void findById_shouldReturnQualityCheckWithHateoasLinksWhenExists() throws Exception {
     mockMvc
-        .perform(get(API_V1_QUALITY_CHECKS_ID, testQualityCheckHash))
+        .perform(get(API_V1_QUALITY_CHECKS_ID, testQualityCheck.getId()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.hash").value(testQualityCheckHash))
         .andExpect(jsonPath("$.name").value("Test Quality Check"))
@@ -72,7 +72,7 @@ class QualityCheckControllerTest {
         .andExpect(jsonPath("$.registeredAt").exists())
         .andExpect(
             jsonPath("$._links.self.href")
-                .value("http://localhost/api/v1/quality-checks/" + testQualityCheckHash))
+                .value("http://localhost/api/v1/quality-checks/" + testQualityCheck.getId()))
         .andExpect(
             jsonPath("$._links.quality-checks.href")
                 .value("http://localhost/api/v1/quality-checks"));
@@ -81,18 +81,16 @@ class QualityCheckControllerTest {
   @Test
   @WithMockUser(roles = "HUMAN_USER")
   void findById_shouldReturnNotFoundWhenQualityCheckDoesNotExist() throws Exception {
-    String nonExistentHash = "non-existent-hash";
+    Long nonExistentId = 99999L;
 
-    mockMvc
-        .perform(get(API_V1_QUALITY_CHECKS_ID, nonExistentHash))
-        .andExpect(status().isNotFound());
+    mockMvc.perform(get(API_V1_QUALITY_CHECKS_ID, nonExistentId)).andExpect(status().isNotFound());
   }
 
   @Test
   @WithMockUser(roles = "ADMIN")
   void findById_shouldReturnQualityCheckForAdmin() throws Exception {
     mockMvc
-        .perform(get(API_V1_QUALITY_CHECKS_ID, testQualityCheckHash))
+        .perform(get(API_V1_QUALITY_CHECKS_ID, testQualityCheck.getId()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.hash").value(testQualityCheckHash));
   }
@@ -150,7 +148,7 @@ class QualityCheckControllerTest {
 
     mockMvc
         .perform(
-            put(API_V1_QUALITY_CHECKS_ID, testQualityCheckHash)
+            put(API_V1_QUALITY_CHECKS_ID, testQualityCheck.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateDTO)))
         .andExpect(status().isOk())
@@ -161,7 +159,7 @@ class QualityCheckControllerTest {
         .andExpect(jsonPath("$.errorThreshold").value(0.45))
         .andExpect(
             jsonPath("$._links.self.href")
-                .value("http://localhost/api/v1/quality-checks/" + testQualityCheckHash))
+                .value("http://localhost/api/v1/quality-checks/" + testQualityCheck.getId()))
         .andExpect(
             jsonPath("$._links.quality-checks.href")
                 .value("http://localhost/api/v1/quality-checks"));
@@ -175,7 +173,7 @@ class QualityCheckControllerTest {
 
     mockMvc
         .perform(
-            put(API_V1_QUALITY_CHECKS_ID, testQualityCheckHash)
+            put(API_V1_QUALITY_CHECKS_ID, testQualityCheck.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateDTO)))
         .andExpect(status().isForbidden());
@@ -184,13 +182,13 @@ class QualityCheckControllerTest {
   @Test
   @WithMockUser(roles = "ADMIN")
   void update_shouldReturnNotFoundWhenQualityCheckDoesNotExist() throws Exception {
-    String nonExistentHash = "non-existent-hash";
+    Long nonExistentId = 99999L;
     QualityCheckUpdateDTO updateDTO =
         new QualityCheckUpdateDTO("Updated Quality Check", "Updated description", 0.75, 0.45, null);
 
     mockMvc
         .perform(
-            put(API_V1_QUALITY_CHECKS_ID, nonExistentHash)
+            put(API_V1_QUALITY_CHECKS_ID, nonExistentId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateDTO)))
         .andExpect(status().isNotFound());
@@ -209,7 +207,7 @@ class QualityCheckControllerTest {
 
     mockMvc
         .perform(
-            put(API_V1_QUALITY_CHECKS_ID, testQualityCheckHash)
+            put(API_V1_QUALITY_CHECKS_ID, testQualityCheck.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateDTO)))
         .andExpect(status().isBadRequest());
@@ -218,7 +216,7 @@ class QualityCheckControllerTest {
   @Test
   void findById_shouldReturnUnauthorizedWhenNotAuthenticated() throws Exception {
     mockMvc
-        .perform(get(API_V1_QUALITY_CHECKS_ID, testQualityCheckHash))
+        .perform(get(API_V1_QUALITY_CHECKS_ID, testQualityCheck.getId()))
         .andExpect(status().isUnauthorized());
   }
 
@@ -234,7 +232,7 @@ class QualityCheckControllerTest {
 
     mockMvc
         .perform(
-            put(API_V1_QUALITY_CHECKS_ID, testQualityCheckHash)
+            put(API_V1_QUALITY_CHECKS_ID, testQualityCheck.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateDTO)))
         .andExpect(status().isUnauthorized());
@@ -249,7 +247,7 @@ class QualityCheckControllerTest {
 
     mockMvc
         .perform(
-            put(API_V1_QUALITY_CHECKS_ID, testQualityCheckHash)
+            put(API_V1_QUALITY_CHECKS_ID, testQualityCheck.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateDTO)))
         .andExpect(status().isOk())
@@ -270,7 +268,7 @@ class QualityCheckControllerTest {
 
     mockMvc
         .perform(
-            put(API_V1_QUALITY_CHECKS_ID, testQualityCheckHash)
+            put(API_V1_QUALITY_CHECKS_ID, testQualityCheck.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateDTO)))
         .andExpect(status().isOk())
@@ -288,7 +286,7 @@ class QualityCheckControllerTest {
 
     mockMvc
         .perform(
-            put(API_V1_QUALITY_CHECKS_ID, testQualityCheckHash)
+            put(API_V1_QUALITY_CHECKS_ID, testQualityCheck.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateDTO)))
         .andExpect(status().isNotFound());
@@ -309,7 +307,7 @@ class QualityCheckControllerTest {
 
     mockMvc
         .perform(
-            put(API_V1_QUALITY_CHECKS_ID, testQualityCheckHash)
+            put(API_V1_QUALITY_CHECKS_ID, testQualityCheck.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateDTO)))
         .andExpect(status().isOk())
@@ -327,7 +325,7 @@ class QualityCheckControllerTest {
     entityManager.flush();
 
     mockMvc
-        .perform(get(API_V1_QUALITY_CHECKS_ID, testQualityCheckHash))
+        .perform(get(API_V1_QUALITY_CHECKS_ID, testQualityCheck.getId()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.category.id").value(testCategory.getId()));
 
@@ -340,7 +338,7 @@ class QualityCheckControllerTest {
     assertFalse(categoryRepository.existsById(categoryId));
 
     mockMvc
-        .perform(get(API_V1_QUALITY_CHECKS_ID, testQualityCheckHash))
+        .perform(get(API_V1_QUALITY_CHECKS_ID, testQualityCheck.getId()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.hash").value(testQualityCheckHash))
         .andExpect(jsonPath("$.category").doesNotExist());
@@ -350,7 +348,7 @@ class QualityCheckControllerTest {
   @WithMockUser(roles = "ADMIN")
   void findById_shouldReturnKeywordsWhenAdded() throws Exception {
     mockMvc
-        .perform(get(API_V1_QUALITY_CHECKS_ID, testQualityCheckHash))
+        .perform(get(API_V1_QUALITY_CHECKS_ID, testQualityCheck.getId()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.keywords").isArray())
         .andExpect(jsonPath("$.keywords.length()").value(3))
@@ -386,7 +384,7 @@ class QualityCheckControllerTest {
 
     mockMvc
         .perform(
-            put(keywordsEndpoint, testQualityCheckHash)
+            put(keywordsEndpoint, testQualityCheck.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(keywordsDTO)))
         .andExpect(status().isOk())
@@ -396,7 +394,7 @@ class QualityCheckControllerTest {
         .andExpect(jsonPath("$.keywords", hasItems("patient data", "diagnosis", "treatment")))
         .andExpect(
             jsonPath("$._links.self.href")
-                .value("http://localhost/api/v1/quality-checks/" + testQualityCheckHash))
+                .value("http://localhost/api/v1/quality-checks/" + testQualityCheck.getId()))
         .andExpect(
             jsonPath("$._links.quality-checks.href")
                 .value("http://localhost/api/v1/quality-checks"));
@@ -410,7 +408,7 @@ class QualityCheckControllerTest {
 
     mockMvc
         .perform(
-            put(keywordsEndpoint, testQualityCheckHash)
+            put(keywordsEndpoint, testQualityCheck.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(keywordsDTO)))
         .andExpect(status().isOk())
@@ -427,7 +425,7 @@ class QualityCheckControllerTest {
 
     mockMvc
         .perform(
-            put(keywordsEndpoint, testQualityCheckHash)
+            put(keywordsEndpoint, testQualityCheck.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(keywordsDTO)))
         .andExpect(status().isForbidden());
@@ -436,13 +434,13 @@ class QualityCheckControllerTest {
   @Test
   @WithMockUser(roles = "ADMIN")
   void setKeywords_shouldReturnNotFoundWhenQualityCheckDoesNotExist() throws Exception {
-    String nonExistentHash = "non-existent-hash";
+    Long nonExistentId = 99999L;
     KeywordsDTO keywordsDTO = new KeywordsDTO(Set.of("test keyword"));
     String keywordsEndpoint = API_V1_QUALITY_CHECKS_ID + "/keywords";
 
     mockMvc
         .perform(
-            put(keywordsEndpoint, nonExistentHash)
+            put(keywordsEndpoint, nonExistentId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(keywordsDTO)))
         .andExpect(status().isNotFound());
@@ -457,7 +455,7 @@ class QualityCheckControllerTest {
 
     mockMvc
         .perform(
-            put(keywordsEndpoint, testQualityCheckHash)
+            put(keywordsEndpoint, testQualityCheck.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(keywordsDTO)))
         .andExpect(status().isBadRequest());
@@ -470,7 +468,7 @@ class QualityCheckControllerTest {
 
     mockMvc
         .perform(
-            put(keywordsEndpoint, testQualityCheckHash)
+            put(keywordsEndpoint, testQualityCheck.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(keywordsDTO)))
         .andExpect(status().isUnauthorized());

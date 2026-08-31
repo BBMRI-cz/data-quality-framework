@@ -11,7 +11,7 @@ import java.util.Objects;
 /**
  * Entity representing a keyword associated with a quality check.
  *
- * <p>Each keyword is uniquely identified by a combination of the quality check hash and the keyword
+ * <p>Each keyword is uniquely identified by a combination of the quality check id and the keyword
  * text.
  */
 @Entity
@@ -20,9 +20,9 @@ import java.util.Objects;
 public class QualityCheckKeyword {
 
   @Id
-  @Column(name = "quality_check_hash")
+  @Column(name = "quality_check_id")
   @NotNull
-  private String qualityCheckHash;
+  private Long qualityCheckId;
 
   @Id
   @Column(name = "keyword", length = 250)
@@ -35,30 +35,30 @@ public class QualityCheckKeyword {
   /**
    * Creates a new quality check keyword.
    *
-   * @param qualityCheckHash the quality check hash
+   * @param qualityCheckId the quality check id
    * @param keyword the keyword text (max 250 characters)
    */
-  public QualityCheckKeyword(String qualityCheckHash, String keyword) {
-    this.qualityCheckHash = qualityCheckHash;
+  public QualityCheckKeyword(Long qualityCheckId, String keyword) {
+    this.qualityCheckId = qualityCheckId;
     this.keyword = keyword;
   }
 
   /**
-   * Gets the quality check hash.
+   * Gets the quality check id.
    *
-   * @return the quality check hash
+   * @return the quality check id
    */
-  public String getQualityCheckHash() {
-    return qualityCheckHash;
+  public Long getQualityCheckId() {
+    return qualityCheckId;
   }
 
   /**
-   * Sets the quality check hash.
+   * Sets the quality check id.
    *
-   * @param qualityCheckHash the quality check hash to set
+   * @param qualityCheckId the quality check id to set
    */
-  public void setQualityCheckHash(String qualityCheckHash) {
-    this.qualityCheckHash = qualityCheckHash;
+  public void setQualityCheckId(Long qualityCheckId) {
+    this.qualityCheckId = qualityCheckId;
   }
 
   /**
@@ -83,12 +83,12 @@ public class QualityCheckKeyword {
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
     QualityCheckKeyword that = (QualityCheckKeyword) o;
-    return Objects.equals(qualityCheckHash, that.qualityCheckHash)
+    return Objects.equals(qualityCheckId, that.qualityCheckId)
         && Objects.equals(keyword, that.keyword);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(qualityCheckHash, keyword);
+    return Objects.hash(qualityCheckId, keyword);
   }
 }
