@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.server.dataquality.domain.Category;
 import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheck;
+import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheckVersion;
 import eu.bbmri_eric.quality.server.dataquality.dto.KeywordsDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckUpdateDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckVersionCreateDTO;
@@ -98,6 +99,58 @@ class QualityCheckControllerTest {
         .perform(get(API_V1_QUALITY_CHECKS_ID, testQualityCheck.getId()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.hash").value(testQualityCheckHash));
+  }
+
+  @Test
+  @WithMockUser(roles = "HUMAN_USER")
+  void findById_shouldReturnEmptyVersionsWhenNoneExist() throws Exception {
+    mockMvc
+        .perform(get(API_V1_QUALITY_CHECKS_ID, testQualityCheck.getId()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.versions").isArray())
+        .andExpect(jsonPath("$.versions.length()").value(0));
+  }
+
+  @Test
+  @WithMockUser(roles = "HUMAN_USER")
+  void findById_shouldReturnVersionsWhenPresent() throws Exception {
+    String query = "SELECT COUNT(*) FROM patients";
+    testQualityCheck.addVersion(new QualityCheckVersion(testQualityCheck, 1, query));
+    qualityCheckRepository.save(testQualityCheck);
+    entityManager.flush();
+
+    mockMvc
+        .perform(get(API_V1_QUALITY_CHECKS_ID, testQualityCheck.getId()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.versions").isArray())
+        .andExpect(jsonPath("$.versions.length()").value(1))
+        .andExpect(jsonPath("$.versions[0].version").value(1))
+        .andExpect(jsonPath("$.versions[0].query").value(query))
+        .andExpect(jsonPath("$.versions[0].hash").value(hashOf(query)));
+  }
+
+  @Test
+  @WithMockUser(roles = "HUMAN_USER")
+  void findById_shouldReturnMultipleVersionsOrderedByVersionNumber() throws Exception {
+    testQualityCheck.addVersion(
+        new QualityCheckVersion(
+            testQualityCheck, 1, "SELECT COUNT(*) FROM patients WHERE gender = 'F'"));
+    qualityCheckRepository.save(testQualityCheck);
+    entityManager.flush();
+
+    testQualityCheck.addVersion(
+        new QualityCheckVersion(
+            testQualityCheck, 2, "SELECT COUNT(*) FROM patients WHERE gender = 'M'"));
+    qualityCheckRepository.save(testQualityCheck);
+    entityManager.flush();
+
+    mockMvc
+        .perform(get(API_V1_QUALITY_CHECKS_ID, testQualityCheck.getId()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.versions").isArray())
+        .andExpect(jsonPath("$.versions.length()").value(2))
+        .andExpect(jsonPath("$.versions[0].version").value(1))
+        .andExpect(jsonPath("$.versions[1].version").value(2));
   }
 
   @Test

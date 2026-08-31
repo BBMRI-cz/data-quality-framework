@@ -49,10 +49,7 @@ public class QualityCheck {
       fetch = jakarta.persistence.FetchType.LAZY)
   private final Set<QualityCheckKeyword> keywords = new HashSet<>();
 
-  @OneToMany(
-      mappedBy = "qualityCheck",
-      cascade = CascadeType.ALL,
-      orphanRemoval = true)
+  @OneToMany(mappedBy = "qualityCheck", cascade = CascadeType.ALL, orphanRemoval = true)
   private final Set<QualityCheckVersion> versions = new HashSet<>();
 
   /** Default constructor for JPA. */
