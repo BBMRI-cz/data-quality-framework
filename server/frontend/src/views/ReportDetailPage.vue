@@ -234,8 +234,11 @@
   };
 
   const navigateToCheckDetail = (result) => {
-    const url = router.resolve(`/quality-checks/${result.hash}`).href;
-    window.open(url, '_blank');
+    const check = qualityCheckMap.value.get(result.hash);
+    if (check?.id) {
+      const url = router.resolve(`/quality-checks/${check.id}`).href;
+      window.open(url, '_blank');
+    }
   };
 
   function getCheckIdKey(result) {

@@ -65,7 +65,7 @@ const routes = [
     meta: { requiresAuth: true, title: 'Quality Checks' },
   },
   {
-    path: '/quality-checks/:hash',
+    path: '/quality-checks/:id',
     name: 'QualityCheckDetail',
     component: QualityCheckDetailView,
     meta: { requiresAuth: true, title: 'Quality Check Detail' },

@@ -96,6 +96,7 @@
   } = useQualityChecksTable();
 
   const tableColumns = [
+    { key: 'id', label: 'ID' },
     { key: 'hash', label: 'Hash' },
     { key: 'name', label: 'Name' },
     { key: 'category', label: 'Category' },
@@ -104,7 +105,7 @@
   ];
 
   const viewCheckDetail = (check) => {
-    router.push(`/quality-checks/${check.hash}`);
+    router.push(`/quality-checks/${check.id}`);
   };
 
   onMounted(loadQualityChecks);

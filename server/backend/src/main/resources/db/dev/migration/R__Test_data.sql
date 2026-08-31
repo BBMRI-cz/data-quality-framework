@@ -39,6 +39,7 @@ INSERT INTO category (name, color_hex) VALUES
 -- NOTE: Result values represent the FRACTION of INVALID records (0.0 = perfect, 1.0 = all invalid)
 -- warning_threshold: if result% > warning_threshold, trigger warning
 -- error_threshold: if result% > error_threshold, trigger error
+-- The id column is BIGSERIAL and auto-generated. The hash is the unique business key.
 INSERT INTO quality_check (hash, name, description, registered_at, warning_threshold, error_threshold, category_id) VALUES
     ('unsupported-gender-check', 'Unsupported Gender Values', 'Percentage of patients with non-supported gender attribute values (not Male/Female/Other/Unknown)', '2024-01-15T10:00:00+00:00', 5.0, 15.0, 2),
     ('missing-birthdate-check', 'Missing Birth Date', 'Percentage of patients with missing or null birth date values', '2024-01-15T10:15:00+00:00', 3.0, 10.0, 1),
@@ -51,7 +52,7 @@ INSERT INTO quality_check (hash, name, description, registered_at, warning_thres
 
 -- Insert keywords for NLP-based search and filtering
 -- Keywords help match user queries to relevant quality checks
--- Format: quality_check_id (via hash subquery), keyword (max 250 chars)
+-- Format: quality_check_id (resolved from hash), keyword (max 250 chars)
 INSERT INTO quality_check_keyword (quality_check_id, keyword) VALUES
     -- Gender-related checks - for queries about gender, sex, female, male
     ((SELECT id FROM quality_check WHERE hash = 'unsupported-gender-check'), 'gender'),
@@ -119,7 +120,7 @@ INSERT INTO quality_check_keyword (quality_check_id, keyword) VALUES
     ((SELECT id FROM quality_check WHERE hash = 'invalid-coding-check'), 'medical code'),
     ((SELECT id FROM quality_check WHERE hash = 'invalid-coding-check'), 'diagnosis'),
     ((SELECT id FROM quality_check WHERE hash = 'invalid-coding-check'), 'C50'),
-    ('invalid-coding-check', 'condition');
+    ((SELECT id FROM quality_check WHERE hash = 'invalid-coding-check'), 'condition');
 
 -- Insert dummy reports for the past 30 days
 -- Some reports include total_patients and total_samples, others are NULL for backwards compatibility testing
@@ -155,7 +156,7 @@ INSERT INTO quality_check_result (report_id, quality_check_id, result) VALUES
     ('report-001', (SELECT id FROM quality_check WHERE hash = 'invalid-format-check'), 0.03),
     ('report-001', (SELECT id FROM quality_check WHERE hash = 'broken-reference-check'), 0.01),
     ('report-001', (SELECT id FROM quality_check WHERE hash = 'outlier-value-check'), 0.08),
-    ('report-001', 'invalid-coding-check', 0.02);
+    ('report-001', (SELECT id FROM quality_check WHERE hash = 'invalid-coding-check'), 0.02);
 
 -- Report 2 results (mixed quality - some warnings)
 INSERT INTO quality_check_result (report_id, quality_check_id, result) VALUES
@@ -166,7 +167,7 @@ INSERT INTO quality_check_result (report_id, quality_check_id, result) VALUES
     ('report-002', (SELECT id FROM quality_check WHERE hash = 'invalid-format-check'), 0.09),
     ('report-002', (SELECT id FROM quality_check WHERE hash = 'broken-reference-check'), 0.04),
     ('report-002', (SELECT id FROM quality_check WHERE hash = 'outlier-value-check'), 0.15),
-    ('report-002', 'invalid-coding-check', 0.06);
+    ('report-002', (SELECT id FROM quality_check WHERE hash = 'invalid-coding-check'), 0.06);
 
 -- Report 3 results (poor quality data - many errors above thresholds)
 INSERT INTO quality_check_result (report_id, quality_check_id, result) VALUES
@@ -177,7 +178,7 @@ INSERT INTO quality_check_result (report_id, quality_check_id, result) VALUES
     ('report-003', (SELECT id FROM quality_check WHERE hash = 'invalid-format-check'), 0.14),
     ('report-003', (SELECT id FROM quality_check WHERE hash = 'broken-reference-check'), 0.11),
     ('report-003', (SELECT id FROM quality_check WHERE hash = 'outlier-value-check'), 0.28),
-    ('report-003', 'invalid-coding-check', 0.13);
+    ('report-003', (SELECT id FROM quality_check WHERE hash = 'invalid-coding-check'), 0.13);
 
 -- Report 4 results (excellent quality - very low error rates)
 INSERT INTO quality_check_result (report_id, quality_check_id, result) VALUES
@@ -188,7 +189,7 @@ INSERT INTO quality_check_result (report_id, quality_check_id, result) VALUES
     ('report-004', (SELECT id FROM quality_check WHERE hash = 'invalid-format-check'), 0.01),
     ('report-004', (SELECT id FROM quality_check WHERE hash = 'broken-reference-check'), 0.0),
     ('report-004', (SELECT id FROM quality_check WHERE hash = 'outlier-value-check'), 0.05),
-    ('report-004', 'invalid-coding-check', 0.01);
+    ('report-004', (SELECT id FROM quality_check WHERE hash = 'invalid-coding-check'), 0.01);
 
 -- Report 5 results (average quality)
 INSERT INTO quality_check_result (report_id, quality_check_id, result) VALUES
@@ -199,7 +200,7 @@ INSERT INTO quality_check_result (report_id, quality_check_id, result) VALUES
     ('report-005', (SELECT id FROM quality_check WHERE hash = 'invalid-format-check'), 0.07),
     ('report-005', (SELECT id FROM quality_check WHERE hash = 'broken-reference-check'), 0.03),
     ('report-005', (SELECT id FROM quality_check WHERE hash = 'outlier-value-check'), 0.12),
-    ('report-005', 'invalid-coding-check', 0.05);
+    ('report-005', (SELECT id FROM quality_check WHERE hash = 'invalid-coding-check'), 0.05);
 
 -- Add more results for remaining reports with varying quality scores
 INSERT INTO quality_check_result (report_id, quality_check_id, result) VALUES
@@ -236,7 +237,7 @@ INSERT INTO quality_check_result (report_id, quality_check_id, result) VALUES
     ('report-010', (SELECT id FROM quality_check WHERE hash = 'invalid-format-check'), 0.02),
     ('report-010', (SELECT id FROM quality_check WHERE hash = 'broken-reference-check'), 0.01),
     ('report-010', (SELECT id FROM quality_check WHERE hash = 'outlier-value-check'), 0.06),
-    ('report-010', 'invalid-coding-check', 0.02);
+    ('report-010', (SELECT id FROM quality_check WHERE hash = 'invalid-coding-check'), 0.02);
 
 -- Add some recent reports with current timestamps for immediate testing
 INSERT INTO report (id, timestamp, agent_id, total_patients, total_samples) VALUES
@@ -264,7 +265,7 @@ INSERT INTO quality_check_result (report_id, quality_check_id, result) VALUES
     ('report-null-001', (SELECT id FROM quality_check WHERE hash = 'invalid-format-check'), NULL),
     ('report-null-001', (SELECT id FROM quality_check WHERE hash = 'broken-reference-check'), NULL),
     ('report-null-001', (SELECT id FROM quality_check WHERE hash = 'outlier-value-check'), NULL),
-    ('report-null-001', 'invalid-coding-check', NULL);
+    ('report-null-001', (SELECT id FROM quality_check WHERE hash = 'invalid-coding-check'), NULL);
 
 -- Insert agent interactions
 -- Registration interactions (when agents first joined)
