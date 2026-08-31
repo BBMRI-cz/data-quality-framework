@@ -63,6 +63,11 @@ class ApiService {
     return response.data;
   }
 
+  async getQualityCheck(id) {
+    const response = await api.get(`/v1/quality-checks/${id}`);
+    return response.data;
+  }
+
   async getReports(params = {}) {
     const response = await api.get('/v1/reports', { params });
     return response.data;
@@ -95,6 +100,11 @@ class ApiService {
 
   async setKeywords(id, keywords) {
     const response = await api.put(`/v1/quality-checks/${id}/keywords`, { keywords });
+    return response.data;
+  }
+
+  async createQualityCheckVersion(id, query) {
+    const response = await api.post(`/v1/quality-checks/${id}/versions`, { query });
     return response.data;
   }
 

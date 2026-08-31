@@ -213,6 +213,69 @@
             </div>
           </div>
 
+          <!-- Versions Card -->
+          <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom py-3">
+              <h5 class="mb-0 fw-semibold">
+                <i class="bi bi-clock-history text-primary me-2"></i>
+                Versions
+              </h5>
+            </div>
+            <div class="card-body p-4">
+              <div v-if="sortedVersions.length === 0" class="text-muted">
+                <i class="bi bi-inbox me-1"></i>No versions yet
+              </div>
+              <ul v-else class="list-group list-group-flush">
+                <li
+                  v-for="version in sortedVersions"
+                  :key="version.id"
+                  class="list-group-item px-0"
+                >
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span class="badge bg-primary">v{{ version.version }}</span>
+                    <span class="text-muted small font-monospace">{{ version.hash }}</span>
+                  </div>
+                  <pre
+                    v-if="version.query"
+                    class="mt-2 mb-0 p-2 bg-light rounded font-monospace small"
+                  >{{ version.query }}</pre>
+                  <div v-else class="mt-2 text-muted small">
+                    <i class="bi bi-dash-circle me-1"></i>No query body stored
+                  </div>
+                </li>
+              </ul>
+
+              <hr class="my-4" />
+
+              <h6 class="fw-semibold mb-3">
+                <i class="bi bi-plus-circle me-1"></i>
+                Add New Version
+              </h6>
+              <div class="mb-3">
+                <textarea
+                  v-model="newVersionQuery"
+                  class="form-control font-monospace"
+                  rows="4"
+                  placeholder="Enter the query for the new version..."
+                  :disabled="savingVersion"
+                ></textarea>
+              </div>
+              <button
+                class="btn btn-primary"
+                :disabled="!newVersionQuery.trim() || savingVersion"
+                @click="addVersion"
+              >
+                <span
+                  v-if="savingVersion"
+                  class="spinner-border spinner-border-sm me-2"
+                  role="status"
+                ></span>
+                <i v-else class="bi bi-plus-lg me-2"></i>
+                Add Version
+              </button>
+            </div>
+          </div>
+
           <!-- Action Buttons -->
           <div class="action-buttons d-flex gap-3 justify-content-center">
             <button
@@ -285,6 +348,14 @@
   const keywords = ref([]);
   const newKeyword = ref('');
 
+  const versions = ref([]);
+  const newVersionQuery = ref('');
+  const savingVersion = ref(false);
+
+  const sortedVersions = computed(() =>
+    [...versions.value].sort((a, b) => a.version - b.version)
+  );
+
   const hasChanges = computed(() => {
     if (!qualityCheck.value) return false;
     const originalKeywords = qualityCheck.value.keywords || [];
@@ -312,20 +383,18 @@
     error.value = null;
 
     try {
-      const [checksData, categoriesData] = await Promise.all([
-        apiService.getQualityChecks(),
+      const [detailedData, categoriesData] = await Promise.all([
+        apiService.getQualityCheck(checkId.value),
         apiService.getCategories(),
       ]);
 
-      const checks =
-        checksData._embedded?.qualityChecks || (Array.isArray(checksData) ? checksData : []);
       categories.value =
         categoriesData._embedded?.categories ||
         (Array.isArray(categoriesData) ? categoriesData : []);
 
-      qualityCheck.value = checks.find((check) => check.id === Number(checkId.value));
+      qualityCheck.value = detailedData;
 
-      if (!qualityCheck.value) {
+      if (!qualityCheck.value || !qualityCheck.value.id) {
         error.value = 'Quality check not found';
         return;
       }
@@ -339,6 +408,7 @@
 
       // Initialize keywords
       keywords.value = qualityCheck.value.keywords ? [...qualityCheck.value.keywords] : [];
+      versions.value = qualityCheck.value.versions ? [...qualityCheck.value.versions] : [];
     } catch (err) {
       error.value = err.message || 'Failed to load quality check';
       console.error('Error loading quality check:', err);
@@ -410,6 +480,27 @@
     if (keyword && !keywords.value.includes(keyword)) {
       keywords.value.push(keyword);
       newKeyword.value = '';
+    }
+  };
+
+  const addVersion = async () => {
+    const query = newVersionQuery.value.trim();
+    if (!query || savingVersion.value) return;
+
+    savingVersion.value = true;
+    error.value = null;
+
+    try {
+      const created = await apiService.createQualityCheckVersion(checkId.value, query);
+      versions.value.push(created);
+      newVersionQuery.value = '';
+      notificationService.success('Version Added', `Version ${created.version} created successfully`);
+    } catch (err) {
+      error.value = err.message || 'Failed to add version';
+      console.error('Error adding version:', err);
+      notificationService.error('Add Version Failed', error.value);
+    } finally {
+      savingVersion.value = false;
     }
   };
 
