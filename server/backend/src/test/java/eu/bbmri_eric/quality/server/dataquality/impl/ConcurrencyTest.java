@@ -110,9 +110,9 @@ class ConcurrencyTest {
     long initialQualityCheckCount = qualityCheckRepository.count();
     log.info("Initial quality check count: {}", initialQualityCheckCount);
 
-    qualityCheckRepository.save(new QualityCheck("test-hash-1", "QC 1", "Description 1", 0.8, 0.5));
-    qualityCheckRepository.save(new QualityCheck("test-hash-2", "QC 2", "Description 2", 0.7, 0.4));
-    qualityCheckRepository.save(new QualityCheck("test-hash-3", "QC 3", "Description 3", 0.9, 0.6));
+    qualityCheckRepository.save(new QualityCheck("QC 1", "Description 1", 0.8, 0.5));
+    qualityCheckRepository.save(new QualityCheck("QC 2", "Description 2", 0.7, 0.4));
+    qualityCheckRepository.save(new QualityCheck("QC 3", "Description 3", 0.9, 0.6));
 
     long afterSetupCount = qualityCheckRepository.count();
     log.info(

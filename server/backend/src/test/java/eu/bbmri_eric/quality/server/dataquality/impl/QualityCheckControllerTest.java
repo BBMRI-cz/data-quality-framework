@@ -17,7 +17,6 @@ import jakarta.persistence.EntityManager;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Set;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,21 +40,14 @@ class QualityCheckControllerTest {
   @Autowired private CategoryRepository categoryRepository;
   @Autowired private EntityManager entityManager;
 
-  private String testQualityCheckHash;
   private QualityCheck testQualityCheck;
   private Category testCategory;
 
   @BeforeEach
   void setUp() {
 
-    testQualityCheckHash = "test-hash-" + UUID.randomUUID().toString().substring(0, 8);
     testQualityCheck =
-        new QualityCheck(
-            testQualityCheckHash,
-            "Test Quality Check",
-            "A test quality check for unit tests",
-            0.8,
-            0.5);
+        new QualityCheck("Test Quality Check", "A test quality check for unit tests", 0.8, 0.5);
     testQualityCheck = qualityCheckRepository.save(testQualityCheck);
 
     testQualityCheck.setKeywords(Set.of("gender", "sex", "male"));
@@ -70,7 +62,6 @@ class QualityCheckControllerTest {
     mockMvc
         .perform(get(API_V1_QUALITY_CHECKS_ID, testQualityCheck.getId()))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.hash").value(testQualityCheckHash))
         .andExpect(jsonPath("$.name").value("Test Quality Check"))
         .andExpect(jsonPath("$.description").value("A test quality check for unit tests"))
         .andExpect(jsonPath("$.warningThreshold").value(0.8))
@@ -97,8 +88,7 @@ class QualityCheckControllerTest {
   void findById_shouldReturnQualityCheckForAdmin() throws Exception {
     mockMvc
         .perform(get(API_V1_QUALITY_CHECKS_ID, testQualityCheck.getId()))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.hash").value(testQualityCheckHash));
+        .andExpect(status().isOk());
   }
 
   @Test
@@ -169,8 +159,7 @@ class QualityCheckControllerTest {
   @WithMockUser(roles = "HUMAN_USER")
   void findAll_shouldReturnAllQualityChecksWithHateoasLinks() throws Exception {
     QualityCheck secondQualityCheck =
-        new QualityCheck(
-            "second-hash", "Second Quality Check", "Another test quality check", 0.9, 0.6);
+        new QualityCheck("Second Quality Check", "Another test quality check", 0.9, 0.6);
     qualityCheckRepository.save(secondQualityCheck);
 
     mockMvc
@@ -179,9 +168,9 @@ class QualityCheckControllerTest {
         .andExpect(jsonPath("$._embedded.qualityChecks").isArray())
         .andExpect(jsonPath("$._embedded.qualityChecks.length()").value(2))
         .andExpect(
-            jsonPath("$._embedded.qualityChecks[?(@.hash == '" + testQualityCheckHash + "')]")
-                .exists())
-        .andExpect(jsonPath("$._embedded.qualityChecks[?(@.hash == 'second-hash')]").exists())
+            jsonPath("$._embedded.qualityChecks[?(@.name == 'Test Quality Check')]").exists())
+        .andExpect(
+            jsonPath("$._embedded.qualityChecks[?(@.name == 'Second Quality Check')]").exists())
         .andExpect(jsonPath("$._links.self.href").value("http://localhost/api/v1/quality-checks"))
         .andExpect(jsonPath("$._embedded.qualityChecks[0]._links.self.href").exists())
         .andExpect(jsonPath("$._embedded.qualityChecks[1]._links.self.href").exists());
@@ -210,7 +199,6 @@ class QualityCheckControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateDTO)))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.hash").value(testQualityCheckHash))
         .andExpect(jsonPath("$.name").value("Updated Quality Check"))
         .andExpect(jsonPath("$.description").value("Updated description for the quality check"))
         .andExpect(jsonPath("$.warningThreshold").value(0.75))
@@ -309,7 +297,6 @@ class QualityCheckControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateDTO)))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.hash").value(testQualityCheckHash))
         .andExpect(jsonPath("$.category.id").value(testCategory.getId()))
         .andExpect(jsonPath("$.category.name").value("Data Completeness"))
         .andExpect(jsonPath("$.category.colorHex").value("#FF5733"));
@@ -330,7 +317,6 @@ class QualityCheckControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateDTO)))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.hash").value(testQualityCheckHash))
         .andExpect(jsonPath("$.category").doesNotExist());
   }
 
@@ -369,7 +355,6 @@ class QualityCheckControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateDTO)))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.hash").value(testQualityCheckHash))
         .andExpect(jsonPath("$.category.id").value(newCategory.getId()))
         .andExpect(jsonPath("$.category.name").value("Data Accuracy"))
         .andExpect(jsonPath("$.category.colorHex").value("#00FF00"));
@@ -398,7 +383,6 @@ class QualityCheckControllerTest {
     mockMvc
         .perform(get(API_V1_QUALITY_CHECKS_ID, testQualityCheck.getId()))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.hash").value(testQualityCheckHash))
         .andExpect(jsonPath("$.category").doesNotExist());
   }
 
@@ -417,8 +401,7 @@ class QualityCheckControllerTest {
   @WithMockUser(roles = "ADMIN")
   void findAll_shouldReturnKeywordsForAllQualityChecks() throws Exception {
     QualityCheck secondQualityCheck =
-        new QualityCheck(
-            "second-hash", "Second Quality Check", "Another test quality check", 0.9, 0.6);
+        new QualityCheck("Second Quality Check", "Another test quality check", 0.9, 0.6);
     secondQualityCheck.setKeywords(Set.of("diagnosis", "C50"));
     qualityCheckRepository.save(testQualityCheck);
     qualityCheckRepository.save(secondQualityCheck);
@@ -446,7 +429,6 @@ class QualityCheckControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(keywordsDTO)))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.hash").value(testQualityCheckHash))
         .andExpect(jsonPath("$.keywords").isArray())
         .andExpect(jsonPath("$.keywords.length()").value(3))
         .andExpect(jsonPath("$.keywords", hasItems("patient data", "diagnosis", "treatment")))
@@ -470,7 +452,6 @@ class QualityCheckControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(keywordsDTO)))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.hash").value(testQualityCheckHash))
         .andExpect(jsonPath("$.keywords").isArray())
         .andExpect(jsonPath("$.keywords.length()").value(0));
   }

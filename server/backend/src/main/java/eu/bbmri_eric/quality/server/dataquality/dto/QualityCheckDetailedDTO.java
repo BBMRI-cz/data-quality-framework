@@ -8,7 +8,6 @@ public class QualityCheckDetailedDTO extends QualityCheckDTO {
   private List<QualityCheckVersionDTO> versions;
 
   public QualityCheckDetailedDTO(
-      String hash,
       String name,
       String description,
       Instant registeredAt,
@@ -16,7 +15,7 @@ public class QualityCheckDetailedDTO extends QualityCheckDTO {
       double errorThreshold,
       List<String> keywords,
       List<QualityCheckVersionDTO> versions) {
-    super(hash, name, description, registeredAt, warningThreshold, errorThreshold, keywords);
+    super(name, description, registeredAt, warningThreshold, errorThreshold, keywords);
     this.versions = versions;
   }
 

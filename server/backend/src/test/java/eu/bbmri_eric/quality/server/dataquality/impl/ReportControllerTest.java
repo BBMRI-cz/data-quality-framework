@@ -353,14 +353,13 @@ class ReportControllerTest {
                 .content(objectMapper.writeValueAsString(createRequest)))
         .andExpect(status().isCreated());
 
-    assertTrue(qualityCheckRepository.findByHash(newHash).isPresent());
+    assertTrue(qualityCheckRepository.findByVersions_Hash(newHash).isPresent());
   }
 
   @Test
   @WithUserDetails("admin")
   void create_shouldReuseExistingQualityCheck() throws Exception {
-    QualityCheck existingCheck =
-        new QualityCheck("existing-hash", "Test Check", "Test Description");
+    QualityCheck existingCheck = new QualityCheck("Test Check", "Test Description");
     existingCheck.addVersion(new QualityCheckVersion(existingCheck, 1, "", "existing-hash"));
     qualityCheckRepository.save(existingCheck);
 
@@ -407,8 +406,8 @@ class ReportControllerTest {
   @Test
   @WithUserDetails("admin")
   void findById_shouldReturnReportWithResults() throws Exception {
-    QualityCheck check1 = new QualityCheck("check1", "Check 1", "Description 1");
-    QualityCheck check2 = new QualityCheck("check2", "Check 2", "Description 2");
+    QualityCheck check1 = new QualityCheck("Check 1", "Description 1");
+    QualityCheck check2 = new QualityCheck("Check 2", "Description 2");
     QualityCheckVersion version1 = new QualityCheckVersion(check1, 1, "", "check1");
     QualityCheckVersion version2 = new QualityCheckVersion(check2, 1, "", "check2");
     check1.addVersion(version1);
@@ -457,8 +456,7 @@ class ReportControllerTest {
   @WithUserDetails("admin")
   void create_shouldNotUpdateExistingQualityCheckName() throws Exception {
     // Create a quality check with an initial name
-    QualityCheck existingCheck =
-        new QualityCheck("existing-check", "Original Name", "Original Description");
+    QualityCheck existingCheck = new QualityCheck("Original Name", "Original Description");
     existingCheck.addVersion(new QualityCheckVersion(existingCheck, 1, "", "existing-check"));
     qualityCheckRepository.save(existingCheck);
 
@@ -478,7 +476,8 @@ class ReportControllerTest {
         .andExpect(jsonPath("$.results[0].result").value(0.85));
 
     // Verify the quality check name was not updated in the database
-    QualityCheck savedCheck = qualityCheckRepository.findByHash("existing-check").orElseThrow();
+    QualityCheck savedCheck =
+        qualityCheckRepository.findByVersions_Hash("existing-check").orElseThrow();
     assertEquals("Original Name", savedCheck.getName());
     assertNotEquals("Updated Name", savedCheck.getName());
   }
@@ -487,7 +486,7 @@ class ReportControllerTest {
   @WithUserDetails("admin")
   void create_shouldIdentifyQualityCheckByVersionHashAndReturnSpecificVersionHash()
       throws Exception {
-    QualityCheck check = new QualityCheck("multi-check", "Multi Version Check", "Description");
+    QualityCheck check = new QualityCheck("Multi Version Check", "Description");
     check.addVersion(new QualityCheckVersion(check, 1, "SELECT 1", "version-1-hash"));
     qualityCheckRepository.save(check);
     check.addVersion(new QualityCheckVersion(check, 2, "SELECT 2", "version-2-hash"));
@@ -682,9 +681,9 @@ class ReportControllerTest {
         .andExpect(jsonPath("$.results[?(@.hash == 'consistency-check')].result").value(0.85))
         .andExpect(jsonPath("$.results[?(@.hash == 'accuracy-check')].result").value(0.92));
 
-    assertTrue(qualityCheckRepository.findByHash("completeness-check").isPresent());
-    assertTrue(qualityCheckRepository.findByHash("consistency-check").isPresent());
-    assertTrue(qualityCheckRepository.findByHash("accuracy-check").isPresent());
+    assertTrue(qualityCheckRepository.findByVersions_Hash("completeness-check").isPresent());
+    assertTrue(qualityCheckRepository.findByVersions_Hash("consistency-check").isPresent());
+    assertTrue(qualityCheckRepository.findByVersions_Hash("accuracy-check").isPresent());
   }
 
   @Test

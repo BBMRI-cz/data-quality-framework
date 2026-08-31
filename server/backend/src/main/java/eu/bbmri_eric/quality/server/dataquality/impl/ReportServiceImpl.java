@@ -133,7 +133,7 @@ class ReportServiceImpl implements ReportService {
             .findByVersions_Hash(hash)
             .orElseGet(
                 () -> {
-                  QualityCheck newCheck = new QualityCheck(hash, name, "");
+                  QualityCheck newCheck = new QualityCheck(name, "");
                   QualityCheckVersion newVersion = new QualityCheckVersion(newCheck, 1, "", hash);
                   newCheck.addVersion(newVersion);
                   return qualityCheckRepository.save(newCheck);
