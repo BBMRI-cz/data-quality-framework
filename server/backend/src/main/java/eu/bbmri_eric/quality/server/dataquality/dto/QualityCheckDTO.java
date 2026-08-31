@@ -11,6 +11,12 @@ import org.springframework.hateoas.server.core.Relation;
 public class QualityCheckDTO {
 
   @Schema(
+      description = "Numeric id of the quality check",
+      example = "1",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private Long id;
+
+  @Schema(
       description = "Hash identifying the quality check",
       example = "abc123def456",
       requiredMode = Schema.RequiredMode.REQUIRED)
@@ -71,6 +77,14 @@ public class QualityCheckDTO {
     this.warningThreshold = warningThreshold;
     this.errorThreshold = errorThreshold;
     this.keywords = keywords;
+  }
+
+  public Long getId() {
+    return id;
+  }
+
+  public void setId(Long id) {
+    this.id = id;
   }
 
   public String getHash() {

@@ -18,8 +18,8 @@ public class QualityCheckResult {
   private Report report;
 
   @ManyToOne(fetch = FetchType.EAGER)
-  @MapsId("qualityCheckHash")
-  @JoinColumn(name = "quality_check_hash")
+  @MapsId("qualityCheckId")
+  @JoinColumn(name = "quality_check_id")
   private QualityCheck qualityCheck;
 
   private Double result;
@@ -38,7 +38,7 @@ public class QualityCheckResult {
     this.report = report;
     this.qualityCheck = qualityCheck;
     this.result = result;
-    this.id = new QualityCheckResultId(report.getId(), qualityCheck.getHash());
+    this.id = new QualityCheckResultId(report.getId(), qualityCheck.getId());
   }
 
   /**

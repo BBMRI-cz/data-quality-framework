@@ -1,7 +1,10 @@
 package eu.bbmri_eric.quality.server.dataquality.domain;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -15,11 +18,19 @@ import java.util.Set;
 /**
  * Entity representing a quality check definition.
  *
- * <p>Each quality check is uniquely identified by a hash and contains metadata about the check.
+ * <p>Each quality check is uniquely identified by a numeric id and carries a unique hash as its
+ * business key.
  */
 @Entity
 public class QualityCheck {
-  @Id private String hash;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
+
+  @Column(name = "hash", nullable = false, unique = true)
+  @NotNull
+  private String hash;
+
   private final Instant registeredAt = Instant.now();
   @NotNull private String name;
   private String description;
@@ -32,7 +43,7 @@ public class QualityCheck {
   private Category category;
 
   @OneToMany(
-      mappedBy = "qualityCheckHash",
+      mappedBy = "qualityCheckId",
       cascade = CascadeType.ALL,
       orphanRemoval = true,
       fetch = jakarta.persistence.FetchType.LAZY)
@@ -89,6 +100,15 @@ public class QualityCheck {
     this.warningThreshold = warningThreshold;
     this.errorThreshold = errorThreshold;
     this.category = category;
+  }
+
+  /**
+   * Gets the numeric id of this quality check.
+   *
+   * @return the id
+   */
+  public Long getId() {
+    return id;
   }
 
   /**
@@ -216,7 +236,7 @@ public class QualityCheck {
   public void setKeywords(Set<String> newKeywords) {
     keywords.clear();
     for (String keyword : newKeywords) {
-      QualityCheckKeyword qualityCheckKeyword = new QualityCheckKeyword(this.hash, keyword);
+      QualityCheckKeyword qualityCheckKeyword = new QualityCheckKeyword(this.id, keyword);
       keywords.add(qualityCheckKeyword);
     }
   }
@@ -225,11 +245,11 @@ public class QualityCheck {
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
     QualityCheck that = (QualityCheck) o;
-    return Objects.equals(hash, that.hash);
+    return Objects.equals(id, that.id);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(hash);
+    return Objects.hash(id);
   }
 }

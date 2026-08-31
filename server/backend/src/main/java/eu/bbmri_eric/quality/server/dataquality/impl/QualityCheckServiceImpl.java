@@ -32,7 +32,7 @@ class QualityCheckServiceImpl implements QualityCheckService {
 
   @Override
   @Transactional(readOnly = true)
-  public QualityCheckDTO findById(String id) {
+  public QualityCheckDTO findById(Long id) {
     QualityCheck qualityCheck =
         qualityCheckRepository
             .findById(id)
@@ -50,7 +50,7 @@ class QualityCheckServiceImpl implements QualityCheckService {
   }
 
   @Override
-  public QualityCheckDTO update(String id, QualityCheckUpdateDTO updateDTO) {
+  public QualityCheckDTO update(Long id, QualityCheckUpdateDTO updateDTO) {
     QualityCheck qualityCheck =
         qualityCheckRepository
             .findById(id)
@@ -80,7 +80,7 @@ class QualityCheckServiceImpl implements QualityCheckService {
   }
 
   @Override
-  public QualityCheckDTO setKeywords(String id, Set<String> keywords) {
+  public QualityCheckDTO setKeywords(Long id, Set<String> keywords) {
     QualityCheck qualityCheck =
         qualityCheckRepository
             .findById(id)

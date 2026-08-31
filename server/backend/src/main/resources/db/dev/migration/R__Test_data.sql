@@ -51,74 +51,74 @@ INSERT INTO quality_check (hash, name, description, registered_at, warning_thres
 
 -- Insert keywords for NLP-based search and filtering
 -- Keywords help match user queries to relevant quality checks
--- Format: quality_check_hash, keyword (max 250 chars)
-INSERT INTO quality_check_keyword (quality_check_hash, keyword) VALUES
+-- Format: quality_check_id (via hash subquery), keyword (max 250 chars)
+INSERT INTO quality_check_keyword (quality_check_id, keyword) VALUES
     -- Gender-related checks - for queries about gender, sex, female, male
-    ('unsupported-gender-check', 'gender'),
-    ('unsupported-gender-check', 'sex'),
-    ('unsupported-gender-check', 'female'),
-    ('unsupported-gender-check', 'male'),
-    ('unsupported-gender-check', 'gender identity'),
-    ('unsupported-gender-check', 'patient demographics'),
-    ('unsupported-gender-check', 'C12.9'),
+    ((SELECT id FROM quality_check WHERE hash = 'unsupported-gender-check'), 'gender'),
+    ((SELECT id FROM quality_check WHERE hash = 'unsupported-gender-check'), 'sex'),
+    ((SELECT id FROM quality_check WHERE hash = 'unsupported-gender-check'), 'female'),
+    ((SELECT id FROM quality_check WHERE hash = 'unsupported-gender-check'), 'male'),
+    ((SELECT id FROM quality_check WHERE hash = 'unsupported-gender-check'), 'gender identity'),
+    ((SELECT id FROM quality_check WHERE hash = 'unsupported-gender-check'), 'patient demographics'),
+    ((SELECT id FROM quality_check WHERE hash = 'unsupported-gender-check'), 'C12.9'),
 
     -- Birth date / age-related checks
-    ('missing-birthdate-check', 'birth date'),
-    ('missing-birthdate-check', 'birthdate'),
-    ('missing-birthdate-check', 'age'),
-    ('missing-birthdate-check', 'date of birth'),
-    ('missing-birthdate-check', 'missing data'),
-    ('missing-birthdate-check', 'completeness'),
+    ((SELECT id FROM quality_check WHERE hash = 'missing-birthdate-check'), 'birth date'),
+    ((SELECT id FROM quality_check WHERE hash = 'missing-birthdate-check'), 'birthdate'),
+    ((SELECT id FROM quality_check WHERE hash = 'missing-birthdate-check'), 'age'),
+    ((SELECT id FROM quality_check WHERE hash = 'missing-birthdate-check'), 'date of birth'),
+    ((SELECT id FROM quality_check WHERE hash = 'missing-birthdate-check'), 'missing data'),
+    ((SELECT id FROM quality_check WHERE hash = 'missing-birthdate-check'), 'completeness'),
 
     -- Date-related checks
-    ('invalid-date-check', 'date'),
-    ('invalid-date-check', 'time'),
-    ('invalid-date-check', 'future date'),
-    ('invalid-date-check', 'past date'),
-    ('invalid-date-check', 'invalid date'),
-    ('invalid-date-check', 'logically invalid'),
+    ((SELECT id FROM quality_check WHERE hash = 'invalid-date-check'), 'date'),
+    ((SELECT id FROM quality_check WHERE hash = 'invalid-date-check'), 'time'),
+    ((SELECT id FROM quality_check WHERE hash = 'invalid-date-check'), 'future date'),
+    ((SELECT id FROM quality_check WHERE hash = 'invalid-date-check'), 'past date'),
+    ((SELECT id FROM quality_check WHERE hash = 'invalid-date-check'), 'invalid date'),
+    ((SELECT id FROM quality_check WHERE hash = 'invalid-date-check'), 'logically invalid'),
 
     -- Patient duplicate checks
-    ('duplicate-patient-check', 'duplicate'),
-    ('duplicate-patient-check', 'patient'),
-    ('duplicate-patient-check', 'same patient'),
-    ('duplicate-patient-check', 'merge'),
-    ('duplicate-patient-check', 'de duplication'),
+    ((SELECT id FROM quality_check WHERE hash = 'duplicate-patient-check'), 'duplicate'),
+    ((SELECT id FROM quality_check WHERE hash = 'duplicate-patient-check'), 'patient'),
+    ((SELECT id FROM quality_check WHERE hash = 'duplicate-patient-check'), 'same patient'),
+    ((SELECT id FROM quality_check WHERE hash = 'duplicate-patient-check'), 'merge'),
+    ((SELECT id FROM quality_check WHERE hash = 'duplicate-patient-check'), 'de duplication'),
 
     -- Format validation checks
-    ('invalid-format-check', 'format'),
-    ('invalid-format-check', 'postal code'),
-    ('invalid-format-check', 'zip code'),
-    ('invalid-format-check', 'phone'),
-    ('invalid-format-check', 'email'),
-    ('invalid-format-check', 'ID format'),
-    ('invalid-format-check', 'pattern'),
+    ((SELECT id FROM quality_check WHERE hash = 'invalid-format-check'), 'format'),
+    ((SELECT id FROM quality_check WHERE hash = 'invalid-format-check'), 'postal code'),
+    ((SELECT id FROM quality_check WHERE hash = 'invalid-format-check'), 'zip code'),
+    ((SELECT id FROM quality_check WHERE hash = 'invalid-format-check'), 'phone'),
+    ((SELECT id FROM quality_check WHERE hash = 'invalid-format-check'), 'email'),
+    ((SELECT id FROM quality_check WHERE hash = 'invalid-format-check'), 'ID format'),
+    ((SELECT id FROM quality_check WHERE hash = 'invalid-format-check'), 'pattern'),
 
     -- Reference integrity checks
-    ('broken-reference-check', 'reference'),
-    ('broken-reference-check', 'foreign key'),
-    ('broken-reference-check', 'link'),
-    ('broken-reference-check', 'relationship'),
-    ('broken-reference-check', 'orphan'),
-    ('broken-reference-check', 'integrity'),
+    ((SELECT id FROM quality_check WHERE hash = 'broken-reference-check'), 'reference'),
+    ((SELECT id FROM quality_check WHERE hash = 'broken-reference-check'), 'foreign key'),
+    ((SELECT id FROM quality_check WHERE hash = 'broken-reference-check'), 'link'),
+    ((SELECT id FROM quality_check WHERE hash = 'broken-reference-check'), 'relationship'),
+    ((SELECT id FROM quality_check WHERE hash = 'broken-reference-check'), 'orphan'),
+    ((SELECT id FROM quality_check WHERE hash = 'broken-reference-check'), 'integrity'),
 
     -- Outlier/value checks
-    ('outlier-value-check', 'outlier'),
-    ('outlier-value-check', 'statistical'),
-    ('outlier-value-check', 'value'),
-    ('outlier-value-check', 'age > 150'),
-    ('outlier-value-check', 'negative value'),
-    ('outlier-value-check', 'abnormal value'),
-    ('outlier-value-check', 'extreme value'),
+    ((SELECT id FROM quality_check WHERE hash = 'outlier-value-check'), 'outlier'),
+    ((SELECT id FROM quality_check WHERE hash = 'outlier-value-check'), 'statistical'),
+    ((SELECT id FROM quality_check WHERE hash = 'outlier-value-check'), 'value'),
+    ((SELECT id FROM quality_check WHERE hash = 'outlier-value-check'), 'age > 150'),
+    ((SELECT id FROM quality_check WHERE hash = 'outlier-value-check'), 'negative value'),
+    ((SELECT id FROM quality_check WHERE hash = 'outlier-value-check'), 'abnormal value'),
+    ((SELECT id FROM quality_check WHERE hash = 'outlier-value-check'), 'extreme value'),
 
     -- Medical coding checks
-    ('invalid-coding-check', 'coding'),
-    ('invalid-coding-check', 'ICD-10'),
-    ('invalid-coding-check', 'SNOMED'),
-    ('invalid-coding-check', 'SNOMED CT'),
-    ('invalid-coding-check', 'medical code'),
-    ('invalid-coding-check', 'diagnosis'),
-    ('invalid-coding-check', 'C50'),
+    ((SELECT id FROM quality_check WHERE hash = 'invalid-coding-check'), 'coding'),
+    ((SELECT id FROM quality_check WHERE hash = 'invalid-coding-check'), 'ICD-10'),
+    ((SELECT id FROM quality_check WHERE hash = 'invalid-coding-check'), 'SNOMED'),
+    ((SELECT id FROM quality_check WHERE hash = 'invalid-coding-check'), 'SNOMED CT'),
+    ((SELECT id FROM quality_check WHERE hash = 'invalid-coding-check'), 'medical code'),
+    ((SELECT id FROM quality_check WHERE hash = 'invalid-coding-check'), 'diagnosis'),
+    ((SELECT id FROM quality_check WHERE hash = 'invalid-coding-check'), 'C50'),
     ('invalid-coding-check', 'condition');
 
 -- Insert dummy reports for the past 30 days
@@ -147,95 +147,95 @@ INSERT INTO report (id, timestamp, agent_id, total_patients, total_samples) VALU
 
 -- Insert quality check results for the reports
 -- Report 1 results (good quality data - low error rates)
-INSERT INTO quality_check_result (report_id, quality_check_hash, result) VALUES
-    ('report-001', 'unsupported-gender-check', 0.02),
-    ('report-001', 'missing-birthdate-check', 0.01),
-    ('report-001', 'invalid-date-check', 0.01),
-    ('report-001', 'duplicate-patient-check', 0.0),
-    ('report-001', 'invalid-format-check', 0.03),
-    ('report-001', 'broken-reference-check', 0.01),
-    ('report-001', 'outlier-value-check', 0.08),
+INSERT INTO quality_check_result (report_id, quality_check_id, result) VALUES
+    ('report-001', (SELECT id FROM quality_check WHERE hash = 'unsupported-gender-check'), 0.02),
+    ('report-001', (SELECT id FROM quality_check WHERE hash = 'missing-birthdate-check'), 0.01),
+    ('report-001', (SELECT id FROM quality_check WHERE hash = 'invalid-date-check'), 0.01),
+    ('report-001', (SELECT id FROM quality_check WHERE hash = 'duplicate-patient-check'), 0.0),
+    ('report-001', (SELECT id FROM quality_check WHERE hash = 'invalid-format-check'), 0.03),
+    ('report-001', (SELECT id FROM quality_check WHERE hash = 'broken-reference-check'), 0.01),
+    ('report-001', (SELECT id FROM quality_check WHERE hash = 'outlier-value-check'), 0.08),
     ('report-001', 'invalid-coding-check', 0.02);
 
 -- Report 2 results (mixed quality - some warnings)
-INSERT INTO quality_check_result (report_id, quality_check_hash, result) VALUES
-    ('report-002', 'unsupported-gender-check', 0.07),
-    ('report-002', 'missing-birthdate-check', 0.05),
-    ('report-002', 'invalid-date-check', 0.03),
-    ('report-002', 'duplicate-patient-check', 0.02),
-    ('report-002', 'invalid-format-check', 0.09),
-    ('report-002', 'broken-reference-check', 0.04),
-    ('report-002', 'outlier-value-check', 0.15),
+INSERT INTO quality_check_result (report_id, quality_check_id, result) VALUES
+    ('report-002', (SELECT id FROM quality_check WHERE hash = 'unsupported-gender-check'), 0.07),
+    ('report-002', (SELECT id FROM quality_check WHERE hash = 'missing-birthdate-check'), 0.05),
+    ('report-002', (SELECT id FROM quality_check WHERE hash = 'invalid-date-check'), 0.03),
+    ('report-002', (SELECT id FROM quality_check WHERE hash = 'duplicate-patient-check'), 0.02),
+    ('report-002', (SELECT id FROM quality_check WHERE hash = 'invalid-format-check'), 0.09),
+    ('report-002', (SELECT id FROM quality_check WHERE hash = 'broken-reference-check'), 0.04),
+    ('report-002', (SELECT id FROM quality_check WHERE hash = 'outlier-value-check'), 0.15),
     ('report-002', 'invalid-coding-check', 0.06);
 
 -- Report 3 results (poor quality data - many errors above thresholds)
-INSERT INTO quality_check_result (report_id, quality_check_hash, result) VALUES
-    ('report-003', 'unsupported-gender-check', 0.18),
-    ('report-003', 'missing-birthdate-check', 0.12),
-    ('report-003', 'invalid-date-check', 0.09),
-    ('report-003', 'duplicate-patient-check', 0.06),
-    ('report-003', 'invalid-format-check', 0.14),
-    ('report-003', 'broken-reference-check', 0.11),
-    ('report-003', 'outlier-value-check', 0.28),
+INSERT INTO quality_check_result (report_id, quality_check_id, result) VALUES
+    ('report-003', (SELECT id FROM quality_check WHERE hash = 'unsupported-gender-check'), 0.18),
+    ('report-003', (SELECT id FROM quality_check WHERE hash = 'missing-birthdate-check'), 0.12),
+    ('report-003', (SELECT id FROM quality_check WHERE hash = 'invalid-date-check'), 0.09),
+    ('report-003', (SELECT id FROM quality_check WHERE hash = 'duplicate-patient-check'), 0.06),
+    ('report-003', (SELECT id FROM quality_check WHERE hash = 'invalid-format-check'), 0.14),
+    ('report-003', (SELECT id FROM quality_check WHERE hash = 'broken-reference-check'), 0.11),
+    ('report-003', (SELECT id FROM quality_check WHERE hash = 'outlier-value-check'), 0.28),
     ('report-003', 'invalid-coding-check', 0.13);
 
 -- Report 4 results (excellent quality - very low error rates)
-INSERT INTO quality_check_result (report_id, quality_check_hash, result) VALUES
-    ('report-004', 'unsupported-gender-check', 0.0),
-    ('report-004', 'missing-birthdate-check', 0.01),
-    ('report-004', 'invalid-date-check', 0.0),
-    ('report-004', 'duplicate-patient-check', 0.0),
-    ('report-004', 'invalid-format-check', 0.01),
-    ('report-004', 'broken-reference-check', 0.0),
-    ('report-004', 'outlier-value-check', 0.05),
+INSERT INTO quality_check_result (report_id, quality_check_id, result) VALUES
+    ('report-004', (SELECT id FROM quality_check WHERE hash = 'unsupported-gender-check'), 0.0),
+    ('report-004', (SELECT id FROM quality_check WHERE hash = 'missing-birthdate-check'), 0.01),
+    ('report-004', (SELECT id FROM quality_check WHERE hash = 'invalid-date-check'), 0.0),
+    ('report-004', (SELECT id FROM quality_check WHERE hash = 'duplicate-patient-check'), 0.0),
+    ('report-004', (SELECT id FROM quality_check WHERE hash = 'invalid-format-check'), 0.01),
+    ('report-004', (SELECT id FROM quality_check WHERE hash = 'broken-reference-check'), 0.0),
+    ('report-004', (SELECT id FROM quality_check WHERE hash = 'outlier-value-check'), 0.05),
     ('report-004', 'invalid-coding-check', 0.01);
 
 -- Report 5 results (average quality)
-INSERT INTO quality_check_result (report_id, quality_check_hash, result) VALUES
-    ('report-005', 'unsupported-gender-check', 0.06),
-    ('report-005', 'missing-birthdate-check', 0.04),
-    ('report-005', 'invalid-date-check', 0.03),
-    ('report-005', 'duplicate-patient-check', 0.02),
-    ('report-005', 'invalid-format-check', 0.07),
-    ('report-005', 'broken-reference-check', 0.03),
-    ('report-005', 'outlier-value-check', 0.12),
+INSERT INTO quality_check_result (report_id, quality_check_id, result) VALUES
+    ('report-005', (SELECT id FROM quality_check WHERE hash = 'unsupported-gender-check'), 0.06),
+    ('report-005', (SELECT id FROM quality_check WHERE hash = 'missing-birthdate-check'), 0.04),
+    ('report-005', (SELECT id FROM quality_check WHERE hash = 'invalid-date-check'), 0.03),
+    ('report-005', (SELECT id FROM quality_check WHERE hash = 'duplicate-patient-check'), 0.02),
+    ('report-005', (SELECT id FROM quality_check WHERE hash = 'invalid-format-check'), 0.07),
+    ('report-005', (SELECT id FROM quality_check WHERE hash = 'broken-reference-check'), 0.03),
+    ('report-005', (SELECT id FROM quality_check WHERE hash = 'outlier-value-check'), 0.12),
     ('report-005', 'invalid-coding-check', 0.05);
 
 -- Add more results for remaining reports with varying quality scores
-INSERT INTO quality_check_result (report_id, quality_check_hash, result) VALUES
+INSERT INTO quality_check_result (report_id, quality_check_id, result) VALUES
     -- Report 6 (good quality)
-    ('report-006', 'unsupported-gender-check', 0.02),
-    ('report-006', 'missing-birthdate-check', 0.02),
-    ('report-006', 'invalid-date-check', 0.01),
-    ('report-006', 'duplicate-patient-check', 0.01),
+    ('report-006', (SELECT id FROM quality_check WHERE hash = 'unsupported-gender-check'), 0.02),
+    ('report-006', (SELECT id FROM quality_check WHERE hash = 'missing-birthdate-check'), 0.02),
+    ('report-006', (SELECT id FROM quality_check WHERE hash = 'invalid-date-check'), 0.01),
+    ('report-006', (SELECT id FROM quality_check WHERE hash = 'duplicate-patient-check'), 0.01),
 
     -- Report 7 (poor quality - warnings)
-    ('report-007', 'unsupported-gender-check', 0.11),
-    ('report-007', 'missing-birthdate-check', 0.08),
-    ('report-007', 'invalid-format-check', 0.10),
-    ('report-007', 'outlier-value-check', 0.18),
+    ('report-007', (SELECT id FROM quality_check WHERE hash = 'unsupported-gender-check'), 0.11),
+    ('report-007', (SELECT id FROM quality_check WHERE hash = 'missing-birthdate-check'), 0.08),
+    ('report-007', (SELECT id FROM quality_check WHERE hash = 'invalid-format-check'), 0.10),
+    ('report-007', (SELECT id FROM quality_check WHERE hash = 'outlier-value-check'), 0.18),
 
     -- Report 8 (good quality)
-    ('report-008', 'unsupported-gender-check', 0.03),
-    ('report-008', 'missing-birthdate-check', 0.02),
-    ('report-008', 'invalid-date-check', 0.02),
-    ('report-008', 'duplicate-patient-check', 0.01),
-    ('report-008', 'broken-reference-check', 0.02),
+    ('report-008', (SELECT id FROM quality_check WHERE hash = 'unsupported-gender-check'), 0.03),
+    ('report-008', (SELECT id FROM quality_check WHERE hash = 'missing-birthdate-check'), 0.02),
+    ('report-008', (SELECT id FROM quality_check WHERE hash = 'invalid-date-check'), 0.02),
+    ('report-008', (SELECT id FROM quality_check WHERE hash = 'duplicate-patient-check'), 0.01),
+    ('report-008', (SELECT id FROM quality_check WHERE hash = 'broken-reference-check'), 0.02),
 
     -- Report 9 (very poor quality - many errors)
-    ('report-009', 'unsupported-gender-check', 0.19),
-    ('report-009', 'missing-birthdate-check', 0.15),
-    ('report-009', 'invalid-format-check', 0.16),
-    ('report-009', 'invalid-coding-check', 0.14),
+    ('report-009', (SELECT id FROM quality_check WHERE hash = 'unsupported-gender-check'), 0.19),
+    ('report-009', (SELECT id FROM quality_check WHERE hash = 'missing-birthdate-check'), 0.15),
+    ('report-009', (SELECT id FROM quality_check WHERE hash = 'invalid-format-check'), 0.16),
+    ('report-009', (SELECT id FROM quality_check WHERE hash = 'invalid-coding-check'), 0.14),
 
     -- Report 10 (excellent quality)
-    ('report-010', 'unsupported-gender-check', 0.01),
-    ('report-010', 'missing-birthdate-check', 0.01),
-    ('report-010', 'invalid-date-check', 0.01),
-    ('report-010', 'duplicate-patient-check', 0.0),
-    ('report-010', 'invalid-format-check', 0.02),
-    ('report-010', 'broken-reference-check', 0.01),
-    ('report-010', 'outlier-value-check', 0.06),
+    ('report-010', (SELECT id FROM quality_check WHERE hash = 'unsupported-gender-check'), 0.01),
+    ('report-010', (SELECT id FROM quality_check WHERE hash = 'missing-birthdate-check'), 0.01),
+    ('report-010', (SELECT id FROM quality_check WHERE hash = 'invalid-date-check'), 0.01),
+    ('report-010', (SELECT id FROM quality_check WHERE hash = 'duplicate-patient-check'), 0.0),
+    ('report-010', (SELECT id FROM quality_check WHERE hash = 'invalid-format-check'), 0.02),
+    ('report-010', (SELECT id FROM quality_check WHERE hash = 'broken-reference-check'), 0.01),
+    ('report-010', (SELECT id FROM quality_check WHERE hash = 'outlier-value-check'), 0.06),
     ('report-010', 'invalid-coding-check', 0.02);
 
 -- Add some recent reports with current timestamps for immediate testing
@@ -246,24 +246,24 @@ INSERT INTO report (id, timestamp, agent_id, total_patients, total_samples) VALU
     ('report-null-001', NOW() - INTERVAL '15 minutes', 'agent-003', NULL, NULL);
 
 -- Add results for current reports
-INSERT INTO quality_check_result (report_id, quality_check_hash, result) VALUES
-    ('report-current-1', 'unsupported-gender-check', 0.04),
-    ('report-current-1', 'missing-birthdate-check', 0.02),
-    ('report-current-1', 'duplicate-patient-check', 0.01),
-    ('report-current-2', 'unsupported-gender-check', 0.09),
-    ('report-current-2', 'invalid-format-check', 0.11),
-    ('report-current-2', 'invalid-coding-check', 0.08),
-    ('report-current-3', 'unsupported-gender-check', 0.01),
-    ('report-current-3', 'missing-birthdate-check', 0.02),
-    ('report-current-3', 'invalid-date-check', 0.02),
-    ('report-current-3', 'broken-reference-check', 0.01),
-    ('report-null-001', 'unsupported-gender-check', NULL),
-    ('report-null-001', 'missing-birthdate-check', NULL),
-    ('report-null-001', 'invalid-date-check', NULL),
-    ('report-null-001', 'duplicate-patient-check', NULL),
-    ('report-null-001', 'invalid-format-check', NULL),
-    ('report-null-001', 'broken-reference-check', NULL),
-    ('report-null-001', 'outlier-value-check', NULL),
+INSERT INTO quality_check_result (report_id, quality_check_id, result) VALUES
+    ('report-current-1', (SELECT id FROM quality_check WHERE hash = 'unsupported-gender-check'), 0.04),
+    ('report-current-1', (SELECT id FROM quality_check WHERE hash = 'missing-birthdate-check'), 0.02),
+    ('report-current-1', (SELECT id FROM quality_check WHERE hash = 'duplicate-patient-check'), 0.01),
+    ('report-current-2', (SELECT id FROM quality_check WHERE hash = 'unsupported-gender-check'), 0.09),
+    ('report-current-2', (SELECT id FROM quality_check WHERE hash = 'invalid-format-check'), 0.11),
+    ('report-current-2', (SELECT id FROM quality_check WHERE hash = 'invalid-coding-check'), 0.08),
+    ('report-current-3', (SELECT id FROM quality_check WHERE hash = 'unsupported-gender-check'), 0.01),
+    ('report-current-3', (SELECT id FROM quality_check WHERE hash = 'missing-birthdate-check'), 0.02),
+    ('report-current-3', (SELECT id FROM quality_check WHERE hash = 'invalid-date-check'), 0.02),
+    ('report-current-3', (SELECT id FROM quality_check WHERE hash = 'broken-reference-check'), 0.01),
+    ('report-null-001', (SELECT id FROM quality_check WHERE hash = 'unsupported-gender-check'), NULL),
+    ('report-null-001', (SELECT id FROM quality_check WHERE hash = 'missing-birthdate-check'), NULL),
+    ('report-null-001', (SELECT id FROM quality_check WHERE hash = 'invalid-date-check'), NULL),
+    ('report-null-001', (SELECT id FROM quality_check WHERE hash = 'duplicate-patient-check'), NULL),
+    ('report-null-001', (SELECT id FROM quality_check WHERE hash = 'invalid-format-check'), NULL),
+    ('report-null-001', (SELECT id FROM quality_check WHERE hash = 'broken-reference-check'), NULL),
+    ('report-null-001', (SELECT id FROM quality_check WHERE hash = 'outlier-value-check'), NULL),
     ('report-null-001', 'invalid-coding-check', NULL);
 
 -- Insert agent interactions

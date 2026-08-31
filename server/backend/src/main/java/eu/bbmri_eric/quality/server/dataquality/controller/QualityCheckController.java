@@ -32,9 +32,9 @@ class QualityCheckController {
   @GetMapping("/quality-checks/{id}")
   @Operation(
       summary = "Get quality check by ID",
-      description = "Retrieves a specific quality check by its unique identifier (hash)")
+      description = "Retrieves a specific quality check by its unique identifier (id)")
   @SecurityRequirement(name = "bearerAuth")
-  public ResponseEntity<EntityModel<QualityCheckDTO>> findById(@PathVariable String id) {
+  public ResponseEntity<EntityModel<QualityCheckDTO>> findById(@PathVariable Long id) {
     QualityCheckDTO qualityCheck = qualityCheckService.findById(id);
     EntityModel<QualityCheckDTO> qualityCheckModel = linkBuilder.toModel(qualityCheck);
     return ResponseEntity.ok(qualityCheckModel);
@@ -58,7 +58,7 @@ class QualityCheckController {
       description = "Updates an existing quality check definition")
   @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<EntityModel<QualityCheckDTO>> update(
-      @PathVariable String id, @Valid @RequestBody QualityCheckUpdateDTO updateDTO) {
+      @PathVariable Long id, @Valid @RequestBody QualityCheckUpdateDTO updateDTO) {
     QualityCheckDTO updatedQualityCheck = qualityCheckService.update(id, updateDTO);
     EntityModel<QualityCheckDTO> qualityCheckModel = linkBuilder.toModel(updatedQualityCheck);
     return ResponseEntity.ok(qualityCheckModel);
@@ -70,7 +70,7 @@ class QualityCheckController {
       description = "Sets the keywords for a quality check, replacing all existing keywords")
   @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<EntityModel<QualityCheckDTO>> setKeywords(
-      @PathVariable String id, @Valid @RequestBody KeywordsDTO keywordsDTO) {
+      @PathVariable Long id, @Valid @RequestBody KeywordsDTO keywordsDTO) {
     QualityCheckDTO updatedQualityCheck =
         qualityCheckService.setKeywords(id, keywordsDTO.getKeywords());
     EntityModel<QualityCheckDTO> qualityCheckModel = linkBuilder.toModel(updatedQualityCheck);

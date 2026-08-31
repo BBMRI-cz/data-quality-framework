@@ -122,7 +122,7 @@ class ReportServiceImpl implements ReportService {
     for (QualityCheckResultDTO resultDTO : createRequest.getResults()) {
       QualityCheck qualityCheck =
           qualityCheckRepository
-              .findById(resultDTO.getHash())
+              .findByHash(resultDTO.getHash())
               .orElseGet(
                   () -> {
                     QualityCheck newCheck =
