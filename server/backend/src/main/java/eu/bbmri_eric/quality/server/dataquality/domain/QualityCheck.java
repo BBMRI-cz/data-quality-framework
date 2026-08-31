@@ -245,11 +245,11 @@ public class QualityCheck {
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
     QualityCheck that = (QualityCheck) o;
-    return Objects.equals(id, that.id);
+    return Objects.equals(hash, that.hash);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id);
+    return Objects.hash(hash);
   }
 }
