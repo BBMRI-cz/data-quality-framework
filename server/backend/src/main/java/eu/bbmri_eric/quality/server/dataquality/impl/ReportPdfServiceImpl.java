@@ -152,7 +152,7 @@ class ReportPdfServiceImpl implements ReportPdfService {
       items.add(
           new ResultItem(
               check.getName(),
-              check.getHash(),
+              r.getVersion().getHash(),
               resultDisplay,
               status,
               formatPercent(check.getWarningThreshold()),

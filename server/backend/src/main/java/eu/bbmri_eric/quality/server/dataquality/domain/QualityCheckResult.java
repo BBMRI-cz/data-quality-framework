@@ -22,6 +22,11 @@ public class QualityCheckResult {
   @JoinColumn(name = "quality_check_id")
   private QualityCheck qualityCheck;
 
+  @ManyToOne(fetch = FetchType.EAGER)
+  @MapsId("versionId")
+  @JoinColumn(name = "version_id")
+  private QualityCheckVersion version;
+
   private Double result;
 
   /** Default constructor for JPA. */
@@ -32,13 +37,16 @@ public class QualityCheckResult {
    *
    * @param report the report this result belongs to
    * @param qualityCheck the quality check that was executed
+   * @param version the version of the check that was executed
    * @param result the numeric result of the check
    */
-  QualityCheckResult(Report report, QualityCheck qualityCheck, Double result) {
+  QualityCheckResult(
+      Report report, QualityCheck qualityCheck, QualityCheckVersion version, Double result) {
     this.report = report;
     this.qualityCheck = qualityCheck;
+    this.version = version;
     this.result = result;
-    this.id = new QualityCheckResultId(report.getId(), qualityCheck.getId());
+    this.id = new QualityCheckResultId(report.getId(), qualityCheck.getId(), version.getId());
   }
 
   /**
@@ -66,6 +74,15 @@ public class QualityCheckResult {
    */
   public QualityCheck getQualityCheck() {
     return qualityCheck;
+  }
+
+  /**
+   * Gets the version of the quality check that was executed.
+   *
+   * @return the version
+   */
+  public QualityCheckVersion getVersion() {
+    return version;
   }
 
   /**

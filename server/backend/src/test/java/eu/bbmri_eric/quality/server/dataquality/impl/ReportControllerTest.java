@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.server.dataquality.domain.Agent;
 import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheck;
+import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheckVersion;
 import eu.bbmri_eric.quality.server.dataquality.domain.Report;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckResultDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.ReportCreateRequest;
@@ -360,6 +361,7 @@ class ReportControllerTest {
   void create_shouldReuseExistingQualityCheck() throws Exception {
     QualityCheck existingCheck =
         new QualityCheck("existing-hash", "Test Check", "Test Description");
+    existingCheck.addVersion(new QualityCheckVersion(existingCheck, 1, "", "existing-hash"));
     qualityCheckRepository.save(existingCheck);
 
     List<QualityCheckResultDTO> results = List.of(new QualityCheckResultDTO("existing-hash", 0.92));
@@ -407,12 +409,16 @@ class ReportControllerTest {
   void findById_shouldReturnReportWithResults() throws Exception {
     QualityCheck check1 = new QualityCheck("check1", "Check 1", "Description 1");
     QualityCheck check2 = new QualityCheck("check2", "Check 2", "Description 2");
+    QualityCheckVersion version1 = new QualityCheckVersion(check1, 1, "", "check1");
+    QualityCheckVersion version2 = new QualityCheckVersion(check2, 1, "", "check2");
+    check1.addVersion(version1);
+    check2.addVersion(version2);
     qualityCheckRepository.save(check1);
     qualityCheckRepository.save(check2);
 
     Report report = new Report();
-    report.addQualityCheckResult(check1, 0.95);
-    report.addQualityCheckResult(check2, 0.87);
+    report.addQualityCheckResult(version1, 0.95);
+    report.addQualityCheckResult(version2, 0.87);
     reportRepository.save(report);
 
     mockMvc
@@ -453,6 +459,7 @@ class ReportControllerTest {
     // Create a quality check with an initial name
     QualityCheck existingCheck =
         new QualityCheck("existing-check", "Original Name", "Original Description");
+    existingCheck.addVersion(new QualityCheckVersion(existingCheck, 1, "", "existing-check"));
     qualityCheckRepository.save(existingCheck);
 
     // Attempt to create a report with a different name for the same hash
@@ -477,8 +484,48 @@ class ReportControllerTest {
   }
 
   @Test
-  @Disabled
   @WithUserDetails("admin")
+  void create_shouldIdentifyQualityCheckByVersionHashAndReturnSpecificVersionHash()
+      throws Exception {
+    QualityCheck check = new QualityCheck("multi-check", "Multi Version Check", "Description");
+    check.addVersion(new QualityCheckVersion(check, 1, "SELECT 1", "version-1-hash"));
+    qualityCheckRepository.save(check);
+    check.addVersion(new QualityCheckVersion(check, 2, "SELECT 2", "version-2-hash"));
+    qualityCheckRepository.save(check);
+
+    List<QualityCheckResultDTO> results =
+        List.of(
+            new QualityCheckResultDTO("version-1-hash", 0.5),
+            new QualityCheckResultDTO("version-2-hash", 0.7));
+    ReportCreateRequest createRequest = new ReportCreateRequest(results);
+
+    String responseContent =
+        mockMvc
+            .perform(
+                post(API_V1_AGENTS_REPORTS, testAgentId)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(createRequest)))
+            .andExpect(status().isCreated())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    String reportId = objectMapper.readTree(responseContent).get("id").asText();
+
+    mockMvc
+        .perform(get(API_V1_REPORTS_ID, reportId))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.results.length()").value(2))
+        .andExpect(
+            jsonPath("$.results[?(@.hash == 'version-1-hash')].name").value("Multi Version Check"))
+        .andExpect(
+            jsonPath("$.results[?(@.hash == 'version-2-hash')].name").value("Multi Version Check"))
+        .andExpect(jsonPath("$.results[?(@.hash == 'version-1-hash')].result").value(0.5))
+        .andExpect(jsonPath("$.results[?(@.hash == 'version-2-hash')].result").value(0.7));
+  }
+
+  @Test
+  @Disabled
   void create_shouldValidateHashFormat() throws Exception {
     List<QualityCheckResultDTO> results =
         List.of(new QualityCheckResultDTO("invalid hash with spaces", 0.95));

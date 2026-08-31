@@ -57,7 +57,7 @@ public class MappingConfig {
         new PropertyMap<QualityCheckResult, QualityCheckResultDTO>() {
           @Override
           protected void configure() {
-            map(source.getQualityCheck().getHash(), destination.getHash());
+            map(source.getVersion().getHash(), destination.getHash());
             map(source.getQualityCheck().getName(), destination.getName());
             map(source.getResult(), destination.getResult());
           }
