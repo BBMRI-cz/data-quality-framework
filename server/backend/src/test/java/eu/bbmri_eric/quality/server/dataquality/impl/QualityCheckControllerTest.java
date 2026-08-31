@@ -10,8 +10,11 @@ import eu.bbmri_eric.quality.server.dataquality.domain.Category;
 import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.server.dataquality.dto.KeywordsDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckUpdateDTO;
+import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckVersionCreateDTO;
 import eu.bbmri_eric.quality.server.util.IntegrationTest;
 import jakarta.persistence.EntityManager;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +31,8 @@ class QualityCheckControllerTest {
 
   public static final String API_V1_QUALITY_CHECKS = "/api/v1/quality-checks";
   public static final String API_V1_QUALITY_CHECKS_ID = "/api/v1/quality-checks/{id}";
+  public static final String API_V1_QUALITY_CHECKS_VERSIONS =
+      "/api/v1/quality-checks/{id}/versions";
 
   @Autowired private MockMvc mockMvc;
   @Autowired private ObjectMapper objectMapper;
@@ -472,5 +477,196 @@ class QualityCheckControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(keywordsDTO)))
         .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void createVersion_shouldCreateVersionWithHashAndAutoIncrementVersion() throws Exception {
+    String query = "SELECT COUNT(*) FROM patients WHERE gender = 'F'";
+    QualityCheckVersionCreateDTO createDTO = new QualityCheckVersionCreateDTO(query, null);
+
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDTO)))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.version").value(1))
+        .andExpect(jsonPath("$.query").value(query))
+        .andExpect(jsonPath("$.hash").value(hashOf(query)))
+        .andExpect(
+            jsonPath("$._links.quality-check-versions.href")
+                .value(
+                    "http://localhost/api/v1/quality-checks/"
+                        + testQualityCheck.getId()
+                        + "/versions"))
+        .andExpect(
+            jsonPath("$._links.quality-check.href")
+                .value("http://localhost/api/v1/quality-checks/" + testQualityCheck.getId()));
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void createVersion_shouldIncrementVersionWhenMultipleVersionsCreated() throws Exception {
+    String firstQuery = "SELECT COUNT(*) FROM patients WHERE gender = 'F'";
+    String secondQuery = "SELECT COUNT(*) FROM patients WHERE gender = 'M'";
+    QualityCheckVersionCreateDTO firstDTO = new QualityCheckVersionCreateDTO(firstQuery, null);
+    QualityCheckVersionCreateDTO secondDTO = new QualityCheckVersionCreateDTO(secondQuery, null);
+
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(firstDTO)))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.version").value(1))
+        .andExpect(jsonPath("$.hash").value(hashOf(firstQuery)));
+
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(secondDTO)))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.version").value(2))
+        .andExpect(jsonPath("$.hash").value(hashOf(secondQuery)));
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void createVersion_shouldAcceptExplicitVersionNumber() throws Exception {
+    String query = "SELECT COUNT(*) FROM patients WHERE gender = 'F'";
+    QualityCheckVersionCreateDTO createDTO = new QualityCheckVersionCreateDTO(query, 7);
+
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDTO)))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.version").value(7))
+        .andExpect(jsonPath("$.hash").value(hashOf(query)));
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void createVersion_shouldReturnNotFoundWhenQualityCheckDoesNotExist() throws Exception {
+    QualityCheckVersionCreateDTO createDTO = new QualityCheckVersionCreateDTO("SELECT 1", null);
+
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS_VERSIONS, 99999L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDTO)))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void createVersion_shouldReturnBadRequestForBlankQuery() throws Exception {
+    QualityCheckVersionCreateDTO createDTO = new QualityCheckVersionCreateDTO(" ", null);
+
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDTO)))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @WithMockUser(roles = "HUMAN_USER")
+  void createVersion_shouldReturnForbiddenForNonAdminUser() throws Exception {
+    QualityCheckVersionCreateDTO createDTO = new QualityCheckVersionCreateDTO("SELECT 1", null);
+
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDTO)))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
+  void createVersion_shouldReturnUnauthorizedWhenNotAuthenticated() throws Exception {
+    QualityCheckVersionCreateDTO createDTO = new QualityCheckVersionCreateDTO("SELECT 1", null);
+
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDTO)))
+        .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void findVersions_shouldReturnAllVersionsOrderedByVersionNumber() throws Exception {
+    QualityCheckVersionCreateDTO firstDTO =
+        new QualityCheckVersionCreateDTO("SELECT COUNT(*) FROM patients WHERE gender = 'F'", null);
+    QualityCheckVersionCreateDTO secondDTO =
+        new QualityCheckVersionCreateDTO("SELECT COUNT(*) FROM patients WHERE gender = 'M'", null);
+
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(firstDTO)))
+        .andExpect(status().isCreated());
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(secondDTO)))
+        .andExpect(status().isCreated());
+
+    mockMvc
+        .perform(get(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$._embedded.qualityCheckVersions.length()").value(2))
+        .andExpect(jsonPath("$._embedded.qualityCheckVersions[0].version").value(1))
+        .andExpect(jsonPath("$._embedded.qualityCheckVersions[1].version").value(2))
+        .andExpect(
+            jsonPath("$._links.self.href")
+                .value(
+                    "http://localhost/api/v1/quality-checks/"
+                        + testQualityCheck.getId()
+                        + "/versions"));
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void findVersions_shouldReturnEmptyCollectionWhenNoVersionsExist() throws Exception {
+    mockMvc
+        .perform(get(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId()))
+        .andExpect(status().isOk())
+        .andExpect(
+            jsonPath("$._links.self.href")
+                .value(
+                    "http://localhost/api/v1/quality-checks/"
+                        + testQualityCheck.getId()
+                        + "/versions"));
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void findVersions_shouldReturnNotFoundWhenQualityCheckDoesNotExist() throws Exception {
+    mockMvc.perform(get(API_V1_QUALITY_CHECKS_VERSIONS, 99999L)).andExpect(status().isNotFound());
+  }
+
+  private static String hashOf(String query) {
+    try {
+      MessageDigest digest = MessageDigest.getInstance("SHA-256");
+      byte[] hash = digest.digest(query.getBytes(StandardCharsets.UTF_8));
+      StringBuilder hexString = new StringBuilder();
+      for (byte b : hash) {
+        String hex = Integer.toHexString(0xff & b);
+        if (hex.length() == 1) hexString.append('0');
+        hexString.append(hex);
+      }
+      return hexString.toString();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 }

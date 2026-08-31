@@ -50,6 +50,31 @@ INSERT INTO quality_check (hash, name, description, registered_at, warning_thres
     ('outlier-value-check', 'Statistical Outlier Values', 'Percentage of numerical values that are statistical outliers (e.g., age > 150, negative measurements)', '2024-01-15T11:30:00+00:00', 10.0, 25.0, NULL),
     ('invalid-coding-check', 'Invalid Medical Codes', 'Percentage of records with invalid or non-standard medical codes (ICD-10, SNOMED CT)', '2024-01-15T11:45:00+00:00', 3.0, 10.0, 2);
 
+-- Insert quality check versions
+-- Each quality check gets an initial (v1) version. Some versions carry a real query body, while
+-- others (whose original query is no longer available) have an empty query body to model legacy checks.
+-- The version hash reuses the quality check's business-key hash so the two stay aligned.
+INSERT INTO quality_check_version (quality_check_id, version, query, hash) VALUES
+    ((SELECT id FROM quality_check WHERE hash = 'unsupported-gender-check'), 1,
+     'SELECT COUNT(*) AS total, SUM(CASE WHEN gender NOT IN (''Male'', ''Female'', ''Other'', ''Unknown'') THEN 1 ELSE 0 END) AS invalid FROM patients;',
+     'unsupported-gender-check'),
+    ((SELECT id FROM quality_check WHERE hash = 'missing-birthdate-check'), 1,
+     'SELECT COUNT(*) AS total, SUM(CASE WHEN birthdate IS NULL THEN 1 ELSE 0 END) AS invalid FROM patients;',
+     'missing-birthdate-check'),
+    ((SELECT id FROM quality_check WHERE hash = 'invalid-date-check'), 1,
+     'SELECT COUNT(*) AS total, SUM(CASE WHEN birthdate > CURRENT_DATE OR (death_date IS NOT NULL AND death_date < birthdate) THEN 1 ELSE 0 END) AS invalid FROM patients;',
+     'invalid-date-check'),
+    ((SELECT id FROM quality_check WHERE hash = 'duplicate-patient-check'), 1,
+     'SELECT COUNT(*) AS total, COUNT(*) - COUNT(DISTINCT mrn) AS invalid FROM patients;',
+     'duplicate-patient-check'),
+    -- Legacy checks without a stored query body
+    ((SELECT id FROM quality_check WHERE hash = 'invalid-format-check'), 1, '', 'invalid-format-check'),
+    ((SELECT id FROM quality_check WHERE hash = 'broken-reference-check'), 1, '', 'broken-reference-check'),
+    ((SELECT id FROM quality_check WHERE hash = 'outlier-value-check'), 1, '', 'outlier-value-check'),
+    ((SELECT id FROM quality_check WHERE hash = 'invalid-coding-check'), 1,
+     'SELECT COUNT(*) AS total, SUM(CASE WHEN icd10 NOT ~ ''^[A-Z][0-9]{2}(\\.[0-9]+)?$'' THEN 1 ELSE 0 END) AS invalid FROM diagnoses;',
+     'invalid-coding-check');
+
 -- Insert keywords for NLP-based search and filtering
 -- Keywords help match user queries to relevant quality checks
 -- Format: quality_check_id (resolved from hash), keyword (max 250 chars)

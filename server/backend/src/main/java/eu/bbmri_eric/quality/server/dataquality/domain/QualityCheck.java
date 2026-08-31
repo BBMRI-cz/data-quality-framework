@@ -49,6 +49,12 @@ public class QualityCheck {
       fetch = jakarta.persistence.FetchType.LAZY)
   private final Set<QualityCheckKeyword> keywords = new HashSet<>();
 
+  @OneToMany(
+      mappedBy = "qualityCheck",
+      cascade = CascadeType.ALL,
+      orphanRemoval = true)
+  private final Set<QualityCheckVersion> versions = new HashSet<>();
+
   /** Default constructor for JPA. */
   protected QualityCheck() {}
 
@@ -239,6 +245,25 @@ public class QualityCheck {
       QualityCheckKeyword qualityCheckKeyword = new QualityCheckKeyword(this.id, keyword);
       keywords.add(qualityCheckKeyword);
     }
+  }
+
+  /**
+   * Gets the versions of this quality check (lazy-loaded).
+   *
+   * @return the set of versions
+   */
+  public Set<QualityCheckVersion> getVersions() {
+    return versions;
+  }
+
+  /**
+   * Adds a new version to this quality check, establishing the back-reference from the version.
+   *
+   * @param version the version to add
+   */
+  public void addVersion(QualityCheckVersion version) {
+    version.setQualityCheck(this);
+    versions.add(version);
   }
 
   @Override

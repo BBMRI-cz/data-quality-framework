@@ -4,8 +4,13 @@ import eu.bbmri_eric.quality.server.common.EntityNotFoundException;
 import eu.bbmri_eric.quality.server.dataquality.QualityCheckService;
 import eu.bbmri_eric.quality.server.dataquality.domain.Category;
 import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheck;
+import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheckVersion;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckDTO;
+import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckDetailedDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckUpdateDTO;
+import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckVersionCreateDTO;
+import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckVersionDTO;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import org.modelmapper.ModelMapper;
@@ -32,13 +37,13 @@ class QualityCheckServiceImpl implements QualityCheckService {
 
   @Override
   @Transactional(readOnly = true)
-  public QualityCheckDTO findById(Long id) {
+  public QualityCheckDetailedDTO findById(Long id) {
     QualityCheck qualityCheck =
         qualityCheckRepository
             .findById(id)
             .orElseThrow(
                 () -> new EntityNotFoundException("Quality check not found with ID: " + id));
-    return modelMapper.map(qualityCheck, QualityCheckDTO.class);
+    return modelMapper.map(qualityCheck, QualityCheckDetailedDTO.class);
   }
 
   @Override
@@ -89,5 +94,45 @@ class QualityCheckServiceImpl implements QualityCheckService {
 
     qualityCheck.setKeywords(keywords);
     return modelMapper.map(qualityCheckRepository.save(qualityCheck), QualityCheckDTO.class);
+  }
+
+  @Override
+  public QualityCheckVersionDTO createVersion(Long id, QualityCheckVersionCreateDTO createDTO) {
+    QualityCheck qualityCheck =
+        qualityCheckRepository
+            .findById(id)
+            .orElseThrow(
+                () -> new EntityNotFoundException("Quality check not found with ID: " + id));
+
+    int version = resolveVersion(createDTO.getVersion(), qualityCheck);
+    QualityCheckVersion qualityCheckVersion =
+        new QualityCheckVersion(qualityCheck, version, createDTO.getQuery());
+    qualityCheck.addVersion(qualityCheckVersion);
+    qualityCheckRepository.save(qualityCheck);
+    return modelMapper.map(qualityCheckVersion, QualityCheckVersionDTO.class);
+  }
+
+  private int resolveVersion(Integer requestedVersion, QualityCheck qualityCheck) {
+    return requestedVersion != null
+        ? requestedVersion
+        : qualityCheck.getVersions().stream()
+                .map(QualityCheckVersion::getVersion)
+                .max(Comparator.naturalOrder())
+                .orElse(0)
+            + 1;
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<QualityCheckVersionDTO> findVersions(Long id) {
+    QualityCheck qualityCheck =
+        qualityCheckRepository
+            .findById(id)
+            .orElseThrow(
+                () -> new EntityNotFoundException("Quality check not found with ID: " + id));
+    return qualityCheck.getVersions().stream()
+        .sorted(Comparator.comparingInt(QualityCheckVersion::getVersion))
+        .map(version -> modelMapper.map(version, QualityCheckVersionDTO.class))
+        .toList();
   }
 }

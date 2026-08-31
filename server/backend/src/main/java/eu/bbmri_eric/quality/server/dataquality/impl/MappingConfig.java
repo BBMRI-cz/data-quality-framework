@@ -5,6 +5,7 @@ import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheckKeyword;
 import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheckResult;
 import eu.bbmri_eric.quality.server.dataquality.domain.Report;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckDTO;
+import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckDetailedDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckResultDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.ReportDTO;
 import jakarta.annotation.PostConstruct;
@@ -36,6 +37,15 @@ public class MappingConfig {
 
     modelMapper.addMappings(
         new PropertyMap<QualityCheck, QualityCheckDTO>() {
+          @Override
+          protected void configure() {
+            map(source.getId(), destination.getId());
+            using(qualityCheckKeywordsConverter)
+                .map(source.getKeywords(), destination.getKeywords());
+          }
+        });
+    modelMapper.addMappings(
+        new PropertyMap<QualityCheck, QualityCheckDetailedDTO>() {
           @Override
           protected void configure() {
             map(source.getId(), destination.getId());
