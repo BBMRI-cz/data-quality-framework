@@ -158,11 +158,11 @@ public class QualityCheckVersion {
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
     QualityCheckVersion that = (QualityCheckVersion) o;
-    return Objects.equals(id, that.id);
+    return Objects.equals(qualityCheck, that.qualityCheck) && version == that.version;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id);
+    return Objects.hash(qualityCheck, version);
   }
 }

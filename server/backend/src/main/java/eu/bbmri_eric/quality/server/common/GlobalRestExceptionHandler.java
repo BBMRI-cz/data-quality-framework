@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.convert.ConversionFailedException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.security.access.AccessDeniedException;
@@ -211,6 +212,24 @@ public class GlobalRestExceptionHandler {
     ProblemDetail problemDetail =
         ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
     problemDetail.setTitle("Entity Already Exists");
+    return problemDetail;
+  }
+
+  @ExceptionHandler(DataIntegrityViolationException.class)
+  @ApiResponse(
+      responseCode = "409",
+      description = "Conflict",
+      content =
+          @Content(
+              mediaType = "application/problem+json",
+              schema = @Schema(implementation = ProblemDetail.class)))
+  public ProblemDetail handleDataIntegrityViolation(
+      org.springframework.dao.DataIntegrityViolationException ex) {
+    logger.debug("Data integrity violation: {}", ex.getMessage());
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(
+            HttpStatus.CONFLICT, "Request conflicts with existing data");
+    problemDetail.setTitle("Conflict");
     return problemDetail;
   }
 

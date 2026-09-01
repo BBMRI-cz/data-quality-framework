@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.server.dataquality.impl;
 
+import eu.bbmri_eric.quality.server.common.EntityAlreadyExistsException;
 import eu.bbmri_eric.quality.server.common.EntityNotFoundException;
 import eu.bbmri_eric.quality.server.dataquality.QualityCheckService;
 import eu.bbmri_eric.quality.server.dataquality.domain.Category;
@@ -105,6 +106,13 @@ class QualityCheckServiceImpl implements QualityCheckService {
                 () -> new EntityNotFoundException("Quality check not found with ID: " + id));
 
     int version = resolveVersion(createDTO.getVersion(), qualityCheck);
+    boolean versionExists =
+        qualityCheck.getVersions().stream().anyMatch(existing -> existing.getVersion() == version);
+    if (versionExists) {
+      throw new EntityAlreadyExistsException(
+          "Quality check version %d already exists for quality check with ID: %d"
+              .formatted(version, id));
+    }
     QualityCheckVersion qualityCheckVersion =
         new QualityCheckVersion(qualityCheck, version, createDTO.getQuery());
     qualityCheck.addVersion(qualityCheckVersion);

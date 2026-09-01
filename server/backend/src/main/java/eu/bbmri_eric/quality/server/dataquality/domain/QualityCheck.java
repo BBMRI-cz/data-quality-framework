@@ -8,9 +8,11 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -40,12 +42,15 @@ public class QualityCheck {
   @OneToMany(
       mappedBy = "qualityCheckId",
       cascade = CascadeType.ALL,
-      orphanRemoval = true,
-      fetch = jakarta.persistence.FetchType.LAZY)
+      orphanRemoval = true)
   private final Set<QualityCheckKeyword> keywords = new HashSet<>();
 
-  @OneToMany(mappedBy = "qualityCheck", cascade = CascadeType.ALL, orphanRemoval = true)
-  private final Set<QualityCheckVersion> versions = new HashSet<>();
+  @OneToMany(
+      mappedBy = "qualityCheck",
+      cascade = CascadeType.ALL,
+      orphanRemoval = true)
+  @OrderBy("version ASC")
+  private final Set<QualityCheckVersion> versions = new LinkedHashSet<>();
 
   /** Default constructor for JPA. */
   protected QualityCheck() {}
@@ -243,11 +248,11 @@ public class QualityCheck {
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
     QualityCheck that = (QualityCheck) o;
-    return Objects.equals(id, that.id);
+    return Objects.equals(id, that.id) && Objects.equals(name, that.name);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id);
+    return Objects.hash(id, name);
   }
 }

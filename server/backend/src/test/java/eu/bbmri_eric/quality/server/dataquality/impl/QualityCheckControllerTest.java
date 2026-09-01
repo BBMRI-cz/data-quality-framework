@@ -584,6 +584,50 @@ class QualityCheckControllerTest {
 
   @Test
   @WithMockUser(roles = "ADMIN")
+  void createVersion_shouldReturnConflictWhenVersionAlreadyExists() throws Exception {
+    QualityCheckVersionCreateDTO first = new QualityCheckVersionCreateDTO("SELECT 1", 1);
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(first)))
+        .andExpect(status().isCreated());
+
+    QualityCheckVersionCreateDTO duplicate = new QualityCheckVersionCreateDTO("SELECT 2", 1);
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(duplicate)))
+        .andExpect(status().isConflict());
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void createVersion_shouldReturnConflictWhenVersionHashIsNotUnique() throws Exception {
+    QualityCheck otherCheck = new QualityCheck("Other Check", "Another test check");
+    qualityCheckRepository.save(otherCheck);
+
+    String query = "SELECT COUNT(*) FROM patients";
+    QualityCheckVersionCreateDTO createDTO = new QualityCheckVersionCreateDTO(query, null);
+
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDTO)))
+        .andExpect(status().isCreated());
+
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS_VERSIONS, otherCheck.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDTO)))
+        .andExpect(status().isConflict());
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
   void createVersion_shouldReturnNotFoundWhenQualityCheckDoesNotExist() throws Exception {
     QualityCheckVersionCreateDTO createDTO = new QualityCheckVersionCreateDTO("SELECT 1", null);
 
