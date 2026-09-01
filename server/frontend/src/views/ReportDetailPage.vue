@@ -143,7 +143,7 @@
   import StatsCard from '@/components/ui/StatsCard.vue';
   import ValuesFilter from '@/components/ui/ValuesFilter.vue';
   import { apiService } from '@/services/apiService.js';
-  import { getCheckStatus, CheckStatus, getStatusIcon } from '@/utils/qualityCheckUtils.js';
+  import { getCheckStatus, CheckStatus, getStatusIcon, buildQualityCheckMap } from '@/utils/qualityCheckUtils.js';
 
   const route = useRoute();
   const router = useRouter();
@@ -375,7 +375,7 @@
       // Fetch report and quality checks in parallel
       const [reportData, checksData] = await Promise.all([
         apiService.getReport(reportId),
-        apiService.getQualityChecks(),
+        apiService.getQualityChecksDetailed(),
       ]);
 
       report.value = reportData;
@@ -390,10 +390,9 @@
         }
       }
 
-      // Handle HAL format response for quality checks
-      const checks =
-        checksData._embedded?.qualityChecks || (Array.isArray(checksData) ? checksData : []);
-      qualityCheckMap.value = new Map(checks.map((check) => [check.hash, check]));
+      // Quality checks are returned as detailed list (with versions)
+      const checks = Array.isArray(checksData) ? checksData : [];
+      qualityCheckMap.value = buildQualityCheckMap(checks);
 
       // Scroll to the specific check if hash is present
       await scrollToCheck();

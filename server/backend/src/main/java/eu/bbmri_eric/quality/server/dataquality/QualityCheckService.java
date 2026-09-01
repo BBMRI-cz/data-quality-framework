@@ -20,11 +20,11 @@ public interface QualityCheckService {
   QualityCheckDetailedDTO findById(Long id);
 
   /**
-   * Finds all quality checks.
+   * Finds all quality checks, including their versions.
    *
-   * @return list of all quality check DTOs
+   * @return list of all quality check detailed DTOs
    */
-  List<QualityCheckDTO> findAll();
+  List<QualityCheckDetailedDTO> findAll();
 
   /**
    * Updates an existing quality check.

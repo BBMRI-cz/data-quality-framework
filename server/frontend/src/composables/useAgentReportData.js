@@ -18,11 +18,13 @@ export function useAgentReportData(agentId) {
       error.value = null;
 
       const [qualityChecksResponse, agentsResponse] = await Promise.all([
-        apiService.getQualityChecks(),
+        apiService.getQualityChecksDetailed(),
         apiService.getAgents(),
       ]);
 
-      qualityChecks.value = qualityChecksResponse?._embedded?.qualityChecks || [];
+      qualityChecks.value = Array.isArray(qualityChecksResponse)
+        ? qualityChecksResponse
+        : qualityChecksResponse?._embedded?.qualityChecks || [];
 
       const agents = agentsResponse?._embedded?.agents || [];
       agent.value = agents.find((item) => item.id === agentId.value);

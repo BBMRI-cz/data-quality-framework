@@ -48,7 +48,7 @@
       :loading="loading"
       :error="error"
       :empty-text="emptyStateText"
-      item-key="hash"
+      item-key="id"
       item-label="checks"
       @row-click="viewCheckDetail"
       @page-change="onPageChange"
@@ -97,7 +97,6 @@
 
   const tableColumns = [
     { key: 'id', label: 'ID' },
-    { key: 'hash', label: 'Hash' },
     { key: 'name', label: 'Name' },
     { key: 'category', label: 'Category' },
     { key: 'description', label: 'Description' },

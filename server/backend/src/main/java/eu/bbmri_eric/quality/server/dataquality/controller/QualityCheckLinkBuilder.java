@@ -29,8 +29,8 @@ final class QualityCheckLinkBuilder {
         .add(linkTo(methodOn(QualityCheckController.class).findAll()).withRel("quality-checks"));
   }
 
-  public CollectionModel<EntityModel<QualityCheckDTO>> toCollectionModel(
-      List<QualityCheckDTO> qualityChecks) {
+  public CollectionModel<EntityModel<QualityCheckDetailedDTO>> toCollectionModel(
+      List<QualityCheckDetailedDTO> qualityChecks) {
     var entityModels = qualityChecks.stream().map(this::toModel).toList();
 
     return CollectionModel.of(entityModels)

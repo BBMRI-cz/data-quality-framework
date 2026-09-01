@@ -141,30 +141,6 @@
                   </small>
                 </div>
 
-                <!-- Hash (Read-only) -->
-                <div class="col-12">
-                  <label class="form-label fw-semibold">Hash</label>
-                  <div class="input-group">
-                    <input
-                      :value="qualityCheck.hash"
-                      type="text"
-                      class="form-control font-monospace bg-light"
-                      readonly
-                    />
-                    <button
-                      class="btn btn-outline-secondary"
-                      type="button"
-                      title="Copy to clipboard"
-                      @click="copyHash"
-                    >
-                      <i class="bi bi-clipboard"></i>
-                    </button>
-                  </div>
-                  <small class="form-text text-muted">
-                    Unique identifier for this quality check
-                  </small>
-                </div>
-
                 <!-- Keywords Section -->
                 <div class="col-12">
                   <label class="form-label fw-semibold"> Keywords </label>
@@ -527,11 +503,6 @@
     validationErrors.errorThreshold = '';
 
     notificationService.info('Form Reset', 'Changes have been discarded');
-  };
-
-  const copyHash = () => {
-    navigator.clipboard.writeText(qualityCheck.value.hash);
-    notificationService.success('Copied', 'Hash copied to clipboard');
   };
 
   const goBack = () => {

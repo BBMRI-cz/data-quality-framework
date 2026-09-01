@@ -125,9 +125,7 @@
   // Computed - Basic Info
   const categoryName = computed(() => props.qualityCheck.category?.name || 'No Category');
 
-  const checkTitle = computed(
-    () => props.qualityCheck.name || props.qualityCheck.cql || props.qualityCheck.hash
-  );
+  const checkTitle = computed(() => props.qualityCheck.name || props.qualityCheck.cql);
 
   const hasDescription = computed(() => Boolean(props.qualityCheck.description));
 
@@ -155,12 +153,20 @@
     return map;
   });
 
+  // The set of version hashes belonging to this quality check
+  const checkVersionHashes = computed(
+    () =>
+      new Set(
+        (props.qualityCheck.versions || []).map((v) => v.hash).filter(Boolean)
+      )
+  );
+
   // Computed - Agent Results
   const agentResults = computed(() => {
     const resultsMap = new Map();
 
     props.reports.forEach((report) => {
-      const result = report.results?.find((r) => r.hash === props.qualityCheck.hash);
+      const result = report.results?.find((r) => checkVersionHashes.value.has(r.hash));
       if (!result) return;
 
       const agentId = report.agentId || report.agent?.id || 'unknown';

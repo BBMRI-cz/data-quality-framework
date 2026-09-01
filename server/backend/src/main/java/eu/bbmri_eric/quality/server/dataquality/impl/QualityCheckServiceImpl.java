@@ -48,9 +48,9 @@ class QualityCheckServiceImpl implements QualityCheckService {
 
   @Override
   @Transactional(readOnly = true)
-  public List<QualityCheckDTO> findAll() {
+  public List<QualityCheckDetailedDTO> findAll() {
     return qualityCheckRepository.findAll().stream()
-        .map(qualityCheck -> modelMapper.map(qualityCheck, QualityCheckDTO.class))
+        .map(qualityCheck -> modelMapper.map(qualityCheck, QualityCheckDetailedDTO.class))
         .toList();
   }
 

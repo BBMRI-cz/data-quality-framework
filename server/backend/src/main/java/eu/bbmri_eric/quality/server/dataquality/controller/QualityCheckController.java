@@ -51,11 +51,11 @@ class QualityCheckController {
   @GetMapping("/quality-checks")
   @Operation(
       summary = "Get all quality checks",
-      description = "Retrieves all quality check definitions")
+      description = "Retrieves all quality check definitions, including their versions")
   @SecurityRequirement(name = "bearerAuth")
-  public ResponseEntity<CollectionModel<EntityModel<QualityCheckDTO>>> findAll() {
-    List<QualityCheckDTO> qualityChecks = qualityCheckService.findAll();
-    CollectionModel<EntityModel<QualityCheckDTO>> qualityChecksModel =
+  public ResponseEntity<CollectionModel<EntityModel<QualityCheckDetailedDTO>>> findAll() {
+    List<QualityCheckDetailedDTO> qualityChecks = qualityCheckService.findAll();
+    CollectionModel<EntityModel<QualityCheckDetailedDTO>> qualityChecksModel =
         linkBuilder.toCollectionModel(qualityChecks);
     return ResponseEntity.ok(qualityChecksModel);
   }

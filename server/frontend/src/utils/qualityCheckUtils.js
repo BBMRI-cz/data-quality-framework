@@ -14,6 +14,25 @@ export const CheckStatus = {
 };
 
 /**
+ * Build a lookup map from version hash to quality check.
+ * Results reference the hash of the specific version that produced them, so
+ * this map lets consumers resolve a result to its quality check.
+ * @param {Array} checks - Quality checks (each with its versions)
+ * @returns {Map} version hash -> quality check
+ */
+export function buildQualityCheckMap(checks) {
+  const map = new Map();
+  checks.forEach((check) => {
+    (check.versions || []).forEach((version) => {
+      if (version.hash) {
+        map.set(version.hash, check);
+      }
+    });
+  });
+  return map;
+}
+
+/**
  * Get the status of a quality check result
  * Supports result values expressed either as fraction (0-1) or percentage (0-100).
  * Higher values indicate worse quality.

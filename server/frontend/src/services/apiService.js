@@ -68,6 +68,13 @@ class ApiService {
     return response.data;
   }
 
+  // The list endpoint returns detailed checks (including versions), so no
+  // per-check requests are needed to obtain version hashes.
+  async getQualityChecksDetailed() {
+    const data = await this.getQualityChecks();
+    return data?._embedded?.qualityChecks || (Array.isArray(data) ? data : []);
+  }
+
   async getReports(params = {}) {
     const response = await api.get('/v1/reports', { params });
     return response.data;
