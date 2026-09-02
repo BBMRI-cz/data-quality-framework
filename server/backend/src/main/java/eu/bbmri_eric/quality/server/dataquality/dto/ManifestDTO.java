@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.server.dataquality.dto;
 
+import com.fasterxml.jackson.annotation.JsonRawValue;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import org.springframework.hateoas.server.core.Relation;
@@ -86,6 +87,7 @@ public class ManifestDTO {
     this.generatedAt = generatedAt;
   }
 
+  @JsonRawValue
   public String getBody() {
     return body;
   }

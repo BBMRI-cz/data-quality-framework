@@ -8,10 +8,14 @@ import eu.bbmri_eric.quality.server.crypto.SignatureException;
 import eu.bbmri_eric.quality.server.crypto.SignatureService;
 import eu.bbmri_eric.quality.server.dataquality.ManifestService;
 import eu.bbmri_eric.quality.server.dataquality.domain.Manifest;
+import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheckVersion;
+import eu.bbmri_eric.quality.server.dataquality.dto.ManifestBody;
 import eu.bbmri_eric.quality.server.dataquality.dto.ManifestCreateDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.ManifestDTO;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
@@ -25,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 class ManifestServiceImpl implements ManifestService {
 
   private final ManifestRepository manifestRepository;
+  private final QualityCheckVersionRepository qualityCheckVersionRepository;
   private final ModelMapper modelMapper;
   private final ObjectMapper objectMapper;
   private final SignatureService signatureService;
@@ -32,11 +37,13 @@ class ManifestServiceImpl implements ManifestService {
 
   public ManifestServiceImpl(
       ManifestRepository manifestRepository,
+      QualityCheckVersionRepository qualityCheckVersionRepository,
       ModelMapper modelMapper,
       ObjectMapper objectMapper,
       SignatureService signatureService,
       KeyProvider keyProvider) {
     this.manifestRepository = manifestRepository;
+    this.qualityCheckVersionRepository = qualityCheckVersionRepository;
     this.modelMapper = modelMapper;
     this.objectMapper = objectMapper;
     this.signatureService = signatureService;
@@ -46,10 +53,14 @@ class ManifestServiceImpl implements ManifestService {
   @Override
   public ManifestDTO create(ManifestCreateDTO createDTO) {
     Objects.requireNonNull(createDTO, "ManifestCreateDTO cannot be null");
-    String body = serializeBody(createDTO);
+    Manifest manifest = new Manifest(createDTO.getName(), "{}", null, null);
+    Manifest persisted = manifestRepository.saveAndFlush(manifest);
+    String body = buildBody(createDTO, persisted.getId());
     String signature = signBody(body);
-    Manifest manifest = new Manifest(createDTO.getName(), body, signature, keyProvider.getKeyId());
-    Manifest savedManifest = manifestRepository.save(manifest);
+    persisted.setBody(body);
+    persisted.setSignature(signature);
+    persisted.setKeyId(keyProvider.getKeyId());
+    Manifest savedManifest = manifestRepository.save(persisted);
     return modelMapper.map(savedManifest, ManifestDTO.class);
   }
 
@@ -82,9 +93,23 @@ class ManifestServiceImpl implements ManifestService {
         .toList();
   }
 
-  private String serializeBody(ManifestCreateDTO createDTO) {
+  private String buildBody(ManifestCreateDTO createDTO, Long manifestId) {
+    List<ManifestBody.Check> checks = new ArrayList<>();
+    for (String hash : createDTO.getHashes()) {
+      QualityCheckVersion version =
+          qualityCheckVersionRepository
+              .findByHash(hash)
+              .orElseThrow(
+                  () ->
+                      new EntityNotFoundException(
+                          "No quality check version found for hash: " + hash));
+      checks.add(
+          new ManifestBody.Check(
+              String.valueOf(version.getQualityCheck().getId()), version.getVersion(), hash));
+    }
+    ManifestBody body = new ManifestBody(manifestId, Instant.now(), checks);
     try {
-      return objectMapper.writeValueAsString(createDTO.getHashes());
+      return objectMapper.writeValueAsString(body);
     } catch (JsonProcessingException e) {
       throw new IllegalArgumentException("Failed to serialize manifest body", e);
     }

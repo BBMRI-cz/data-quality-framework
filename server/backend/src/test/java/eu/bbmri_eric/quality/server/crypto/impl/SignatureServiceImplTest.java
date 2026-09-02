@@ -39,12 +39,24 @@ class SignatureServiceImplTest {
   }
 
   @Test
-  void sign_shouldFailWhenNoKeyIsConfigured() {
+  void signAndVerify_shouldDeriveEcdsaAlgorithmForEcKey() throws Exception {
+    KeyPair ecKeyPair = generateEcKeyPair();
+    SignatureServiceImpl ecSignatureService =
+        new SignatureServiceImpl(new TestKeyProvider(ecKeyPair), "");
+    byte[] data = "payload".getBytes(StandardCharsets.UTF_8);
+
+    byte[] signature = ecSignatureService.sign(data);
+
+    assertTrue(ecSignatureService.verify(data, signature, ecKeyPair.getPublic()));
+  }
+
+  @Test
+  void sign_shouldPropagateKeyProviderFailureWhenNoKeyIsConfigured() {
     SignatureServiceImpl unconfigured =
         new SignatureServiceImpl(new MissingKeyProvider(), "SHA256withRSA");
 
     assertThrows(
-        GeneralSecurityException.class,
+        IllegalStateException.class,
         () -> unconfigured.sign("payload".getBytes(StandardCharsets.UTF_8)));
   }
 
@@ -52,6 +64,16 @@ class SignatureServiceImplTest {
     try {
       KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
       generator.initialize(2048);
+      return generator.generateKeyPair();
+    } catch (GeneralSecurityException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  private static KeyPair generateEcKeyPair() {
+    try {
+      KeyPairGenerator generator = KeyPairGenerator.getInstance("EC");
+      generator.initialize(256);
       return generator.generateKeyPair();
     } catch (GeneralSecurityException e) {
       throw new IllegalStateException(e);
@@ -84,7 +106,7 @@ class SignatureServiceImplTest {
   private static final class MissingKeyProvider implements KeyProvider {
     @Override
     public PrivateKey getPrivateKey() {
-      return null;
+      throw new IllegalStateException("Cryptographic functionality is not setup");
     }
 
     @Override

@@ -18,7 +18,7 @@ public class ManifestCreateDTO {
 
   @NotEmpty(message = "At least one check hash is required")
   @Schema(
-      description = "SHA-256 hashes of the quality check versions included in the manifest",
+      description = "SHA-256 hashes of the quality check versions to include in the manifest",
       example = "[\"5f3c9a...\"]",
       requiredMode = Schema.RequiredMode.REQUIRED)
   private List<String> hashes;
@@ -30,7 +30,7 @@ public class ManifestCreateDTO {
    * Constructor with all fields.
    *
    * @param name the name of the manifest
-   * @param hashes the SHA-256 hashes of the quality checks to include
+   * @param hashes the SHA-256 hashes of the quality check versions to include
    */
   public ManifestCreateDTO(String name, List<String> hashes) {
     this.name = name;
