@@ -17,12 +17,6 @@ public class QualityCheckDTO {
   private Long id;
 
   @Schema(
-      description = "Hash identifying the quality check",
-      example = "abc123def456",
-      requiredMode = Schema.RequiredMode.REQUIRED)
-  private String hash;
-
-  @Schema(
       description = "Name of the quality check",
       example = "Patient Count Validation",
       requiredMode = Schema.RequiredMode.REQUIRED)
@@ -54,7 +48,6 @@ public class QualityCheckDTO {
   /**
    * Constructor with all fields.
    *
-   * @param hash the unique hash identifying the quality check
    * @param name the name of the quality check
    * @param description the description of what the check validates
    * @param registeredAt when this quality check was registered
@@ -63,14 +56,12 @@ public class QualityCheckDTO {
    * @param keywords list of keywords associated with the quality check
    */
   public QualityCheckDTO(
-      String hash,
       String name,
       String description,
       Instant registeredAt,
       double warningThreshold,
       double errorThreshold,
       List<String> keywords) {
-    this.hash = hash;
     this.name = name;
     this.description = description;
     this.registeredAt = registeredAt;
@@ -85,14 +76,6 @@ public class QualityCheckDTO {
 
   public void setId(Long id) {
     this.id = id;
-  }
-
-  public String getHash() {
-    return hash;
-  }
-
-  public void setHash(String hash) {
-    this.hash = hash;
   }
 
   public String getName() {

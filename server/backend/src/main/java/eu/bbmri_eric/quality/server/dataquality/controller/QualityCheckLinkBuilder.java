@@ -3,6 +3,7 @@ package eu.bbmri_eric.quality.server.dataquality.controller;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckDTO;
+import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckDetailedDTO;
 import java.util.List;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
@@ -20,8 +21,16 @@ final class QualityCheckLinkBuilder {
         .add(linkTo(methodOn(QualityCheckController.class).findAll()).withRel("quality-checks"));
   }
 
-  public CollectionModel<EntityModel<QualityCheckDTO>> toCollectionModel(
-      List<QualityCheckDTO> qualityChecks) {
+  public EntityModel<QualityCheckDetailedDTO> toModel(QualityCheckDetailedDTO qualityCheckDto) {
+    return EntityModel.of(qualityCheckDto)
+        .add(
+            linkTo(methodOn(QualityCheckController.class).findById(qualityCheckDto.getId()))
+                .withSelfRel())
+        .add(linkTo(methodOn(QualityCheckController.class).findAll()).withRel("quality-checks"));
+  }
+
+  public CollectionModel<EntityModel<QualityCheckDetailedDTO>> toCollectionModel(
+      List<QualityCheckDetailedDTO> qualityChecks) {
     var entityModels = qualityChecks.stream().map(this::toModel).toList();
 
     return CollectionModel.of(entityModels)

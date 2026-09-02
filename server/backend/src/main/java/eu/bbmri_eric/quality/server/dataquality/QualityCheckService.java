@@ -1,7 +1,10 @@
 package eu.bbmri_eric.quality.server.dataquality;
 
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckDTO;
+import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckDetailedDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckUpdateDTO;
+import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckVersionCreateDTO;
+import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckVersionDTO;
 import java.util.List;
 import java.util.Set;
 
@@ -14,14 +17,14 @@ public interface QualityCheckService {
    * @param id the quality check id
    * @return the quality check DTO
    */
-  QualityCheckDTO findById(Long id);
+  QualityCheckDetailedDTO findById(Long id);
 
   /**
-   * Finds all quality checks.
+   * Finds all quality checks, including their versions.
    *
-   * @return list of all quality check DTOs
+   * @return list of all quality check detailed DTOs
    */
-  List<QualityCheckDTO> findAll();
+  List<QualityCheckDetailedDTO> findAll();
 
   /**
    * Updates an existing quality check.
@@ -42,4 +45,26 @@ public interface QualityCheckService {
    *     associated with the quality check
    */
   QualityCheckDTO setKeywords(Long id, Set<String> keywords);
+
+  /**
+   * Creates a new version of a quality check. The version's hash is computed from the query using
+   * SHA-256. When no version number is supplied, the next sequential version is assigned.
+   *
+   * @param id the quality check id
+   * @param createDTO the version data (query, optional version)
+   * @return the created version DTO
+   * @throws eu.bbmri_eric.quality.server.common.EntityNotFoundException if the quality check is not
+   *     found
+   */
+  QualityCheckVersionDTO createVersion(Long id, QualityCheckVersionCreateDTO createDTO);
+
+  /**
+   * Finds all versions of a quality check.
+   *
+   * @param id the quality check id
+   * @return list of version DTOs
+   * @throws eu.bbmri_eric.quality.server.common.EntityNotFoundException if the quality check is not
+   *     found
+   */
+  List<QualityCheckVersionDTO> findVersions(Long id);
 }

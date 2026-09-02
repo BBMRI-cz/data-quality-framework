@@ -132,12 +132,13 @@ public class Report {
   /**
    * Adds a quality check result to this report.
    *
-   * @param qualityCheck the quality check that was executed
+   * @param version the version of the quality check that was executed
    * @param result the numeric result of the check
    * @return the created quality check result
    */
-  public QualityCheckResult addQualityCheckResult(QualityCheck qualityCheck, Double result) {
-    QualityCheckResult checkResult = new QualityCheckResult(this, qualityCheck, result);
+  public QualityCheckResult addQualityCheckResult(QualityCheckVersion version, Double result) {
+    QualityCheckResult checkResult =
+        new QualityCheckResult(this, version.getQualityCheck(), version, result);
     qualityCheckResults.add(checkResult);
     return checkResult;
   }

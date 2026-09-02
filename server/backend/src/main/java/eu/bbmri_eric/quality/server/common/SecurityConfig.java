@@ -66,6 +66,8 @@ class SecurityConfig {
                     .hasRole("ADMIN")
                     .requestMatchers(HttpMethod.PUT, "/api/v1/quality-checks/*/keywords")
                     .hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.POST, "/api/v1/quality-checks/*/versions")
+                    .hasRole("ADMIN")
                     .requestMatchers(HttpMethod.GET, "/api/v1/categories/**")
                     .hasAnyRole("HUMAN_USER", "ADMIN")
                     .requestMatchers(HttpMethod.POST, "/api/v1/categories")

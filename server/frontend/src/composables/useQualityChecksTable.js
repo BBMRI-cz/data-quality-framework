@@ -41,7 +41,6 @@ export function useQualityChecksTable() {
       (check) =>
         check.name?.toLowerCase().includes(query) ||
         check.description?.toLowerCase().includes(query) ||
-        check.hash?.toLowerCase().includes(query) ||
         check.category?.name?.toLowerCase().includes(query)
     );
   });

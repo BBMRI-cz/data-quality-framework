@@ -8,12 +8,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.server.dataquality.domain.Category;
 import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheck;
+import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheckVersion;
 import eu.bbmri_eric.quality.server.dataquality.dto.KeywordsDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckUpdateDTO;
+import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckVersionCreateDTO;
 import eu.bbmri_eric.quality.server.util.IntegrationTest;
 import jakarta.persistence.EntityManager;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Set;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +31,8 @@ class QualityCheckControllerTest {
 
   public static final String API_V1_QUALITY_CHECKS = "/api/v1/quality-checks";
   public static final String API_V1_QUALITY_CHECKS_ID = "/api/v1/quality-checks/{id}";
+  public static final String API_V1_QUALITY_CHECKS_VERSIONS =
+      "/api/v1/quality-checks/{id}/versions";
 
   @Autowired private MockMvc mockMvc;
   @Autowired private ObjectMapper objectMapper;
@@ -35,21 +40,14 @@ class QualityCheckControllerTest {
   @Autowired private CategoryRepository categoryRepository;
   @Autowired private EntityManager entityManager;
 
-  private String testQualityCheckHash;
   private QualityCheck testQualityCheck;
   private Category testCategory;
 
   @BeforeEach
   void setUp() {
 
-    testQualityCheckHash = "test-hash-" + UUID.randomUUID().toString().substring(0, 8);
     testQualityCheck =
-        new QualityCheck(
-            testQualityCheckHash,
-            "Test Quality Check",
-            "A test quality check for unit tests",
-            0.8,
-            0.5);
+        new QualityCheck("Test Quality Check", "A test quality check for unit tests", 0.8, 0.5);
     testQualityCheck = qualityCheckRepository.save(testQualityCheck);
 
     testQualityCheck.setKeywords(Set.of("gender", "sex", "male"));
@@ -64,7 +62,6 @@ class QualityCheckControllerTest {
     mockMvc
         .perform(get(API_V1_QUALITY_CHECKS_ID, testQualityCheck.getId()))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.hash").value(testQualityCheckHash))
         .andExpect(jsonPath("$.name").value("Test Quality Check"))
         .andExpect(jsonPath("$.description").value("A test quality check for unit tests"))
         .andExpect(jsonPath("$.warningThreshold").value(0.8))
@@ -91,8 +88,59 @@ class QualityCheckControllerTest {
   void findById_shouldReturnQualityCheckForAdmin() throws Exception {
     mockMvc
         .perform(get(API_V1_QUALITY_CHECKS_ID, testQualityCheck.getId()))
+        .andExpect(status().isOk());
+  }
+
+  @Test
+  @WithMockUser(roles = "HUMAN_USER")
+  void findById_shouldReturnEmptyVersionsWhenNoneExist() throws Exception {
+    mockMvc
+        .perform(get(API_V1_QUALITY_CHECKS_ID, testQualityCheck.getId()))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.hash").value(testQualityCheckHash));
+        .andExpect(jsonPath("$.versions").isArray())
+        .andExpect(jsonPath("$.versions.length()").value(0));
+  }
+
+  @Test
+  @WithMockUser(roles = "HUMAN_USER")
+  void findById_shouldReturnVersionsWhenPresent() throws Exception {
+    String query = "SELECT COUNT(*) FROM patients";
+    testQualityCheck.addVersion(new QualityCheckVersion(testQualityCheck, 1, query));
+    qualityCheckRepository.save(testQualityCheck);
+    entityManager.flush();
+
+    mockMvc
+        .perform(get(API_V1_QUALITY_CHECKS_ID, testQualityCheck.getId()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.versions").isArray())
+        .andExpect(jsonPath("$.versions.length()").value(1))
+        .andExpect(jsonPath("$.versions[0].version").value(1))
+        .andExpect(jsonPath("$.versions[0].query").value(query))
+        .andExpect(jsonPath("$.versions[0].hash").value(hashOf(query)));
+  }
+
+  @Test
+  @WithMockUser(roles = "HUMAN_USER")
+  void findById_shouldReturnMultipleVersionsOrderedByVersionNumber() throws Exception {
+    testQualityCheck.addVersion(
+        new QualityCheckVersion(
+            testQualityCheck, 1, "SELECT COUNT(*) FROM patients WHERE gender = 'F'"));
+    qualityCheckRepository.save(testQualityCheck);
+    entityManager.flush();
+
+    testQualityCheck.addVersion(
+        new QualityCheckVersion(
+            testQualityCheck, 2, "SELECT COUNT(*) FROM patients WHERE gender = 'M'"));
+    qualityCheckRepository.save(testQualityCheck);
+    entityManager.flush();
+
+    mockMvc
+        .perform(get(API_V1_QUALITY_CHECKS_ID, testQualityCheck.getId()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.versions").isArray())
+        .andExpect(jsonPath("$.versions.length()").value(2))
+        .andExpect(jsonPath("$.versions[0].version").value(1))
+        .andExpect(jsonPath("$.versions[1].version").value(2));
   }
 
   @Test
@@ -111,8 +159,7 @@ class QualityCheckControllerTest {
   @WithMockUser(roles = "HUMAN_USER")
   void findAll_shouldReturnAllQualityChecksWithHateoasLinks() throws Exception {
     QualityCheck secondQualityCheck =
-        new QualityCheck(
-            "second-hash", "Second Quality Check", "Another test quality check", 0.9, 0.6);
+        new QualityCheck("Second Quality Check", "Another test quality check", 0.9, 0.6);
     qualityCheckRepository.save(secondQualityCheck);
 
     mockMvc
@@ -121,9 +168,9 @@ class QualityCheckControllerTest {
         .andExpect(jsonPath("$._embedded.qualityChecks").isArray())
         .andExpect(jsonPath("$._embedded.qualityChecks.length()").value(2))
         .andExpect(
-            jsonPath("$._embedded.qualityChecks[?(@.hash == '" + testQualityCheckHash + "')]")
-                .exists())
-        .andExpect(jsonPath("$._embedded.qualityChecks[?(@.hash == 'second-hash')]").exists())
+            jsonPath("$._embedded.qualityChecks[?(@.name == 'Test Quality Check')]").exists())
+        .andExpect(
+            jsonPath("$._embedded.qualityChecks[?(@.name == 'Second Quality Check')]").exists())
         .andExpect(jsonPath("$._links.self.href").value("http://localhost/api/v1/quality-checks"))
         .andExpect(jsonPath("$._embedded.qualityChecks[0]._links.self.href").exists())
         .andExpect(jsonPath("$._embedded.qualityChecks[1]._links.self.href").exists());
@@ -152,7 +199,6 @@ class QualityCheckControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateDTO)))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.hash").value(testQualityCheckHash))
         .andExpect(jsonPath("$.name").value("Updated Quality Check"))
         .andExpect(jsonPath("$.description").value("Updated description for the quality check"))
         .andExpect(jsonPath("$.warningThreshold").value(0.75))
@@ -251,7 +297,6 @@ class QualityCheckControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateDTO)))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.hash").value(testQualityCheckHash))
         .andExpect(jsonPath("$.category.id").value(testCategory.getId()))
         .andExpect(jsonPath("$.category.name").value("Data Completeness"))
         .andExpect(jsonPath("$.category.colorHex").value("#FF5733"));
@@ -272,7 +317,6 @@ class QualityCheckControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateDTO)))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.hash").value(testQualityCheckHash))
         .andExpect(jsonPath("$.category").doesNotExist());
   }
 
@@ -311,7 +355,6 @@ class QualityCheckControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateDTO)))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.hash").value(testQualityCheckHash))
         .andExpect(jsonPath("$.category.id").value(newCategory.getId()))
         .andExpect(jsonPath("$.category.name").value("Data Accuracy"))
         .andExpect(jsonPath("$.category.colorHex").value("#00FF00"));
@@ -340,7 +383,6 @@ class QualityCheckControllerTest {
     mockMvc
         .perform(get(API_V1_QUALITY_CHECKS_ID, testQualityCheck.getId()))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.hash").value(testQualityCheckHash))
         .andExpect(jsonPath("$.category").doesNotExist());
   }
 
@@ -359,8 +401,7 @@ class QualityCheckControllerTest {
   @WithMockUser(roles = "ADMIN")
   void findAll_shouldReturnKeywordsForAllQualityChecks() throws Exception {
     QualityCheck secondQualityCheck =
-        new QualityCheck(
-            "second-hash", "Second Quality Check", "Another test quality check", 0.9, 0.6);
+        new QualityCheck("Second Quality Check", "Another test quality check", 0.9, 0.6);
     secondQualityCheck.setKeywords(Set.of("diagnosis", "C50"));
     qualityCheckRepository.save(testQualityCheck);
     qualityCheckRepository.save(secondQualityCheck);
@@ -388,7 +429,6 @@ class QualityCheckControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(keywordsDTO)))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.hash").value(testQualityCheckHash))
         .andExpect(jsonPath("$.keywords").isArray())
         .andExpect(jsonPath("$.keywords.length()").value(3))
         .andExpect(jsonPath("$.keywords", hasItems("patient data", "diagnosis", "treatment")))
@@ -412,7 +452,6 @@ class QualityCheckControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(keywordsDTO)))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.hash").value(testQualityCheckHash))
         .andExpect(jsonPath("$.keywords").isArray())
         .andExpect(jsonPath("$.keywords.length()").value(0));
   }
@@ -472,5 +511,240 @@ class QualityCheckControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(keywordsDTO)))
         .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void createVersion_shouldCreateVersionWithHashAndAutoIncrementVersion() throws Exception {
+    String query = "SELECT COUNT(*) FROM patients WHERE gender = 'F'";
+    QualityCheckVersionCreateDTO createDTO = new QualityCheckVersionCreateDTO(query, null);
+
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDTO)))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.version").value(1))
+        .andExpect(jsonPath("$.query").value(query))
+        .andExpect(jsonPath("$.hash").value(hashOf(query)))
+        .andExpect(
+            jsonPath("$._links.quality-check-versions.href")
+                .value(
+                    "http://localhost/api/v1/quality-checks/"
+                        + testQualityCheck.getId()
+                        + "/versions"))
+        .andExpect(
+            jsonPath("$._links.quality-check.href")
+                .value("http://localhost/api/v1/quality-checks/" + testQualityCheck.getId()));
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void createVersion_shouldIncrementVersionWhenMultipleVersionsCreated() throws Exception {
+    String firstQuery = "SELECT COUNT(*) FROM patients WHERE gender = 'F'";
+    String secondQuery = "SELECT COUNT(*) FROM patients WHERE gender = 'M'";
+    QualityCheckVersionCreateDTO firstDTO = new QualityCheckVersionCreateDTO(firstQuery, null);
+    QualityCheckVersionCreateDTO secondDTO = new QualityCheckVersionCreateDTO(secondQuery, null);
+
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(firstDTO)))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.version").value(1))
+        .andExpect(jsonPath("$.hash").value(hashOf(firstQuery)));
+
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(secondDTO)))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.version").value(2))
+        .andExpect(jsonPath("$.hash").value(hashOf(secondQuery)));
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void createVersion_shouldAcceptExplicitVersionNumber() throws Exception {
+    String query = "SELECT COUNT(*) FROM patients WHERE gender = 'F'";
+    QualityCheckVersionCreateDTO createDTO = new QualityCheckVersionCreateDTO(query, 7);
+
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDTO)))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.version").value(7))
+        .andExpect(jsonPath("$.hash").value(hashOf(query)));
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void createVersion_shouldReturnConflictWhenVersionAlreadyExists() throws Exception {
+    QualityCheckVersionCreateDTO first = new QualityCheckVersionCreateDTO("SELECT 1", 1);
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(first)))
+        .andExpect(status().isCreated());
+
+    QualityCheckVersionCreateDTO duplicate = new QualityCheckVersionCreateDTO("SELECT 2", 1);
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(duplicate)))
+        .andExpect(status().isConflict());
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void createVersion_shouldReturnConflictWhenVersionHashIsNotUnique() throws Exception {
+    QualityCheck otherCheck = new QualityCheck("Other Check", "Another test check");
+    qualityCheckRepository.save(otherCheck);
+
+    String query = "SELECT COUNT(*) FROM patients";
+    QualityCheckVersionCreateDTO createDTO = new QualityCheckVersionCreateDTO(query, null);
+
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDTO)))
+        .andExpect(status().isCreated());
+
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS_VERSIONS, otherCheck.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDTO)))
+        .andExpect(status().isConflict());
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void createVersion_shouldReturnNotFoundWhenQualityCheckDoesNotExist() throws Exception {
+    QualityCheckVersionCreateDTO createDTO = new QualityCheckVersionCreateDTO("SELECT 1", null);
+
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS_VERSIONS, 99999L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDTO)))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void createVersion_shouldReturnBadRequestForBlankQuery() throws Exception {
+    QualityCheckVersionCreateDTO createDTO = new QualityCheckVersionCreateDTO(" ", null);
+
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDTO)))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @WithMockUser(roles = "HUMAN_USER")
+  void createVersion_shouldReturnForbiddenForNonAdminUser() throws Exception {
+    QualityCheckVersionCreateDTO createDTO = new QualityCheckVersionCreateDTO("SELECT 1", null);
+
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDTO)))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
+  void createVersion_shouldReturnUnauthorizedWhenNotAuthenticated() throws Exception {
+    QualityCheckVersionCreateDTO createDTO = new QualityCheckVersionCreateDTO("SELECT 1", null);
+
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDTO)))
+        .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void findVersions_shouldReturnAllVersionsOrderedByVersionNumber() throws Exception {
+    QualityCheckVersionCreateDTO firstDTO =
+        new QualityCheckVersionCreateDTO("SELECT COUNT(*) FROM patients WHERE gender = 'F'", null);
+    QualityCheckVersionCreateDTO secondDTO =
+        new QualityCheckVersionCreateDTO("SELECT COUNT(*) FROM patients WHERE gender = 'M'", null);
+
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(firstDTO)))
+        .andExpect(status().isCreated());
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(secondDTO)))
+        .andExpect(status().isCreated());
+
+    mockMvc
+        .perform(get(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$._embedded.qualityCheckVersions.length()").value(2))
+        .andExpect(jsonPath("$._embedded.qualityCheckVersions[0].version").value(1))
+        .andExpect(jsonPath("$._embedded.qualityCheckVersions[1].version").value(2))
+        .andExpect(
+            jsonPath("$._links.self.href")
+                .value(
+                    "http://localhost/api/v1/quality-checks/"
+                        + testQualityCheck.getId()
+                        + "/versions"));
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void findVersions_shouldReturnEmptyCollectionWhenNoVersionsExist() throws Exception {
+    mockMvc
+        .perform(get(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId()))
+        .andExpect(status().isOk())
+        .andExpect(
+            jsonPath("$._links.self.href")
+                .value(
+                    "http://localhost/api/v1/quality-checks/"
+                        + testQualityCheck.getId()
+                        + "/versions"));
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void findVersions_shouldReturnNotFoundWhenQualityCheckDoesNotExist() throws Exception {
+    mockMvc.perform(get(API_V1_QUALITY_CHECKS_VERSIONS, 99999L)).andExpect(status().isNotFound());
+  }
+
+  private static String hashOf(String query) {
+    try {
+      MessageDigest digest = MessageDigest.getInstance("SHA-256");
+      byte[] hash = digest.digest(query.getBytes(StandardCharsets.UTF_8));
+      StringBuilder hexString = new StringBuilder();
+      for (byte b : hash) {
+        String hex = Integer.toHexString(0xff & b);
+        if (hex.length() == 1) hexString.append('0');
+        hexString.append(hex);
+      }
+      return hexString.toString();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 }

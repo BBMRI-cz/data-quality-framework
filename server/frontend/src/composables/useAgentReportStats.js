@@ -1,5 +1,5 @@
 import { computed } from 'vue';
-import { countChecksByStatus } from '@/utils/qualityCheckUtils.js';
+import { countChecksByStatus, buildQualityCheckMap } from '@/utils/qualityCheckUtils.js';
 
 const AGENT_STATUS_META = {
   ACTIVE: {
@@ -63,13 +63,7 @@ function toLabel(status) {
 
 export function useAgentReportStats({ agent, latestReport, qualityChecks, totalReports }) {
   const qualityCheckMap = computed(() => {
-    const map = new Map();
-
-    qualityChecks.value.forEach((check) => {
-      map.set(check.hash, check);
-    });
-
-    return map;
+    return buildQualityCheckMap(qualityChecks.value);
   });
 
   const agentName = computed(() => {

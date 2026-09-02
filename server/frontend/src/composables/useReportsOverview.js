@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue';
 import { apiService } from '@/services/apiService.js';
-import { getReportStatus, CheckStatus } from '@/utils/qualityCheckUtils.js';
+import { getReportStatus, buildQualityCheckMap, CheckStatus } from '@/utils/qualityCheckUtils.js';
 
 export function useReportsOverview() {
   const reports = ref([]);
@@ -63,16 +63,15 @@ export function useReportsOverview() {
 
     try {
       const [checksData, agentsData] = await Promise.all([
-        apiService.getQualityChecks(),
+        apiService.getQualityChecksDetailed(),
         apiService.getAgents(),
       ]);
 
-      const checks =
-        checksData?._embedded?.qualityChecks || (Array.isArray(checksData) ? checksData : []);
+      const checks = Array.isArray(checksData) ? checksData : [];
 
       agents.value = agentsData?._embedded?.agents || (Array.isArray(agentsData) ? agentsData : []);
 
-      qualityCheckMap.value = new Map(checks.map((check) => [check.hash, check]));
+      qualityCheckMap.value = buildQualityCheckMap(checks);
 
       await fetchReportsPage();
     } catch (err) {

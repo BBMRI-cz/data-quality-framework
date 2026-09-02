@@ -141,30 +141,6 @@
                   </small>
                 </div>
 
-                <!-- Hash (Read-only) -->
-                <div class="col-12">
-                  <label class="form-label fw-semibold">Hash</label>
-                  <div class="input-group">
-                    <input
-                      :value="qualityCheck.hash"
-                      type="text"
-                      class="form-control font-monospace bg-light"
-                      readonly
-                    />
-                    <button
-                      class="btn btn-outline-secondary"
-                      type="button"
-                      title="Copy to clipboard"
-                      @click="copyHash"
-                    >
-                      <i class="bi bi-clipboard"></i>
-                    </button>
-                  </div>
-                  <small class="form-text text-muted">
-                    Unique identifier for this quality check
-                  </small>
-                </div>
-
                 <!-- Keywords Section -->
                 <div class="col-12">
                   <label class="form-label fw-semibold"> Keywords </label>
@@ -213,6 +189,13 @@
             </div>
           </div>
 
+          <!-- Versions Card -->
+          <QualityCheckVersions
+            :versions="versions"
+            :check-id="checkId"
+            @version-added="onVersionAdded"
+          />
+
           <!-- Action Buttons -->
           <div class="action-buttons d-flex gap-3 justify-content-center">
             <button
@@ -253,6 +236,7 @@
   import PageHeader from '@/components/ui/PageHeader.vue';
   import StatsCard from '@/components/ui/StatsCard.vue';
   import Badge from '@/components/ui/Badge.vue';
+  import QualityCheckVersions from '@/components/QualityCheckVersions.vue';
 
   const route = useRoute();
   const router = useRouter();
@@ -285,6 +269,8 @@
   const keywords = ref([]);
   const newKeyword = ref('');
 
+  const versions = ref([]);
+
   const hasChanges = computed(() => {
     if (!qualityCheck.value) return false;
     const originalKeywords = qualityCheck.value.keywords || [];
@@ -312,20 +298,18 @@
     error.value = null;
 
     try {
-      const [checksData, categoriesData] = await Promise.all([
-        apiService.getQualityChecks(),
+      const [detailedData, categoriesData] = await Promise.all([
+        apiService.getQualityCheck(checkId.value),
         apiService.getCategories(),
       ]);
 
-      const checks =
-        checksData._embedded?.qualityChecks || (Array.isArray(checksData) ? checksData : []);
       categories.value =
         categoriesData._embedded?.categories ||
         (Array.isArray(categoriesData) ? categoriesData : []);
 
-      qualityCheck.value = checks.find((check) => check.id === Number(checkId.value));
+      qualityCheck.value = detailedData;
 
-      if (!qualityCheck.value) {
+      if (!qualityCheck.value || !qualityCheck.value.id) {
         error.value = 'Quality check not found';
         return;
       }
@@ -339,6 +323,7 @@
 
       // Initialize keywords
       keywords.value = qualityCheck.value.keywords ? [...qualityCheck.value.keywords] : [];
+      versions.value = qualityCheck.value.versions ? [...qualityCheck.value.versions] : [];
     } catch (err) {
       error.value = err.message || 'Failed to load quality check';
       console.error('Error loading quality check:', err);
@@ -413,6 +398,10 @@
     }
   };
 
+  const onVersionAdded = (version) => {
+    versions.value.push(version);
+  };
+
   const removeKeyword = (keyword) => {
     const index = keywords.value.indexOf(keyword);
     if (index > -1) {
@@ -436,11 +425,6 @@
     validationErrors.errorThreshold = '';
 
     notificationService.info('Form Reset', 'Changes have been discarded');
-  };
-
-  const copyHash = () => {
-    navigator.clipboard.writeText(qualityCheck.value.hash);
-    notificationService.success('Copied', 'Hash copied to clipboard');
   };
 
   const goBack = () => {
@@ -475,15 +459,6 @@
   .form-control:focus {
     border-color: #0d6efd;
     box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
-  }
-
-  .font-monospace {
-    font-family: var(--font-mono), monospace;
-    font-size: 0.875rem;
-  }
-
-  .bg-light {
-    background-color: #f8f9fa !important;
   }
 
   /* Action Buttons */

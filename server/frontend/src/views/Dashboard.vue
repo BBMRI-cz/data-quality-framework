@@ -64,6 +64,7 @@
   import SiteView from '@/components/dashboard/SiteView.vue';
   import PatientView from '@/components/dashboard/PatientView.vue';
   import { apiService } from '@/services/apiService.js';
+  import { buildQualityCheckMap } from '@/utils/qualityCheckUtils.js';
 
   const route = useRoute();
   const router = useRouter();
@@ -113,14 +114,13 @@
 
       // Fetch quality checks, reports, and agents in parallel
       const [checksData, reportsData, agentsData] = await Promise.all([
-        apiService.getQualityChecks(),
+        apiService.getQualityChecksDetailed(),
         apiService.getReports(),
         apiService.getAgents(),
       ]);
 
       // Handle HAL format response for quality checks
-      const checks =
-        checksData._embedded?.qualityChecks || (Array.isArray(checksData) ? checksData : []);
+      const checks = Array.isArray(checksData) ? checksData : [];
 
       // Handle HAL format response for reports
       const reportsArray =
@@ -129,8 +129,8 @@
       // Handle HAL format response for agents
       agents.value = agentsData._embedded?.agents || (Array.isArray(agentsData) ? agentsData : []);
 
-      // Convert quality checks array to Map for quick lookup
-      qualityCheckMap.value = new Map(checks.map((check) => [check.hash, check]));
+      // Convert quality checks array to Map for quick lookup by version hash
+      qualityCheckMap.value = buildQualityCheckMap(checks);
 
       // Sort reports by timestamp (newest first)
       reports.value = reportsArray.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));

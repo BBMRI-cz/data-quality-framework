@@ -9,5 +9,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 interface QualityCheckRepository extends JpaRepository<QualityCheck, Long> {
 
-  Optional<QualityCheck> findByHash(String hash);
+  Optional<QualityCheck> findByVersions_Hash(String hash);
 }

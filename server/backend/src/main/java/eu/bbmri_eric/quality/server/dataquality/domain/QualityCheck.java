@@ -1,7 +1,6 @@
 package eu.bbmri_eric.quality.server.dataquality.domain;
 
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -9,27 +8,25 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 
 /**
  * Entity representing a quality check definition.
  *
- * <p>Each quality check is uniquely identified by a numeric id and carries a unique hash as its
- * business key.
+ * <p>Each quality check is uniquely identified by a numeric id. Query hashes live on its {@link
+ * QualityCheckVersion}s.
  */
 @Entity
 public class QualityCheck {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
-
-  @Column(name = "hash", nullable = false, unique = true)
-  @NotNull
-  private String hash;
 
   private final Instant registeredAt = Instant.now();
   @NotNull private String name;
@@ -42,12 +39,12 @@ public class QualityCheck {
   @JoinColumn(name = "category_id")
   private Category category;
 
-  @OneToMany(
-      mappedBy = "qualityCheckId",
-      cascade = CascadeType.ALL,
-      orphanRemoval = true,
-      fetch = jakarta.persistence.FetchType.LAZY)
+  @OneToMany(mappedBy = "qualityCheckId", cascade = CascadeType.ALL, orphanRemoval = true)
   private final Set<QualityCheckKeyword> keywords = new HashSet<>();
+
+  @OneToMany(mappedBy = "qualityCheck", cascade = CascadeType.ALL, orphanRemoval = true)
+  @OrderBy("version ASC")
+  private final Set<QualityCheckVersion> versions = new LinkedHashSet<>();
 
   /** Default constructor for JPA. */
   protected QualityCheck() {}
@@ -55,12 +52,10 @@ public class QualityCheck {
   /**
    * Creates a new quality check.
    *
-   * @param hash the unique hash identifying this check
    * @param name the name of the check
    * @param description the description of what the check validates
    */
-  public QualityCheck(String hash, String name, String description) {
-    this.hash = hash;
+  public QualityCheck(String name, String description) {
     this.name = name;
     this.description = description;
   }
@@ -68,19 +63,13 @@ public class QualityCheck {
   /**
    * Creates a new quality check with thresholds.
    *
-   * @param hash the unique hash identifying this check
    * @param name the name of the check
    * @param description the description of what the check validates
    * @param warningThreshold the threshold value for warnings
    * @param errorThreshold the threshold value for errors
    */
   public QualityCheck(
-      String hash,
-      String name,
-      String description,
-      double warningThreshold,
-      double errorThreshold) {
-    this.hash = hash;
+      String name, String description, double warningThreshold, double errorThreshold) {
     this.name = name;
     this.description = description;
     this.warningThreshold = warningThreshold;
@@ -88,13 +77,11 @@ public class QualityCheck {
   }
 
   public QualityCheck(
-      String hash,
       String name,
       String description,
       double warningThreshold,
       double errorThreshold,
       Category category) {
-    this.hash = hash;
     this.name = name;
     this.description = description;
     this.warningThreshold = warningThreshold;
@@ -109,15 +96,6 @@ public class QualityCheck {
    */
   public Long getId() {
     return id;
-  }
-
-  /**
-   * Gets the unique hash of this quality check.
-   *
-   * @return the hash
-   */
-  public String getHash() {
-    return hash;
   }
 
   /**
@@ -241,15 +219,34 @@ public class QualityCheck {
     }
   }
 
+  /**
+   * Gets the versions of this quality check (lazy-loaded).
+   *
+   * @return the set of versions
+   */
+  public Set<QualityCheckVersion> getVersions() {
+    return versions;
+  }
+
+  /**
+   * Adds a new version to this quality check, establishing the back-reference from the version.
+   *
+   * @param version the version to add
+   */
+  public void addVersion(QualityCheckVersion version) {
+    version.setQualityCheck(this);
+    versions.add(version);
+  }
+
   @Override
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
     QualityCheck that = (QualityCheck) o;
-    return Objects.equals(hash, that.hash);
+    return Objects.equals(id, that.id) && Objects.equals(name, that.name);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(hash);
+    return Objects.hash(id, name);
   }
 }

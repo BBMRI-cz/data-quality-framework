@@ -6,6 +6,7 @@ import eu.bbmri_eric.quality.server.common.dto.PageResponse;
 import eu.bbmri_eric.quality.server.dataquality.ReportService;
 import eu.bbmri_eric.quality.server.dataquality.domain.Agent;
 import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheck;
+import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheckVersion;
 import eu.bbmri_eric.quality.server.dataquality.domain.Report;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckResultDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.ReportCreateRequest;
@@ -120,19 +121,30 @@ class ReportServiceImpl implements ReportService {
     report.setTotalSamples(createRequest.getTotalSamples());
 
     for (QualityCheckResultDTO resultDTO : createRequest.getResults()) {
-      QualityCheck qualityCheck =
-          qualityCheckRepository
-              .findByHash(resultDTO.getHash())
-              .orElseGet(
-                  () -> {
-                    QualityCheck newCheck =
-                        new QualityCheck(resultDTO.getHash(), resultDTO.getName(), "");
-                    return qualityCheckRepository.save(newCheck);
-                  });
-
-      report.addQualityCheckResult(qualityCheck, resultDTO.getResult());
+      QualityCheckVersion version = resolveVersion(resultDTO.getHash(), resultDTO.getName());
+      report.addQualityCheckResult(version, resultDTO.getResult());
     }
     return report;
+  }
+
+  private QualityCheckVersion resolveVersion(String hash, String name) {
+    QualityCheck qualityCheck =
+        qualityCheckRepository
+            .findByVersions_Hash(hash)
+            .orElseGet(
+                () -> {
+                  QualityCheck newCheck = new QualityCheck(name, "");
+                  QualityCheckVersion newVersion = new QualityCheckVersion(newCheck, 1, "", hash);
+                  newCheck.addVersion(newVersion);
+                  return qualityCheckRepository.save(newCheck);
+                });
+    return qualityCheck.getVersions().stream()
+        .filter(version -> version.getHash().equals(hash))
+        .findFirst()
+        .orElseThrow(
+            () ->
+                new IllegalStateException(
+                    "No version with hash '%s' found for quality check".formatted(hash)));
   }
 
   private void verifyAuthorization(String agentId) {
