@@ -39,16 +39,10 @@ public class QualityCheck {
   @JoinColumn(name = "category_id")
   private Category category;
 
-  @OneToMany(
-      mappedBy = "qualityCheckId",
-      cascade = CascadeType.ALL,
-      orphanRemoval = true)
+  @OneToMany(mappedBy = "qualityCheckId", cascade = CascadeType.ALL, orphanRemoval = true)
   private final Set<QualityCheckKeyword> keywords = new HashSet<>();
 
-  @OneToMany(
-      mappedBy = "qualityCheck",
-      cascade = CascadeType.ALL,
-      orphanRemoval = true)
+  @OneToMany(mappedBy = "qualityCheck", cascade = CascadeType.ALL, orphanRemoval = true)
   @OrderBy("version ASC")
   private final Set<QualityCheckVersion> versions = new LinkedHashSet<>();
 
