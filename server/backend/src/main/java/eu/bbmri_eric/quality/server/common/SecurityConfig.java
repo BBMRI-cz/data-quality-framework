@@ -76,7 +76,7 @@ class SecurityConfig {
                     .hasRole("ADMIN")
                     .requestMatchers(HttpMethod.DELETE, "/api/v1/categories/*")
                     .hasRole("ADMIN")
-                    .requestMatchers(HttpMethod.GET, "/api/v1/manifests/*")
+                    .requestMatchers(HttpMethod.GET, "/api/v1/manifests/**")
                     .authenticated()
                     .requestMatchers(HttpMethod.POST, "/api/v1/manifests")
                     .hasRole("ADMIN")

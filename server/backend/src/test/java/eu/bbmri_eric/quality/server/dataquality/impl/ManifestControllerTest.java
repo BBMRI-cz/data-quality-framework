@@ -1,9 +1,13 @@
 package eu.bbmri_eric.quality.server.dataquality.impl;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.bbmri_eric.quality.server.crypto.KeyProvider;
+import eu.bbmri_eric.quality.server.crypto.SignatureService;
 import eu.bbmri_eric.quality.server.dataquality.domain.Manifest;
 import eu.bbmri_eric.quality.server.dataquality.dto.ManifestCreateDTO;
 import eu.bbmri_eric.quality.server.util.IntegrationTest;
@@ -13,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,10 +32,15 @@ class ManifestControllerTest {
   @Autowired private ObjectMapper objectMapper;
   @Autowired private ManifestRepository manifestRepository;
 
+  @MockitoBean private SignatureService signatureService;
+  @MockitoBean private KeyProvider keyProvider;
+
   private Manifest testManifest;
 
   @BeforeEach
-  void setUp() {
+  void setUp() throws Exception {
+    given(signatureService.sign(any(byte[].class))).willReturn(new byte[] {1, 2, 3});
+    given(keyProvider.getKeyId()).willReturn("central-server-key");
     manifestRepository.deleteAll();
     testManifest = new Manifest("Quality Checks 2026-08", "{\"checks\":[]}", null, null);
     testManifest = manifestRepository.save(testManifest);
@@ -111,6 +121,10 @@ class ManifestControllerTest {
         .andExpect(jsonPath("$.name").value("Quality Checks 2026-08"))
         .andExpect(jsonPath("$.generatedAt").exists())
         .andExpect(jsonPath("$.body").value("[\"5f3c9a...\",\"b4d2e...\"]"))
+        .andExpect(
+            jsonPath("$.signature")
+                .value(java.util.Base64.getEncoder().encodeToString(new byte[] {1, 2, 3})))
+        .andExpect(jsonPath("$.keyId").value("central-server-key"))
         .andExpect(jsonPath("$._links.manifests.href").value("http://localhost/api/v1/manifests"))
         .andExpect(jsonPath("$._links.self.href").exists());
   }
@@ -139,6 +153,23 @@ class ManifestControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createDTO)))
         .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void create_shouldFailWhenSigningFails() throws Exception {
+    given(signatureService.sign(any(byte[].class)))
+        .willThrow(new java.security.GeneralSecurityException("signing failed"));
+    ManifestCreateDTO createDTO =
+        new ManifestCreateDTO("Quality Checks 2026-08", List.of("5f3c9a..."));
+
+    mockMvc
+        .perform(
+            post(API_V1_MANIFESTS)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDTO)))
+        .andExpect(status().isInternalServerError())
+        .andExpect(jsonPath("$.title").value("Signature Error"));
   }
 
   @Test

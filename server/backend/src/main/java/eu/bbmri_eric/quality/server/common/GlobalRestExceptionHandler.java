@@ -184,6 +184,24 @@ public class GlobalRestExceptionHandler {
     return problemDetail;
   }
 
+  @ExceptionHandler(eu.bbmri_eric.quality.server.crypto.SignatureException.class)
+  @ApiResponse(
+      responseCode = "500",
+      description = "Signature Error",
+      content =
+          @Content(
+              mediaType = "application/problem+json",
+              schema = @Schema(implementation = ProblemDetail.class)))
+  public ProblemDetail handleSignatureError(
+      eu.bbmri_eric.quality.server.crypto.SignatureException ex) {
+    logger.error("Signature error: {}", ex.getMessage());
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(
+            HttpStatus.INTERNAL_SERVER_ERROR, "Failed to sign manifest body");
+    problemDetail.setTitle("Signature Error");
+    return problemDetail;
+  }
+
   @ExceptionHandler(AccessDeniedException.class)
   @ApiResponse(
       responseCode = "403",
