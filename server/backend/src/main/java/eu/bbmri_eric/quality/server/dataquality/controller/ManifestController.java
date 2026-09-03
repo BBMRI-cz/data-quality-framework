@@ -3,6 +3,8 @@ package eu.bbmri_eric.quality.server.dataquality.controller;
 import eu.bbmri_eric.quality.server.dataquality.ManifestService;
 import eu.bbmri_eric.quality.server.dataquality.dto.ManifestCreateDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.ManifestDTO;
+import eu.bbmri_eric.quality.server.dataquality.dto.ManifestVersionCreateDTO;
+import eu.bbmri_eric.quality.server.dataquality.dto.ManifestVersionDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,10 +24,15 @@ class ManifestController {
 
   private final ManifestService manifestService;
   private final ManifestLinkBuilder linkBuilder;
+  private final ManifestVersionLinkBuilder versionLinkBuilder;
 
-  public ManifestController(ManifestService manifestService, ManifestLinkBuilder linkBuilder) {
+  public ManifestController(
+      ManifestService manifestService,
+      ManifestLinkBuilder linkBuilder,
+      ManifestVersionLinkBuilder versionLinkBuilder) {
     this.manifestService = manifestService;
     this.linkBuilder = linkBuilder;
+    this.versionLinkBuilder = versionLinkBuilder;
   }
 
   @GetMapping("/manifests/{id}")
@@ -55,5 +62,30 @@ class ManifestController {
     ManifestDTO createdManifest = manifestService.create(createDTO);
     EntityModel<ManifestDTO> manifestModel = linkBuilder.toModel(createdManifest);
     return ResponseEntity.status(HttpStatus.CREATED).body(manifestModel);
+  }
+
+  @PostMapping("/manifests/{id}/versions")
+  @Operation(
+      summary = "Publish manifest version",
+      description = "Publishes a new signed version of a manifest")
+  @SecurityRequirement(name = "bearerAuth")
+  public ResponseEntity<EntityModel<ManifestVersionDTO>> createVersion(
+      @PathVariable Long id, @Valid @RequestBody ManifestVersionCreateDTO createDTO) {
+    ManifestVersionDTO createdVersion = manifestService.createVersion(id, createDTO);
+    EntityModel<ManifestVersionDTO> versionModel = versionLinkBuilder.toModel(id, createdVersion);
+    return ResponseEntity.status(HttpStatus.CREATED).body(versionModel);
+  }
+
+  @GetMapping("/manifests/{id}/versions")
+  @Operation(
+      summary = "Get manifest versions",
+      description = "Retrieves all versions of a manifest")
+  @SecurityRequirement(name = "bearerAuth")
+  public ResponseEntity<CollectionModel<EntityModel<ManifestVersionDTO>>> findVersions(
+      @PathVariable Long id) {
+    List<ManifestVersionDTO> versions = manifestService.findVersions(id);
+    CollectionModel<EntityModel<ManifestVersionDTO>> versionsModel =
+        versionLinkBuilder.toCollectionModel(id, versions);
+    return ResponseEntity.ok(versionsModel);
   }
 }

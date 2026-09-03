@@ -2,21 +2,26 @@ package eu.bbmri_eric.quality.server.dataquality.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.bbmri_eric.quality.server.common.EntityAlreadyExistsException;
 import eu.bbmri_eric.quality.server.common.EntityNotFoundException;
 import eu.bbmri_eric.quality.server.crypto.KeyProvider;
 import eu.bbmri_eric.quality.server.crypto.SignatureException;
 import eu.bbmri_eric.quality.server.crypto.SignatureService;
 import eu.bbmri_eric.quality.server.dataquality.ManifestService;
 import eu.bbmri_eric.quality.server.dataquality.domain.Manifest;
+import eu.bbmri_eric.quality.server.dataquality.domain.ManifestVersion;
 import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheckVersion;
 import eu.bbmri_eric.quality.server.dataquality.dto.ManifestBody;
 import eu.bbmri_eric.quality.server.dataquality.dto.ManifestCreateDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.ManifestDTO;
+import eu.bbmri_eric.quality.server.dataquality.dto.ManifestVersionCreateDTO;
+import eu.bbmri_eric.quality.server.dataquality.dto.ManifestVersionDTO;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import org.modelmapper.ModelMapper;
@@ -53,36 +58,15 @@ class ManifestServiceImpl implements ManifestService {
   @Override
   public ManifestDTO create(ManifestCreateDTO createDTO) {
     Objects.requireNonNull(createDTO, "ManifestCreateDTO cannot be null");
-    Manifest manifest = new Manifest(createDTO.getName(), "{}", null, null);
-    Manifest persisted = manifestRepository.saveAndFlush(manifest);
-    String body = buildBody(createDTO, persisted.getId());
-    String signature = signBody(body);
-    persisted.setBody(body);
-    persisted.setSignature(signature);
-    persisted.setKeyId(keyProvider.getKeyId());
-    Manifest savedManifest = manifestRepository.save(persisted);
+    Manifest manifest = new Manifest(createDTO.getName());
+    Manifest savedManifest = manifestRepository.save(manifest);
     return modelMapper.map(savedManifest, ManifestDTO.class);
-  }
-
-  private String signBody(String body) {
-    try {
-      byte[] signature = signatureService.sign(body.getBytes(StandardCharsets.UTF_8));
-      return Base64.getEncoder().encodeToString(signature);
-    } catch (GeneralSecurityException e) {
-      throw new SignatureException("Failed to sign manifest body", e);
-    }
   }
 
   @Override
   @Transactional(readOnly = true)
   public ManifestDTO findById(Long id) {
-    Objects.requireNonNull(id, "ID cannot be null");
-    return modelMapper.map(
-        manifestRepository
-            .findById(id)
-            .orElseThrow(
-                () -> new EntityNotFoundException("Manifest with ID %s not found".formatted(id))),
-        ManifestDTO.class);
+    return modelMapper.map(findManifest(id), ManifestDTO.class);
   }
 
   @Override
@@ -93,9 +77,59 @@ class ManifestServiceImpl implements ManifestService {
         .toList();
   }
 
-  private String buildBody(ManifestCreateDTO createDTO, Long manifestId) {
+  @Override
+  public ManifestVersionDTO createVersion(Long id, ManifestVersionCreateDTO createDTO) {
+    Objects.requireNonNull(createDTO, "ManifestVersionCreateDTO cannot be null");
+    Manifest manifest = findManifest(id);
+
+    int versionNumber = resolveVersion(createDTO.getVersion(), manifest);
+    boolean versionExists =
+        manifest.getVersions().stream().anyMatch(v -> v.getVersion() == versionNumber);
+    if (versionExists) {
+      throw new EntityAlreadyExistsException(
+          "Version %d already exists for manifest with ID: %d".formatted(versionNumber, id));
+    }
+
+    String body = buildBody(createDTO.getHashes(), id);
+    String signature = signBody(body);
+    ManifestVersion version =
+        new ManifestVersion(manifest, versionNumber, body, signature, keyProvider.getKeyId());
+    manifest.addVersion(version);
+    manifestRepository.save(manifest);
+    return modelMapper.map(version, ManifestVersionDTO.class);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<ManifestVersionDTO> findVersions(Long id) {
+    Manifest manifest = findManifest(id);
+    return manifest.getVersions().stream()
+        .sorted(Comparator.comparingInt(ManifestVersion::getVersion))
+        .map(version -> modelMapper.map(version, ManifestVersionDTO.class))
+        .toList();
+  }
+
+  private Manifest findManifest(Long id) {
+    Objects.requireNonNull(id, "ID cannot be null");
+    return manifestRepository
+        .findById(id)
+        .orElseThrow(
+            () -> new EntityNotFoundException("Manifest with ID %s not found".formatted(id)));
+  }
+
+  private int resolveVersion(Integer requestedVersion, Manifest manifest) {
+    return requestedVersion != null
+        ? requestedVersion
+        : manifest.getVersions().stream()
+                .map(ManifestVersion::getVersion)
+                .max(Comparator.naturalOrder())
+                .orElse(0)
+            + 1;
+  }
+
+  private String buildBody(List<String> hashes, Long manifestId) {
     List<ManifestBody.Check> checks = new ArrayList<>();
-    for (String hash : createDTO.getHashes()) {
+    for (String hash : hashes) {
       QualityCheckVersion version =
           qualityCheckVersionRepository
               .findByHash(hash)
@@ -112,6 +146,15 @@ class ManifestServiceImpl implements ManifestService {
       return objectMapper.writeValueAsString(body);
     } catch (JsonProcessingException e) {
       throw new IllegalArgumentException("Failed to serialize manifest body", e);
+    }
+  }
+
+  private String signBody(String body) {
+    try {
+      byte[] signature = signatureService.sign(body.getBytes(StandardCharsets.UTF_8));
+      return Base64.getEncoder().encodeToString(signature);
+    } catch (GeneralSecurityException e) {
+      throw new SignatureException("Failed to sign manifest body", e);
     }
   }
 }

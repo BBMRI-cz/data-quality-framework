@@ -80,6 +80,8 @@ class SecurityConfig {
                     .authenticated()
                     .requestMatchers(HttpMethod.POST, "/api/v1/manifests")
                     .hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.POST, "/api/v1/manifests/*/versions")
+                    .hasRole("ADMIN")
                     .requestMatchers(HttpMethod.GET, "/api/v1/groups/**")
                     .hasAnyRole("HUMAN_USER", "ADMIN")
                     .requestMatchers(HttpMethod.POST, "/api/v1/groups")
