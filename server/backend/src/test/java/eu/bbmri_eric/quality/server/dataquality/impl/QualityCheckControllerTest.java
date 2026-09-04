@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.server.dataquality.domain.Category;
 import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheckVersion;
+import eu.bbmri_eric.quality.server.dataquality.domain.QueryType;
 import eu.bbmri_eric.quality.server.dataquality.dto.KeywordsDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckUpdateDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckVersionCreateDTO;
@@ -116,7 +117,23 @@ class QualityCheckControllerTest {
         .andExpect(jsonPath("$.versions.length()").value(1))
         .andExpect(jsonPath("$.versions[0].version").value(1))
         .andExpect(jsonPath("$.versions[0].query").value(query))
-        .andExpect(jsonPath("$.versions[0].hash").value(hashOf(query)));
+        .andExpect(jsonPath("$.versions[0].hash").value(hashOf(query)))
+        .andExpect(jsonPath("$.versions[0].type").value("UNKNOWN"));
+  }
+
+  @Test
+  @WithMockUser(roles = "HUMAN_USER")
+  void findById_shouldReturnVersionsWithQueryTypeWhenPresent() throws Exception {
+    String query = "SELECT COUNT(*) FROM patients";
+    testQualityCheck.addVersion(new QualityCheckVersion(testQualityCheck, 1, query, QueryType.SQL));
+    qualityCheckRepository.save(testQualityCheck);
+    entityManager.flush();
+
+    mockMvc
+        .perform(get(API_V1_QUALITY_CHECKS_ID, testQualityCheck.getId()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.versions.length()").value(1))
+        .andExpect(jsonPath("$.versions[0].type").value("SQL"));
   }
 
   @Test
@@ -628,6 +645,52 @@ class QualityCheckControllerTest {
 
   @Test
   @WithMockUser(roles = "ADMIN")
+  void createVersion_shouldPersistProvidedQueryType() throws Exception {
+    String query = "SELECT COUNT(*) FROM patients WHERE gender = 'F'";
+    QualityCheckVersionCreateDTO createDTO =
+        new QualityCheckVersionCreateDTO(query, null, QueryType.CQL);
+
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDTO)))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.version").value(1))
+        .andExpect(jsonPath("$.query").value(query))
+        .andExpect(jsonPath("$.hash").value(hashOf(query)))
+        .andExpect(jsonPath("$.type").value("CQL"));
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void createVersion_shouldDefaultToUnknownTypeWhenNotProvided() throws Exception {
+    QualityCheckVersionCreateDTO createDTO = new QualityCheckVersionCreateDTO("SELECT 1", null);
+
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDTO)))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.type").value("UNKNOWN"));
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void createVersion_shouldReturnBadRequestForInvalidQueryType() throws Exception {
+    String invalidBody = "{\"query\": \"SELECT 1\", \"type\": \"NOT_A_TYPE\"}";
+
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(invalidBody))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
   void createVersion_shouldReturnNotFoundWhenQualityCheckDoesNotExist() throws Exception {
     QualityCheckVersionCreateDTO createDTO = new QualityCheckVersionCreateDTO("SELECT 1", null);
 
@@ -703,6 +766,7 @@ class QualityCheckControllerTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$._embedded.qualityCheckVersions.length()").value(2))
         .andExpect(jsonPath("$._embedded.qualityCheckVersions[0].version").value(1))
+        .andExpect(jsonPath("$._embedded.qualityCheckVersions[0].type").value("UNKNOWN"))
         .andExpect(jsonPath("$._embedded.qualityCheckVersions[1].version").value(2))
         .andExpect(
             jsonPath("$._links.self.href")

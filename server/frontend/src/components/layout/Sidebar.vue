@@ -52,6 +52,15 @@
             <span>Quality Checks</span>
           </router-link>
           <router-link
+            to="/manifests"
+            class="nav-link"
+            :class="{ active: $route.name === 'Manifests' || $route.name === 'ManifestDetail' }"
+            @click="closeMobileMenu"
+          >
+            <i class="bi bi-file-earmark-lock-fill"></i>
+            <span>Manifests</span>
+          </router-link>
+          <router-link
             to="/categories"
             class="nav-link"
             :class="{ active: $route.name === 'Categories' }"

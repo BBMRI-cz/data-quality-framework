@@ -11,6 +11,9 @@ import AgentReportView from '@/views/AgentReportView.vue';
 import AgentInteractionsView from '@/views/AgentInteractionsView.vue';
 import QualityChecksView from '@/views/QualityChecksView.vue';
 import QualityCheckDetailView from '@/views/QualityCheckDetailView.vue';
+import ManifestsView from '@/views/ManifestsView.vue';
+import ManifestDetailView from '@/views/ManifestDetailView.vue';
+import ManifestVersionPublishView from '@/views/ManifestVersionPublishView.vue';
 import CategoriesView from '@/views/CategoriesView.vue';
 import CategoryDetailView from '@/views/CategoryDetailView.vue';
 import LoginView from '@/views/LoginView.vue';
@@ -69,6 +72,24 @@ const routes = [
     name: 'QualityCheckDetail',
     component: QualityCheckDetailView,
     meta: { requiresAuth: true, title: 'Quality Check Detail' },
+  },
+  {
+    path: '/manifests',
+    name: 'Manifests',
+    component: ManifestsView,
+    meta: { requiresAuth: true, title: 'Manifests' },
+  },
+  {
+    path: '/manifests/:id',
+    name: 'ManifestDetail',
+    component: ManifestDetailView,
+    meta: { requiresAuth: true, title: 'Manifest Versions' },
+  },
+  {
+    path: '/manifests/:id/publish',
+    name: 'ManifestVersionPublish',
+    component: ManifestVersionPublishView,
+    meta: { requiresAuth: true, title: 'Publish Manifest Version' },
   },
   {
     path: '/categories',

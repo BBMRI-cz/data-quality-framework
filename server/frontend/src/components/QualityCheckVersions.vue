@@ -13,7 +13,10 @@
       <ul v-else class="list-group list-group-flush">
         <li v-for="version in sortedVersions" :key="version.id" class="list-group-item px-0">
           <div class="d-flex justify-content-between align-items-center">
-            <span class="badge bg-primary">v{{ version.version }}</span>
+            <span>
+              <span class="badge bg-primary">v{{ version.version }}</span>
+              <span class="badge bg-secondary ms-1">{{ formatQueryType(version.type) }}</span>
+            </span>
             <span class="text-muted small font-monospace">{{ version.hash }}</span>
           </div>
           <pre v-if="version.query" class="mt-2 mb-0 p-2 bg-light rounded font-monospace small">{{
@@ -31,6 +34,19 @@
         <i class="bi bi-plus-circle me-1"></i>
         Add New Version
       </h6>
+      <div class="mb-3">
+        <label for="new-version-type" class="form-label">Query Type</label>
+        <select
+          id="new-version-type"
+          v-model="newVersionType"
+          class="form-select"
+          :disabled="savingVersion"
+        >
+          <option v-for="type in QUERY_TYPES" :key="type" :value="type">
+            {{ formatQueryType(type) }}
+          </option>
+        </select>
+      </div>
       <div class="mb-3">
         <textarea
           v-model="newVersionQuery"
@@ -67,6 +83,10 @@
     >
       <template #body>
         <div class="py-2">
+          <p class="mb-2">
+            <span class="text-muted small me-1">Query Type:</span>
+            <span class="badge bg-secondary">{{ formatQueryType(pendingType) }}</span>
+          </p>
           <pre class="mb-0 mx-auto p-2 bg-light rounded font-monospace small text-start">{{
             pendingQuery
           }}</pre>
@@ -84,6 +104,7 @@
   import { ref, computed } from 'vue';
   import { apiService } from '@/services/apiService.js';
   import { notificationService } from '@/services/notificationService.js';
+  import { QUERY_TYPES, formatQueryType } from '@/utils/queryTypeUtils.js';
   import ConfirmModal from './ConfirmModal.vue';
 
   const props = defineProps({
@@ -100,9 +121,11 @@
   const emit = defineEmits(['version-added']);
 
   const newVersionQuery = ref('');
+  const newVersionType = ref('UNKNOWN');
   const savingVersion = ref(false);
   const showConfirm = ref(false);
   const pendingQuery = ref('');
+  const pendingType = ref('UNKNOWN');
 
   const sortedVersions = computed(() => [...props.versions].sort((a, b) => a.version - b.version));
 
@@ -110,6 +133,7 @@
     const query = newVersionQuery.value.trim();
     if (!query || savingVersion.value) return;
     pendingQuery.value = query;
+    pendingType.value = newVersionType.value;
     showConfirm.value = true;
   };
 
@@ -124,8 +148,13 @@
 
     savingVersion.value = true;
     try {
-      const created = await apiService.createQualityCheckVersion(props.checkId, pendingQuery.value);
+      const created = await apiService.createQualityCheckVersion(
+        props.checkId,
+        pendingQuery.value,
+        pendingType.value
+      );
       newVersionQuery.value = '';
+      newVersionType.value = 'UNKNOWN';
       pendingQuery.value = '';
       showConfirm.value = false;
       emit('version-added', created);

@@ -69,6 +69,7 @@ export default defineConfig({
                             text: 'Data Quality Server',
                             items: [
                                 {text: 'Configuration', link: '/user/server/configuration'},
+                                {text: 'Manifests', link: '/user/server/manifests'},
                                 {text: 'OIDC Configuration', link: '/user/oidc-configuration'},
                             ]
                         },

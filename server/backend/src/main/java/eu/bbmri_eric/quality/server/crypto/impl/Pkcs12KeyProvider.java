@@ -19,10 +19,10 @@ import java.security.cert.CertificateException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 /** Loads a private/public key pair from a PKCS#12 keystore on the filesystem. */
-@Component
+@Service
 class Pkcs12KeyProvider implements KeyProvider {
 
   private static final Logger log = LoggerFactory.getLogger(Pkcs12KeyProvider.class);
