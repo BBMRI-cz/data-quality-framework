@@ -69,6 +69,19 @@
         </template>
       </FormField>
 
+      <FormTextarea
+        id="serverPublicKey"
+        v-model="formData.publicKey"
+        label="Public Key (optional)"
+        icon="bi-key"
+        placeholder="-----BEGIN PUBLIC KEY-----"
+        help-text="PEM encoded public key used to verify manifests signed by this server. Can also be added later."
+        help-icon="bi-info-circle"
+        :rows="5"
+        maxlength="2048"
+        monospace
+      />
+
       <FormActions
         :loading="loading"
         :show-cancel-button="false"
@@ -107,7 +120,7 @@
   import { reactive, ref } from 'vue';
   import { validateServerUrl } from '@/api';
   import SaveButton from './SaveButton.vue';
-  import { FormField, FormActions } from '@/components/forms';
+  import { FormField, FormActions, FormTextarea } from '@/components/forms';
 
   defineProps({
     loading: {
@@ -123,6 +136,7 @@
   const formData = reactive({
     name: '',
     url: '',
+    publicKey: '',
   });
 
   const urlValidation = reactive({
@@ -192,12 +206,14 @@
     emit('submit', {
       name: formData.name.trim(),
       url: url,
+      publicKey: formData.publicKey.trim(),
     });
   }
 
   function clearForm() {
     formData.name = '';
     formData.url = '';
+    formData.publicKey = '';
     resetValidation();
   }
 
