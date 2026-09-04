@@ -1,10 +1,10 @@
 <template>
   <div class="server-detail-page">
     <PageHeader
-      :title="server?.name || 'Server Details'"
+      :title="server?.name || 'Central Server Details'"
       :mobile-title="server?.name || 'Server'"
-      subtitle="Server configuration and interaction history"
-      icon="bi bi-server"
+      subtitle="Central server configuration and interaction history"
+      icon="bi bi-hdd-network"
     />
 
     <div class="page-content">
@@ -13,7 +13,7 @@
         <ActionButton
           to="/servers"
           icon="bi bi-arrow-left"
-          text="Back to Servers"
+          text="Back to Central Servers"
           variant="secondary"
         />
       </div>

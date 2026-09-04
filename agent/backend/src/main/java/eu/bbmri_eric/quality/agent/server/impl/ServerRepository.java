@@ -17,5 +17,7 @@ import org.springframework.stereotype.Repository;
 interface ServerRepository extends CrudRepository<Server, String> {
   Optional<Server> findByUrl(String url);
 
+  boolean existsByUrl(String url);
+
   List<Server> findAllByStatusIs(ServerConnectionStatus status);
 }

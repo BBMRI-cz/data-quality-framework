@@ -1,62 +1,88 @@
 <template>
   <div class="servers-page">
     <PageHeader
-      title="Reporting Management"
+      title="Central Servers"
       mobile-title="Servers"
-      subtitle="Manage and register central servers to which reports should be sent"
-      icon="bi bi-server"
-    />
+      subtitle="Manage central servers that receive quality reports and publish quality checks"
+      icon="bi bi-hdd-network"
+    >
+      <template #actions>
+        <ActionButton to="/servers/new" icon="bi bi-plus" text="Add Central Server" />
+      </template>
+    </PageHeader>
 
     <div class="page-content">
-      <!-- Loading State -->
-      <div v-if="serverStore.loading && servers.length === 0" class="loading-card">
-        <i class="bi bi-arrow-clockwise spinning"></i>
-        <p>Loading servers...</p>
-      </div>
-
-      <!-- No Servers - Show Registration Form -->
-      <ServerRegistrationForm
-        v-else-if="servers.length === 0"
-        ref="registrationForm"
-        :loading="isRegistering"
-        @submit="registerServer"
-      />
-
-      <!-- Has Servers - Show First Server Details -->
-      <div v-else class="servers-container">
-        <div class="section-header">
-          <div>
-            <h2 class="section-title">
-              <i class="bi bi-server"></i>
-              Registered Server
-            </h2>
-            <p class="section-description">Your central server configuration</p>
-          </div>
-          <button class="btn btn-refresh" :disabled="serverStore.loading" @click="refreshServers">
-            <i class="bi bi-arrow-clockwise" :class="{ spinning: serverStore.loading }"></i>
-            Refresh
-          </button>
-        </div>
-
-        <ServerDetailsCard
-          :server="firstServer"
-          @delete="handleDelete"
-          @view-details="handleViewDetails"
+      <div class="stats-grid">
+        <StatCard
+          :number="servers.length"
+          label="Total Servers"
+          number-class="text-primary"
+          help-text="Number of registered central servers"
         />
-
-        <div v-if="servers.length > 1" class="additional-servers-notice">
-          <i class="bi bi-info-circle"></i>
-          <span
-            >{{ servers.length - 1 }} additional server{{
-              servers.length > 2 ? 's' : ''
-            }}
-            registered</span
-          >
-        </div>
+        <StatCard
+          :number="activeServers"
+          label="Active Servers"
+          number-class="text-success"
+          help-text="Servers that currently receive reports and publish quality checks"
+        />
       </div>
+
+      <div class="search-bar">
+        <i class="bi bi-search search-icon"></i>
+        <input
+          v-model="searchQuery"
+          type="text"
+          class="form-control"
+          placeholder="Search servers..."
+        />
+        <button
+          v-if="searchQuery"
+          class="btn btn-link clear-btn"
+          type="button"
+          @click="searchQuery = ''"
+        >
+          <i class="bi bi-x-circle"></i>
+        </button>
+      </div>
+
+      <BaseTable
+        title="Central Servers"
+        :columns="columns"
+        :items="filteredServers"
+        :loading="serverStore.loading"
+        item-key="id"
+        item-label="servers"
+        empty-text="No central servers registered yet"
+        empty-icon="bi bi-hdd-network"
+        @row-click="navigateToDetails"
+      >
+        <template #name="{ item }">
+          <span class="fw-medium">{{ item.name }}</span>
+        </template>
+        <template #url="{ item }">
+          <span class="text-muted">{{ item.url }}</span>
+        </template>
+        <template #status="{ item }">
+          <span
+            :class="['badge', getStatusBadgeClass(item.status)]"
+            :title="getStatusTooltip(item.status)"
+          >
+            <i :class="getStatusIcon(item.status)"></i>
+            {{ formatStatus(item.status) }}
+          </span>
+        </template>
+        <template #actions="{ item }">
+          <button
+            class="btn btn-sm btn-outline-danger"
+            title="Remove server"
+            @click.stop="openDeleteModal(item)"
+          >
+            <i class="bi bi-trash"></i>
+          </button>
+        </template>
+      </BaseTable>
     </div>
 
-    <!-- Delete Confirmation Modal -->
     <DeleteConfirmModal
       v-if="showDeleteModal && deletingServer"
       :item-name="deletingServer.name"
@@ -72,50 +98,61 @@
   import { useRouter } from 'vue-router';
   import { useServerStore } from '@/stores/serverStore.js';
   import PageHeader from '@/components/PageHeader.vue';
-  import ServerRegistrationForm from '@/components/ServerRegistrationForm.vue';
-  import ServerDetailsCard from '@/components/ServerDetailsCard.vue';
+  import ActionButton from '@/components/ActionButton.vue';
+  import StatCard from '@/components/StatCard.vue';
+  import BaseTable from '@/components/BaseTable.vue';
   import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue';
   import { notificationService } from '@/services/notificationService.js';
+  import {
+    getStatusBadgeClass,
+    getStatusIcon,
+    formatStatus,
+    getStatusTooltip,
+  } from '@/utils/serverStatus.js';
 
   const router = useRouter();
   const serverStore = useServerStore();
 
-  const isRegistering = ref(false);
+  const searchQuery = ref('');
   const isDeleting = ref(false);
   const showDeleteModal = ref(false);
-  const registrationForm = ref(null);
-
   const deletingServer = ref(null);
 
+  const columns = [
+    { key: 'name', label: 'Name' },
+    { key: 'url', label: 'URL' },
+    { key: 'status', label: 'Status', headerClass: 'center', cellClass: 'center' },
+    { key: 'actions', label: '', headerClass: 'center', cellClass: 'center' },
+  ];
+
   const servers = computed(() => serverStore.servers);
-  const firstServer = computed(() => servers.value[0] || null);
+  const activeServers = computed(
+    () => servers.value.filter((server) => server.status === 'ACTIVE').length
+  );
 
-  async function registerServer(data) {
-    if (!data.name || !data.url) {
-      notificationService.error('Validation Error', 'Please fill in all required fields');
-      return;
+  const filteredServers = computed(() => {
+    if (!searchQuery.value) {
+      return servers.value;
     }
+    const query = searchQuery.value.toLowerCase();
+    return servers.value.filter(
+      (server) =>
+        server.name?.toLowerCase().includes(query) || server.url?.toLowerCase().includes(query)
+    );
+  });
 
-    isRegistering.value = true;
-    try {
-      await serverStore.createServer(data);
-      notificationService.success(
-        'Server Registered',
-        `${data.name} has been registered successfully`
-      );
-      registrationForm.value?.clearForm();
-    } catch {
-      notificationService.error(
-        'Registration Failed',
-        serverStore.error || 'Unable to register server. Please try again.'
-      );
-    } finally {
-      isRegistering.value = false;
-    }
+  function navigateToDetails(server) {
+    router.push(`/servers/${server.id}`);
   }
 
-  function handleViewDetails(server) {
-    router.push(`/servers/${server.id}`);
+  function openDeleteModal(server) {
+    deletingServer.value = server;
+    showDeleteModal.value = true;
+  }
+
+  function closeDeleteModal() {
+    showDeleteModal.value = false;
+    deletingServer.value = null;
   }
 
   async function deleteServer() {
@@ -139,30 +176,15 @@
     }
   }
 
-  function handleDelete(server) {
-    deletingServer.value = server;
-    showDeleteModal.value = true;
-  }
-
-  function closeDeleteModal() {
-    showDeleteModal.value = false;
-    deletingServer.value = null;
-  }
-
-  async function refreshServers() {
+  async function loadServers() {
     try {
       await serverStore.fetchServers();
     } catch {
-      notificationService.error(
-        'Refresh Failed',
-        'Unable to refresh servers list. Please try again.'
-      );
+      notificationService.error('Load Failed', 'Unable to load servers. Please try again.');
     }
   }
 
-  onMounted(() => {
-    refreshServers();
-  });
+  onMounted(loadServers);
 </script>
 
 <style scoped>
@@ -172,139 +194,86 @@
   }
 
   .page-content {
-    max-width: 900px;
-    margin: 0 auto;
+    width: 100%;
   }
 
-  /* Loading State */
-  .loading-card {
-    background: var(--bg-card);
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-sm);
-    text-align: center;
-    padding: 4rem var(--spacing-xl);
-    color: var(--color-gray-500);
-  }
-
-  .loading-card i {
-    font-size: 3rem;
-    color: var(--color-primary);
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
     margin-bottom: var(--spacing-lg);
-    display: block;
   }
 
-  .spinning {
-    animation: spin 1s linear infinite;
+  .search-bar {
+    position: relative;
+    margin-bottom: var(--spacing-lg);
+    max-width: 400px;
   }
 
-  @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  /* Server Container */
-  .servers-container {
-    background: var(--bg-card);
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-sm);
-    padding: var(--spacing-2xl);
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xl);
-  }
-
-  .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding-bottom: var(--spacing-lg);
-    border-bottom: 2px solid var(--color-gray-100);
-  }
-
-  .section-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--color-gray-800);
-    margin: 0 0 var(--spacing-sm) 0;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-
-  .section-title i {
-    color: var(--color-primary);
-    font-size: 1.75rem;
-  }
-
-  .section-description {
-    font-size: 0.95rem;
-    color: var(--color-gray-500);
-    margin: 0;
-  }
-
-  .btn {
-    padding: 0.875rem var(--spacing-xl);
-    font-size: 1rem;
-    font-weight: 600;
-    border: none;
+  .search-bar .form-control {
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+    border: 2px solid var(--color-gray-200);
     border-radius: var(--radius-md);
-    cursor: pointer;
-    transition: all var(--transition-base);
+    background: var(--bg-card);
+  }
+
+  .search-bar .form-control:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 0.875rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-gray-400);
+    font-size: 1rem;
+    pointer-events: none;
+  }
+
+  .clear-btn {
+    position: absolute;
+    right: 0.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-gray-400);
+    padding: 0.25rem 0.5rem;
+    text-decoration: none;
+  }
+
+  .clear-btn:hover {
+    color: var(--color-gray-600);
+  }
+
+  .badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: 0.35rem 0.65rem;
     display: inline-flex;
     align-items: center;
-    gap: var(--spacing-sm);
+    gap: 0.35rem;
   }
 
-  .btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  .btn-refresh {
-    background: var(--color-gray-100);
-    color: var(--color-gray-700);
-  }
-
-  .btn-refresh:hover:not(:disabled) {
-    background: var(--color-gray-200);
-    transform: translateY(-1px);
-  }
-
-  /* Additional Servers Notice */
-  .additional-servers-notice {
-    padding: var(--spacing-md) var(--spacing-lg);
-    background: #eff6ff;
-    border-left: 4px solid var(--color-primary);
-    border-radius: var(--radius-md);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-md);
-    color: #1e40af;
-    font-weight: 500;
-  }
-
-  .additional-servers-notice i {
-    font-size: 1.25rem;
-    color: var(--color-primary);
-  }
-
-  /* Responsive Design */
   @media (max-width: 768px) {
     .servers-page {
       padding: var(--spacing-md);
     }
 
-    .servers-container {
-      padding: var(--spacing-lg);
+    .search-bar {
+      max-width: 100%;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .servers-page {
+      padding: var(--spacing-sm);
     }
 
-    .section-header {
-      flex-direction: column;
-      gap: var(--spacing-md);
+    .stats-grid {
+      grid-template-columns: 1fr;
     }
   }
 </style>

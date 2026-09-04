@@ -3,11 +3,11 @@
     <div class="section-header">
       <div>
         <h2 class="section-title">
-          <i class="bi bi-server"></i>
-          Register Server
+          <i class="bi bi-hdd-network"></i>
+          Register Central Server
         </h2>
         <p class="section-description">
-          Register your first central server to start sending quality reports
+          The agent will send quality reports to this server and pull quality checks from it
         </p>
       </div>
     </div>
@@ -94,7 +94,7 @@
           <SaveButton
             type="submit"
             :loading="loading"
-            icon="bi-server"
+            icon="bi-hdd-network"
             :text="loading ? 'Registering...' : 'Register Server'"
           />
         </template>
