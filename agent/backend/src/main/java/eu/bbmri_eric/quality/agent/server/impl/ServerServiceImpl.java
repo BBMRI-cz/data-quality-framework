@@ -70,6 +70,7 @@ class ServerServiceImpl implements ServerService {
           "A server with URL '%s' is already registered".formatted(createDto.getUrl()));
     }
     Server server = new Server(createDto.getUrl(), createDto.getName());
+    server.setPublicKey(createDto.getPublicKey());
     Server savedServer = serverRepository.save(server);
     String agentId = settingsService.getSettings().getAgentId();
     eventPublisher.publishEvent(new ServerRegistrationEvent(agentId, savedServer.getUrl()));
@@ -99,6 +100,9 @@ class ServerServiceImpl implements ServerService {
     }
     if (updateDto.getClientSecret() != null) {
       server.setClientSecret(updateDto.getClientSecret());
+    }
+    if (updateDto.getPublicKey() != null) {
+      server.setPublicKey(updateDto.getPublicKey());
     }
 
     Server updatedServer = serverRepository.save(server);

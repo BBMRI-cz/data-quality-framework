@@ -30,6 +30,12 @@ public class ServerDto {
   @Schema(description = "Current status of the server connection", example = "ACTIVE")
   private ServerConnectionStatus status;
 
+  /** Public key used to verify signatures published by the server. */
+  @Schema(
+      description = "PEM encoded public key used to verify signatures from the central server",
+      example = "-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----")
+  private String publicKey;
+
   /** Default constructor. */
   public ServerDto() {}
 
@@ -118,5 +124,23 @@ public class ServerDto {
    */
   public void setStatus(ServerConnectionStatus status) {
     this.status = status;
+  }
+
+  /**
+   * Gets the public key.
+   *
+   * @return the public key
+   */
+  public String getPublicKey() {
+    return publicKey;
+  }
+
+  /**
+   * Sets the public key.
+   *
+   * @param publicKey the public key
+   */
+  public void setPublicKey(String publicKey) {
+    this.publicKey = publicKey;
   }
 }

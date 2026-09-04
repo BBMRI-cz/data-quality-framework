@@ -38,6 +38,10 @@ public class Server {
   @Column(name = "client_secret", nullable = false, length = 500)
   private String clientSecret = "";
 
+  @Size(max = 2048)
+  @Column(name = "public_key", length = 2048)
+  private String publicKey;
+
   @NotNull
   @Enumerated(EnumType.STRING)
   private ServerConnectionStatus status = ServerConnectionStatus.PENDING;
@@ -129,6 +133,26 @@ public class Server {
     }
   }
 
+  public String getPublicKey() {
+    return publicKey;
+  }
+
+  public void setPublicKey(String publicKey) {
+    String oldPublicKey = this.publicKey;
+    this.publicKey = publicKey;
+    if (this.id != null && !Objects.equals(oldPublicKey, publicKey)) {
+      boolean hadKey = oldPublicKey != null && !oldPublicKey.isEmpty();
+      boolean hasKey = publicKey != null && !publicKey.isEmpty();
+      if (hadKey && hasKey) {
+        addInteraction(new ServerInteraction(InteractionType.UPDATE, "Public key updated"));
+      } else if (hasKey) {
+        addInteraction(new ServerInteraction(InteractionType.UPDATE, "Public key added"));
+      } else if (hadKey) {
+        addInteraction(new ServerInteraction(InteractionType.UPDATE, "Public key removed"));
+      }
+    }
+  }
+
   public ServerConnectionStatus getStatus() {
     return status;
   }
@@ -163,12 +187,13 @@ public class Server {
         && Objects.equals(name, server.name)
         && Objects.equals(clientId, server.clientId)
         && Objects.equals(clientSecret, server.clientSecret)
+        && Objects.equals(publicKey, server.publicKey)
         && status == server.status;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, url, name, clientId, clientSecret, status);
+    return Objects.hash(id, url, name, clientId, clientSecret, publicKey, status);
   }
 
   @Override

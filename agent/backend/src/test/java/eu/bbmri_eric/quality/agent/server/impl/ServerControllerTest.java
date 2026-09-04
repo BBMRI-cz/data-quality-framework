@@ -135,6 +135,122 @@ class ServerControllerTest {
 
   @Test
   @WithUserDetails("admin")
+  void createServer_withPublicKey_createdSuccessfully() throws Exception {
+    ServerCreateDto createDto = new ServerCreateDto();
+    createDto.setUrl("https://example.com");
+    createDto.setName("Test Server");
+    createDto.setPublicKey(
+        "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE\n-----END PUBLIC KEY-----");
+
+    mockMvc
+        .perform(
+            post(SERVERS_ENDPOINT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDto)))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.url").value("https://example.com"))
+        .andExpect(jsonPath("$.publicKey").value(createDto.getPublicKey()));
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void createServer_withoutPublicKey_hasNullPublicKey() throws Exception {
+    ServerCreateDto createDto = new ServerCreateDto();
+    createDto.setUrl("https://example.com");
+    createDto.setName("Test Server");
+
+    mockMvc
+        .perform(
+            post(SERVERS_ENDPOINT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDto)))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.publicKey").doesNotExist());
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void createServer_publicKeyTooLong_returnsBadRequest() throws Exception {
+    ServerCreateDto createDto = new ServerCreateDto();
+    createDto.setUrl("https://example.com");
+    createDto.setName("Test Server");
+    createDto.setPublicKey("x".repeat(2049));
+
+    mockMvc
+        .perform(
+            post(SERVERS_ENDPOINT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDto)))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void updateServer_addPublicKeyAfterRegistration_addedSuccessfully() throws Exception {
+    ServerCreateDto createDto = new ServerCreateDto();
+    createDto.setUrl("https://example.com");
+    createDto.setName("Test Server");
+
+    String location =
+        mockMvc
+            .perform(
+                post(SERVERS_ENDPOINT)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(createDto)))
+            .andExpect(status().isCreated())
+            .andReturn()
+            .getResponse()
+            .getHeader("Location");
+
+    ServerUpdateDto updateDto = new ServerUpdateDto();
+    updateDto.setPublicKey(
+        "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE\n-----END PUBLIC KEY-----");
+
+    mockMvc
+        .perform(
+            put(location)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateDto)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.publicKey").value(updateDto.getPublicKey()));
+
+    mockMvc
+        .perform(get(location))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.publicKey").value(updateDto.getPublicKey()));
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void updateServer_publicKeyTooLong_returnsBadRequest() throws Exception {
+    ServerCreateDto createDto = new ServerCreateDto();
+    createDto.setUrl("https://example.com");
+    createDto.setName("Test Server");
+
+    String location =
+        mockMvc
+            .perform(
+                post(SERVERS_ENDPOINT)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(createDto)))
+            .andExpect(status().isCreated())
+            .andReturn()
+            .getResponse()
+            .getHeader("Location");
+
+    ServerUpdateDto updateDto = new ServerUpdateDto();
+    updateDto.setPublicKey("x".repeat(2049));
+
+    mockMvc
+        .perform(
+            put(location)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateDto)))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @WithUserDetails("admin")
   void getServerById_existingServer_returnsServer() throws Exception {
     // Create a server first
     ServerCreateDto createDto = new ServerCreateDto();
