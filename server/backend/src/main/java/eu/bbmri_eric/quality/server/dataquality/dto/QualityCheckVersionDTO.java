@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.server.dataquality.dto;
 
+import eu.bbmri_eric.quality.server.dataquality.domain.QueryType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.hateoas.server.core.Relation;
 
@@ -34,6 +35,12 @@ public class QualityCheckVersionDTO {
       requiredMode = Schema.RequiredMode.REQUIRED)
   private String hash;
 
+  @Schema(
+      description = "Type of the query",
+      example = "SQL",
+      requiredMode = Schema.RequiredMode.REQUIRED)
+  private QueryType type;
+
   /** Default constructor for serialization frameworks. */
   public QualityCheckVersionDTO() {}
 
@@ -46,10 +53,24 @@ public class QualityCheckVersionDTO {
    * @param hash the hash of the query
    */
   public QualityCheckVersionDTO(Long id, int version, String query, String hash) {
+    this(id, version, query, hash, QueryType.UNKNOWN);
+  }
+
+  /**
+   * Constructor with all fields including the query type.
+   *
+   * @param id the numeric id of the version
+   * @param version the version number
+   * @param query the query text
+   * @param hash the hash of the query
+   * @param type the query type
+   */
+  public QualityCheckVersionDTO(Long id, int version, String query, String hash, QueryType type) {
     this.id = id;
     this.version = version;
     this.query = query;
     this.hash = hash;
+    this.type = type;
   }
 
   public Long getId() {
@@ -82,5 +103,13 @@ public class QualityCheckVersionDTO {
 
   public void setHash(String hash) {
     this.hash = hash;
+  }
+
+  public QueryType getType() {
+    return type;
+  }
+
+  public void setType(QueryType type) {
+    this.type = type;
   }
 }

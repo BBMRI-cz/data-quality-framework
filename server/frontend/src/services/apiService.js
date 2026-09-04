@@ -110,8 +110,9 @@ class ApiService {
     return response.data;
   }
 
-  async createQualityCheckVersion(id, query) {
-    const response = await api.post(`/v1/quality-checks/${id}/versions`, { query });
+  async createQualityCheckVersion(id, query, type) {
+    const body = type ? { query, type } : { query };
+    const response = await api.post(`/v1/quality-checks/${id}/versions`, body);
     return response.data;
   }
 

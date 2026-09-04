@@ -1,0 +1,2 @@
+ALTER TABLE quality_check_version
+    ADD COLUMN type VARCHAR(255) NOT NULL DEFAULT 'UNKNOWN';

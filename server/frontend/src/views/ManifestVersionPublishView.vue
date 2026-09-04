@@ -120,6 +120,9 @@
                       </td>
                       <td>
                         <span class="badge bg-primary">v{{ versionFor(check) }}</span>
+                        <span class="badge bg-secondary ms-1">{{
+                          formatQueryType(versionEntry(check)?.type)
+                        }}</span>
                       </td>
                       <td class="query-cell">
                         <span class="font-monospace small text-muted">{{
@@ -159,6 +162,7 @@
                               @change="onVersionChange(check, v.version)"
                             />
                             <span class="badge bg-primary">v{{ v.version }}</span>
+                            <span class="badge bg-secondary">{{ formatQueryType(v.type) }}</span>
                             <span class="query-preview font-monospace small text-muted">{{
                               truncate(v.query)
                             }}</span>
@@ -227,6 +231,7 @@
       <div v-if="queryModalCheck" class="mb-3">
         <h6 class="fw-semibold mb-1">{{ queryModalCheck.name }}</h6>
         <span class="badge bg-primary">v{{ queryModalVersion }}</span>
+        <span class="badge bg-secondary ms-1">{{ formatQueryType(queryModalType) }}</span>
       </div>
       <pre class="query-full font-monospace bg-light rounded p-3 mb-0">{{ fullQuery }}</pre>
     </BaseModal>
@@ -239,6 +244,7 @@
   import { useHead } from '@unhead/vue';
   import { apiService } from '@/services/apiService.js';
   import { notificationService } from '@/services/notificationService.js';
+  import { formatQueryType } from '@/utils/queryTypeUtils.js';
   import PageHeader from '@/components/ui/PageHeader.vue';
   import ConfirmModal from '@/components/ConfirmModal.vue';
   import BaseModal from '@/components/BaseModal.vue';
@@ -265,6 +271,7 @@
   const showQueryModal = ref(false);
   const queryModalCheck = ref(null);
   const queryModalVersion = ref(null);
+  const queryModalType = ref(null);
   const fullQuery = ref('');
 
   useHead({ title: 'Publish Manifest Version' });
@@ -325,6 +332,7 @@
     fullQuery.value = entry?.query || '';
     queryModalCheck.value = check;
     queryModalVersion.value = version;
+    queryModalType.value = entry?.type || null;
     showQueryModal.value = true;
   };
 

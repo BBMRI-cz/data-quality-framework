@@ -114,7 +114,7 @@ class QualityCheckServiceImpl implements QualityCheckService {
               .formatted(version, id));
     }
     QualityCheckVersion qualityCheckVersion =
-        new QualityCheckVersion(qualityCheck, version, createDTO.getQuery());
+        new QualityCheckVersion(qualityCheck, version, createDTO.getQuery(), createDTO.getType());
     qualityCheck.addVersion(qualityCheckVersion);
     qualityCheckRepository.save(qualityCheck);
     return modelMapper.map(qualityCheckVersion, QualityCheckVersionDTO.class);

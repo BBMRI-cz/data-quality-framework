@@ -2,6 +2,8 @@ package eu.bbmri_eric.quality.server.dataquality.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -43,8 +45,25 @@ public class QualityCheckVersion {
   @NotNull
   private String hash;
 
+  @Enumerated(EnumType.STRING)
+  @Column(name = "type", nullable = false)
+  @NotNull
+  private QueryType type = QueryType.UNKNOWN;
+
   /** Default constructor for JPA. */
   protected QualityCheckVersion() {}
+
+  /**
+   * Creates a new quality check version and computes its hash from the query using SHA-256. The
+   * query type defaults to {@link QueryType#UNKNOWN}.
+   *
+   * @param qualityCheck the quality check this version belongs to
+   * @param version the version number
+   * @param query the query text
+   */
+  public QualityCheckVersion(QualityCheck qualityCheck, int version, String query) {
+    this(qualityCheck, version, query, QueryType.UNKNOWN);
+  }
 
   /**
    * Creates a new quality check version and computes its hash from the query using SHA-256.
@@ -52,12 +71,28 @@ public class QualityCheckVersion {
    * @param qualityCheck the quality check this version belongs to
    * @param version the version number
    * @param query the query text
+   * @param type the query type
    */
-  public QualityCheckVersion(QualityCheck qualityCheck, int version, String query) {
+  public QualityCheckVersion(QualityCheck qualityCheck, int version, String query, QueryType type) {
     this.qualityCheck = qualityCheck;
     this.version = version;
     this.query = query;
+    this.type = type != null ? type : QueryType.UNKNOWN;
     this.hash = hashOf(query);
+  }
+
+  /**
+   * Creates a new quality check version with an explicitly provided hash. Intended for backfilling
+   * historical versions whose query is no longer available. The query type defaults to {@link
+   * QueryType#UNKNOWN}.
+   *
+   * @param qualityCheck the quality check this version belongs to
+   * @param version the version number
+   * @param query the query text
+   * @param hash the precomputed hash of the query
+   */
+  public QualityCheckVersion(QualityCheck qualityCheck, int version, String query, String hash) {
+    this(qualityCheck, version, query, hash, QueryType.UNKNOWN);
   }
 
   /**
@@ -68,12 +103,15 @@ public class QualityCheckVersion {
    * @param version the version number
    * @param query the query text
    * @param hash the precomputed hash of the query
+   * @param type the query type
    */
-  public QualityCheckVersion(QualityCheck qualityCheck, int version, String query, String hash) {
+  public QualityCheckVersion(
+      QualityCheck qualityCheck, int version, String query, String hash, QueryType type) {
     this.qualityCheck = qualityCheck;
     this.version = version;
     this.query = query;
     this.hash = hash;
+    this.type = type != null ? type : QueryType.UNKNOWN;
   }
 
   /**
@@ -152,6 +190,15 @@ public class QualityCheckVersion {
    */
   public String getHash() {
     return hash;
+  }
+
+  /**
+   * Gets the query type of this version.
+   *
+   * @return the query type
+   */
+  public QueryType getType() {
+    return type;
   }
 
   @Override

@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.server.dataquality.dto;
 
+import eu.bbmri_eric.quality.server.dataquality.domain.QueryType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -23,6 +24,9 @@ public class QualityCheckVersionCreateDTO {
       example = "1")
   private Integer version;
 
+  @Schema(description = "Type of the query; if omitted, UNKNOWN is assigned", example = "SQL")
+  private QueryType type;
+
   /** Default constructor for serialization frameworks. */
   public QualityCheckVersionCreateDTO() {}
 
@@ -33,8 +37,20 @@ public class QualityCheckVersionCreateDTO {
    * @param version the version number, or null to auto-assign
    */
   public QualityCheckVersionCreateDTO(String query, Integer version) {
+    this(query, version, null);
+  }
+
+  /**
+   * Constructor with all fields including the query type.
+   *
+   * @param query the query text
+   * @param version the version number, or null to auto-assign
+   * @param type the query type, or null for UNKNOWN
+   */
+  public QualityCheckVersionCreateDTO(String query, Integer version, QueryType type) {
     this.query = query;
     this.version = version;
+    this.type = type;
   }
 
   public String getQuery() {
@@ -51,5 +67,13 @@ public class QualityCheckVersionCreateDTO {
 
   public void setVersion(Integer version) {
     this.version = version;
+  }
+
+  public QueryType getType() {
+    return type;
+  }
+
+  public void setType(QueryType type) {
+    this.type = type;
   }
 }
