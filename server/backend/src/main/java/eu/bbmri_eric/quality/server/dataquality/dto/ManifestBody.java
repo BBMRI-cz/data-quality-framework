@@ -14,12 +14,12 @@ public class ManifestBody {
 
   private final Long manifestId;
   private final Instant generatedAt;
-  private final List<Check> checks;
+  private final List<Check> qualityChecks;
 
   public ManifestBody(Long manifestId, Instant generatedAt, List<Check> checks) {
     this.manifestId = manifestId;
     this.generatedAt = generatedAt;
-    this.checks = checks;
+    this.qualityChecks = checks;
   }
 
   public Long getManifestId() {
@@ -30,8 +30,8 @@ public class ManifestBody {
     return generatedAt;
   }
 
-  public List<Check> getChecks() {
-    return checks;
+  public List<Check> getQualityChecks() {
+    return qualityChecks;
   }
 
   /** A single quality check entry within a manifest body. */

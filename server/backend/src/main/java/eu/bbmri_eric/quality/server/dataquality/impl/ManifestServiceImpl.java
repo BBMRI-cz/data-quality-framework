@@ -18,7 +18,6 @@ import eu.bbmri_eric.quality.server.dataquality.dto.ManifestVersionCreateDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.ManifestVersionDTO;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Comparator;
@@ -91,7 +90,7 @@ class ManifestServiceImpl implements ManifestService {
     }
 
     ManifestVersion version =
-            new ManifestVersion(manifest, versionNumber, "", "", keyProvider.getKeyId());
+        new ManifestVersion(manifest, versionNumber, "", "", keyProvider.getKeyId());
     version.setBody(buildBody(createDTO.getHashes(), version));
     version.setSignature(signBody(version.getBody()));
     manifest.addVersion(version);
@@ -142,7 +141,8 @@ class ManifestServiceImpl implements ManifestService {
               String.valueOf(version.getQualityCheck().getId()), version.getVersion(), hash));
     }
     ManifestBody body =
-        new ManifestBody(manifestVersion.getManifest().getId(), manifestVersion.getGeneratedAt(), checks);
+        new ManifestBody(
+            manifestVersion.getManifest().getId(), manifestVersion.getGeneratedAt(), checks);
     try {
       return objectMapper.writeValueAsString(body);
     } catch (JsonProcessingException e) {

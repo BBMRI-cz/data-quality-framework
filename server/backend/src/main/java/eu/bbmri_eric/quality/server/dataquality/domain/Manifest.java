@@ -15,8 +15,8 @@ import java.util.Set;
 /**
  * Entity representing a manifest of quality checks.
  *
- * <p>A manifest holds the manifest's metadata (currently only its name) and owns a set of
- * immutable, signed {@link ManifestVersion}s. Publishing a new release appends a new version.
+ * <p>A manifest holds the manifest's metadata and owns a set of immutable, signed {@link
+ * ManifestVersion}s. Publishing a new release appends a new version.
  */
 @Entity
 public class Manifest {
