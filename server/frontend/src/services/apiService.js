@@ -115,6 +115,31 @@ class ApiService {
     return response.data;
   }
 
+  async getManifests() {
+    const response = await api.get('/v1/manifests');
+    return response.data;
+  }
+
+  async getManifest(id) {
+    const response = await api.get(`/v1/manifests/${id}`);
+    return response.data;
+  }
+
+  async createManifest(data) {
+    const response = await api.post('/v1/manifests', data);
+    return response.data;
+  }
+
+  async getManifestVersions(id) {
+    const response = await api.get(`/v1/manifests/${id}/versions`);
+    return response.data;
+  }
+
+  async createManifestVersion(id, data) {
+    const response = await api.post(`/v1/manifests/${id}/versions`, data);
+    return response.data;
+  }
+
   async changePassword(userId, currentPassword, newPassword, confirmPassword) {
     await api.put(`/users/${userId}/password`, {
       currentPassword,

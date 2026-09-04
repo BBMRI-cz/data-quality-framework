@@ -155,10 +155,7 @@
 
   // The set of version hashes belonging to this quality check
   const checkVersionHashes = computed(
-    () =>
-      new Set(
-        (props.qualityCheck.versions || []).map((v) => v.hash).filter(Boolean)
-      )
+    () => new Set((props.qualityCheck.versions || []).map((v) => v.hash).filter(Boolean))
   );
 
   // Computed - Agent Results
