@@ -90,10 +90,10 @@ class ManifestServiceImpl implements ManifestService {
           "Version %d already exists for manifest with ID: %d".formatted(versionNumber, id));
     }
 
-    String body = buildBody(createDTO.getHashes(), id);
-    String signature = signBody(body);
     ManifestVersion version =
-        new ManifestVersion(manifest, versionNumber, body, signature, keyProvider.getKeyId());
+            new ManifestVersion(manifest, versionNumber, "", "", keyProvider.getKeyId());
+    version.setBody(buildBody(createDTO.getHashes(), version));
+    version.setSignature(signBody(version.getBody()));
     manifest.addVersion(version);
     manifestRepository.save(manifest);
     return modelMapper.map(version, ManifestVersionDTO.class);
@@ -127,7 +127,7 @@ class ManifestServiceImpl implements ManifestService {
             + 1;
   }
 
-  private String buildBody(List<String> hashes, Long manifestId) {
+  private String buildBody(List<String> hashes, ManifestVersion manifestVersion) {
     List<ManifestBody.Check> checks = new ArrayList<>();
     for (String hash : hashes) {
       QualityCheckVersion version =
@@ -141,7 +141,8 @@ class ManifestServiceImpl implements ManifestService {
           new ManifestBody.Check(
               String.valueOf(version.getQualityCheck().getId()), version.getVersion(), hash));
     }
-    ManifestBody body = new ManifestBody(manifestId, Instant.now(), checks);
+    ManifestBody body =
+        new ManifestBody(manifestVersion.getManifest().getId(), manifestVersion.getGeneratedAt(), checks);
     try {
       return objectMapper.writeValueAsString(body);
     } catch (JsonProcessingException e) {
