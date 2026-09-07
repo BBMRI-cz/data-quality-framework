@@ -1,11 +1,11 @@
-FROM node:24.18.0@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059 AS frontend-builder
+FROM node:26.8.1@sha256:f5d1cc40abc10c2843339a2134d07817cf33c405cb16bfd052b0ed790254c3a3 AS frontend-builder
 WORKDIR /app/frontend
 COPY agent/frontend/package*.json ./
 RUN npm ci --silent
 COPY agent/frontend/ .
 RUN npm run build --silent
 
-FROM maven:3.9.16-eclipse-temurin-25-noble@sha256:7e461cec477077c1d9e50b13df8aef9018764410f4c4cd7c34803f10c4c99e4c AS backend-builder
+FROM maven:3-eclipse-temurin-26-noble@sha256:166ca19b6b5fe1e924ab2d66b64ba9854c739f16210b94bbe0074b036c5c7992 AS backend-builder
 ARG ARTIFACT_VERSION=unknown
 WORKDIR /app
 COPY .git ./.git
@@ -17,7 +17,7 @@ COPY --from=frontend-builder /app/frontend/dist ./src/main/resources/static
 RUN mvn --quiet -B versions:set -DnewVersion=$ARTIFACT_VERSION
 RUN mvn package --quiet -DskipTests
 
-FROM eclipse-temurin:25-jre-resolute@sha256:17ddcc32b1f296155738c4b2f689208e46bf0cf4eb0b215c717717deb8b74b90
+FROM eclipse-temurin:25-jre-resolute@sha256:71bfb73662d4146bdc9ee2f97418a764d5ab4e83f4e90baec3b3dcda14071007
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl ca-certificates && \
     rm -rf /var/lib/apt/lists/*
