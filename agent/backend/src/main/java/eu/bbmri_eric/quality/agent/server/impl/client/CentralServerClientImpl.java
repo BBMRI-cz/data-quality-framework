@@ -3,7 +3,10 @@ package eu.bbmri_eric.quality.agent.server.impl.client;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ObfuscatedReportDTO;
 import eu.bbmri_eric.quality.agent.server.CentralServerClient;
 import eu.bbmri_eric.quality.agent.server.RegistrationCredentials;
+import eu.bbmri_eric.quality.agent.server.ServerCommunicationException;
 import eu.bbmri_eric.quality.agent.server.domain.ServerConnectionStatus;
+import eu.bbmri_eric.quality.agent.server.dto.ManifestDto;
+import java.util.List;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +30,7 @@ class CentralServerClientImpl implements CentralServerClient {
   // API Endpoints
   private static final String AGENTS_ENDPOINT = "/api/v1/agents";
   private static final String LOGIN_ENDPOINT = "/api/auth/login";
+  private static final String MANIFESTS_ENDPOINT = "/api/v1/manifests";
 
   private final RestTemplate restTemplate;
   private final BuildProperties buildProperties;
@@ -115,6 +119,71 @@ class CentralServerClientImpl implements CentralServerClient {
     HttpEntity<ObfuscatedReportDTO> requestEntity = new HttpEntity<>(reportDTO, headers);
     restTemplate.exchange(reportUrl, HttpMethod.POST, requestEntity, Void.class);
     log.info("Successfully sent report to server {}", serverUrl);
+  }
+
+  @Override
+  public List<ManifestDto> getManifests() {
+    try {
+      HttpEntity<Void> requestEntity = createAuthenticatedEntity();
+      ResponseEntity<ManifestListResponse> response =
+          restTemplate.exchange(
+              buildApiUrl(MANIFESTS_ENDPOINT),
+              HttpMethod.GET,
+              requestEntity,
+              ManifestListResponse.class);
+      ManifestListResponse body = response.getBody();
+      return body == null ? List.of() : body.getManifests();
+    } catch (RestClientException e) {
+      throw communicationFailure("fetch manifests", e);
+    }
+  }
+
+  @Override
+  public ManifestDto getManifest(Long manifestId) {
+    try {
+      HttpEntity<Void> requestEntity = createAuthenticatedEntity();
+      ResponseEntity<ManifestDto> response =
+          restTemplate.exchange(
+              buildApiUrl(MANIFESTS_ENDPOINT + "/" + manifestId),
+              HttpMethod.GET,
+              requestEntity,
+              ManifestDto.class);
+      ManifestDto manifest = response.getBody();
+      if (manifest == null) {
+        throw new ServerCommunicationException(
+            "Empty response when fetching manifest %d from server %s"
+                .formatted(manifestId, serverUrl));
+      }
+      return manifest;
+    } catch (RestClientException e) {
+      throw communicationFailure("fetch manifest " + manifestId, e);
+    }
+  }
+
+  /**
+   * Creates an authenticated HTTP entity for authorized requests against the central server.
+   *
+   * @return an HTTP entity with bearer authentication
+   */
+  private HttpEntity<Void> createAuthenticatedEntity() {
+    String token = authenticateWithServer();
+    HttpHeaders headers = createDefaultHeaders();
+    headers.setBearerAuth(token);
+    return new HttpEntity<>(headers);
+  }
+
+  /**
+   * Wraps a low-level communication error in a {@link ServerCommunicationException}.
+   *
+   * @param action the action that failed
+   * @param cause the original error
+   * @return the exception to throw
+   */
+  private ServerCommunicationException communicationFailure(
+      String action, RestClientException cause) {
+    log.warn("Failed to {} from server {}: {}", action, serverUrl, cause.getMessage());
+    return new ServerCommunicationException(
+        "Failed to %s from server %s".formatted(action, serverUrl), cause);
   }
 
   /**
