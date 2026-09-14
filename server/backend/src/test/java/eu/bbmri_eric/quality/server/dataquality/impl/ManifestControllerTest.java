@@ -413,9 +413,11 @@ class ManifestControllerTest {
         .andExpect(jsonPath("$._embedded.qualityChecks").isArray())
         .andExpect(jsonPath("$._embedded.qualityChecks.length()").value(2))
         .andExpect(jsonPath("$._embedded.qualityChecks[0].name").value("Data Completeness"))
+        .andExpect(jsonPath("$._embedded.qualityChecks[0].versions.length()").value(1))
         .andExpect(jsonPath("$._embedded.qualityChecks[0].versions[0].version").value(7))
         .andExpect(jsonPath("$._embedded.qualityChecks[0].versions[0].hash").value(firstHash))
         .andExpect(jsonPath("$._embedded.qualityChecks[1].name").value("Data Accuracy"))
+        .andExpect(jsonPath("$._embedded.qualityChecks[1].versions.length()").value(1))
         .andExpect(jsonPath("$._embedded.qualityChecks[1].versions[0].version").value(3))
         .andExpect(jsonPath("$._embedded.qualityChecks[1].versions[0].hash").value(secondHash))
         .andExpect(
@@ -426,6 +428,42 @@ class ManifestControllerTest {
                         + "/versions/"
                         + versionId
                         + "/quality-checks"));
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void findVersionQualityChecks_shouldReturnOnlyTheLinkedVersionWhenCheckHasMany()
+      throws Exception {
+    QualityCheck multiVersionCheck =
+        new QualityCheck("Multi Version Check", "Has multiple versions");
+    multiVersionCheck.addVersion(new QualityCheckVersion(multiVersionCheck, 1, "SELECT 1"));
+    multiVersionCheck.addVersion(new QualityCheckVersion(multiVersionCheck, 2, "SELECT 2"));
+    qualityCheckRepository.save(multiVersionCheck);
+
+    String linkedHash = hashOf("SELECT 2");
+    mockMvc
+        .perform(
+            post(API_V1_MANIFEST_VERSIONS, testManifest.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    objectMapper.writeValueAsString(
+                        new ManifestVersionCreateDTO(List.of(linkedHash), null))))
+        .andExpect(status().isCreated());
+
+    Long versionId =
+        manifestRepository.findById(testManifest.getId()).get().getVersions().stream()
+            .findFirst()
+            .orElseThrow()
+            .getId();
+
+    mockMvc
+        .perform(get(API_V1_MANIFEST_VERSION_QUALITY_CHECKS, testManifest.getId(), versionId))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$._embedded.qualityChecks.length()").value(1))
+        .andExpect(jsonPath("$._embedded.qualityChecks[0].name").value("Multi Version Check"))
+        .andExpect(jsonPath("$._embedded.qualityChecks[0].versions.length()").value(1))
+        .andExpect(jsonPath("$._embedded.qualityChecks[0].versions[0].version").value(2))
+        .andExpect(jsonPath("$._embedded.qualityChecks[0].versions[0].hash").value(linkedHash));
   }
 
   @Test
