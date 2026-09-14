@@ -37,10 +37,7 @@
       </div>
 
       <template v-else>
-        <div
-          v-if="currentVersion"
-          class="d-flex flex-wrap align-items-center gap-3 mb-3"
-        >
+        <div v-if="currentVersion" class="d-flex flex-wrap align-items-center gap-3 mb-3">
           <span class="badge bg-primary">v{{ currentVersion.version }}</span>
           <span class="text-muted small">
             <i class="bi bi-calendar-event me-1"></i>{{ formatDate(currentVersion.generatedAt) }}
@@ -179,8 +176,8 @@
 
   const sortedVersions = computed(() => [...props.versions].sort((a, b) => a.version - b.version));
 
-  const currentVersion = computed(() =>
-    selectedVersion.value || sortedVersions.value[sortedVersions.value.length - 1] || null
+  const currentVersion = computed(
+    () => selectedVersion.value || sortedVersions.value[sortedVersions.value.length - 1] || null
   );
 
   const formatDate = formatDateLong;
