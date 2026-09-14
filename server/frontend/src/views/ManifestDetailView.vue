@@ -76,7 +76,7 @@
           </div>
 
           <!-- Versions Card -->
-          <ManifestVersions :versions="versions" />
+          <ManifestVersions :versions="versions" :manifest-id="manifestId" />
         </div>
       </div>
     </div>

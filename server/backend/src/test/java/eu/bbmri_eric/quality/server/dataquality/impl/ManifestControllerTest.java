@@ -34,6 +34,8 @@ class ManifestControllerTest {
   private static final String API_V1_MANIFESTS = "/api/v1/manifests";
   private static final String API_V1_MANIFESTS_ID = "/api/v1/manifests/{id}";
   private static final String API_V1_MANIFEST_VERSIONS = "/api/v1/manifests/{id}/versions";
+  private static final String API_V1_MANIFEST_VERSION_QUALITY_CHECKS =
+      "/api/v1/manifests/{id}/versions/{versionId}/quality-checks";
 
   @Autowired private MockMvc mockMvc;
   @Autowired private ObjectMapper objectMapper;
@@ -385,6 +387,60 @@ class ManifestControllerTest {
   @WithMockUser(roles = "ADMIN")
   void findVersions_shouldReturnNotFoundWhenManifestDoesNotExist() throws Exception {
     mockMvc.perform(get(API_V1_MANIFEST_VERSIONS, 99999L)).andExpect(status().isNotFound());
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void findVersionQualityChecks_shouldReturnLinkedQualityChecks() throws Exception {
+    mockMvc
+        .perform(
+            post(API_V1_MANIFEST_VERSIONS, testManifest.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    objectMapper.writeValueAsString(
+                        new ManifestVersionCreateDTO(List.of(firstHash, secondHash), null))))
+        .andExpect(status().isCreated());
+
+    Long versionId =
+        manifestRepository.findById(testManifest.getId()).get().getVersions().stream()
+            .findFirst()
+            .orElseThrow()
+            .getId();
+
+    mockMvc
+        .perform(get(API_V1_MANIFEST_VERSION_QUALITY_CHECKS, testManifest.getId(), versionId))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$._embedded.qualityChecks").isArray())
+        .andExpect(jsonPath("$._embedded.qualityChecks.length()").value(2))
+        .andExpect(jsonPath("$._embedded.qualityChecks[0].name").value("Data Completeness"))
+        .andExpect(jsonPath("$._embedded.qualityChecks[0].versions[0].version").value(7))
+        .andExpect(jsonPath("$._embedded.qualityChecks[0].versions[0].hash").value(firstHash))
+        .andExpect(jsonPath("$._embedded.qualityChecks[1].name").value("Data Accuracy"))
+        .andExpect(jsonPath("$._embedded.qualityChecks[1].versions[0].version").value(3))
+        .andExpect(jsonPath("$._embedded.qualityChecks[1].versions[0].hash").value(secondHash))
+        .andExpect(
+            jsonPath("$._links.self.href")
+                .value(
+                    "http://localhost/api/v1/manifests/"
+                        + testManifest.getId()
+                        + "/versions/"
+                        + versionId
+                        + "/quality-checks"));
+  }
+
+  @Test
+  @WithMockUser(roles = "HUMAN_USER")
+  void findVersionQualityChecks_shouldReturnNotFoundWhenVersionDoesNotExist() throws Exception {
+    mockMvc
+        .perform(get(API_V1_MANIFEST_VERSION_QUALITY_CHECKS, testManifest.getId(), 99999L))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void findVersionQualityChecks_shouldReturnUnauthorizedWhenNotAuthenticated() throws Exception {
+    mockMvc
+        .perform(get(API_V1_MANIFEST_VERSION_QUALITY_CHECKS, testManifest.getId(), 1L))
+        .andExpect(status().isUnauthorized());
   }
 
   private static String hashOf(String query) {

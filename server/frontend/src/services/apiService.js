@@ -136,6 +136,13 @@ class ApiService {
     return response.data;
   }
 
+  async getManifestVersionQualityChecks(manifestId, versionId) {
+    const response = await api.get(
+      `/v1/manifests/${manifestId}/versions/${versionId}/quality-checks`
+    );
+    return response.data;
+  }
+
   async createManifestVersion(id, data) {
     const response = await api.post(`/v1/manifests/${id}/versions`, data, {
       skipErrorNotification: true,

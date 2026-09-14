@@ -5,6 +5,7 @@ import eu.bbmri_eric.quality.server.dataquality.dto.ManifestCreateDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.ManifestDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.ManifestVersionCreateDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.ManifestVersionDTO;
+import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckDetailedDTO;
 import java.util.List;
 
 /** Service interface for managing quality check manifests. */
@@ -53,4 +54,15 @@ public interface ManifestService {
    * @throws EntityNotFoundException if no manifest with the given id exists
    */
   List<ManifestVersionDTO> findVersions(Long id);
+
+  /**
+   * Finds all quality checks (with their referenced version) linked to a specific manifest version.
+   *
+   * @param manifestId the manifest id
+   * @param versionId the manifest version id
+   * @return list of quality check DTOs referenced by the given manifest version
+   * @throws EntityNotFoundException if no manifest with the given id exists, or the manifest has no
+   *     version with the given id
+   */
+  List<QualityCheckDetailedDTO> findVersionQualityChecks(Long manifestId, Long versionId);
 }
