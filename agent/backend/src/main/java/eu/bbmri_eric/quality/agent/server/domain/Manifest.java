@@ -1,6 +1,7 @@
 package eu.bbmri_eric.quality.agent.server.domain;
 
 import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -46,6 +47,7 @@ public class Manifest {
   /** IDs of the local {@code QualityCheck} entities installed from this manifest. */
   @ElementCollection
   @CollectionTable(name = "manifest_quality_check", joinColumns = @JoinColumn(name = "manifest_id"))
+  @Column(name = "quality_check_id")
   private final Set<Long> qualityCheckIds = new LinkedHashSet<>();
 
   protected Manifest() {}
