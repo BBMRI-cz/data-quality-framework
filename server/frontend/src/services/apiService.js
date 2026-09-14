@@ -137,7 +137,14 @@ class ApiService {
   }
 
   async createManifestVersion(id, data) {
-    const response = await api.post(`/v1/manifests/${id}/versions`, data);
+    const response = await api.post(`/v1/manifests/${id}/versions`, data, {
+      skipErrorNotification: true,
+    });
+    return response.data;
+  }
+
+  async getPublicKey() {
+    const response = await api.get('/v1/public-key', { skipErrorNotification: true });
     return response.data;
   }
 
