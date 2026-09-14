@@ -8,6 +8,7 @@ export {
 export { categoryService } from './categoryService.js';
 export { diagnosticsService } from './diagnosticsService.js';
 export { healthService } from './healthService.js';
+export { manifestService } from './manifestService.js';
 export { notificationService } from './notificationService.js';
 export { patientService } from './patientService.js';
 export { qualityCheckService } from './qualityCheckService.js';

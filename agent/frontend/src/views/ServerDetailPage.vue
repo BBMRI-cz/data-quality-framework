@@ -16,6 +16,11 @@
           text="Back to Central Servers"
           variant="secondary"
         />
+        <ActionButton
+          :to="`/servers/${route.params.id}/manifests`"
+          icon="bi bi-file-earmark-lock"
+          text="Browse Manifests"
+        />
       </div>
 
       <!-- Loading state -->
@@ -284,6 +289,7 @@
   .page-actions {
     display: flex;
     justify-content: flex-start;
+    gap: var(--spacing-sm);
     margin-bottom: var(--spacing-md);
   }
 

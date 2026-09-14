@@ -72,13 +72,22 @@
           </span>
         </template>
         <template #actions="{ item }">
-          <button
-            class="btn btn-sm btn-outline-danger"
-            title="Remove server"
-            @click.stop="openDeleteModal(item)"
-          >
-            <i class="bi bi-trash"></i>
-          </button>
+          <div class="d-flex justify-content-center gap-2">
+            <button
+              class="btn btn-sm btn-outline-primary"
+              title="Browse server manifests"
+              @click.stop="navigateToManifests(item)"
+            >
+              <i class="bi bi-file-earmark-lock"></i>
+            </button>
+            <button
+              class="btn btn-sm btn-outline-danger"
+              title="Remove server"
+              @click.stop="openDeleteModal(item)"
+            >
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
         </template>
       </BaseTable>
     </div>
@@ -143,6 +152,10 @@
 
   function navigateToDetails(server) {
     router.push(`/servers/${server.id}`);
+  }
+
+  function navigateToManifests(server) {
+    router.push(`/servers/${server.id}/manifests`);
   }
 
   function openDeleteModal(server) {
