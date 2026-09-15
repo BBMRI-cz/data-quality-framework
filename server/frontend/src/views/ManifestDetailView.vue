@@ -10,7 +10,12 @@
           icon="bi bi-file-earmark-lock"
         >
           <template #actions>
-            <button class="btn btn-primary btn-sm" :disabled="loading" @click="goToPublish">
+            <button
+              class="btn btn-primary btn-sm"
+              :disabled="loading || !cryptoReady"
+              :title="cryptoError || ''"
+              @click="goToPublish"
+            >
               <i class="bi bi-plus-lg"></i>
               <span class="d-none d-md-inline ms-1">Publish New Version</span>
             </button>
@@ -22,6 +27,16 @@
           <button class="btn btn-outline-secondary btn-sm" @click="goBack">
             <i class="bi bi-arrow-left me-2"></i>Back to Manifests
           </button>
+        </div>
+
+        <!-- Crypto Not Configured Warning -->
+        <div v-if="cryptoError" class="alert alert-warning" role="alert">
+          <h6 class="alert-heading">
+            <i class="bi bi-exclamation-triangle me-2"></i>Publishing Unavailable
+          </h6>
+          <p class="mb-0">
+            {{ cryptoError }} Please configure the signing key pair on the server and try again.
+          </p>
         </div>
 
         <!-- Loading State -->
@@ -61,7 +76,7 @@
           </div>
 
           <!-- Versions Card -->
-          <ManifestVersions :versions="versions" />
+          <ManifestVersions :versions="versions" :manifest-id="manifestId" />
         </div>
       </div>
     </div>
@@ -86,6 +101,9 @@
   const versions = ref([]);
   const loading = ref(true);
   const error = ref(null);
+
+  const cryptoReady = ref(false);
+  const cryptoError = ref(null);
 
   useHead({
     title: computed(() => manifest.value?.name || 'Manifest Versions'),
@@ -118,6 +136,19 @@
     }
   };
 
+  const checkCryptoSetup = async () => {
+    try {
+      await apiService.getPublicKey();
+      cryptoReady.value = true;
+      cryptoError.value = null;
+    } catch (err) {
+      cryptoReady.value = false;
+      cryptoError.value =
+        err.response?.data?.detail || 'The server signing key pair is not set up.';
+      console.error('Crypto setup check failed:', err);
+    }
+  };
+
   const goToPublish = () => {
     router.push(`/manifests/${manifestId.value}/publish`);
   };
@@ -126,7 +157,10 @@
     router.push('/manifests');
   };
 
-  onMounted(loadManifest);
+  onMounted(() => {
+    loadManifest();
+    checkCryptoSetup();
+  });
 </script>
 
 <style scoped>

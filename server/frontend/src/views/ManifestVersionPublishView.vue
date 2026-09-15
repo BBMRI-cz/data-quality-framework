@@ -382,7 +382,10 @@
       router.push(`/manifests/${manifestId.value}`);
     } catch (err) {
       console.error('Error publishing version:', err);
-      notificationService.error('Publish Failed', err.message || 'Failed to publish version');
+      showConfirm.value = false;
+      pendingItems.value = [];
+      const message = err.response?.data?.detail || err.message || 'Failed to publish version';
+      notificationService.error('Publish Failed', message);
     } finally {
       publishing.value = false;
     }
