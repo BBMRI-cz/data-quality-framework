@@ -1,6 +1,9 @@
 package eu.bbmri_eric.quality.agent.server.impl.client;
 
+import eu.bbmri_eric.quality.agent.dataquality.QualityCheckType;
+import eu.bbmri_eric.quality.agent.dataquality.dto.CategoryDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ObfuscatedReportDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.agent.server.CentralServerClient;
 import eu.bbmri_eric.quality.agent.server.RegistrationCredentials;
 import eu.bbmri_eric.quality.agent.server.ServerCommunicationException;
@@ -158,6 +161,80 @@ class CentralServerClientImpl implements CentralServerClient {
     } catch (RestClientException e) {
       throw communicationFailure("fetch manifest " + manifestId, e);
     }
+  }
+
+  @Override
+  public List<QualityCheckDTO> getManifestVersionQualityChecks(Long manifestId, Long versionId) {
+    try {
+      HttpEntity<Void> requestEntity = createAuthenticatedEntity();
+      ResponseEntity<QualityCheckListResponse> response =
+          restTemplate.exchange(
+              buildApiUrl(
+                  MANIFESTS_ENDPOINT
+                      + "/"
+                      + manifestId
+                      + "/versions/"
+                      + versionId
+                      + "/quality-checks"),
+              HttpMethod.GET,
+              requestEntity,
+              QualityCheckListResponse.class);
+      QualityCheckListResponse body = response.getBody();
+      if (body == null) {
+        return List.of();
+      }
+      return body.getQualityChecks().stream().map(this::toAgentQualityCheck).toList();
+    } catch (RestClientException e) {
+      throw communicationFailure(
+          "fetch quality checks of manifest %d version %d".formatted(manifestId, versionId), e);
+    }
+  }
+
+  /**
+   * Maps a remote quality check to an agent quality check DTO. The query and type are taken from
+   * the version pinned by the manifest version.
+   *
+   * @param remote the quality check as returned by the central server
+   * @return the agent DTO
+   */
+  private QualityCheckDTO toAgentQualityCheck(
+      QualityCheckListResponse.RemoteQualityCheck remote) {
+    QualityCheckDTO dto = new QualityCheckDTO();
+    dto.setId(remote.getId());
+    dto.setName(remote.getName());
+    dto.setDescription(remote.getDescription());
+    dto.setWarningThreshold((int) Math.round(remote.getWarningThreshold()));
+    dto.setErrorThreshold((int) Math.round(remote.getErrorThreshold()));
+    if (remote.getCategory() != null) {
+      QualityCheckListResponse.RemoteCategory category = remote.getCategory();
+      dto.setCategory(new CategoryDTO(category.getId(), category.getName(), category.getColorHex()));
+    }
+    remote.getVersions().stream()
+        .findFirst()
+        .ifPresent(
+            version -> {
+              dto.setQuery(version.getQuery());
+              dto.setType(toQualityCheckType(version.getType()));
+            });
+    return dto;
+  }
+
+  /**
+   * Maps the query type used by the central server to the agent's quality check type. Types unknown
+   * to the agent are mapped to null.
+   *
+   * @param type the remote query type
+   * @return the agent quality check type, or null if unsupported
+   */
+  private QualityCheckType toQualityCheckType(String type) {
+    if (type == null) {
+      return null;
+    }
+    return switch (type) {
+      case "CQL" -> QualityCheckType.CQL;
+      case "SQL" -> QualityCheckType.SQL;
+      default -> null;
+    };
   }
 
   /**

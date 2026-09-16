@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.agent.server.controller;
 
+import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.agent.server.ManifestService;
 import eu.bbmri_eric.quality.agent.server.dto.ManifestDto;
 import io.swagger.v3.oas.annotations.Operation;
@@ -52,5 +53,21 @@ class ManifestController {
       @Parameter(description = "Manifest ID on the central server", required = true) @PathVariable
           Long manifestId) {
     return ResponseEntity.ok(manifestService.fetchManifest(serverId, manifestId));
+  }
+
+  @GetMapping("/{manifestId}/versions/{versionId}/quality-checks")
+  @Operation(
+      summary = "Get quality checks of a manifest version",
+      description =
+          "Fetches the quality checks pinned by the given manifest version from the central server without persisting them")
+  public ResponseEntity<List<QualityCheckDTO>> findVersionQualityChecks(
+      @Parameter(description = "Server ID", required = true) @PathVariable String serverId,
+      @Parameter(description = "Manifest ID on the central server", required = true) @PathVariable
+          Long manifestId,
+      @Parameter(description = "Manifest version ID on the central server", required = true)
+          @PathVariable
+          Long versionId) {
+    return ResponseEntity.ok(
+        manifestService.fetchVersionQualityChecks(serverId, manifestId, versionId));
   }
 }

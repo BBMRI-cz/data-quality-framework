@@ -10,6 +10,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.bbmri_eric.quality.agent.dataquality.QualityCheckType;
+import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.agent.server.CentralServerClient;
 import eu.bbmri_eric.quality.agent.server.CentralServerClientFactory;
 import eu.bbmri_eric.quality.agent.server.ServerCommunicationException;
@@ -121,6 +123,47 @@ class ManifestIntegrationTests {
   void listManifests_unauthenticated_returnsUnauthorized() throws Exception {
     mockMvc
         .perform(get(API_SERVERS_MANIFESTS.formatted(server.getId())))
+        .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void findVersionQualityChecks_returnsQualityChecksFromCentralServer() throws Exception {
+    QualityCheckDTO check = new QualityCheckDTO();
+    check.setId(1L);
+    check.setName("Patient Count");
+    check.setDescription("Counts patients");
+    check.setQuery("SELECT COUNT(*) FROM patients");
+    check.setType(QualityCheckType.SQL);
+    check.setWarningThreshold(10);
+    check.setErrorThreshold(30);
+    when(client.getManifestVersionQualityChecks(1L, 2L)).thenReturn(List.of(check));
+
+    mockMvc
+        .perform(get(API_SERVERS_MANIFESTS.formatted(server.getId()) + "/1/versions/2/quality-checks"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].id").value(1))
+        .andExpect(jsonPath("$[0].name").value("Patient Count"))
+        .andExpect(jsonPath("$[0].query").value("SELECT COUNT(*) FROM patients"))
+        .andExpect(jsonPath("$[0].type").value("SQL"))
+        .andExpect(jsonPath("$[0].warningThreshold").value(10))
+        .andExpect(jsonPath("$[0].errorThreshold").value(30));
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void findVersionQualityChecks_unknownServer_returnsNotFound() throws Exception {
+    mockMvc
+        .perform(
+            get(API_SERVERS_MANIFESTS.formatted("does-not-exist") + "/1/versions/2/quality-checks"))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void findVersionQualityChecks_unauthenticated_returnsUnauthorized() throws Exception {
+    mockMvc
+        .perform(
+            get(API_SERVERS_MANIFESTS.formatted(server.getId()) + "/1/versions/2/quality-checks"))
         .andExpect(status().isUnauthorized());
   }
 }

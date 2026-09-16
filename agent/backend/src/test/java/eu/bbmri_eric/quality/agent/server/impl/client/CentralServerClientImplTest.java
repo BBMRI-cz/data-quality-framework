@@ -7,6 +7,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import eu.bbmri_eric.quality.agent.dataquality.QualityCheckType;
+import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.agent.server.ServerCommunicationException;
 import eu.bbmri_eric.quality.agent.server.dto.ManifestDto;
 import java.util.List;
@@ -126,5 +128,111 @@ class CentralServerClientImplTest {
 
     assertThatThrownBy(() -> client.getManifest(7L))
         .isInstanceOf(ServerCommunicationException.class);
+  }
+
+  @Test
+  void getManifestVersionQualityChecks_mapsRemoteChecksToQualityCheckDtos() {
+    stubLogin();
+    QualityCheckListResponse.RemoteQualityCheckVersion version =
+        new QualityCheckListResponse.RemoteQualityCheckVersion();
+    version.setId(5L);
+    version.setVersion(3);
+    version.setQuery("SELECT COUNT(*) FROM patients");
+    version.setHash("abc123");
+    version.setType("SQL");
+    QualityCheckListResponse.RemoteCategory category =
+        new QualityCheckListResponse.RemoteCategory();
+    category.setId(2L);
+    category.setName("Completeness");
+    category.setColorHex("#FF5733");
+    QualityCheckListResponse.RemoteQualityCheck check =
+        new QualityCheckListResponse.RemoteQualityCheck();
+    check.setId(1L);
+    check.setName("Patient Count");
+    check.setDescription("Counts patients");
+    check.setWarningThreshold(10.0);
+    check.setErrorThreshold(30.4);
+    check.setCategory(category);
+    check.setVersions(List.of(version));
+    QualityCheckListResponse.EmbeddedQualityChecks embedded =
+        new QualityCheckListResponse.EmbeddedQualityChecks();
+    embedded.setQualityChecks(List.of(check));
+    QualityCheckListResponse response = new QualityCheckListResponse();
+    response.setEmbedded(embedded);
+    when(restTemplate.exchange(
+            eq(SERVER_URL + "/api/v1/manifests/7/versions/42/quality-checks"),
+            eq(HttpMethod.GET),
+            any(HttpEntity.class),
+            eq(QualityCheckListResponse.class)))
+        .thenReturn(new ResponseEntity<>(response, HttpStatus.OK));
+
+    List<QualityCheckDTO> checks = client.getManifestVersionQualityChecks(7L, 42L);
+
+    assertThat(checks).hasSize(1);
+    QualityCheckDTO dto = checks.getFirst();
+    assertThat(dto.getId()).isEqualTo(1L);
+    assertThat(dto.getName()).isEqualTo("Patient Count");
+    assertThat(dto.getDescription()).isEqualTo("Counts patients");
+    assertThat(dto.getQuery()).isEqualTo("SELECT COUNT(*) FROM patients");
+    assertThat(dto.getType()).isEqualTo(QualityCheckType.SQL);
+    assertThat(dto.getWarningThreshold()).isEqualTo(10);
+    assertThat(dto.getErrorThreshold()).isEqualTo(30);
+    assertThat(dto.getCategory().getName()).isEqualTo("Completeness");
+  }
+
+  @Test
+  void getManifestVersionQualityChecks_unsupportedQueryType_leavesTypeNull() {
+    stubLogin();
+    QualityCheckListResponse.RemoteQualityCheckVersion version =
+        new QualityCheckListResponse.RemoteQualityCheckVersion();
+    version.setQuery("print('hello')");
+    version.setType("PYTHON");
+    QualityCheckListResponse.RemoteQualityCheck check =
+        new QualityCheckListResponse.RemoteQualityCheck();
+    check.setId(1L);
+    check.setVersions(List.of(version));
+    QualityCheckListResponse.EmbeddedQualityChecks embedded =
+        new QualityCheckListResponse.EmbeddedQualityChecks();
+    embedded.setQualityChecks(List.of(check));
+    QualityCheckListResponse response = new QualityCheckListResponse();
+    response.setEmbedded(embedded);
+    when(restTemplate.exchange(
+            eq(SERVER_URL + "/api/v1/manifests/7/versions/42/quality-checks"),
+            eq(HttpMethod.GET),
+            any(HttpEntity.class),
+            eq(QualityCheckListResponse.class)))
+        .thenReturn(new ResponseEntity<>(response, HttpStatus.OK));
+
+    List<QualityCheckDTO> checks = client.getManifestVersionQualityChecks(7L, 42L);
+
+    assertThat(checks.getFirst().getType()).isNull();
+  }
+
+  @Test
+  void getManifestVersionQualityChecks_emptyResponse_returnsEmptyList() {
+    stubLogin();
+    when(restTemplate.exchange(
+            eq(SERVER_URL + "/api/v1/manifests/7/versions/42/quality-checks"),
+            eq(HttpMethod.GET),
+            any(HttpEntity.class),
+            eq(QualityCheckListResponse.class)))
+        .thenReturn(new ResponseEntity<>(null, HttpStatus.OK));
+
+    assertThat(client.getManifestVersionQualityChecks(7L, 42L)).isEmpty();
+  }
+
+  @Test
+  void getManifestVersionQualityChecks_serverUnreachable_throwsServerCommunicationException() {
+    when(restTemplate.exchange(
+            eq(SERVER_URL + "/api/auth/login"),
+            eq(HttpMethod.POST),
+            any(HttpEntity.class),
+            eq(LoginResponse.class)))
+        .thenThrow(new RestClientException("Connection refused"));
+
+    assertThatThrownBy(() -> client.getManifestVersionQualityChecks(7L, 42L))
+        .isInstanceOf(ServerCommunicationException.class)
+        .hasMessageContaining("fetch quality checks")
+        .hasMessageContaining(SERVER_URL);
   }
 }

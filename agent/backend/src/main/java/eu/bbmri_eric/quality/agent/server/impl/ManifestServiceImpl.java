@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.agent.server.impl;
 
+import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.agent.server.CentralServerClient;
 import eu.bbmri_eric.quality.agent.server.CentralServerClientFactory;
 import eu.bbmri_eric.quality.agent.server.ManifestService;
@@ -37,6 +38,12 @@ class ManifestServiceImpl implements ManifestService {
   @Override
   public ManifestDto fetchManifest(String serverId, Long manifestId) {
     return createClient(serverId).getManifest(manifestId);
+  }
+
+  @Override
+  public List<QualityCheckDTO> fetchVersionQualityChecks(
+      String serverId, Long manifestId, Long versionId) {
+    return createClient(serverId).getManifestVersionQualityChecks(manifestId, versionId);
   }
 
   /**

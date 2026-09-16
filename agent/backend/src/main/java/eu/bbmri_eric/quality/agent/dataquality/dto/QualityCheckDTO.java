@@ -1,6 +1,6 @@
 package eu.bbmri_eric.quality.agent.dataquality.dto;
 
-import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheckType;
+import eu.bbmri_eric.quality.agent.dataquality.QualityCheckType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;

@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.agent.server.CentralServerClient;
 import eu.bbmri_eric.quality.agent.server.CentralServerClientFactory;
 import eu.bbmri_eric.quality.agent.server.ManifestService;
@@ -92,5 +93,24 @@ class ManifestServiceImplTest {
 
     assertThatThrownBy(() -> manifestService.fetchManifests(server.getId()))
         .isInstanceOf(ServerCommunicationException.class);
+  }
+
+  @Test
+  void fetchVersionQualityChecks_returnsQualityChecksFromCentralServer() {
+    QualityCheckDTO check = new QualityCheckDTO();
+    check.setId(1L);
+    check.setName("Patient Count");
+    when(client.getManifestVersionQualityChecks(1L, 2L)).thenReturn(List.of(check));
+
+    List<QualityCheckDTO> checks = manifestService.fetchVersionQualityChecks(server.getId(), 1L, 2L);
+
+    assertThat(checks).hasSize(1);
+    assertThat(checks.getFirst().getName()).isEqualTo("Patient Count");
+  }
+
+  @Test
+  void fetchVersionQualityChecks_unknownServer_throwsEntityNotFound() {
+    assertThatThrownBy(() -> manifestService.fetchVersionQualityChecks("does-not-exist", 1L, 2L))
+        .isInstanceOf(EntityNotFoundException.class);
   }
 }
