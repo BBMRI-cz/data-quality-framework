@@ -197,8 +197,7 @@ class CentralServerClientImpl implements CentralServerClient {
    * @param remote the quality check as returned by the central server
    * @return the agent DTO
    */
-  private QualityCheckDTO toAgentQualityCheck(
-      QualityCheckListResponse.RemoteQualityCheck remote) {
+  private QualityCheckDTO toAgentQualityCheck(QualityCheckListResponse.RemoteQualityCheck remote) {
     QualityCheckDTO dto = new QualityCheckDTO();
     dto.setId(remote.getId());
     dto.setName(remote.getName());
@@ -207,7 +206,8 @@ class CentralServerClientImpl implements CentralServerClient {
     dto.setErrorThreshold((int) Math.round(remote.getErrorThreshold()));
     if (remote.getCategory() != null) {
       QualityCheckListResponse.RemoteCategory category = remote.getCategory();
-      dto.setCategory(new CategoryDTO(category.getId(), category.getName(), category.getColorHex()));
+      dto.setCategory(
+          new CategoryDTO(category.getId(), category.getName(), category.getColorHex()));
     }
     remote.getVersions().stream()
         .findFirst()

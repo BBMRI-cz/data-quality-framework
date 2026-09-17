@@ -27,7 +27,22 @@ export async function getManifest(serverId, manifestId) {
   return response.data;
 }
 
+/**
+ * Fetches the quality checks pinned by a specific manifest version
+ * @param {string|number} serverId
+ * @param {string|number} manifestId
+ * @param {string|number} versionId manifest version ID on the central server
+ * @returns {Promise<Array>}
+ */
+export async function getVersionQualityChecks(serverId, manifestId, versionId) {
+  const response = await api.get(
+    `${BASE_URL}/${serverId}/manifests/${manifestId}/versions/${versionId}/quality-checks`
+  );
+  return Array.isArray(response.data) ? response.data : [];
+}
+
 export const manifestService = {
   getManifests,
   getManifest,
+  getVersionQualityChecks,
 };

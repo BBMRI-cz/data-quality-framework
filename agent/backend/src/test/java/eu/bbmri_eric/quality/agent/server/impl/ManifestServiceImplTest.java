@@ -102,7 +102,8 @@ class ManifestServiceImplTest {
     check.setName("Patient Count");
     when(client.getManifestVersionQualityChecks(1L, 2L)).thenReturn(List.of(check));
 
-    List<QualityCheckDTO> checks = manifestService.fetchVersionQualityChecks(server.getId(), 1L, 2L);
+    List<QualityCheckDTO> checks =
+        manifestService.fetchVersionQualityChecks(server.getId(), 1L, 2L);
 
     assertThat(checks).hasSize(1);
     assertThat(checks.getFirst().getName()).isEqualTo("Patient Count");

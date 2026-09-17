@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.agent.server.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -9,6 +10,10 @@ import java.time.Instant;
 @Schema(name = "Manifest Version", description = "A signed version of a quality check manifest")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ManifestVersionDto {
+
+  @Schema(description = "ID of the manifest version on the central server", example = "42")
+  @JsonAlias("id")
+  private Long remoteId;
 
   @Schema(description = "Version number of the manifest", example = "1")
   private int version;
@@ -33,12 +38,26 @@ public class ManifestVersionDto {
   public ManifestVersionDto() {}
 
   public ManifestVersionDto(
-      int version, Instant generatedAt, JsonNode body, String signature, String keyId) {
+      Long remoteId,
+      int version,
+      Instant generatedAt,
+      JsonNode body,
+      String signature,
+      String keyId) {
+    this.remoteId = remoteId;
     this.version = version;
     this.generatedAt = generatedAt;
     this.body = body;
     this.signature = signature;
     this.keyId = keyId;
+  }
+
+  public Long getRemoteId() {
+    return remoteId;
+  }
+
+  public void setRemoteId(Long remoteId) {
+    this.remoteId = remoteId;
   }
 
   public int getVersion() {

@@ -86,13 +86,14 @@ class ManifestIntegrationTests {
             "{\"manifest_id\":1,\"generated_at\":\"2026-08-13T10:00:00Z\",\"checks\":[]}");
     ManifestVersionDto version =
         new ManifestVersionDto(
-            1, Instant.parse("2026-08-13T10:00:00Z"), body, "MEUCIBd", "central-signing");
+            42L, 1, Instant.parse("2026-08-13T10:00:00Z"), body, "MEUCIBd", "central-signing");
     when(client.getManifest(1L)).thenReturn(new ManifestDto(1L, "Core checks", List.of(version)));
 
     mockMvc
         .perform(get(API_SERVERS_MANIFESTS.formatted(server.getId()) + "/1"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.remoteId").value(1))
+        .andExpect(jsonPath("$.versions[0].remoteId").value(42))
         .andExpect(jsonPath("$.versions[0].version").value(1))
         .andExpect(jsonPath("$.versions[0].generatedAt").value("2026-08-13T10:00:00Z"))
         .andExpect(jsonPath("$.versions[0].body.manifest_id").value(1))
@@ -140,7 +141,8 @@ class ManifestIntegrationTests {
     when(client.getManifestVersionQualityChecks(1L, 2L)).thenReturn(List.of(check));
 
     mockMvc
-        .perform(get(API_SERVERS_MANIFESTS.formatted(server.getId()) + "/1/versions/2/quality-checks"))
+        .perform(
+            get(API_SERVERS_MANIFESTS.formatted(server.getId()) + "/1/versions/2/quality-checks"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].id").value(1))
         .andExpect(jsonPath("$[0].name").value("Patient Count"))

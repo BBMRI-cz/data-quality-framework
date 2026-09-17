@@ -47,43 +47,59 @@
           />
         </div>
 
-        <!-- Versions Table -->
-        <BaseTable
-          title="Versions"
-          :columns="columns"
-          :items="sortedVersions"
-          :loading="false"
-          item-key="version"
-          item-label="versions"
-          empty-text="No versions published yet"
-          empty-icon="bi bi-clock-history"
-        >
-          <template #version="{ item }">
-            <span class="badge bg-primary">v{{ item.version }}</span>
-          </template>
-          <template #generatedAt="{ item }">
-            <div class="d-flex flex-column gap-1">
-              <span class="fw-medium">{{ formatDateShort(item.generatedAt) }}</span>
-              <span class="text-muted small">{{ formatTime(item.generatedAt) }}</span>
+        <!-- Empty versions state -->
+        <div v-if="versions.length === 0" class="alert alert-info mb-4">
+          <i class="bi bi-clock-history me-2"></i>
+          No versions published yet.
+        </div>
+
+        <template v-else>
+          <!-- Version picker and info -->
+          <div class="version-panel mb-4">
+            <FormSelect
+              v-model="selectedVersionId"
+              label="Version"
+              icon="bi bi-clock-history"
+              :options="versionOptions"
+              class="version-picker"
+            />
+
+            <div v-if="selectedVersion" class="version-meta">
+              <div class="meta-item">
+                <span class="meta-label">Generated At</span>
+                <span>
+                  {{ formatDateShort(selectedVersion.generatedAt) }}
+                  {{ formatTime(selectedVersion.generatedAt) }}
+                </span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">Key ID</span>
+                <span>{{ selectedVersion.keyId || 'N/A' }}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">Signature</span>
+                <span class="signature-preview">{{ truncateText(selectedVersion.signature, 48) }}</span>
+              </div>
+              <div class="meta-item meta-actions">
+                <button
+                  class="btn btn-sm btn-outline-primary"
+                  title="View signed body"
+                  @click="showBodyModal = true"
+                >
+                  <i class="bi bi-braces"></i>
+                  View Signed Body
+                </button>
+              </div>
             </div>
-          </template>
-          <template #keyId="{ item }">
-            <span class="text-muted">{{ item.keyId || 'N/A' }}</span>
-          </template>
-          <template #signature="{ item }">
-            <span class="signature-preview">{{ truncateText(item.signature, 24) }}</span>
-          </template>
-          <template #actions="{ item }">
-            <button
-              class="btn btn-sm btn-outline-primary"
-              title="View signed body"
-              @click.stop="openBodyModal(item)"
-            >
-              <i class="bi bi-braces"></i>
-              Body
-            </button>
-          </template>
-        </BaseTable>
+          </div>
+
+          <!-- Quality checks of the selected version -->
+          <ManifestQualityChecksTable
+            :checks="qualityChecks"
+            :loading="checksLoading"
+            :error="checksError"
+          />
+        </template>
       </template>
     </div>
 
@@ -93,13 +109,16 @@
       :title="selectedVersion ? `Version v${selectedVersion.version}` : 'Manifest Version'"
       size="lg"
       :show-footer="false"
-      @close="closeBodyModal"
+      @close="showBodyModal = false"
     >
       <template v-if="selectedVersion">
         <div class="version-meta mb-3">
           <div class="meta-item">
             <span class="meta-label">Signed At</span>
-            <span>{{ formatDateShort(selectedVersion.generatedAt) }} {{ formatTime(selectedVersion.generatedAt) }}</span>
+            <span>
+              {{ formatDateShort(selectedVersion.generatedAt) }}
+              {{ formatTime(selectedVersion.generatedAt) }}
+            </span>
           </div>
           <div class="meta-item">
             <span class="meta-label">Key ID</span>
@@ -118,13 +137,14 @@
 </template>
 
 <script setup>
-  import { ref, computed, onMounted } from 'vue';
+  import { ref, computed, watch, onMounted } from 'vue';
   import { useRoute } from 'vue-router';
   import PageHeader from '@/components/PageHeader.vue';
   import ActionButton from '@/components/ActionButton.vue';
   import StatCard from '@/components/StatCard.vue';
-  import BaseTable from '@/components/BaseTable.vue';
   import BaseModal from '@/components/BaseModal.vue';
+  import FormSelect from '@/components/forms/FormSelect.vue';
+  import ManifestQualityChecksTable from '@/components/manifests/ManifestQualityChecksTable.vue';
   import { serverService } from '@/services/serverService.js';
   import { manifestService } from '@/services/manifestService.js';
   import { notificationService } from '@/services/notificationService.js';
@@ -140,15 +160,13 @@
   const error = ref(null);
 
   const showBodyModal = ref(false);
-  const selectedVersion = ref(null);
+  const selectedVersionId = ref(null);
+  const qualityChecks = ref([]);
+  const checksLoading = ref(false);
+  const checksError = ref(null);
 
-  const columns = [
-    { key: 'version', label: 'Version', headerClass: 'center', cellClass: 'center' },
-    { key: 'generatedAt', label: 'Generated At' },
-    { key: 'keyId', label: 'Key ID' },
-    { key: 'signature', label: 'Signature' },
-    { key: 'actions', label: '', headerClass: 'center', cellClass: 'center' },
-  ];
+  // Guards against out-of-order responses when the user switches versions quickly
+  let checksRequestSeq = 0;
 
   const versions = computed(() => manifest.value?.versions || []);
 
@@ -161,18 +179,60 @@
     return latest ? formatDateShort(latest.generatedAt) : '—';
   });
 
+  const versionOptions = computed(() =>
+    sortedVersions.value.map((version, index) => ({
+      value: version.remoteId,
+      label: `v${version.version} · ${formatDateShort(version.generatedAt)}${index === 0 ? ' (latest)' : ''}`,
+    }))
+  );
+
+  const selectedVersion = computed(
+    () => sortedVersions.value.find((version) => version.remoteId === selectedVersionId.value) || null
+  );
+
   const formattedBody = computed(() =>
     selectedVersion.value?.body ? JSON.stringify(selectedVersion.value.body, null, 2) : ''
   );
 
-  function openBodyModal(version) {
-    selectedVersion.value = version;
-    showBodyModal.value = true;
-  }
+  watch(
+    sortedVersions,
+    (availableVersions) => {
+      if (availableVersions.length > 0 && selectedVersionId.value == null) {
+        selectedVersionId.value = availableVersions[0].remoteId;
+      }
+    },
+    { immediate: true }
+  );
 
-  function closeBodyModal() {
-    showBodyModal.value = false;
-    selectedVersion.value = null;
+  watch(selectedVersionId, (versionId) => {
+    if (versionId != null) {
+      loadQualityChecks(versionId);
+    }
+  });
+
+  async function loadQualityChecks(versionId) {
+    const requestSeq = ++checksRequestSeq;
+    checksLoading.value = true;
+    checksError.value = null;
+    try {
+      const checks = await manifestService.getVersionQualityChecks(serverId, manifestId, versionId);
+      if (requestSeq === checksRequestSeq) {
+        qualityChecks.value = checks;
+      }
+    } catch (err) {
+      if (requestSeq === checksRequestSeq) {
+        checksError.value =
+          err.response?.data?.detail ||
+          err.response?.data?.message ||
+          'Unable to load the quality checks of this version. Please try again.';
+        qualityChecks.value = [];
+        notificationService.error('Load Failed', checksError.value);
+      }
+    } finally {
+      if (requestSeq === checksRequestSeq) {
+        checksLoading.value = false;
+      }
+    }
   }
 
   async function loadManifest() {
@@ -227,16 +287,19 @@
     gap: var(--spacing-md);
   }
 
-  .badge {
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 0.35rem 0.65rem;
+  .version-panel {
+    display: grid;
+    grid-template-columns: minmax(220px, 320px) 1fr;
+    gap: var(--spacing-xl);
+    align-items: start;
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: var(--spacing-lg);
   }
 
-  .signature-preview {
-    font-family: var(--font-mono), monospace;
-    font-size: 0.8rem;
-    color: var(--color-gray-500);
+  .version-picker :deep(.form-field) {
+    margin-bottom: 0;
   }
 
   .version-meta {
@@ -251,12 +314,24 @@
     gap: 2px;
   }
 
+  .meta-actions {
+    margin-top: var(--spacing-xs);
+    align-self: flex-start;
+  }
+
   .meta-label {
     font-size: 0.75rem;
     font-weight: 600;
     color: var(--color-gray-500);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+  }
+
+  .signature-preview {
+    font-family: var(--font-mono), monospace;
+    font-size: 0.8rem;
+    color: var(--color-gray-500);
+    word-break: break-all;
   }
 
   .signature-full {
@@ -307,6 +382,11 @@
   @media (max-width: 768px) {
     .server-manifest-detail-page {
       padding: var(--spacing-md);
+    }
+
+    .version-panel {
+      grid-template-columns: 1fr;
+      gap: var(--spacing-md);
     }
   }
 
