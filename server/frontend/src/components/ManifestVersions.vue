@@ -251,10 +251,6 @@
     font-size: 0.875rem;
   }
 
-  .bg-light {
-    background-color: #f8f9fa !important;
-  }
-
   .check-row {
     cursor: pointer;
   }

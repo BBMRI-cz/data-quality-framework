@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.server.dataquality;
 
+import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckCreateDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckDetailedDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckUpdateDTO;
@@ -10,6 +11,16 @@ import java.util.Set;
 
 /** Service interface for managing quality checks. */
 public interface QualityCheckService {
+
+  /**
+   * Creates a new quality check definition.
+   *
+   * @param createDTO the quality check data
+   * @return the created quality check DTO
+   * @throws eu.bbmri_eric.quality.server.common.EntityNotFoundException if the referenced category
+   *     does not exist
+   */
+  QualityCheckDTO create(QualityCheckCreateDTO createDTO);
 
   /**
    * Finds a quality check by its ID.

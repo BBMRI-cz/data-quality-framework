@@ -2,6 +2,7 @@ package eu.bbmri_eric.quality.server.dataquality.controller;
 
 import eu.bbmri_eric.quality.server.dataquality.QualityCheckService;
 import eu.bbmri_eric.quality.server.dataquality.dto.KeywordsDTO;
+import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckCreateDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckDetailedDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckUpdateDTO;
@@ -46,6 +47,18 @@ class QualityCheckController {
     QualityCheckDetailedDTO qualityCheck = qualityCheckService.findById(id);
     EntityModel<QualityCheckDetailedDTO> qualityCheckModel = linkBuilder.toModel(qualityCheck);
     return ResponseEntity.ok(qualityCheckModel);
+  }
+
+  @PostMapping("/quality-checks")
+  @Operation(
+      summary = "Create quality check",
+      description = "Creates a new quality check definition")
+  @SecurityRequirement(name = "bearerAuth")
+  public ResponseEntity<EntityModel<QualityCheckDTO>> create(
+      @Valid @RequestBody QualityCheckCreateDTO createDTO) {
+    QualityCheckDTO createdQualityCheck = qualityCheckService.create(createDTO);
+    EntityModel<QualityCheckDTO> qualityCheckModel = linkBuilder.toModel(createdQualityCheck);
+    return ResponseEntity.status(HttpStatus.CREATED).body(qualityCheckModel);
   }
 
   @GetMapping("/quality-checks")
