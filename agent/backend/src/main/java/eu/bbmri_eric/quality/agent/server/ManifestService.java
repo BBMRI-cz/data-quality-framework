@@ -1,6 +1,7 @@
 package eu.bbmri_eric.quality.agent.server;
 
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
+import eu.bbmri_eric.quality.agent.server.dto.ManifestDownloadDto;
 import eu.bbmri_eric.quality.agent.server.dto.ManifestDto;
 import java.util.List;
 
@@ -46,4 +47,18 @@ public interface ManifestService {
    * @throws ServerCommunicationException if the quality checks cannot be retrieved from the server
    */
   List<QualityCheckDTO> fetchVersionQualityChecks(String serverId, Long manifestId, Long versionId);
+
+  /**
+   * Downloads a manifest version from a registered central server and persists it together with its
+   * quality checks as local quality checks.
+   *
+   * @param serverId the ID of the registered server
+   * @param manifestId the ID of the manifest on the central server
+   * @param version the version number to download
+   * @return the result of the download
+   * @throws jakarta.persistence.EntityNotFoundException if no server exists with the given ID or
+   *     the manifest has no such version
+   * @throws ServerCommunicationException if the manifest cannot be retrieved from the server
+   */
+  ManifestDownloadDto downloadManifest(String serverId, Long manifestId, int version);
 }

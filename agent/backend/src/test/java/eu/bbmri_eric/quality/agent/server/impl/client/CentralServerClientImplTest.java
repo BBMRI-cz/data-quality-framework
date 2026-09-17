@@ -181,7 +181,7 @@ class CentralServerClientImplTest {
   }
 
   @Test
-  void getManifestVersionQualityChecks_unsupportedQueryType_leavesTypeNull() {
+  void getManifestVersionQualityChecks_unsupportedQueryType_defaultsToSql() {
     stubLogin();
     QualityCheckListResponse.RemoteQualityCheckVersion version =
         new QualityCheckListResponse.RemoteQualityCheckVersion();
@@ -205,7 +205,7 @@ class CentralServerClientImplTest {
 
     List<QualityCheckDTO> checks = client.getManifestVersionQualityChecks(7L, 42L);
 
-    assertThat(checks.getFirst().getType()).isNull();
+    assertThat(checks.getFirst().getType()).isEqualTo(QualityCheckType.SQL);
   }
 
   @Test

@@ -41,8 +41,23 @@ export async function getVersionQualityChecks(serverId, manifestId, versionId) {
   return Array.isArray(response.data) ? response.data : [];
 }
 
+/**
+ * Downloads a manifest version and persists it together with its quality checks locally
+ * @param {string|number} serverId
+ * @param {string|number} manifestId
+ * @param {number} version the manifest version number
+ * @returns {Promise<object>}
+ */
+export async function downloadManifestVersion(serverId, manifestId, version) {
+  const response = await api.post(
+    `${BASE_URL}/${serverId}/manifests/${manifestId}/versions/${version}/download`
+  );
+  return response.data;
+}
+
 export const manifestService = {
   getManifests,
   getManifest,
   getVersionQualityChecks,
+  downloadManifestVersion,
 };

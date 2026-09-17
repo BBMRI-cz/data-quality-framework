@@ -89,6 +89,12 @@
                   <i class="bi bi-braces"></i>
                   View Signed Body
                 </button>
+                <ActionButton
+                  icon="bi bi-download"
+                  :text="`Download v${selectedVersion.version}`"
+                  :loading="downloading"
+                  @click="downloadSelectedVersion"
+                />
               </div>
             </div>
           </div>
@@ -164,6 +170,7 @@
   const qualityChecks = ref([]);
   const checksLoading = ref(false);
   const checksError = ref(null);
+  const downloading = ref(false);
 
   // Guards against out-of-order responses when the user switches versions quickly
   let checksRequestSeq = 0;
@@ -232,6 +239,33 @@
       if (requestSeq === checksRequestSeq) {
         checksLoading.value = false;
       }
+    }
+  }
+
+  async function downloadSelectedVersion() {
+    if (!selectedVersion.value) {
+      return;
+    }
+    downloading.value = true;
+    try {
+      const result = await manifestService.downloadManifestVersion(
+        serverId,
+        manifestId,
+        selectedVersion.value.version
+      );
+      notificationService.success(
+        'Download Complete',
+        `Installed v${result.installedVersion} of "${result.name}" with ${result.installedChecks} quality checks.`
+      );
+    } catch (err) {
+      notificationService.error(
+        'Download Failed',
+        err.response?.data?.detail ||
+          err.response?.data?.message ||
+          'Unable to download this manifest version. Please try again.'
+      );
+    } finally {
+      downloading.value = false;
     }
   }
 
@@ -316,7 +350,9 @@
 
   .meta-actions {
     margin-top: var(--spacing-xs);
-    align-self: flex-start;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--spacing-sm);
   }
 
   .meta-label {

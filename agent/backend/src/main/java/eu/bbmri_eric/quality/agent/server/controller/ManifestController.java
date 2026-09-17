@@ -2,6 +2,7 @@ package eu.bbmri_eric.quality.agent.server.controller;
 
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.agent.server.ManifestService;
+import eu.bbmri_eric.quality.agent.server.dto.ManifestDownloadDto;
 import eu.bbmri_eric.quality.agent.server.dto.ManifestDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -11,6 +12,7 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -69,5 +71,19 @@ class ManifestController {
           Long versionId) {
     return ResponseEntity.ok(
         manifestService.fetchVersionQualityChecks(serverId, manifestId, versionId));
+  }
+
+  @PostMapping("/{manifestId}/versions/{version}/download")
+  @Operation(
+      summary = "Download manifest version",
+      description =
+          "Downloads a manifest version from the central server and persists the manifest together with its quality checks locally")
+  public ResponseEntity<ManifestDownloadDto> download(
+      @Parameter(description = "Server ID", required = true) @PathVariable String serverId,
+      @Parameter(description = "Manifest ID on the central server", required = true) @PathVariable
+          Long manifestId,
+      @Parameter(description = "Version number of the manifest", required = true) @PathVariable
+          int version) {
+    return ResponseEntity.ok(manifestService.downloadManifest(serverId, manifestId, version));
   }
 }

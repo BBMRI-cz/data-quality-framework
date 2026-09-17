@@ -1,16 +1,21 @@
 package eu.bbmri_eric.quality.agent.server.impl;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.bbmri_eric.quality.agent.dataquality.QualityCheckService;
 import eu.bbmri_eric.quality.agent.dataquality.QualityCheckType;
+import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.agent.server.CentralServerClient;
 import eu.bbmri_eric.quality.agent.server.CentralServerClientFactory;
@@ -44,7 +49,11 @@ class ManifestIntegrationTests {
 
   @Autowired private ServerRepository serverRepository;
 
+  @Autowired private ManifestRepository manifestRepository;
+
   @MockitoBean private CentralServerClientFactory clientFactory;
+
+  @MockitoBean private QualityCheckService qualityCheckService;
 
   private final CentralServerClient client = mock(CentralServerClient.class);
   private Server server;
@@ -166,6 +175,59 @@ class ManifestIntegrationTests {
     mockMvc
         .perform(
             get(API_SERVERS_MANIFESTS.formatted(server.getId()) + "/1/versions/2/quality-checks"))
+        .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void downloadManifest_persistsManifestAndQualityChecks() throws Exception {
+    JsonNode body = objectMapper.readTree("{\"manifest_id\":1}");
+    ManifestVersionDto version =
+        new ManifestVersionDto(
+            42L, 2, Instant.parse("2026-08-13T10:00:00Z"), body, "MEUCIBd", "central-signing");
+    when(client.getManifest(1L)).thenReturn(new ManifestDto(1L, "Core checks", List.of(version)));
+    QualityCheckDTO check = new QualityCheckDTO();
+    check.setId(7L);
+    check.setName("Patient Count");
+    check.setDescription("Counts patients");
+    check.setQuery("SELECT COUNT(*) FROM patients");
+    check.setType(QualityCheckType.SQL);
+    check.setWarningThreshold(10);
+    check.setErrorThreshold(30);
+    when(client.getManifestVersionQualityChecks(1L, 42L)).thenReturn(List.of(check));
+    when(qualityCheckService.create(any(QualityCheckCreateDTO.class)))
+        .thenAnswer(
+            invocation -> {
+              QualityCheckCreateDTO createDTO = invocation.getArgument(0);
+              QualityCheckDTO created = new QualityCheckDTO();
+              created.setId(100L);
+              created.setName(createDTO.getName());
+              return created;
+            });
+
+    mockMvc
+        .perform(post(API_SERVERS_MANIFESTS.formatted(server.getId()) + "/1/versions/2/download"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.remoteId").value(1))
+        .andExpect(jsonPath("$.name").value("Core checks"))
+        .andExpect(jsonPath("$.installedVersion").value(2))
+        .andExpect(jsonPath("$.installedChecks").value(1));
+
+    assertThat(manifestRepository.findByServerIdAndRemoteId(server.getId(), 1L)).isPresent();
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void downloadManifest_unknownServer_returnsNotFound() throws Exception {
+    mockMvc
+        .perform(post(API_SERVERS_MANIFESTS.formatted("does-not-exist") + "/1/versions/2/download"))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void downloadManifest_unauthenticated_returnsUnauthorized() throws Exception {
+    mockMvc
+        .perform(post(API_SERVERS_MANIFESTS.formatted(server.getId()) + "/1/versions/2/download"))
         .andExpect(status().isUnauthorized());
   }
 }
