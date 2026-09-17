@@ -100,6 +100,11 @@ class ApiService {
     window.URL.revokeObjectURL(url);
   }
 
+  async createQualityCheck(data) {
+    const response = await api.post('/v1/quality-checks', data);
+    return response.data;
+  }
+
   async updateQualityCheck(id, data) {
     const response = await api.put(`/v1/quality-checks/${id}`, data);
     return response.data;

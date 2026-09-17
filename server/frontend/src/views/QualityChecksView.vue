@@ -11,6 +11,10 @@
           <i class="bi bi-arrow-clockwise"></i>
           <span class="d-none d-md-inline ms-1">Refresh</span>
         </button>
+        <button class="btn btn-primary btn-sm ms-2" :disabled="loading" @click="createCheck">
+          <i class="bi bi-plus-lg"></i>
+          <span class="d-none d-md-inline ms-1">New Check</span>
+        </button>
       </template>
     </PageHeader>
 
@@ -102,6 +106,10 @@
     { key: 'description', label: 'Description' },
     { key: 'registeredAtText', label: 'Registered At' },
   ];
+
+  const createCheck = () => {
+    router.push('/quality-checks/new');
+  };
 
   const viewCheckDetail = (check) => {
     router.push(`/quality-checks/${check.id}`);
