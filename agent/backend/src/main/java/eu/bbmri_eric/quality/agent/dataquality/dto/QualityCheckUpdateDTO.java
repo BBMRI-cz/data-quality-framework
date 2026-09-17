@@ -45,6 +45,11 @@ public class QualityCheckUpdateDTO {
   @Schema(description = "Epsilon budget for differential privacy", example = "1.0")
   private Double epsilonBudget;
 
+  @Schema(
+      description = "Whether the check is active and included in report generation",
+      example = "true")
+  private Boolean active;
+
   @Schema(description = "Category ID for grouping quality checks", example = "1")
   private Long categoryId;
 
