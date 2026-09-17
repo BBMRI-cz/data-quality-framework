@@ -1,6 +1,7 @@
 package eu.bbmri_eric.quality.agent.server.impl;
 
 import eu.bbmri_eric.quality.agent.common.EventPublisher;
+import eu.bbmri_eric.quality.agent.common.exception.EntityAlreadyExistsException;
 import eu.bbmri_eric.quality.agent.server.ServerService;
 import eu.bbmri_eric.quality.agent.server.domain.Server;
 import eu.bbmri_eric.quality.agent.server.dto.DetailedServerDto;
@@ -64,7 +65,12 @@ class ServerServiceImpl implements ServerService {
 
   @Override
   public ServerDto create(ServerCreateDto createDto) {
+    if (serverRepository.existsByUrl(createDto.getUrl())) {
+      throw new EntityAlreadyExistsException(
+          "A server with URL '%s' is already registered".formatted(createDto.getUrl()));
+    }
     Server server = new Server(createDto.getUrl(), createDto.getName());
+    server.setPublicKey(createDto.getPublicKey());
     Server savedServer = serverRepository.save(server);
     String agentId = settingsService.getSettings().getAgentId();
     eventPublisher.publishEvent(new ServerRegistrationEvent(agentId, savedServer.getUrl()));
@@ -79,7 +85,11 @@ class ServerServiceImpl implements ServerService {
             .findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Server not found with id: " + id));
 
-    if (updateDto.getUrl() != null) {
+    if (updateDto.getUrl() != null && !updateDto.getUrl().equals(server.getUrl())) {
+      if (serverRepository.existsByUrl(updateDto.getUrl())) {
+        throw new EntityAlreadyExistsException(
+            "A server with URL '%s' is already registered".formatted(updateDto.getUrl()));
+      }
       server.setUrl(updateDto.getUrl());
     }
     if (updateDto.getName() != null) {
@@ -90,6 +100,9 @@ class ServerServiceImpl implements ServerService {
     }
     if (updateDto.getClientSecret() != null) {
       server.setClientSecret(updateDto.getClientSecret());
+    }
+    if (updateDto.getPublicKey() != null) {
+      server.setPublicKey(updateDto.getPublicKey());
     }
 
     Server updatedServer = serverRepository.save(server);

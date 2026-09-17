@@ -24,7 +24,11 @@
             <i class="bi bi-heart-pulse text-primary fs-5"></i>
             <h5 class="mb-0">Health</h5>
           </div>
-          <span v-if="health" class="badge rounded-pill health-badge" :class="statusClass(health.status)">
+          <span
+            v-if="health"
+            class="badge rounded-pill health-badge"
+            :class="statusClass(health.status)"
+          >
             {{ health.status }}
           </span>
         </div>
@@ -366,7 +370,9 @@
     overflow: auto;
     z-index: 10;
     box-shadow: var(--shadow-lg);
-    transition: opacity var(--transition-fast), transform var(--transition-fast);
+    transition:
+      opacity var(--transition-fast),
+      transform var(--transition-fast);
     pointer-events: none;
   }
 

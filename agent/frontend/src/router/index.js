@@ -42,8 +42,23 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/servers/new',
+      component: () => import('@/views/ServerCreatePage.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/servers/:id',
       component: () => import('@/views/ServerDetailPage.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/servers/:id/manifests',
+      component: () => import('@/views/ServerManifestsPage.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/servers/:id/manifests/:manifestId',
+      component: () => import('@/views/ServerManifestDetailPage.vue'),
       meta: { requiresAuth: true },
     },
     {

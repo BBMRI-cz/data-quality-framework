@@ -1,6 +1,7 @@
 package eu.bbmri_eric.quality.agent.config;
 
 import eu.bbmri_eric.quality.agent.common.exception.EntityAlreadyExistsException;
+import eu.bbmri_eric.quality.agent.server.ServerCommunicationException;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -310,6 +311,22 @@ class GlobalRestExceptionHandler {
     ProblemDetail problemDetail =
         ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, "Data integrity constraint violated");
     problemDetail.setTitle("Data Integrity Violation");
+    return problemDetail;
+  }
+
+  @ExceptionHandler(ServerCommunicationException.class)
+  @ApiResponse(
+      responseCode = "502",
+      description = "Central Server Communication Failed",
+      content =
+          @Content(
+              mediaType = "application/problem+json",
+              schema = @Schema(implementation = ProblemDetail.class)))
+  public ProblemDetail handleServerCommunication(ServerCommunicationException ex) {
+    logger.warn("Central server communication failed: {}", ex.getMessage());
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.BAD_GATEWAY, ex.getMessage());
+    problemDetail.setTitle("Central Server Communication Failed");
     return problemDetail;
   }
 

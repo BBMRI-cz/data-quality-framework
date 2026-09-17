@@ -42,6 +42,15 @@
           <span>Reports</span>
         </router-link>
         <router-link
+          to="/servers"
+          class="nav-link"
+          :class="{ active: $route.path.startsWith('/servers') }"
+          @click="closeMobileMenu"
+        >
+          <i class="bi bi-hdd-network-fill"></i>
+          <span>Central Servers</span>
+        </router-link>
+        <router-link
           to="/categories"
           class="nav-link"
           :class="{ active: $route.path.startsWith('/categories') }"
@@ -75,15 +84,6 @@
             >
               <i class="bi bi-person-fill-lock"></i>
               <span>Differential Privacy</span>
-            </router-link>
-            <router-link
-              to="/servers"
-              class="nav-link nav-sublink"
-              :class="{ active: $route.path === '/servers' }"
-              @click="closeMobileMenu"
-            >
-              <i class="bi bi-flag-fill"></i>
-              <span>Reporting</span>
             </router-link>
             <router-link
               to="/diagnostics"

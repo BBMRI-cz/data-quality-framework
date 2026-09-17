@@ -1,10 +1,10 @@
 <template>
   <div class="server-detail-page">
     <PageHeader
-      :title="server?.name || 'Server Details'"
+      :title="server?.name || 'Central Server Details'"
       :mobile-title="server?.name || 'Server'"
-      subtitle="Server configuration and interaction history"
-      icon="bi bi-server"
+      subtitle="Central server configuration and interaction history"
+      icon="bi bi-hdd-network"
     />
 
     <div class="page-content">
@@ -13,8 +13,13 @@
         <ActionButton
           to="/servers"
           icon="bi bi-arrow-left"
-          text="Back to Servers"
+          text="Back to Central Servers"
           variant="secondary"
+        />
+        <ActionButton
+          :to="`/servers/${route.params.id}/manifests`"
+          icon="bi bi-file-earmark-lock"
+          text="Browse Manifests"
         />
       </div>
 
@@ -46,6 +51,37 @@
             number-class="text-primary"
           />
           <StatCard :number="server.clientId || 'N/A'" label="Client ID" number-class="text-dark" />
+        </div>
+
+        <!-- Public Key Card -->
+        <div class="card public-key-card mb-4 border-0 shadow-sm">
+          <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="mb-0">
+                <i class="bi bi-key me-2"></i>
+                Public Key
+              </h5>
+              <small class="text-muted">Used to verify manifests signed by this server</small>
+            </div>
+            <ActionButton
+              :icon="server.publicKey ? 'bi bi-pencil' : 'bi bi-plus'"
+              :text="server.publicKey ? 'Update Key' : 'Add Key'"
+              @click="openKeyModal"
+            />
+          </div>
+          <div class="card-body">
+            <template v-if="server.publicKey">
+              <span class="badge bg-success mb-2">
+                <i class="bi bi-check-circle-fill me-1"></i>
+                Configured
+              </span>
+              <pre class="key-preview">{{ server.publicKey }}</pre>
+            </template>
+            <span v-else class="text-muted">
+              <i class="bi bi-info-circle me-2"></i>
+              No public key configured. Add one to verify manifests pulled from this server.
+            </span>
+          </div>
         </div>
 
         <!-- Filters -->
@@ -140,18 +176,30 @@
     >
       <pre class="json-viewer">{{ formattedJson }}</pre>
     </BaseModal>
+
+    <!-- Public Key Modal -->
+    <ServerPublicKeyModal
+      :show="showKeyModal"
+      :public-key="server?.publicKey || ''"
+      :loading="isSavingKey"
+      @close="closeKeyModal"
+      @save="savePublicKey"
+    />
   </div>
 </template>
 
 <script setup>
-  import { onMounted } from 'vue';
+  import { ref, onMounted } from 'vue';
   import { useRoute } from 'vue-router';
   import PageHeader from '@/components/PageHeader.vue';
   import StatCard from '@/components/StatCard.vue';
   import BaseTable from '@/components/BaseTable.vue';
   import BaseModal from '@/components/BaseModal.vue';
   import ActionButton from '@/components/ActionButton.vue';
+  import ServerPublicKeyModal from '@/components/ServerPublicKeyModal.vue';
   import { useServerDetails } from '@/composables/useServerDetails.js';
+  import { serverService } from '@/services/serverService.js';
+  import { notificationService } from '@/services/notificationService.js';
   import { formatStatus, getStatusTextClass } from '@/utils/serverStatus.js';
   import { getInteractionTypeBadge } from '@/utils/interactionTypes.js';
   import { truncateText, formatDateShort, formatTime, isValidJson } from '@/utils/stringUtils.js';
@@ -176,6 +224,40 @@
     openJsonModal,
     closeJsonModal,
   } = useServerDetails(route.params.id);
+
+  const showKeyModal = ref(false);
+  const isSavingKey = ref(false);
+
+  function openKeyModal() {
+    showKeyModal.value = true;
+  }
+
+  function closeKeyModal() {
+    showKeyModal.value = false;
+  }
+
+  async function savePublicKey(newKey) {
+    isSavingKey.value = true;
+    try {
+      await serverService.update(server.value.id, { publicKey: newKey });
+      notificationService.success(
+        'Public Key Saved',
+        newKey ? 'The public key has been saved.' : 'The public key has been removed.'
+      );
+      closeKeyModal();
+      await fetchServer();
+    } catch (err) {
+      console.error('Error saving public key:', err);
+      notificationService.error(
+        'Save Failed',
+        err.response?.data?.detail ||
+          err.response?.data?.message ||
+          'Unable to save the public key. Please try again.'
+      );
+    } finally {
+      isSavingKey.value = false;
+    }
+  }
 
   const interactionColumns = [
     { key: 'timestamp', label: 'Timestamp' },
@@ -207,6 +289,7 @@
   .page-actions {
     display: flex;
     justify-content: flex-start;
+    gap: var(--spacing-sm);
     margin-bottom: var(--spacing-md);
   }
 
@@ -249,7 +332,8 @@
     padding: 0.35rem 0.65rem;
   }
 
-  .json-viewer {
+  .json-viewer,
+  .key-preview {
     background: var(--color-gray-50);
     border: 1px solid var(--color-gray-200);
     border-radius: var(--radius-md);

@@ -1,4 +1,4 @@
-package eu.bbmri_eric.quality.agent.dataquality.domain;
+package eu.bbmri_eric.quality.agent.dataquality;
 
 /** Represents the type of quality check implementation. */
 public enum QualityCheckType {

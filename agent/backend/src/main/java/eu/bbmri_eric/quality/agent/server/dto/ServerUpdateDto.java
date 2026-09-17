@@ -38,6 +38,13 @@ public class ServerUpdateDto {
       example = "Y2xpZW50LXNlY3JldA==")
   private String clientSecret;
 
+  /** Public key used to verify signatures from the server. */
+  @Size(max = 2048, message = "Public key must not exceed 2048 characters")
+  @Schema(
+      description = "PEM encoded public key used to verify signatures from the central server",
+      example = "-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----")
+  private String publicKey;
+
   /** Default constructor. */
   public ServerUpdateDto() {}
 
@@ -126,5 +133,23 @@ public class ServerUpdateDto {
    */
   public void setClientSecret(String clientSecret) {
     this.clientSecret = clientSecret;
+  }
+
+  /**
+   * Gets the public key.
+   *
+   * @return the public key
+   */
+  public String getPublicKey() {
+    return publicKey;
+  }
+
+  /**
+   * Sets the public key.
+   *
+   * @param publicKey the PEM encoded public key
+   */
+  public void setPublicKey(String publicKey) {
+    this.publicKey = publicKey;
   }
 }
