@@ -5,10 +5,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import eu.bbmri_eric.quality.agent.dataquality.QualityCheckService;
+import eu.bbmri_eric.quality.agent.dataquality.QualityCheckType;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.agent.server.CentralServerClient;
@@ -52,13 +56,14 @@ class ManifestServiceImplTest {
   @BeforeEach
   void setUp() {
     server =
-        serverRepository.save(
-            new Server(
-                "https://central.example.com",
-                "Central",
-                "client-id",
-                "client-secret",
-                ServerConnectionStatus.ACTIVE));
+        new Server(
+            "https://central.example.com",
+            "Central",
+            "client-id",
+            "client-secret",
+            ServerConnectionStatus.ACTIVE);
+    server.setPublicKey(TestManifestSigner.publicKeyPem());
+    server = serverRepository.save(server);
     when(clientFactory.createClient(
             anyString(), eq("https://central.example.com"), anyString(), anyString()))
         .thenReturn(client);
@@ -161,6 +166,7 @@ class ManifestServiceImplTest {
     when(client.getManifestVersionQualityChecks(1L, 42L)).thenReturn(List.of());
     Manifest existing = new Manifest(1L, "Old name", server);
     existing.setInstalledVersion(1);
+    existing.addQualityCheckId(55L);
     manifestRepository.save(existing);
 
     ManifestDownloadDto result = manifestService.downloadManifest(server.getId(), 1L, 2);
@@ -170,6 +176,109 @@ class ManifestServiceImplTest {
     assertThat(result.getInstalledVersion()).isEqualTo(2);
     assertThat(manifestRepository.findByServerIdAndRemoteId(server.getId(), 1L)).isPresent();
     assertThat(manifestRepository.count()).isOne();
+    verify(qualityCheckService).delete(55L);
+    Manifest persisted = manifestRepository.findById(existing.getId()).orElseThrow();
+    assertThat(persisted.getQualityCheckIds()).isEmpty();
+  }
+
+  @Test
+  void downloadManifest_repeatDownload_replacesInstalledChecks() {
+    stubRemoteManifestWithVersion();
+    when(client.getManifestVersionQualityChecks(1L, 42L))
+        .thenReturn(List.of(remoteCheck("Patient Count")));
+    AtomicLong nextId = new AtomicLong(100L);
+    when(qualityCheckService.create(any(QualityCheckCreateDTO.class)))
+        .thenAnswer(
+            invocation -> {
+              QualityCheckDTO created = new QualityCheckDTO();
+              created.setId(nextId.getAndIncrement());
+              return created;
+            });
+
+    manifestService.downloadManifest(server.getId(), 1L, 2);
+    manifestService.downloadManifest(server.getId(), 1L, 2);
+
+    Manifest persisted =
+        manifestRepository.findByServerIdAndRemoteId(server.getId(), 1L).orElseThrow();
+    assertThat(persisted.getQualityCheckIds()).containsExactly(101L);
+    verify(qualityCheckService).delete(100L);
+    assertThat(manifestRepository.count()).isOne();
+  }
+
+  @Test
+  void downloadManifest_staleCheckAlreadyRemoved_stillDownloads() {
+    stubRemoteManifestWithVersion();
+    when(client.getManifestVersionQualityChecks(1L, 42L)).thenReturn(List.of());
+    doThrow(new eu.bbmri_eric.quality.agent.common.exception.EntityNotFoundException("gone"))
+        .when(qualityCheckService)
+        .delete(55L);
+    Manifest existing = new Manifest(1L, "Old name", server);
+    existing.addQualityCheckId(55L);
+    manifestRepository.save(existing);
+
+    ManifestDownloadDto result = manifestService.downloadManifest(server.getId(), 1L, 2);
+
+    assertThat(result.getInstalledVersion()).isEqualTo(2);
+    Manifest persisted = manifestRepository.findById(existing.getId()).orElseThrow();
+    assertThat(persisted.getQualityCheckIds()).isEmpty();
+  }
+
+  @Test
+  void downloadManifest_unsupportedCheckType_throwsServerCommunicationException() {
+    stubRemoteManifestWithVersion();
+    QualityCheckDTO untyped = remoteCheck("Legacy Check");
+    untyped.setType(null);
+    when(client.getManifestVersionQualityChecks(1L, 42L)).thenReturn(List.of(untyped));
+
+    assertThatThrownBy(() -> manifestService.downloadManifest(server.getId(), 1L, 2))
+        .isInstanceOf(ServerCommunicationException.class)
+        .hasMessageContaining("unsupported query type");
+    assertThat(manifestRepository.count()).isZero();
+  }
+
+  @Test
+  void downloadManifest_unsignedVersion_throwsServerCommunicationException() {
+    ManifestVersionDto unsigned =
+        new ManifestVersionDto(42L, 2, Instant.parse("2026-08-13T10:00:00Z"), null, null, null);
+    when(client.getManifest(1L)).thenReturn(new ManifestDto(1L, "Core checks", List.of(unsigned)));
+
+    assertThatThrownBy(() -> manifestService.downloadManifest(server.getId(), 1L, 2))
+        .isInstanceOf(ServerCommunicationException.class);
+    assertThat(manifestRepository.count()).isZero();
+  }
+
+  @Test
+  void downloadManifest_invalidSignature_throwsServerCommunicationException() {
+    ManifestVersionDto version = TestManifestSigner.signedVersion(42L, 2);
+    version.setSignature(TestManifestSigner.sign("{\"manifest_id\":999}"));
+    when(client.getManifest(1L)).thenReturn(new ManifestDto(1L, "Core checks", List.of(version)));
+
+    assertThatThrownBy(() -> manifestService.downloadManifest(server.getId(), 1L, 2))
+        .isInstanceOf(ServerCommunicationException.class)
+        .hasMessageContaining("invalid signature");
+    assertThat(manifestRepository.count()).isZero();
+    verify(qualityCheckService, never()).create(any());
+  }
+
+  @Test
+  void downloadManifest_noPublicKey_throwsServerCommunicationException() {
+    Server keyless =
+        serverRepository.save(
+            new Server(
+                "https://keyless.example.com",
+                "Keyless",
+                "client-id",
+                "client-secret",
+                ServerConnectionStatus.ACTIVE));
+    when(clientFactory.createClient(
+            anyString(), eq("https://keyless.example.com"), anyString(), anyString()))
+        .thenReturn(client);
+    stubRemoteManifestWithVersion();
+
+    assertThatThrownBy(() -> manifestService.downloadManifest(keyless.getId(), 1L, 2))
+        .isInstanceOf(ServerCommunicationException.class)
+        .hasMessageContaining("no public key");
+    assertThat(manifestRepository.count()).isZero();
   }
 
   @Test
@@ -187,8 +296,7 @@ class ManifestServiceImplTest {
   }
 
   private void stubRemoteManifestWithVersion() {
-    ManifestVersionDto version =
-        new ManifestVersionDto(42L, 2, Instant.parse("2026-08-13T10:00:00Z"), null, "sig", "key");
+    ManifestVersionDto version = TestManifestSigner.signedVersion(42L, 2);
     when(client.getManifest(1L)).thenReturn(new ManifestDto(1L, "Core checks", List.of(version)));
   }
 
@@ -198,6 +306,7 @@ class ManifestServiceImplTest {
     check.setName(name);
     check.setDescription("Description of " + name);
     check.setQuery("SELECT COUNT(*) FROM patients");
+    check.setType(QualityCheckType.SQL);
     check.setWarningThreshold(10);
     check.setErrorThreshold(30);
     return check;

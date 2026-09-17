@@ -221,18 +221,19 @@ class CentralServerClientImpl implements CentralServerClient {
 
   /**
    * Maps the query type used by the central server to the agent's quality check type. Types unknown
-   * to the agent default to SQL.
+   * to the agent are mapped to null; downloads reject checks with unsupported types.
    *
    * @param type the remote query type
-   * @return the agent quality check type
+   * @return the agent quality check type, or null if unsupported
    */
   private QualityCheckType toQualityCheckType(String type) {
     if (type == null) {
-      return QualityCheckType.SQL;
+      return null;
     }
     return switch (type) {
       case "CQL" -> QualityCheckType.CQL;
-      default -> QualityCheckType.SQL;
+      case "SQL" -> QualityCheckType.SQL;
+      default -> null;
     };
   }
 

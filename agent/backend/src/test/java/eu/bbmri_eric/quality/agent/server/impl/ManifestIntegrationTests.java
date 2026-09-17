@@ -181,11 +181,7 @@ class ManifestIntegrationTests {
   @Test
   @WithUserDetails("admin")
   void downloadManifest_persistsManifestAndQualityChecks() throws Exception {
-    JsonNode body = objectMapper.readTree("{\"manifest_id\":1}");
-    ManifestVersionDto version =
-        new ManifestVersionDto(
-            42L, 2, Instant.parse("2026-08-13T10:00:00Z"), body, "MEUCIBd", "central-signing");
-    when(client.getManifest(1L)).thenReturn(new ManifestDto(1L, "Core checks", List.of(version)));
+    stubSignedServerAndManifest();
     QualityCheckDTO check = new QualityCheckDTO();
     check.setId(7L);
     check.setName("Patient Count");
@@ -214,6 +210,44 @@ class ManifestIntegrationTests {
         .andExpect(jsonPath("$.installedChecks").value(1));
 
     assertThat(manifestRepository.findByServerIdAndRemoteId(server.getId(), 1L)).isPresent();
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void downloadManifest_invalidSignature_returnsBadGateway() throws Exception {
+    stubSignedServerAndManifest();
+    ManifestVersionDto version = TestManifestSigner.signedVersion(42L, 2);
+    version.setSignature(TestManifestSigner.sign("{\"manifest_id\":999}"));
+    when(client.getManifest(1L)).thenReturn(new ManifestDto(1L, "Core checks", List.of(version)));
+
+    mockMvc
+        .perform(post(API_SERVERS_MANIFESTS.formatted(server.getId()) + "/1/versions/2/download"))
+        .andExpect(status().isBadGateway());
+
+    assertThat(manifestRepository.count()).isZero();
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void downloadManifest_unsupportedCheckType_returnsBadGateway() throws Exception {
+    stubSignedServerAndManifest();
+    QualityCheckDTO untyped = new QualityCheckDTO();
+    untyped.setName("Legacy Check");
+    when(client.getManifestVersionQualityChecks(1L, 42L)).thenReturn(List.of(untyped));
+
+    mockMvc
+        .perform(post(API_SERVERS_MANIFESTS.formatted(server.getId()) + "/1/versions/2/download"))
+        .andExpect(status().isBadGateway());
+
+    assertThat(manifestRepository.count()).isZero();
+  }
+
+  private void stubSignedServerAndManifest() {
+    server.setPublicKey(TestManifestSigner.publicKeyPem());
+    server = serverRepository.save(server);
+    when(client.getManifest(1L))
+        .thenReturn(
+            new ManifestDto(1L, "Core checks", List.of(TestManifestSigner.signedVersion(42L, 2))));
   }
 
   @Test
