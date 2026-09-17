@@ -55,10 +55,6 @@
         <span class="fw-medium">{{ value }}</span>
       </template>
 
-      <template #cell-versionCount="{ item }">
-        <Badge :text="`${item.versionCount}`" variant="primary" size="small" />
-      </template>
-
       <template #cell-latestVersion="{ item }">
         <span v-if="item.latestVersion" class="badge bg-primary">v{{ item.latestVersion }}</span>
         <span v-else class="text-muted">—</span>
