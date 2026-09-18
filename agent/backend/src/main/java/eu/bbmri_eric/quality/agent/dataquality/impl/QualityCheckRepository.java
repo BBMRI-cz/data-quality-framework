@@ -5,4 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 interface QualityCheckRepository
-    extends JpaRepository<QualityCheck, Long>, JpaSpecificationExecutor<QualityCheck> {}
+    extends JpaRepository<QualityCheck, Long>, JpaSpecificationExecutor<QualityCheck> {
+  QualityCheck[] findAllByActive(boolean active);
+}

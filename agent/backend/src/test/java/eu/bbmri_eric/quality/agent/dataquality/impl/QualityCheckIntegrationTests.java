@@ -17,6 +17,7 @@ import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckBulkUpdateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckUpdateDTO;
+import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -372,6 +373,24 @@ class QualityCheckIntegrationTests {
     assertThat(updated.isActive()).isFalse();
     assertThat(updated.getCategory()).isNotNull();
     assertThat(updated.getCategory().getId()).isEqualTo(category.getId());
+  }
+
+  @Test
+  void repository_findAllByActive_returnsOnlyActiveChecks() {
+    QualityCheck activeCheck =
+        qualityCheckRepository.save(
+            new QualityCheck("Active Query Check", "Is active", "define Test: true"));
+    QualityCheck inactiveCheck =
+        new QualityCheck("Inactive Query Check", "Is inactive", "define Test: true");
+    inactiveCheck.setActive(false);
+    inactiveCheck = qualityCheckRepository.save(inactiveCheck);
+
+    List<Long> activeIds =
+        Arrays.stream(qualityCheckRepository.findAllByActive(true))
+            .map(QualityCheck::getId)
+            .toList();
+
+    assertThat(activeIds).contains(activeCheck.getId()).doesNotContain(inactiveCheck.getId());
   }
 
   @Test
