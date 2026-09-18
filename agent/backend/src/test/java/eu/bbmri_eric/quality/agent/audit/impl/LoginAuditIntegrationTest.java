@@ -20,8 +20,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 /**
- * Verifies that logging in produces audit log entries via Spring Security's built-in
- * authentication auditing (see {@code SecurityConfig#authenticationEventPublisher} and {@code
+ * Verifies that logging in produces audit log entries via Spring Security's built-in authentication
+ * auditing (see {@code SecurityConfig#authenticationEventPublisher} and {@code
  * AuditConfig#authenticationAuditListener}), rather than through code in {@code AuthController}.
  */
 @SpringBootTest

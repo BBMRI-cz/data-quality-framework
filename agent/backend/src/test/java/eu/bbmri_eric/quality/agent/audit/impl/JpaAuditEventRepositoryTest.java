@@ -28,7 +28,8 @@ class JpaAuditEventRepositoryTest {
   @Test
   void add_withKnownActionType_persistsMatchingAction() {
     auditEventRepository.add(
-        new AuditEvent("admin", AuditAction.SETTINGS_UPDATED.name(), Map.of("details", "Changed FHIR URL")));
+        new AuditEvent(
+            "admin", AuditAction.SETTINGS_UPDATED.name(), Map.of("details", "Changed FHIR URL")));
 
     AuditLogEntry entry = auditLogRepository.findAll().getFirst();
     assertThat(entry.getAction()).isEqualTo(AuditAction.SETTINGS_UPDATED);
@@ -75,12 +76,16 @@ class JpaAuditEventRepositoryTest {
 
   @Test
   void find_filtersByPrincipalAfterAndType() {
-    auditEventRepository.add(new AuditEvent(Instant.now().minusSeconds(60), "admin", AuditAction.LOGOUT.name(), Map.of()));
+    auditEventRepository.add(
+        new AuditEvent(
+            Instant.now().minusSeconds(60), "admin", AuditAction.LOGOUT.name(), Map.of()));
     auditEventRepository.add(new AuditEvent("admin", AuditAction.LOGIN_SUCCESS.name(), Map.of()));
-    auditEventRepository.add(new AuditEvent("intruder", AuditAction.LOGIN_FAILURE.name(), Map.of()));
+    auditEventRepository.add(
+        new AuditEvent("intruder", AuditAction.LOGIN_FAILURE.name(), Map.of()));
 
     List<AuditEvent> events =
-        auditEventRepository.find("admin", Instant.now().minusSeconds(30), AuditAction.LOGIN_SUCCESS.name());
+        auditEventRepository.find(
+            "admin", Instant.now().minusSeconds(30), AuditAction.LOGIN_SUCCESS.name());
 
     assertThat(events).hasSize(1);
     assertThat(events.getFirst().getPrincipal()).isEqualTo("admin");

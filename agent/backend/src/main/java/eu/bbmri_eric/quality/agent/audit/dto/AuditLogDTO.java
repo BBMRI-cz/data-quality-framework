@@ -23,7 +23,9 @@ public class AuditLogDTO {
       accessMode = Schema.AccessMode.READ_ONLY)
   private Long id;
 
-  @Schema(description = "Timestamp at which the action was performed", example = "2026-09-15T10:30:00")
+  @Schema(
+      description = "Timestamp at which the action was performed",
+      example = "2026-09-15T10:30:00")
   private LocalDateTime timestamp;
 
   @Schema(

@@ -41,7 +41,8 @@ class AuditAspect {
     }
     StandardEvaluationContext context = new StandardEvaluationContext();
     context.setVariable("result", result);
-    Parameter[] parameters = ((MethodSignature) joinPoint.getSignature()).getMethod().getParameters();
+    Parameter[] parameters =
+        ((MethodSignature) joinPoint.getSignature()).getMethod().getParameters();
     Object[] args = joinPoint.getArgs();
     for (int i = 0; i < parameters.length; i++) {
       context.setVariable(parameters[i].getName(), args[i]);

@@ -62,10 +62,12 @@ class AuditLogSpecification {
   }
 
   /**
-   * Builds a specification for {@link org.springframework.boot.actuate.audit.AuditEventRepository#find}
-   * query semantics: matches entries by principal/after/type, each ignored when {@code null}.
+   * Builds a specification for {@link
+   * org.springframework.boot.actuate.audit.AuditEventRepository#find} query semantics: matches
+   * entries by principal/after/type, each ignored when {@code null}.
    */
-  static Specification<AuditLogEntry> forAuditQuery(String principal, Instant after, AuditAction action) {
+  static Specification<AuditLogEntry> forAuditQuery(
+      String principal, Instant after, AuditAction action) {
     return (root, query, criteriaBuilder) -> {
       List<Predicate> predicates = new ArrayList<>();
 

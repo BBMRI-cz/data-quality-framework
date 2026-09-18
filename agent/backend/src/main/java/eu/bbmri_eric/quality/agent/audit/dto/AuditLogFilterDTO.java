@@ -12,8 +12,8 @@ import lombok.Setter;
 /**
  * Filter DTO for querying audit log entries.
  *
- * <p>Extends the common {@link FilterDTO} with audit-specific filters: exact action, exact actor,
- * a timestamp range, and a free-text search matched against actor, action, and details.
+ * <p>Extends the common {@link FilterDTO} with audit-specific filters: exact action, exact actor, a
+ * timestamp range, and a free-text search matched against actor, action, and details.
  */
 @Setter
 @Getter
@@ -28,10 +28,14 @@ public class AuditLogFilterDTO extends FilterDTO {
   @Schema(description = "Filter by exact actor", example = "admin")
   private String actor;
 
-  @Schema(description = "Only include entries at or after this timestamp", example = "2026-09-01T00:00:00")
+  @Schema(
+      description = "Only include entries at or after this timestamp",
+      example = "2026-09-01T00:00:00")
   private LocalDateTime dateFrom;
 
-  @Schema(description = "Only include entries at or before this timestamp", example = "2026-09-30T23:59:59")
+  @Schema(
+      description = "Only include entries at or before this timestamp",
+      example = "2026-09-30T23:59:59")
   private LocalDateTime dateTo;
 
   @Schema(

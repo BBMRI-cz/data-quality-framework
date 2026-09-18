@@ -9,8 +9,8 @@ import java.lang.annotation.Target;
  * Marks a service method whose successful completion should be recorded as an audit log entry,
  * without the method itself depending on {@link AuditService}.
  *
- * <p>An aspect ({@code AuditAspect}) intercepts every call to a method carrying this annotation
- * and records it after the method returns. The current authenticated user (if any) is used as the
+ * <p>An aspect ({@code AuditAspect}) intercepts every call to a method carrying this annotation and
+ * records it after the method returns. The current authenticated user (if any) is used as the
  * actor.
  */
 @Retention(RetentionPolicy.RUNTIME)
@@ -24,9 +24,9 @@ public @interface Audited {
   String module() default "";
 
   /**
-   * A SpEL expression resolving the affected entity's ID, evaluated against the method's
-   * parameters (by name, e.g. {@code #id}) and its return value (as {@code #result}). Empty means
-   * no entity ID is recorded.
+   * A SpEL expression resolving the affected entity's ID, evaluated against the method's parameters
+   * (by name, e.g. {@code #id}) and its return value (as {@code #result}). Empty means no entity ID
+   * is recorded.
    */
   String entityId() default "";
 }

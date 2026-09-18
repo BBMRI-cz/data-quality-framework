@@ -57,7 +57,8 @@ class JpaAuditEventRepository implements AuditEventRepository {
   @Override
   public List<AuditEvent> find(String principal, Instant after, String type) {
     AuditAction action = type != null ? mapType(type) : null;
-    return auditLogRepository.findAll(AuditLogSpecification.forAuditQuery(principal, after, action))
+    return auditLogRepository
+        .findAll(AuditLogSpecification.forAuditQuery(principal, after, action))
         .stream()
         .map(JpaAuditEventRepository::toAuditEvent)
         .toList();
@@ -90,6 +91,7 @@ class JpaAuditEventRepository implements AuditEventRepository {
       data.put("entityId", entry.getEntityId());
     }
     String type = entry.getAction() != null ? entry.getAction().name() : AuditAction.OTHER.name();
-    return new AuditEvent(entry.getTimestamp().toInstant(ZoneOffset.UTC), entry.getActor(), type, data);
+    return new AuditEvent(
+        entry.getTimestamp().toInstant(ZoneOffset.UTC), entry.getActor(), type, data);
   }
 }
