@@ -1,16 +1,20 @@
 package eu.bbmri_eric.quality.agent.audit.impl;
 
+import eu.bbmri_eric.quality.agent.audit.AuditAction;
 import eu.bbmri_eric.quality.agent.audit.AuditService;
-import eu.bbmri_eric.quality.agent.audit.domain.AuditAction;
 import eu.bbmri_eric.quality.agent.audit.domain.AuditLogEntry;
 import eu.bbmri_eric.quality.agent.audit.dto.AuditLogDTO;
 import eu.bbmri_eric.quality.agent.audit.dto.AuditLogFilterDTO;
 import eu.bbmri_eric.quality.agent.common.dto.PageResponse;
-import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.listener.AuditApplicationEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -26,10 +30,15 @@ class AuditServiceImpl implements AuditService {
   private static final String SYSTEM_ACTOR = "SYSTEM";
 
   private final AuditLogRepository auditLogRepository;
+  private final ApplicationEventPublisher eventPublisher;
   private final ModelMapper modelMapper;
 
-  AuditServiceImpl(AuditLogRepository auditLogRepository, ModelMapper modelMapper) {
+  AuditServiceImpl(
+      AuditLogRepository auditLogRepository,
+      ApplicationEventPublisher eventPublisher,
+      ModelMapper modelMapper) {
     this.auditLogRepository = auditLogRepository;
+    this.eventPublisher = eventPublisher;
     this.modelMapper = modelMapper;
   }
 
@@ -43,15 +52,25 @@ class AuditServiceImpl implements AuditService {
   @Transactional
   public void record(
       AuditAction action, String actor, String details, String module, Long entityId) {
-    AuditLogEntry entry = new AuditLogEntry();
-    entry.setTimestamp(LocalDateTime.now());
-    entry.setActor(actor != null ? actor : SYSTEM_ACTOR);
-    entry.setAction(action);
-    entry.setDetails(details);
-    entry.setModule(module);
-    entry.setEntityId(entityId);
-    auditLogRepository.save(entry);
-    logger.debug("Recorded audit log entry: action={}, actor={}", action, entry.getActor());
+    String principal = actor != null ? actor : SYSTEM_ACTOR;
+
+    Map<String, Object> data = new LinkedHashMap<>();
+    if (details != null) {
+      data.put("details", details);
+    }
+    if (module != null) {
+      data.put("module", module);
+    }
+    if (entityId != null) {
+      data.put("entityId", entityId);
+    }
+
+    // Published as a Spring Boot AuditEvent rather than saved directly, so this shares the same
+    // persistence path (JpaAuditEventRepository, via the auto-configured AuditListener) as audit
+    // events Spring Security publishes automatically, e.g. authentication success/failure.
+    eventPublisher.publishEvent(
+        new AuditApplicationEvent(new AuditEvent(principal, action.name(), data)));
+    logger.debug("Recorded audit log entry: action={}, actor={}", action, principal);
   }
 
   @Override

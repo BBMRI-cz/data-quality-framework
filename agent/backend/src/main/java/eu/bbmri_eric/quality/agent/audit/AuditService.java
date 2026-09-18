@@ -1,6 +1,5 @@
 package eu.bbmri_eric.quality.agent.audit;
 
-import eu.bbmri_eric.quality.agent.audit.domain.AuditAction;
 import eu.bbmri_eric.quality.agent.audit.dto.AuditLogDTO;
 import eu.bbmri_eric.quality.agent.audit.dto.AuditLogFilterDTO;
 import eu.bbmri_eric.quality.agent.common.dto.PageResponse;

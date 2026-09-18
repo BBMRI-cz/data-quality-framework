@@ -1,6 +1,7 @@
 package eu.bbmri_eric.quality.agent.audit.domain;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import eu.bbmri_eric.quality.agent.audit.AuditAction;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;

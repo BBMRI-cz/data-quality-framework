@@ -4,10 +4,13 @@ import static org.springframework.security.config.http.SessionCreationPolicy.STA
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -90,6 +93,16 @@ class SecurityConfig {
   @Bean
   AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
     return config.getAuthenticationManager();
+  }
+
+  /**
+   * Makes the {@link AuthenticationManager} publish {@code AuthenticationSuccessEvent}/{@code
+   * AbstractAuthenticationFailureEvent}s on every {@code authenticate()} call, which Spring Boot's
+   * {@code AuthenticationAuditListener} turns into audit events recorded by the audit module.
+   */
+  @Bean
+  AuthenticationEventPublisher authenticationEventPublisher(ApplicationEventPublisher publisher) {
+    return new DefaultAuthenticationEventPublisher(publisher);
   }
 
   @Bean

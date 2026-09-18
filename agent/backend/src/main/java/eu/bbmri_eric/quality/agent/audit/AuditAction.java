@@ -1,4 +1,4 @@
-package eu.bbmri_eric.quality.agent.audit.domain;
+package eu.bbmri_eric.quality.agent.audit;
 
 public enum AuditAction {
   LOGIN_SUCCESS,
@@ -30,4 +30,7 @@ public enum AuditAction {
 
   AGENT_STARTED,
   AGENT_STOPPED,
+
+  /** Fallback for audit events whose type does not map to a known action. */
+  OTHER,
 }

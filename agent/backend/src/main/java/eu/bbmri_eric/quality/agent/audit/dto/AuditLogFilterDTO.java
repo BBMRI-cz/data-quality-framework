@@ -1,6 +1,6 @@
 package eu.bbmri_eric.quality.agent.audit.dto;
 
-import eu.bbmri_eric.quality.agent.audit.domain.AuditAction;
+import eu.bbmri_eric.quality.agent.audit.AuditAction;
 import eu.bbmri_eric.quality.agent.common.dto.FilterDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
