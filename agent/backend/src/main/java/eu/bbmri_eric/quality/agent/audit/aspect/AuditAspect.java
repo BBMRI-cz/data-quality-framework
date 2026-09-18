@@ -47,7 +47,14 @@ class AuditAspect {
     for (int i = 0; i < parameters.length; i++) {
       context.setVariable(parameters[i].getName(), args[i]);
     }
-    Object value = expressionParser.parseExpression(expression).getValue(context);
-    return value == null ? null : ((Number) value).longValue();
-  }
+    Object value;
+    try {
+      value = expressionParser.parseExpression(expression).getValue(context);
+    } catch (RuntimeException ex) {
+      return null;
+    }
+    if (!(value instanceof Number number)) {
+      return null;
+    }
+    return number.longValue();
 }
