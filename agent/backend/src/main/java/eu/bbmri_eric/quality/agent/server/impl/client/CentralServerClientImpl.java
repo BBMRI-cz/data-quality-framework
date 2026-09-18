@@ -1,9 +1,15 @@
 package eu.bbmri_eric.quality.agent.server.impl.client;
 
+import eu.bbmri_eric.quality.agent.dataquality.QualityCheckType;
+import eu.bbmri_eric.quality.agent.dataquality.dto.CategoryDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ObfuscatedReportDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.agent.server.CentralServerClient;
 import eu.bbmri_eric.quality.agent.server.RegistrationCredentials;
+import eu.bbmri_eric.quality.agent.server.ServerCommunicationException;
 import eu.bbmri_eric.quality.agent.server.domain.ServerConnectionStatus;
+import eu.bbmri_eric.quality.agent.server.dto.ManifestDto;
+import java.util.List;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +33,7 @@ class CentralServerClientImpl implements CentralServerClient {
   // API Endpoints
   private static final String AGENTS_ENDPOINT = "/api/v1/agents";
   private static final String LOGIN_ENDPOINT = "/api/auth/login";
+  private static final String MANIFESTS_ENDPOINT = "/api/v1/manifests";
 
   private final RestTemplate restTemplate;
   private final BuildProperties buildProperties;
@@ -115,6 +122,145 @@ class CentralServerClientImpl implements CentralServerClient {
     HttpEntity<ObfuscatedReportDTO> requestEntity = new HttpEntity<>(reportDTO, headers);
     restTemplate.exchange(reportUrl, HttpMethod.POST, requestEntity, Void.class);
     log.info("Successfully sent report to server {}", serverUrl);
+  }
+
+  @Override
+  public List<ManifestDto> getManifests() {
+    try {
+      HttpEntity<Void> requestEntity = createAuthenticatedEntity();
+      ResponseEntity<ManifestListResponse> response =
+          restTemplate.exchange(
+              buildApiUrl(MANIFESTS_ENDPOINT),
+              HttpMethod.GET,
+              requestEntity,
+              ManifestListResponse.class);
+      ManifestListResponse body = response.getBody();
+      return body == null ? List.of() : body.getManifests();
+    } catch (RestClientException e) {
+      throw communicationFailure("fetch manifests", e);
+    }
+  }
+
+  @Override
+  public ManifestDto getManifest(Long manifestId) {
+    try {
+      HttpEntity<Void> requestEntity = createAuthenticatedEntity();
+      ResponseEntity<ManifestDto> response =
+          restTemplate.exchange(
+              buildApiUrl(MANIFESTS_ENDPOINT + "/" + manifestId),
+              HttpMethod.GET,
+              requestEntity,
+              ManifestDto.class);
+      ManifestDto manifest = response.getBody();
+      if (manifest == null) {
+        throw new ServerCommunicationException(
+            "Empty response when fetching manifest %d from server %s"
+                .formatted(manifestId, serverUrl));
+      }
+      return manifest;
+    } catch (RestClientException e) {
+      throw communicationFailure("fetch manifest " + manifestId, e);
+    }
+  }
+
+  @Override
+  public List<QualityCheckDTO> getManifestVersionQualityChecks(Long manifestId, Long versionId) {
+    try {
+      HttpEntity<Void> requestEntity = createAuthenticatedEntity();
+      ResponseEntity<QualityCheckListResponse> response =
+          restTemplate.exchange(
+              buildApiUrl(
+                  MANIFESTS_ENDPOINT
+                      + "/"
+                      + manifestId
+                      + "/versions/"
+                      + versionId
+                      + "/quality-checks"),
+              HttpMethod.GET,
+              requestEntity,
+              QualityCheckListResponse.class);
+      QualityCheckListResponse body = response.getBody();
+      if (body == null) {
+        return List.of();
+      }
+      return body.getQualityChecks().stream().map(this::toAgentQualityCheck).toList();
+    } catch (RestClientException e) {
+      throw communicationFailure(
+          "fetch quality checks of manifest %d version %d".formatted(manifestId, versionId), e);
+    }
+  }
+
+  /**
+   * Maps a remote quality check to an agent quality check DTO. The query and type are taken from
+   * the version pinned by the manifest version.
+   *
+   * @param remote the quality check as returned by the central server
+   * @return the agent DTO
+   */
+  private QualityCheckDTO toAgentQualityCheck(QualityCheckListResponse.RemoteQualityCheck remote) {
+    QualityCheckDTO dto = new QualityCheckDTO();
+    dto.setId(remote.getId());
+    dto.setName(remote.getName());
+    dto.setDescription(remote.getDescription());
+    dto.setWarningThreshold((int) Math.round(remote.getWarningThreshold()));
+    dto.setErrorThreshold((int) Math.round(remote.getErrorThreshold()));
+    if (remote.getCategory() != null) {
+      QualityCheckListResponse.RemoteCategory category = remote.getCategory();
+      dto.setCategory(
+          new CategoryDTO(category.getId(), category.getName(), category.getColorHex()));
+    }
+    remote.getVersions().stream()
+        .findFirst()
+        .ifPresent(
+            version -> {
+              dto.setQuery(version.getQuery());
+              dto.setType(toQualityCheckType(version.getType()));
+            });
+    return dto;
+  }
+
+  /**
+   * Maps the query type used by the central server to the agent's quality check type. Types unknown
+   * to the agent are mapped to null; downloads reject checks with unsupported types.
+   *
+   * @param type the remote query type
+   * @return the agent quality check type, or null if unsupported
+   */
+  private QualityCheckType toQualityCheckType(String type) {
+    if (type == null) {
+      return null;
+    }
+    return switch (type) {
+      case "CQL" -> QualityCheckType.CQL;
+      case "SQL" -> QualityCheckType.SQL;
+      default -> null;
+    };
+  }
+
+  /**
+   * Creates an authenticated HTTP entity for authorized requests against the central server.
+   *
+   * @return an HTTP entity with bearer authentication
+   */
+  private HttpEntity<Void> createAuthenticatedEntity() {
+    String token = authenticateWithServer();
+    HttpHeaders headers = createDefaultHeaders();
+    headers.setBearerAuth(token);
+    return new HttpEntity<>(headers);
+  }
+
+  /**
+   * Wraps a low-level communication error in a {@link ServerCommunicationException}.
+   *
+   * @param action the action that failed
+   * @param cause the original error
+   * @return the exception to throw
+   */
+  private ServerCommunicationException communicationFailure(
+      String action, RestClientException cause) {
+    log.warn("Failed to {} from server {}: {}", action, serverUrl, cause.getMessage());
+    return new ServerCommunicationException(
+        "Failed to %s from server %s".formatted(action, serverUrl), cause);
   }
 
   /**

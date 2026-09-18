@@ -35,6 +35,12 @@ public class ServerCreateDto {
       requiredMode = Schema.RequiredMode.REQUIRED)
   private String name;
 
+  @Size(max = 2048, message = "Public key must not exceed 2048 characters")
+  @Schema(
+      description = "PEM encoded public key used to verify signatures from the central server",
+      example = "-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----")
+  private String publicKey;
+
   /** Default constructor. */
   public ServerCreateDto() {}
 
@@ -65,5 +71,14 @@ public class ServerCreateDto {
    */
   public void setName(String name) {
     this.name = name != null ? HtmlUtils.htmlEscape(name.trim()) : null;
+  }
+
+  /**
+   * Sets the public key.
+   *
+   * @param publicKey the PEM encoded public key
+   */
+  public void setPublicKey(String publicKey) {
+    this.publicKey = publicKey != null ? publicKey.trim() : null;
   }
 }

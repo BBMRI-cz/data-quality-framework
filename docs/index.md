@@ -4,7 +4,7 @@ layout: home
 hero:
   name: "Data Quality Framework"
   text: "For Federated Environments"
-  tagline: "Comprehensive Health Data Quality Framework for Federated Environments with Privacy Preserving techniques for Sensitive Data"
+  tagline: "Open-source, privacy-preserving tooling for assessing health data quality across federated networks, without sharing raw data."
   image:
     src: /logo.svg
     alt: Data Quality Framework
@@ -17,27 +17,27 @@ hero:
       link: /user
 
 features:
-  - icon: <i class="bi bi-code-slash"></i>
-    title: Open-Source
-    details: Fully open-source framework released under the GNU AGPL v3.0 License, enabling transparency, collaboration, and community-driven development.
-    link: /developer/contributing
+  - icon: <i class="bi bi-database"></i>
+    title: FHIR & SQL
+    details: Runs quality checks against HL7 FHIR R4 servers with CQL, or against SQL databases and CSV files with plain SQL.
+    link: /user/data-sources
     linkText: Learn More
 
   - icon: <i class="bi bi-shield-lock"></i>
-    title: Secure
-    details: State‑of‑the‑art differential privacy (powered by mathematically proven noise injection) keeps your health data private. We can’t trace any metric back to an individual—privacy isn’t optional, it’s built into every quality assessment.
+    title: Privacy-Preserving
+    details: Results are aggregated locally and anonymized with differential privacy before leaving the site, so they cannot be traced back to individuals.
     link: /user/privacy
     linkText: Learn More
 
   - icon: <i class="bi bi-rocket-takeoff"></i>
     title: Easy to Deploy
-    details: Simple deployment with Docker containers and Docker Compose, making it easy to get started quickly in any environment.
+    details: Deploy the agent and the server as Docker containers with Docker Compose in any environment.
     link: /user/deployment
     linkText: Learn More
 
   - icon: <i class="bi bi-puzzle"></i>
     title: Extensible
-    details: Modular architecture with RESTful APIs and plugin support, making it easy to integrate with existing systems and extend functionality.
+    details: Modular architecture with REST APIs for integrating quality reports into external systems.
     link: /developer/
     linkText: Learn More
 ---

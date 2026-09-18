@@ -11,6 +11,7 @@ import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheckVersion;
 import eu.bbmri_eric.quality.server.dataquality.domain.QueryType;
 import eu.bbmri_eric.quality.server.dataquality.dto.KeywordsDTO;
+import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckCreateDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckUpdateDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckVersionCreateDTO;
 import eu.bbmri_eric.quality.server.util.IntegrationTest;
@@ -201,6 +202,112 @@ class QualityCheckControllerTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$._embedded.qualityChecks").isArray())
         .andExpect(jsonPath("$._embedded.qualityChecks.length()").value(1));
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void create_shouldCreateQualityCheckAndReturnHateoasResponse() throws Exception {
+    QualityCheckCreateDTO createDTO =
+        new QualityCheckCreateDTO(
+            "New Quality Check", "A newly created quality check", 0.8, 0.5, null);
+
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDTO)))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.id").isNumber())
+        .andExpect(jsonPath("$.name").value("New Quality Check"))
+        .andExpect(jsonPath("$.description").value("A newly created quality check"))
+        .andExpect(jsonPath("$.warningThreshold").value(0.8))
+        .andExpect(jsonPath("$.errorThreshold").value(0.5))
+        .andExpect(jsonPath("$.registeredAt").exists())
+        .andExpect(jsonPath("$._links.self.href").exists())
+        .andExpect(
+            jsonPath("$._links.quality-checks.href")
+                .value("http://localhost/api/v1/quality-checks"));
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void create_shouldAssignCategoryWhenCategoryIdProvided() throws Exception {
+    QualityCheckCreateDTO createDTO =
+        new QualityCheckCreateDTO(
+            "New Quality Check", "A newly created quality check", 0.8, 0.5, testCategory.getId());
+
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDTO)))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.category.id").value(testCategory.getId()))
+        .andExpect(jsonPath("$.category.name").value("Data Completeness"))
+        .andExpect(jsonPath("$.category.colorHex").value("#FF5733"));
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void create_shouldReturnNotFoundWhenCategoryDoesNotExist() throws Exception {
+    QualityCheckCreateDTO createDTO =
+        new QualityCheckCreateDTO(
+            "New Quality Check", "A newly created quality check", 0.8, 0.5, 99999L);
+
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDTO)))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void create_shouldReturnBadRequestForInvalidData() throws Exception {
+    QualityCheckCreateDTO createDTO =
+        new QualityCheckCreateDTO(
+            "", // empty name should trigger validation error
+            "A newly created quality check",
+            0.8,
+            0.5,
+            null);
+
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDTO)))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @WithMockUser(roles = "HUMAN_USER")
+  void create_shouldReturnForbiddenForNonAdminUser() throws Exception {
+    QualityCheckCreateDTO createDTO =
+        new QualityCheckCreateDTO(
+            "New Quality Check", "A newly created quality check", 0.8, 0.5, null);
+
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDTO)))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
+  void create_shouldReturnUnauthorizedWhenNotAuthenticated() throws Exception {
+    QualityCheckCreateDTO createDTO =
+        new QualityCheckCreateDTO(
+            "New Quality Check", "A newly created quality check", 0.8, 0.5, null);
+
+    mockMvc
+        .perform(
+            post(API_V1_QUALITY_CHECKS)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDTO)))
+        .andExpect(status().isUnauthorized());
   }
 
   @Test

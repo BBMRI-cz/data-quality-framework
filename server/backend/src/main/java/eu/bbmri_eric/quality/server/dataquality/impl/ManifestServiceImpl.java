@@ -16,6 +16,8 @@ import eu.bbmri_eric.quality.server.dataquality.dto.ManifestCreateDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.ManifestDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.ManifestVersionCreateDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.ManifestVersionDTO;
+import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckDetailedDTO;
+import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckVersionDTO;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
@@ -89,9 +91,13 @@ class ManifestServiceImpl implements ManifestService {
           "Version %d already exists for manifest with ID: %d".formatted(versionNumber, id));
     }
 
+    List<QualityCheckVersion> qualityCheckVersions =
+        resolveQualityCheckVersions(createDTO.getHashes());
+
     ManifestVersion version =
         new ManifestVersion(manifest, versionNumber, "", "", keyProvider.getKeyId());
-    version.setBody(buildBody(createDTO.getHashes(), version));
+    version.addQualityChecks(qualityCheckVersions);
+    version.setBody(buildBody(qualityCheckVersions, version));
     version.setSignature(signBody(version.getBody()));
     manifest.addVersion(version);
     manifestRepository.save(manifest);
@@ -106,6 +112,50 @@ class ManifestServiceImpl implements ManifestService {
         .sorted(Comparator.comparingInt(ManifestVersion::getVersion))
         .map(version -> modelMapper.map(version, ManifestVersionDTO.class))
         .toList();
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<QualityCheckDetailedDTO> findVersionQualityChecks(Long manifestId, Long versionId) {
+    ManifestVersion manifestVersion = findManifestVersion(manifestId, versionId);
+    return manifestVersion.getQualityChecks().stream().map(this::toDetailedDto).toList();
+  }
+
+  private ManifestVersion findManifestVersion(Long manifestId, Long versionId) {
+    Objects.requireNonNull(versionId, "Version ID cannot be null");
+    Manifest manifest = findManifest(manifestId);
+    return manifest.getVersions().stream()
+        .filter(version -> version.getId().equals(versionId))
+        .findFirst()
+        .orElseThrow(
+            () ->
+                new EntityNotFoundException(
+                    "Manifest version with ID %s not found for manifest with ID %s"
+                        .formatted(versionId, manifestId)));
+  }
+
+  private List<QualityCheckVersion> resolveQualityCheckVersions(List<String> hashes) {
+    return hashes.stream()
+        .map(
+            hash ->
+                qualityCheckVersionRepository
+                    .findByHash(hash)
+                    .orElseThrow(
+                        () ->
+                            new EntityNotFoundException(
+                                "No quality check version found for hash: " + hash)))
+        .toList();
+  }
+
+  /**
+   * Maps a specific quality check version to a detailed quality check DTO, restricting the versions
+   * to the one referenced by the manifest version.
+   */
+  private QualityCheckDetailedDTO toDetailedDto(QualityCheckVersion version) {
+    QualityCheckDetailedDTO dto =
+        modelMapper.map(version.getQualityCheck(), QualityCheckDetailedDTO.class);
+    dto.setVersions(List.of(modelMapper.map(version, QualityCheckVersionDTO.class)));
+    return dto;
   }
 
   private Manifest findManifest(Long id) {
@@ -126,19 +176,15 @@ class ManifestServiceImpl implements ManifestService {
             + 1;
   }
 
-  private String buildBody(List<String> hashes, ManifestVersion manifestVersion) {
+  private String buildBody(
+      List<QualityCheckVersion> qualityCheckVersions, ManifestVersion manifestVersion) {
     List<ManifestBody.Check> checks = new ArrayList<>();
-    for (String hash : hashes) {
-      QualityCheckVersion version =
-          qualityCheckVersionRepository
-              .findByHash(hash)
-              .orElseThrow(
-                  () ->
-                      new EntityNotFoundException(
-                          "No quality check version found for hash: " + hash));
+    for (QualityCheckVersion version : qualityCheckVersions) {
       checks.add(
           new ManifestBody.Check(
-              String.valueOf(version.getQualityCheck().getId()), version.getVersion(), hash));
+              String.valueOf(version.getQualityCheck().getId()),
+              version.getVersion(),
+              version.getHash()));
     }
     ManifestBody body =
         new ManifestBody(

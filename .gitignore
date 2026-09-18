@@ -32,3 +32,5 @@
 hs_err_pid*
 replay_pid*
 /agent/backend/agent.iml
+/signing.p12
+/central-signing.pub.pem

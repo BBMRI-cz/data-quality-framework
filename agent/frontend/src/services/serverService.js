@@ -33,13 +33,14 @@ export async function get(id) {
 
 /**
  * Creates a new server
- * @param {{url: string, name: string}} serverData
+ * @param {{url: string, name: string, publicKey?: string}} serverData
  * @returns {Promise<object>}
  */
 export async function create(serverData) {
   const response = await api.post(BASE_URL, {
     url: serverData.url,
     name: serverData.name,
+    ...(serverData.publicKey ? { publicKey: serverData.publicKey } : {}),
   });
   return response.data.content || response.data;
 }
@@ -47,14 +48,15 @@ export async function create(serverData) {
 /**
  * Updates an existing server
  * @param {string|number} id
- * @param {{url: string, name: string}} updateData
+ * @param {{url?: string, name?: string, publicKey?: string}} updateData
  * @returns {Promise<object>}
  */
 export async function update(id, updateData) {
-  const response = await api.put(`${BASE_URL}/${id}`, {
-    url: updateData.url,
-    name: updateData.name,
-  });
+  const payload = {};
+  if (updateData.url != null) payload.url = updateData.url;
+  if (updateData.name != null) payload.name = updateData.name;
+  if (updateData.publicKey != null) payload.publicKey = updateData.publicKey;
+  const response = await api.put(`${BASE_URL}/${id}`, payload);
   return response.data.content || response.data;
 }
 

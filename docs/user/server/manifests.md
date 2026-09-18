@@ -1,59 +1,54 @@
 # Manifests
 
-Manifests are named collections of quality check versions maintained by the Data Quality Server. A manifest defines
-exactly which quality checks (and which versions of them) belong together. Publishing a manifest creates an
-**immutable, cryptographically signed snapshot** — a *manifest version* — that agents and other clients can download
-and verify before executing the checks it lists.
+Manifests let you distribute a curated set of quality checks from the Data Quality Server to connected agents.
+Each manifest is a named collection of quality checks. When you **publish** a manifest, the server creates an
+immutable, cryptographically signed snapshot — a **manifest version** — pinning down exactly which checks (and which
+versions of them) belong together.
 
-## What Publishing Does
+Agents can browse published manifests, inspect their versions, and download a version to install its checks locally.
+Because every version is signed, agents can verify that what they install genuinely comes from your server and has
+not been altered.
 
-Each manifest starts as simple metadata. When you **publish** a manifest, the server:
+## Before You Start
 
-1. Resolves the requested SHA-256 hashes to published quality check versions stored in its database.
-2. Builds a JSON **body** containing the manifest ID, a generation timestamp, and the list of checks
-   (check ID, check version, and hash for each entry).
-3. **Signs** the body with the server's private key (ECDSA; `SHA256withECDSA` for the recommended `secp256r1` key).
-4. Stores the body together with its Base64-encoded signature and the ID of the signing key.
+Publishing requires a signing key pair on the server. If no keystore is configured, the server starts normally but
+publishing a manifest version fails.
 
-The resulting manifest version looks like this:
+Set up the key pair as described in
+[Server Configuration — Cryptography](./configuration.md#cryptography), then publish at least one version of the
+quality checks you want to distribute (only checks with published versions can be added to a manifest).
 
-```json
-{
-  "id": 1,
-  "version": 1,
-  "generatedAt": "2026-08-13T10:00:00Z",
-  "body": {
-    "manifest_id": 1,
-    "generated_at": "2026-08-13T10:00:00Z",
-    "checks": [
-      {"id": "3", "version": 2, "hash": "5f3c9a..."}
-    ]
-  },
-  "signature": "MEUCIBd...",
-  "keyId": "central-signing"
-}
-```
+## Creating a Manifest
 
-Key properties of manifest versions:
+1. Open **Manifests** in the server navigation.
+2. Click **Create Manifest** and give it a name (for example, `Core Checks 2026`).
+3. Confirm with **Create**.
 
-- **Immutable** — once published, a version cannot be changed. Updates are published as a new version.
-- **Monotonically numbered** — if no explicit version number is given, the server assigns the next number
-  (latest version + 1, starting at 1). A version number can only be used once per manifest.
-- **Independently verifiable** — the signature is computed over the JSON body only. Clients can fetch the server's
-  public key from the unauthenticated `GET /api/v1/public-key` endpoint and verify authenticity and integrity of the
-  body offline.
+The new manifest is created without any versions yet; you publish versions from its detail page.
 
-## Prerequisites: Signing Key Pair
+## Publishing a Version
 
-Publishing requires a private/public key pair on the server. If no keystore is configured, the server still starts,
-but publishing a manifest version fails because the body cannot be signed.
+1. Open the manifest from the **Manifests** list.
+2. Click **Publish New Version**. If the signing key is missing or invalid, the page shows a warning and publishing
+   stays unavailable.
+3. Select the quality checks to include. Expand a check's row to pick the exact version to pin.
+4. Click **Publish** and confirm.
 
-Generate the key pair with `keytool` as described in the
-[Cryptography section of the Server Configuration](./configuration.md#generating-the-key-pair), then point the server
-at the keystore via environment variables (see [Server Configuration](./configuration.md#cryptography) for the full
-reference). The keystore alias becomes the `keyId` embedded in every published manifest version.
+Things to know about manifest versions:
+
+- **Immutable** — a published version cannot be edited; changes are released as a new version.
+- **Sequential numbering** — versions are numbered automatically (1, 2, 3, …) and each number is used only once per
+  manifest.
+- **Signed** — every version carries a signature and the ID of the key that signed it. Agents verify this signature
+  against your public key before installing anything.
+
+Your server's public key is available at the unauthenticated endpoint `GET /api/v1/public-key`. Agent operators need
+this key to verify your manifests — share it with them when you onboard a new site. Public keys of well-known
+servers can also be listed under [Trusted Central Servers](../manifests.md#trusted-central-servers) in the agent
+guide.
 
 ## See Also
 
 - [Server Configuration](./configuration.md)
+- [Using Manifests on the Agent](../manifests.md)
 - [Deployment Guide](../deployment.md)

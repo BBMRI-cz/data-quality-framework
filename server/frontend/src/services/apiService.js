@@ -1,8 +1,22 @@
 import api from './api';
 
+const AUTH_LOGIN_URL = '/auth/login';
+const AGENTS_URL = '/v1/agents';
+const QUALITY_CHECKS_URL = '/v1/quality-checks';
+const REPORTS_URL = '/v1/reports';
+const MANIFESTS_URL = '/v1/manifests';
+const CATEGORIES_URL = '/v1/categories';
+const GROUPS_URL = '/v1/groups';
+const USERS_URL = '/v1/users';
+const USERINFO_URL = '/userinfo';
+const USER_PASSWORD_URL = '/users';
+const PUBLIC_KEY_URL = '/v1/public-key';
+const INFO_URL = '/info';
+const COUNTS_URL = '/counts';
+
 class ApiService {
   async login(username, password) {
-    const response = await api.post('/auth/login', {
+    const response = await api.post(AUTH_LOGIN_URL, {
       username,
       password,
     });
@@ -14,20 +28,20 @@ class ApiService {
   }
 
   async getAgents() {
-    const response = await api.get('/v1/agents');
+    const response = await api.get(AGENTS_URL);
     return response.data;
   }
 
   async getAgent(agentId, expandInteractions = false) {
     const url = expandInteractions
-      ? `/v1/agents/${agentId}?expand=interactions`
-      : `/v1/agents/${agentId}`;
+      ? `${AGENTS_URL}/${agentId}?expand=interactions`
+      : `${AGENTS_URL}/${agentId}`;
     const response = await api.get(url);
     return response.data;
   }
 
   async updateAgent(agentId, data) {
-    const response = await api.patch(`/v1/agents/${agentId}`, data);
+    const response = await api.patch(`${AGENTS_URL}/${agentId}`, data);
     return response.data;
   }
 
@@ -49,22 +63,22 @@ class ApiService {
   }
 
   async deleteAgent(agentId) {
-    const response = await api.delete(`/v1/agents/${agentId}`);
+    const response = await api.delete(`${AGENTS_URL}/${agentId}`);
     return response.data;
   }
 
   async getAgentReports(agentId, params = {}) {
-    const response = await api.get(`/v1/agents/${agentId}/reports`, { params });
+    const response = await api.get(`${AGENTS_URL}/${agentId}/reports`, { params });
     return response.data;
   }
 
   async getQualityChecks() {
-    const response = await api.get('/v1/quality-checks');
+    const response = await api.get(QUALITY_CHECKS_URL);
     return response.data;
   }
 
   async getQualityCheck(id) {
-    const response = await api.get(`/v1/quality-checks/${id}`);
+    const response = await api.get(`${QUALITY_CHECKS_URL}/${id}`);
     return response.data;
   }
 
@@ -76,17 +90,17 @@ class ApiService {
   }
 
   async getReports(params = {}) {
-    const response = await api.get('/v1/reports', { params });
+    const response = await api.get(REPORTS_URL, { params });
     return response.data;
   }
 
   async getReport(reportId) {
-    const response = await api.get(`/v1/reports/${reportId}`);
+    const response = await api.get(`${REPORTS_URL}/${reportId}`);
     return response.data;
   }
 
   async downloadReportSummary(reportId) {
-    const response = await api.get(`/v1/reports/${reportId}/summary?format=pdf`, {
+    const response = await api.get(`${REPORTS_URL}/${reportId}/summary?format=pdf`, {
       responseType: 'blob',
     });
     const blob = new window.Blob([response.data], { type: 'application/pdf' });
@@ -100,49 +114,68 @@ class ApiService {
     window.URL.revokeObjectURL(url);
   }
 
+  async createQualityCheck(data) {
+    const response = await api.post(QUALITY_CHECKS_URL, data);
+    return response.data;
+  }
+
   async updateQualityCheck(id, data) {
-    const response = await api.put(`/v1/quality-checks/${id}`, data);
+    const response = await api.put(`${QUALITY_CHECKS_URL}/${id}`, data);
     return response.data;
   }
 
   async setKeywords(id, keywords) {
-    const response = await api.put(`/v1/quality-checks/${id}/keywords`, { keywords });
+    const response = await api.put(`${QUALITY_CHECKS_URL}/${id}/keywords`, { keywords });
     return response.data;
   }
 
   async createQualityCheckVersion(id, query, type) {
     const body = type ? { query, type } : { query };
-    const response = await api.post(`/v1/quality-checks/${id}/versions`, body);
+    const response = await api.post(`${QUALITY_CHECKS_URL}/${id}/versions`, body);
     return response.data;
   }
 
   async getManifests() {
-    const response = await api.get('/v1/manifests');
+    const response = await api.get(MANIFESTS_URL);
     return response.data;
   }
 
   async getManifest(id) {
-    const response = await api.get(`/v1/manifests/${id}`);
+    const response = await api.get(`${MANIFESTS_URL}/${id}`);
     return response.data;
   }
 
   async createManifest(data) {
-    const response = await api.post('/v1/manifests', data);
+    const response = await api.post(MANIFESTS_URL, data);
     return response.data;
   }
 
   async getManifestVersions(id) {
-    const response = await api.get(`/v1/manifests/${id}/versions`);
+    const response = await api.get(`${MANIFESTS_URL}/${id}/versions`);
+    return response.data;
+  }
+
+  async getManifestVersionQualityChecks(manifestId, versionId) {
+    const response = await api.get(
+      `${MANIFESTS_URL}/${manifestId}/versions/${versionId}/quality-checks`
+    );
     return response.data;
   }
 
   async createManifestVersion(id, data) {
-    const response = await api.post(`/v1/manifests/${id}/versions`, data);
+    const response = await api.post(`${MANIFESTS_URL}/${id}/versions`, data, {
+      skipErrorNotification: true,
+    });
+    return response.data;
+  }
+
+  async getPublicKey() {
+    const response = await api.get(PUBLIC_KEY_URL, { skipErrorNotification: true });
     return response.data;
   }
 
   async changePassword(userId, currentPassword, newPassword, confirmPassword) {
-    await api.put(`/users/${userId}/password`, {
+    await api.put(`${USER_PASSWORD_URL}/${userId}/password`, {
       currentPassword,
       newPassword,
       confirmPassword,
@@ -150,7 +183,7 @@ class ApiService {
   }
 
   async getInfo() {
-    const response = await api.get('/info');
+    const response = await api.get(INFO_URL);
     const data = response.data;
     return {
       version: data?.build?.version || 'unknown',
@@ -160,92 +193,92 @@ class ApiService {
   }
 
   async getCounts() {
-    const response = await api.get('/counts');
+    const response = await api.get(COUNTS_URL);
     return response.data;
   }
 
   async getCategories() {
-    const response = await api.get('/v1/categories');
+    const response = await api.get(CATEGORIES_URL);
     return response.data;
   }
 
   async getCategory(categoryId) {
-    const response = await api.get(`/v1/categories/${categoryId}`);
+    const response = await api.get(`${CATEGORIES_URL}/${categoryId}`);
     return response.data;
   }
 
   async createCategory(data) {
-    const response = await api.post('/v1/categories', data);
+    const response = await api.post(CATEGORIES_URL, data);
     return response.data;
   }
 
   async updateCategory(categoryId, data) {
-    const response = await api.put(`/v1/categories/${categoryId}`, data);
+    const response = await api.put(`${CATEGORIES_URL}/${categoryId}`, data);
     return response.data;
   }
 
   async deleteCategory(categoryId) {
-    const response = await api.delete(`/v1/categories/${categoryId}`);
+    const response = await api.delete(`${CATEGORIES_URL}/${categoryId}`);
     return response.data;
   }
 
   async getGroups() {
-    const response = await api.get('/v1/groups');
+    const response = await api.get(GROUPS_URL);
     return response.data;
   }
 
   async getGroup(groupId) {
-    const response = await api.get(`/v1/groups/${groupId}`);
+    const response = await api.get(`${GROUPS_URL}/${groupId}`);
     return response.data;
   }
 
   async createGroup(data) {
-    const response = await api.post('/v1/groups', data);
+    const response = await api.post(GROUPS_URL, data);
     return response.data;
   }
 
   async updateGroup(groupId, data) {
-    const response = await api.put(`/v1/groups/${groupId}`, data);
+    const response = await api.put(`${GROUPS_URL}/${groupId}`, data);
     return response.data;
   }
 
   async deleteGroup(groupId) {
-    const response = await api.delete(`/v1/groups/${groupId}`);
+    const response = await api.delete(`${GROUPS_URL}/${groupId}`);
     return response.data;
   }
 
   async assignAgentsToGroup(groupId, agentIds) {
-    const response = await api.put(`/v1/groups/${groupId}/agents`, { agentIds });
+    const response = await api.put(`${GROUPS_URL}/${groupId}/agents`, { agentIds });
     return response.data;
   }
 
   async getUserProfile() {
-    const response = await api.get('/userinfo');
+    const response = await api.get(USERINFO_URL);
     return response.data;
   }
 
   async getUsers() {
-    const response = await api.get('/v1/users');
+    const response = await api.get(USERS_URL);
     return response.data;
   }
 
   async getUser(userId) {
-    const response = await api.get(`/v1/users/${userId}`);
+    const response = await api.get(`${USERS_URL}/${userId}`);
     return response.data;
   }
 
   async createUser(data) {
-    const response = await api.post('/v1/users', data);
+    const response = await api.post(USERS_URL, data);
     return response.data;
   }
 
   async updateUser(userId, data) {
-    const response = await api.put(`/v1/users/${userId}`, data);
+    const response = await api.put(`${USERS_URL}/${userId}`, data);
     return response.data;
   }
 
   async deleteUser(userId) {
-    const response = await api.delete(`/v1/users/${userId}`);
+    const response = await api.delete(`${USERS_URL}/${userId}`);
     return response.data;
   }
 }

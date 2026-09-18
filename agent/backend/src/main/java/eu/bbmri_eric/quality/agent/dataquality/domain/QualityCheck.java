@@ -1,6 +1,7 @@
 package eu.bbmri_eric.quality.agent.dataquality.domain;
 
 import eu.bbmri_eric.quality.agent.dataquality.DataStore;
+import eu.bbmri_eric.quality.agent.dataquality.QualityCheckType;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

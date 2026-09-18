@@ -55,40 +55,44 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    if (error.response) {
-      const status = error.response.status;
-      let title = 'Error';
-      let message = 'An unexpected error occurred. Please try again later.';
-      switch (status) {
-        case 400:
-          title = 'Bad Request';
-          message = error.response.data?.message || 'The request was invalid.';
-          break;
-        case 403:
-          title = 'Forbidden';
-          message = 'You do not have permission to perform this action.';
-          break;
-        case 404:
-          title = 'Not Found';
-          message = 'The requested resource was not found.';
-          break;
-        case 500:
-          title = 'Server Error';
-          message = 'A server error occurred. Please try again later.';
-          break;
-        default:
-          if (error.response.data?.message) {
-            message = error.response.data.message;
-          }
-          break;
+    // Callers can set `skipErrorNotification: true` on the request config to handle
+    // error display themselves (e.g. to show the server's ProblemDetail message).
+    if (!error.config?.skipErrorNotification) {
+      if (error.response) {
+        const status = error.response.status;
+        let title = 'Error';
+        let message = 'An unexpected error occurred. Please try again later.';
+        switch (status) {
+          case 400:
+            title = 'Bad Request';
+            message = error.response.data?.message || 'The request was invalid.';
+            break;
+          case 403:
+            title = 'Forbidden';
+            message = 'You do not have permission to perform this action.';
+            break;
+          case 404:
+            title = 'Not Found';
+            message = 'The requested resource was not found.';
+            break;
+          case 500:
+            title = 'Server Error';
+            message = 'A server error occurred. Please try again later.';
+            break;
+          default:
+            if (error.response.data?.message) {
+              message = error.response.data.message;
+            }
+            break;
+        }
+        notificationService.error(title, message, { duration: 5000, autoClose: true });
+      } else if (error.request) {
+        notificationService.error(
+          'Network Error',
+          'Unable to connect to the server. Please check your internet connection.',
+          { duration: 5000, autoClose: true }
+        );
       }
-      notificationService.error(title, message, { duration: 5000, autoClose: true });
-    } else if (error.request) {
-      notificationService.error(
-        'Network Error',
-        'Unable to connect to the server. Please check your internet connection.',
-        { duration: 5000, autoClose: true }
-      );
     }
     return Promise.reject(error);
   }

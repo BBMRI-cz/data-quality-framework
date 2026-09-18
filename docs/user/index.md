@@ -1,100 +1,75 @@
 # Overview
 
-This guide introduces the **Federated Data Quality Framework (FDQF)** and its tooling.  
-It is intended for users who want to **deploy, operate, or understand** the system at a high level.
+The **Federated Data Quality Framework (FDQF)** is open-source tooling for assessing data quality in federated
+environments — networks where data remains distributed across independent locations for legal, organizational, or
+technical reasons.
 
-For deeper technical information, configuration guides, and deployment steps, please refer to the additional sections in
-the documentation menu.
+Instead of moving data to a central location, the FDQF runs quality checks locally at each site and reports only
+aggregated, privacy-preserving results.
 
----
+## Components
 
-# What is the FDQF?
+The FDQF consists of two main components:
 
-The **Federated Data Quality Framework (FDQF)** provides a structured approach and supporting software to assess and
-improve data quality in **federated environments** — situations where data remains distributed across independent
-locations due to **legal, organizational, or technical constraints**.
-
-Instead of moving data to a central location, the FDQF enables **local data quality analysis** and **privacy-preserving
-reporting** across multiple sites.
-
-## Key Components
-
-The FDQF consists of two main software components:
-
-![](/diagram.svg)
+![Architecture diagram](/diagram.svg)
 
 ### Data Quality Agent (DQA)
 
-Runs **locally at each data-holding site**.
+Runs locally at each data-holding site. It:
 
-Responsibilities:
+- Executes data quality checks against the site's data source
+- Supports two data source types:
+  - **FHIR** — a FHIR R4 server queried with HL7 CQL (Clinical Quality Language)
+  - **SQL** — a relational database or directory of CSV files queried with SQL (PostgreSQL, MySQL, SQLite,
+    Apache Calcite/CSV)
+- Aggregates results and applies differential privacy before anything leaves the site
+- Pushes quality reports to the central server (one-way only; the server cannot pull data)
 
-- Executes predefined, domain-specific **data quality checks**
-- Converts human-readable rules into machine-readable queries  
-  *(currently supported: HL7 CQL — Clinical Quality Language)*
-- Queries the connected database locally
-- Generates **aggregated and privacy-preserving results**
-- **Pushes** data quality reports to the central server (one-way; no data pull)
-
-::: warning Privacy-First Approach
-If you would like to learn how do we guarantee privacy preservation/anonymization of the shared results see
-the [Privacy page](/user/privacy).
-:::
+See [Data Sources](/user/data-sources) for configuration details and [Privacy and Security](/user/privacy) for how the
+reported results are anonymized.
 
 ### Data Quality Server (DQS)
 
-Runs **centrally** to collect and present results.
+Runs centrally to collect and present results. It:
 
-Responsibilities:
-
-- Receives quality reports from multiple sites
+- Receives quality reports from multiple agents
 - Aggregates results across the network
-- Provides dashboards and views for end-users
-- Provides a REST API for including the reports in external Dataset catalogues
-- Enables researchers or study investigators to evaluate **multi-site data quality** without accessing raw data
+- Provides dashboards for end users
+- Exposes a REST API for integrating reports into external dataset catalogues
+
+This lets researchers and study investigators compare data quality across sites without accessing raw data.
 
 ## Why Federated Data Quality?
 
-Traditional data quality validation typically requires central access to raw datasets.  
-In many real-world environments — such as healthcare or regulated research settings — this is not possible.
+Traditional data quality validation requires central access to raw datasets, which is often impossible in healthcare
+and other regulated environments. The FDQF enables:
 
-The FDQF enables:
+- Local processing at each data site
+- Privacy-preserving quality metrics
+- Cross-site comparison without data sharing
+- Standardized and reproducible quality evaluation
 
-- <i class="bi bi-check-circle"></i> **Local processing** at each data site
-- <i class="bi bi-check-circle"></i> **Privacy-preserving quality metrics**
-- <i class="bi bi-check-circle"></i> **Cross-site comparison without data sharing**
-- <i class="bi bi-check-circle"></i> **Standardized and reproducible quality evaluation**
-- <i class="bi bi-check-circle"></i> Support for federated biomedical and research infrastructures
-
-## Who Is This For?
+## Who Is It For?
 
 The FDQF is designed for:
 
 - Research networks and data consortia
 - Healthcare institutions
-- Federated biobanking and cohort infrastructures
+- Biobanking and cohort infrastructures
 - Privacy-sensitive or regulated environments
-- Projects requiring **data quality transparency without data transfer**
 
-Roles that may use the system include:
+Typical roles include data stewards, study principal investigators, clinical researchers, and data engineers or IT
+operators.
 
-- Data Stewards
-- Study Principal Investigators
-- Clinical Researchers
-- Data Engineers and IT Operators
+## Summary
 
-## In Summary
+| Concept            | Description                                                       |
+|--------------------|-------------------------------------------------------------------|
+| Federated approach | Data stays at each site; checks run locally                       |
+| Local agent        | Executes CQL or SQL checks and reports privacy-preserving metrics |
+| Central server     | Collects, aggregates, and displays results                        |
+| Goal               | Assess data quality across sites without sharing raw data         |
 
-| Concept            | Description                                                        |
-|--------------------|--------------------------------------------------------------------|
-| Federated approach | Data stays at each site — processing happens locally               |
-| Local Agent        | Executes checks and generates privacy-preserving metrics           |
-| Central Server     | Collects, aggregates, and displays results                         |
-| Goal               | Enable cross-site data quality assessment without raw data sharing |
-
-The FDQF ensures **trust, privacy, and transparency** in multi-institution data ecosystems by combining **local
-computation** with **centralized insight**.
-
-::: tip See for yourself
-If you would like to experiment with the tooling please go to the [Getting Started page](/user/hands‑on_guide.md).
+::: tip See it in action
+Follow the [Hands-On Guide](/user/hands‑on_guide) to deploy an agent and run your first quality checks.
 :::

@@ -5,6 +5,7 @@ import eu.bbmri_eric.quality.server.dataquality.dto.ManifestCreateDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.ManifestDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.ManifestVersionCreateDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.ManifestVersionDTO;
+import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckDetailedDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -87,5 +88,20 @@ class ManifestController {
     CollectionModel<EntityModel<ManifestVersionDTO>> versionsModel =
         versionLinkBuilder.toCollectionModel(id, versions);
     return ResponseEntity.ok(versionsModel);
+  }
+
+  @GetMapping("/manifests/{id}/versions/{versionId}/quality-checks")
+  @Operation(
+      summary = "Get quality checks for manifest version",
+      description =
+          "Retrieves all quality checks (with the referenced version) linked to a specific manifest version")
+  @SecurityRequirement(name = "bearerAuth")
+  public ResponseEntity<CollectionModel<EntityModel<QualityCheckDetailedDTO>>>
+      findVersionQualityChecks(@PathVariable Long id, @PathVariable Long versionId) {
+    List<QualityCheckDetailedDTO> qualityChecks =
+        manifestService.findVersionQualityChecks(id, versionId);
+    CollectionModel<EntityModel<QualityCheckDetailedDTO>> qualityChecksModel =
+        versionLinkBuilder.toQualityChecksCollectionModel(id, versionId, qualityChecks);
+    return ResponseEntity.ok(qualityChecksModel);
   }
 }

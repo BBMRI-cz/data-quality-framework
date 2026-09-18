@@ -6,17 +6,24 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Entity representing an immutable, signed version of a manifest.
  *
  * <p>Each version belongs to exactly one {@link Manifest} and holds the JSON body of the manifest
- * snapshot together with its cryptographic signature and the id of the key that produced it.
+ * snapshot together with its cryptographic signature and the id of the key that produced it. The
+ * {@link QualityCheckVersion}s referenced by the snapshot are linked via a join table so they can
+ * be browsed directly.
  */
 @Entity
 @Table(name = "manifest_version")
@@ -46,6 +53,14 @@ public class ManifestVersion {
 
   /** Identifier of the key that produced the signature. */
   private String keyId;
+
+  /** Quality check versions referenced by this manifest version. */
+  @ManyToMany
+  @JoinTable(
+      name = "manifest_version_quality_check",
+      joinColumns = @JoinColumn(name = "manifest_version_id"),
+      inverseJoinColumns = @JoinColumn(name = "quality_check_version_id"))
+  private final Set<QualityCheckVersion> qualityChecks = new LinkedHashSet<>();
 
   /** Default constructor for JPA. */
   protected ManifestVersion() {}
@@ -166,6 +181,25 @@ public class ManifestVersion {
    */
   public void setKeyId(String keyId) {
     this.keyId = keyId;
+  }
+
+  /**
+   * Gets the quality check versions referenced by this manifest version.
+   *
+   * @return the referenced quality check versions (lazy-loaded)
+   */
+  public Set<QualityCheckVersion> getQualityChecks() {
+    return qualityChecks;
+  }
+
+  /**
+   * Adds quality check versions to this manifest version, establishing the link between the
+   * snapshot and the checks it references.
+   *
+   * @param checks the quality check versions to link
+   */
+  public void addQualityChecks(Collection<QualityCheckVersion> checks) {
+    qualityChecks.addAll(checks);
   }
 
   @Override

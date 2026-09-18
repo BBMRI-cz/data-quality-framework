@@ -280,11 +280,9 @@
     qualityChecks.value.filter((check) => check.versions && check.versions.length > 0)
   );
 
-  const truncate = (text) => {
+  const truncate = (text, length = QUERY_PREVIEW_LENGTH) => {
     if (!text) return '';
-    return text.length > QUERY_PREVIEW_LENGTH
-      ? text.slice(0, QUERY_PREVIEW_LENGTH).trimEnd() + '…'
-      : text;
+    return text.length > length ? text.slice(0, length).trimEnd() + '…' : text;
   };
 
   const isSelected = (check) => !!selected[check.id];
@@ -382,7 +380,10 @@
       router.push(`/manifests/${manifestId.value}`);
     } catch (err) {
       console.error('Error publishing version:', err);
-      notificationService.error('Publish Failed', err.message || 'Failed to publish version');
+      showConfirm.value = false;
+      pendingItems.value = [];
+      const message = err.response?.data?.detail || err.message || 'Failed to publish version';
+      notificationService.error('Publish Failed', message);
     } finally {
       publishing.value = false;
     }
@@ -408,10 +409,6 @@
     font-size: 0.875rem;
   }
 
-  .bg-light {
-    background-color: #f8f9fa !important;
-  }
-
   .expand-btn {
     line-height: 1;
   }
@@ -431,11 +428,11 @@
   }
 
   .versions-panel {
-    background: #f8f9fa;
+    background: var(--color-gray-50);
     padding: 0.75rem 1rem;
-    border-left: 3px solid var(--color-primary, #0d6efd);
+    border-left: 3px solid var(--color-primary);
     margin: 0.25rem 1rem 0.75rem 2.5rem;
-    border-radius: 0 0.5rem 0.5rem 0;
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
   }
 
   .version-item {
@@ -454,7 +451,7 @@
 
   .version-item.active .query-preview {
     font-weight: 600;
-    color: #212529;
+    color: var(--color-gray-900);
   }
 
   .query-full {
@@ -467,8 +464,8 @@
   .hashes-list {
     max-height: 40vh;
     overflow-y: auto;
-    border: 1px solid #e5e7eb;
-    border-radius: 0.5rem;
+    border: 1px solid var(--color-gray-200);
+    border-radius: var(--radius-md);
   }
 
   .hash-row {
@@ -476,7 +473,7 @@
   }
 
   .hash-row:not(:last-child) {
-    border-bottom: 1px solid #f1f3f5;
+    border-bottom: 1px solid var(--color-gray-100);
   }
 
   .hash-row-info {

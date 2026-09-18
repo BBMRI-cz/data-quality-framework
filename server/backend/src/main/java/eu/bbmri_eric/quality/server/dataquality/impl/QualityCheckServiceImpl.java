@@ -6,6 +6,7 @@ import eu.bbmri_eric.quality.server.dataquality.QualityCheckService;
 import eu.bbmri_eric.quality.server.dataquality.domain.Category;
 import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheckVersion;
+import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckCreateDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckDetailedDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckUpdateDTO;
@@ -34,6 +35,27 @@ class QualityCheckServiceImpl implements QualityCheckService {
     this.qualityCheckRepository = qualityCheckRepository;
     this.categoryRepository = categoryRepository;
     this.modelMapper = modelMapper;
+  }
+
+  @Override
+  public QualityCheckDTO create(QualityCheckCreateDTO createDTO) {
+    QualityCheck qualityCheck =
+        new QualityCheck(
+            createDTO.getName(),
+            createDTO.getDescription(),
+            createDTO.getWarningThreshold(),
+            createDTO.getErrorThreshold());
+    if (createDTO.getCategoryId() != null) {
+      Category category =
+          categoryRepository
+              .findById(createDTO.getCategoryId())
+              .orElseThrow(
+                  () ->
+                      new EntityNotFoundException(
+                          "Category not found with ID: " + createDTO.getCategoryId()));
+      qualityCheck.setCategory(category);
+    }
+    return modelMapper.map(qualityCheckRepository.save(qualityCheck), QualityCheckDTO.class);
   }
 
   @Override

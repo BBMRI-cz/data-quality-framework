@@ -4,8 +4,8 @@
       <div class="col-12">
         <!-- Page Header -->
         <PageHeader
-          :title="qualityCheck?.name || 'Quality Check Details'"
-          subtitle="Quality Check Details"
+          :title="isNew ? 'New Quality Check' : qualityCheck?.name || 'Quality Check Details'"
+          :subtitle="isNew ? 'Create a new quality check' : 'Quality Check Details'"
           icon="bi bi-check-square"
         />
 
@@ -30,9 +30,9 @@
         </div>
 
         <!-- Detail View -->
-        <div v-else-if="qualityCheck">
+        <div v-else-if="qualityCheck || isNew">
           <!-- Metadata Stat Card -->
-          <div class="mb-4">
+          <div v-if="!isNew" class="mb-4">
             <StatsCard
               label="Registered At"
               :value="formatDate(qualityCheck.registeredAt)"
@@ -47,7 +47,7 @@
             <div class="card-header bg-white border-bottom py-3">
               <h5 class="mb-0 fw-semibold">
                 <i class="bi bi-pencil text-primary me-2"></i>
-                Edit Quality Check
+                {{ isNew ? 'Create Quality Check' : 'Edit Quality Check' }}
               </h5>
             </div>
             <div class="card-body p-4">
@@ -142,7 +142,7 @@
                 </div>
 
                 <!-- Keywords Section -->
-                <div class="col-12">
+                <div v-if="!isNew" class="col-12">
                   <label class="form-label fw-semibold"> Keywords </label>
                   <div class="keywords-container">
                     <Badge
@@ -191,6 +191,7 @@
 
           <!-- Versions Card -->
           <QualityCheckVersions
+            v-if="!isNew"
             :versions="versions"
             :check-id="checkId"
             @version-added="onVersionAdded"
@@ -200,7 +201,7 @@
           <div class="action-buttons d-flex gap-3 justify-content-center">
             <button
               class="btn btn-action btn-save"
-              :disabled="saving || !hasChanges"
+              :disabled="saving || (!isNew && !hasChanges)"
               @click="saveCheck"
             >
               <span
@@ -209,11 +210,11 @@
                 role="status"
               ></span>
               <i v-else class="bi bi-check-lg me-2"></i>
-              {{ saving ? 'Saving...' : 'Save Changes' }}
+              {{ saving ? 'Saving...' : isNew ? 'Create Quality Check' : 'Save Changes' }}
             </button>
             <button
               class="btn btn-action btn-reset"
-              :disabled="saving || !hasChanges"
+              :disabled="saving || (!isNew && !hasChanges)"
               @click="resetForm"
             >
               <i class="bi bi-x-circle me-2"></i>
@@ -241,14 +242,18 @@
   const route = useRoute();
   const router = useRouter();
 
+  const isNew = computed(() => route.path === '/quality-checks/new');
   const checkId = ref(route.params.id);
   const qualityCheck = ref(null);
 
   useHead({
-    title: computed(() => qualityCheck.value?.name || 'Quality Check Details'),
+    title: computed(() => {
+      if (isNew.value) return 'New Quality Check';
+      return qualityCheck.value?.name || 'Quality Check Details';
+    }),
   });
   const categories = ref([]);
-  const loading = ref(true);
+  const loading = ref(!isNew.value);
   const saving = ref(false);
   const error = ref(null);
 
@@ -272,6 +277,7 @@
   const versions = ref([]);
 
   const hasChanges = computed(() => {
+    if (isNew.value) return true;
     if (!qualityCheck.value) return false;
     const originalKeywords = qualityCheck.value.keywords || [];
     const currentKeywords = keywords.value || [];
@@ -298,15 +304,16 @@
     error.value = null;
 
     try {
-      const [detailedData, categoriesData] = await Promise.all([
-        apiService.getQualityCheck(checkId.value),
-        apiService.getCategories(),
-      ]);
-
+      const categoriesData = await apiService.getCategories();
       categories.value =
         categoriesData._embedded?.categories ||
         (Array.isArray(categoriesData) ? categoriesData : []);
 
+      if (isNew.value) {
+        return;
+      }
+
+      const detailedData = await apiService.getQualityCheck(checkId.value);
       qualityCheck.value = detailedData;
 
       if (!qualityCheck.value || !qualityCheck.value.id) {
@@ -369,22 +376,44 @@
     error.value = null;
 
     try {
-      await apiService.updateQualityCheck(checkId.value, editForm);
+      if (isNew.value) {
+        const created = await apiService.createQualityCheck({
+          name: editForm.name,
+          description: editForm.description,
+          categoryId: editForm.categoryId,
+          warningThreshold: editForm.warningThreshold,
+          errorThreshold: editForm.errorThreshold,
+        });
+        notificationService.success(
+          'Quality Check Created',
+          'The quality check has been created successfully'
+        );
 
-      // Save keywords
-      await apiService.setKeywords(checkId.value, keywords.value);
+        // Set the check data before navigation, as the router reuses this component instance
+        qualityCheck.value = created;
+        checkId.value = created.id;
+        keywords.value = created.keywords ? [...created.keywords] : [];
 
-      notificationService.success(
-        'Quality Check Updated',
-        'Your changes have been saved successfully'
-      );
+        // Navigate to the edit page where versions and keywords can be added
+        await router.push(`/quality-checks/${created.id}`);
+      } else {
+        await apiService.updateQualityCheck(checkId.value, editForm);
 
-      // Reload the data to show updated information
-      await loadQualityCheck();
+        // Save keywords
+        await apiService.setKeywords(checkId.value, keywords.value);
+
+        notificationService.success(
+          'Quality Check Updated',
+          'Your changes have been saved successfully'
+        );
+
+        // Reload the data to show updated information
+        await loadQualityCheck();
+      }
     } catch (err) {
-      error.value = err.message || 'Failed to update quality check';
-      console.error('Error updating quality check:', err);
-      notificationService.error('Update Failed', error.value);
+      error.value = err.message || 'Failed to save quality check';
+      console.error('Error saving quality check:', err);
+      notificationService.error('Save Failed', error.value);
     } finally {
       saving.value = false;
     }
@@ -410,14 +439,22 @@
   };
 
   const resetForm = () => {
-    editForm.name = qualityCheck.value.name || '';
-    editForm.description = qualityCheck.value.description || '';
-    editForm.categoryId = qualityCheck.value.category?.id || null;
-    editForm.warningThreshold = qualityCheck.value.warningThreshold ?? 0;
-    editForm.errorThreshold = qualityCheck.value.errorThreshold ?? 0;
+    if (isNew.value) {
+      editForm.name = '';
+      editForm.description = '';
+      editForm.categoryId = null;
+      editForm.warningThreshold = 0;
+      editForm.errorThreshold = 0;
+    } else {
+      editForm.name = qualityCheck.value.name || '';
+      editForm.description = qualityCheck.value.description || '';
+      editForm.categoryId = qualityCheck.value.category?.id || null;
+      editForm.warningThreshold = qualityCheck.value.warningThreshold ?? 0;
+      editForm.errorThreshold = qualityCheck.value.errorThreshold ?? 0;
 
-    // Reset keywords
-    keywords.value = qualityCheck.value.keywords ? [...qualityCheck.value.keywords] : [];
+      // Reset keywords
+      keywords.value = qualityCheck.value.keywords ? [...qualityCheck.value.keywords] : [];
+    }
     newKeyword.value = '';
 
     validationErrors.name = '';
