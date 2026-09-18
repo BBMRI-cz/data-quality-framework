@@ -175,6 +175,24 @@ private static final double DEFAULT_EPSILON = 1.0;
   }
   ```
 
+### Audit Logging
+
+Service methods whose successful completion should be recorded in the audit log are annotated with `@Audited` instead of calling `AuditService` directly, 
+an aspect (`AuditAspect`) records the entry after the method returns, using the current authenticated user as actor.
+If no user is authenticated, the actor will be "SYSTEM".
+
+```java
+@Audited(action = AuditAction.QUALITY_CHECK_UPDATED, module = "dataquality", entityId = "#id")
+public QualityCheckDTO updateQualityCheck(String id, QualityCheckUpdateDTO dto) {
+    // Implementation
+}
+```
+
+- `action`: the `AuditAction` enum value being recorded
+- `module`: the owning module name (e.g. `"dataquality"`, `"settings"`, `"user"`)
+- `entityId`: a SpEL expression resolving the affected entity's ID from the method's parameters (by name, e.g. `#id`) or its return value (`#result`); omit if not applicable
+- Add new action types to `AuditAction` rather than reusing `OTHER`
+
 ### Vue.js Frontend
 
 - **Component Names**: `PascalCase` (e.g., `QualityCheckCard.vue`)
