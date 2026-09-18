@@ -51,6 +51,11 @@ class LoginAuditIntegrationTest {
     mockMvc
         .perform(
             post(AUTH_LOGIN_ENDPOINT)
+                .with(
+                    req -> {
+                      req.setRemoteAddr(TEST_IP);
+                      return req;
+                    })
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequest)))
         .andExpect(status().isOk());
