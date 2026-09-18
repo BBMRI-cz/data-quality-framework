@@ -57,4 +57,5 @@ class AuditAspect {
       return null;
     }
     return number.longValue();
+  }
 }
