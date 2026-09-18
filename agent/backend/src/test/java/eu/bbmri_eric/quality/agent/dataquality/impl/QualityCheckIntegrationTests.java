@@ -347,6 +347,34 @@ class QualityCheckIntegrationTests {
   }
 
   @Test
+  void updateAll_checkWithCategory_preservesCategory() throws Exception {
+    Category category = categoryRepository.save(new Category("Data Completeness", "#FF5733"));
+    QualityCheck savedCheck =
+        qualityCheckRepository.save(
+            new QualityCheck("Categorized Check", "Has a category", "define Test: true"));
+    savedCheck.setCategory(category);
+    savedCheck = qualityCheckRepository.save(savedCheck);
+
+    QualityCheckBulkUpdateDTO updateDTO = new QualityCheckBulkUpdateDTO();
+    updateDTO.setId(savedCheck.getId());
+    updateDTO.setActive(false);
+
+    mockMvc
+        .perform(
+            patch(API_QUALITY_CHECKS)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(List.of(updateDTO))))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].active").value(false))
+        .andExpect(jsonPath("$[0].category.id").value(category.getId()));
+
+    QualityCheck updated = qualityCheckRepository.findById(savedCheck.getId()).orElseThrow();
+    assertThat(updated.isActive()).isFalse();
+    assertThat(updated.getCategory()).isNotNull();
+    assertThat(updated.getCategory().getId()).isEqualTo(category.getId());
+  }
+
+  @Test
   void delete_existingQualityCheck_returnsNoContent() throws Exception {
     QualityCheck savedCheck =
         qualityCheckRepository.save(

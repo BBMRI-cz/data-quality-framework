@@ -99,12 +99,6 @@ class QualityCheckController {
 
   @PutMapping("/{id}")
   @Operation(summary = "Update a quality check", description = "Updates an existing quality check")
-  @ApiResponses(
-      value = {
-        @ApiResponse(responseCode = "200", description = "Quality check updated successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid input data"),
-        @ApiResponse(responseCode = "404", description = "Quality check not found")
-      })
   public ResponseEntity<EntityModel<QualityCheckDTO>> update(
       @Parameter(description = "Quality check ID") @PathVariable Long id,
       @RequestBody @Valid QualityCheckUpdateDTO updateDTO) {

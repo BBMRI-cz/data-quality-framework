@@ -63,6 +63,33 @@ export function useQualityChecks() {
     searchQuery.value = '';
   };
 
+  /**
+   * Activates or deactivates the given checks via a single bulk request and merges the result
+   * into the currently loaded page
+   * @param {Array<number>} ids - IDs of the quality checks to update
+   * @param {boolean} active - Desired active state
+   */
+  const setChecksActive = async (ids, active) => {
+    const updated = await qualityCheckService.bulkUpdate(ids.map((id) => ({ id, active })));
+    const byId = new Map(updated.map((check) => [check.id, check]));
+    qualityChecks.value = qualityChecks.value.map((check) => byId.get(check.id) ?? check);
+  };
+
+  /**
+   * Fetches the IDs of all quality checks matching the current filter, across all pages
+   * @param {object} options - Filter options
+   * @param {string|null} options.categoryName - Category name filter, matching getAll
+   * @returns {Promise<Array<number>>} IDs of all matching quality checks
+   */
+  const fetchAllIds = async ({ categoryName = null } = {}) => {
+    const total = pagination.value.totalElements;
+    if (total === 0) {
+      return [];
+    }
+    const result = await qualityCheckService.getAll({ page: 0, size: total, categoryName });
+    return result.items.map((check) => check.id);
+  };
+
   return {
     qualityChecks,
     filteredChecks,
@@ -74,5 +101,7 @@ export function useQualityChecks() {
     pagination,
     fetchChecks,
     clearSearch,
+    setChecksActive,
+    fetchAllIds,
   };
 }

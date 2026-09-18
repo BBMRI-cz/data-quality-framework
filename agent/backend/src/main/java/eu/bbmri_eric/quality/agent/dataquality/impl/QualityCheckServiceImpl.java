@@ -143,10 +143,27 @@ class QualityCheckServiceImpl implements QualityCheckService {
   @Override
   @Transactional
   public List<QualityCheckDTO> updateAll(List<QualityCheckBulkUpdateDTO> updateDTOs) {
-    List<QualityCheckDTO> updated =
-        updateDTOs.stream().map(updateDTO -> update(updateDTO.getId(), updateDTO)).toList();
+    List<QualityCheckDTO> updated = updateDTOs.stream().map(this::updatePartially).toList();
     logger.info("Bulk updated {} quality checks", updated.size());
     return updated;
+  }
+
+  /**
+   * Applies a partial update to a single quality check. Unlike the full replace in {@link
+   * #update(Long, QualityCheckUpdateDTO)}, a {@code null} category ID leaves the assigned category
+   * untouched instead of clearing it.
+   */
+  private QualityCheckDTO updatePartially(QualityCheckBulkUpdateDTO updateDTO) {
+    QualityCheck qualityCheck =
+        qualityCheckRepository
+            .findById(updateDTO.getId())
+            .orElseThrow(() -> new QualityCheckNotFoundException(updateDTO.getId()));
+    modelMapper.map(updateDTO, qualityCheck);
+    if (updateDTO.getCategoryId() != null) {
+      setCategory(updateDTO.getCategoryId(), qualityCheck);
+    }
+    qualityCheck = qualityCheckRepository.save(qualityCheck);
+    return modelMapper.map(qualityCheck, QualityCheckDTO.class);
   }
 
   private void setCategory(Long categoryId, QualityCheck qualityCheck) {

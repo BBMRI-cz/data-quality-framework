@@ -78,7 +78,9 @@
               </div>
               <div class="meta-item">
                 <span class="meta-label">Signature</span>
-                <span class="signature-preview">{{ truncateText(selectedVersion.signature, 48) }}</span>
+                <span class="signature-preview">{{
+                  truncateText(selectedVersion.signature, 48)
+                }}</span>
               </div>
               <div class="meta-item meta-actions">
                 <button
@@ -194,7 +196,8 @@
   );
 
   const selectedVersion = computed(
-    () => sortedVersions.value.find((version) => version.remoteId === selectedVersionId.value) || null
+    () =>
+      sortedVersions.value.find((version) => version.remoteId === selectedVersionId.value) || null
   );
 
   const formattedBody = computed(() =>
