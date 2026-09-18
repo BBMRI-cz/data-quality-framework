@@ -1,6 +1,7 @@
 package eu.bbmri_eric.quality.agent.dataquality.controller;
 
 import eu.bbmri_eric.quality.agent.dataquality.QualityCheckService;
+import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckBulkUpdateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckFilterDTO;
@@ -12,13 +13,17 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import java.net.URI;
+import java.util.List;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -31,6 +36,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 @RequestMapping("/api/quality-checks")
 @Tag(name = "Quality Checks", description = "API for managing Data Quality checks")
 @SecurityRequirement(name = "bearerAuth")
+@Validated
 class QualityCheckController {
 
   private final QualityCheckService qualityCheckService;
@@ -93,17 +99,25 @@ class QualityCheckController {
 
   @PutMapping("/{id}")
   @Operation(summary = "Update a quality check", description = "Updates an existing quality check")
-  @ApiResponses(
-      value = {
-        @ApiResponse(responseCode = "200", description = "Quality check updated successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid input data"),
-        @ApiResponse(responseCode = "404", description = "Quality check not found")
-      })
   public ResponseEntity<EntityModel<QualityCheckDTO>> update(
       @Parameter(description = "Quality check ID") @PathVariable Long id,
       @RequestBody @Valid QualityCheckUpdateDTO updateDTO) {
     QualityCheckDTO updated = qualityCheckService.update(id, updateDTO);
     return ResponseEntity.ok(linkBuilder.toModel(updated));
+  }
+
+  @PatchMapping
+  @Operation(
+      summary = "Bulk update quality checks",
+      description =
+          "Partially updates multiple quality checks in a single request; only provided fields are"
+              + " changed. The update is atomic: if any check cannot be found or is invalid, no"
+              + " changes are applied.")
+  public ResponseEntity<List<EntityModel<QualityCheckDTO>>> updateAll(
+      @RequestBody @NotEmpty(message = "At least one quality check update is required") @Valid
+          List<QualityCheckBulkUpdateDTO> updateDTOs) {
+    List<QualityCheckDTO> updated = qualityCheckService.updateAll(updateDTOs);
+    return ResponseEntity.ok(updated.stream().map(linkBuilder::toModel).toList());
   }
 
   @DeleteMapping("/{id}")

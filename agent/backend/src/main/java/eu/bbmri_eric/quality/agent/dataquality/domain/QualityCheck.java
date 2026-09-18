@@ -42,6 +42,9 @@ public class QualityCheck implements DataQualityCheck {
   private int warningThreshold = 10;
   private int errorThreshold = 30;
 
+  @Column(nullable = false)
+  private boolean active = true;
+
   @Getter(AccessLevel.NONE)
   private Double epsilonBudget;
 

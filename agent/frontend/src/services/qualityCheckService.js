@@ -37,6 +37,16 @@ export const qualityCheckService = {
     return response.data;
   },
 
+  /**
+   * Partially updates multiple quality checks in a single request
+   * @param {Array<{id: number}>} updates - Update items carrying the check ID
+   * @returns {Promise<Array>} The updated quality checks
+   */
+  async bulkUpdate(updates) {
+    const response = await api.patch(BASE_URL, updates);
+    return response.data;
+  },
+
   async delete(id) {
     await api.delete(`${BASE_URL}/${id}`);
   },

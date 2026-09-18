@@ -30,11 +30,15 @@
       </div>
 
       <QualityCheckTable
+        ref="tableRef"
         :items="qualityChecks"
         :loading="loading"
         :error="error"
+        :updating="bulkUpdating"
         :pagination="pagination"
+        :fetch-all-ids="handleFetchAllIds"
         @page-change="handlePageChange"
+        @bulk-update="handleBulkUpdate"
       />
     </div>
   </div>
@@ -54,10 +58,20 @@
 
   const route = useRoute();
   const router = useRouter();
-  const { qualityChecks, loading, error, pagination, totalChecks, fetchChecks } =
-    useQualityChecks();
+  const {
+    qualityChecks,
+    loading,
+    error,
+    pagination,
+    totalChecks,
+    fetchChecks,
+    setChecksActive,
+    fetchAllIds,
+  } = useQualityChecks();
   const categories = ref([]);
   const selectedCategoryName = ref(null);
+  const tableRef = ref(null);
+  const bulkUpdating = ref(false);
 
   const categoryNameForApi = computed(() => {
     if (selectedCategoryName.value === 'none') {
@@ -84,6 +98,39 @@
     router.replace({ query: { ...route.query, page: page.toString() } });
   };
 
+  const handleBulkUpdate = async ({ ids, active }) => {
+    bulkUpdating.value = true;
+    try {
+      await setChecksActive(ids, active);
+      notificationService.success(
+        'Quality Checks Updated',
+        `${ids.length} quality check(s) ${active ? 'activated' : 'deactivated'}.`
+      );
+      tableRef.value?.clearSelection();
+    } catch (error) {
+      console.error('Failed to update quality checks:', error);
+      notificationService.error(
+        'Update Failed',
+        'Unable to update the selected quality checks. Please try again.'
+      );
+    } finally {
+      bulkUpdating.value = false;
+    }
+  };
+
+  const handleFetchAllIds = async () => {
+    try {
+      return await fetchAllIds({ categoryName: categoryNameForApi.value });
+    } catch (error) {
+      console.error('Failed to load all quality checks:', error);
+      notificationService.error(
+        'Load Failed',
+        'Unable to load all quality checks. Please try again.'
+      );
+      return null;
+    }
+  };
+
   const loadCategories = async () => {
     try {
       categories.value = await categoryService.getAll();
@@ -107,6 +154,7 @@
   );
 
   watch(selectedCategoryName, () => {
+    tableRef.value?.clearSelection();
     router.replace({ query: { ...route.query, page: '0' } });
   });
 

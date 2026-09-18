@@ -6,6 +6,7 @@ import eu.bbmri_eric.quality.agent.common.exception.EntityNotFoundException;
 import eu.bbmri_eric.quality.agent.dataquality.QualityCheckService;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Category;
 import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
+import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckBulkUpdateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckFilterDTO;
@@ -136,6 +137,32 @@ class QualityCheckServiceImpl implements QualityCheckService {
     setCategory(updateDTO.getCategoryId(), qualityCheck);
     qualityCheck = qualityCheckRepository.save(qualityCheck);
     logger.info("Updated quality check id: {}", id);
+    return modelMapper.map(qualityCheck, QualityCheckDTO.class);
+  }
+
+  @Override
+  @Transactional
+  public List<QualityCheckDTO> updateAll(List<QualityCheckBulkUpdateDTO> updateDTOs) {
+    List<QualityCheckDTO> updated = updateDTOs.stream().map(this::updatePartially).toList();
+    logger.info("Bulk updated {} quality checks", updated.size());
+    return updated;
+  }
+
+  /**
+   * Applies a partial update to a single quality check. Unlike the full replace in {@link
+   * #update(Long, QualityCheckUpdateDTO)}, a {@code null} category ID leaves the assigned category
+   * untouched instead of clearing it.
+   */
+  private QualityCheckDTO updatePartially(QualityCheckBulkUpdateDTO updateDTO) {
+    QualityCheck qualityCheck =
+        qualityCheckRepository
+            .findById(updateDTO.getId())
+            .orElseThrow(() -> new QualityCheckNotFoundException(updateDTO.getId()));
+    modelMapper.map(updateDTO, qualityCheck);
+    if (updateDTO.getCategoryId() != null) {
+      setCategory(updateDTO.getCategoryId(), qualityCheck);
+    }
+    qualityCheck = qualityCheckRepository.save(qualityCheck);
     return modelMapper.map(qualityCheck, QualityCheckDTO.class);
   }
 

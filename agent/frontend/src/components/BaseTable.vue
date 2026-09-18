@@ -9,7 +9,9 @@
         <thead>
           <tr>
             <th v-for="col in columns" :key="col.key" :class="col.headerClass">
-              {{ col.label }}
+              <slot :name="'header-' + col.key" :items="items">
+                {{ col.label }}
+              </slot>
             </th>
           </tr>
         </thead>
