@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.hateoas.server.core.Relation;
 
 @Setter
 @Getter
@@ -15,6 +16,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 @Schema(description = "Audit log entry Data Transfer Object")
+@Relation(itemRelation = "audit-log", collectionRelation = "audit-logs")
 public class AuditLogDTO {
 
   @Schema(
@@ -32,6 +34,9 @@ public class AuditLogDTO {
       description = "Username of the actor who performed the action, or SYSTEM",
       example = "admin")
   private String actor;
+
+  @Schema(description = "ID of the user account that performed the action, if known", example = "1")
+  private Long actorId;
 
   @Schema(description = "The type of action that was audited", example = "LOGIN_SUCCESS")
   private AuditAction action;

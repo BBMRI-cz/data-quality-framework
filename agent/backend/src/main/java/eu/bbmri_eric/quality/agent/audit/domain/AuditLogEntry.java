@@ -8,6 +8,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,6 +16,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
+@Table(name = "audit_log")
 public class AuditLogEntry {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,6 +26,9 @@ public class AuditLogEntry {
   private LocalDateTime timestamp;
 
   private String actor;
+
+  /** The ID of the {@code User} who performed the action, or {@code null} if unknown/system. */
+  private Long actorId;
 
   @Enumerated(EnumType.STRING)
   private AuditAction action;

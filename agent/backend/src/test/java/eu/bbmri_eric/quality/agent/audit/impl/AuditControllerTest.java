@@ -53,9 +53,9 @@ class AuditControllerTest {
     mockMvc
         .perform(get(AUDIT_LOGS_ENDPOINT))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$._embedded.auditLogDTOList").isArray())
-        .andExpect(jsonPath("$._embedded.auditLogDTOList.length()").value(1))
-        .andExpect(jsonPath("$._embedded.auditLogDTOList[0].action").value("LOGIN_SUCCESS"))
+        .andExpect(jsonPath("$._embedded.audit-logs").isArray())
+        .andExpect(jsonPath("$._embedded.audit-logs.length()").value(1))
+        .andExpect(jsonPath("$._embedded.audit-logs[0].action").value("LOGIN_SUCCESS"))
         .andExpect(jsonPath("$.page.totalElements").value(1));
   }
 
@@ -67,8 +67,8 @@ class AuditControllerTest {
     mockMvc
         .perform(get(AUDIT_LOGS_ENDPOINT).param("action", "LOGOUT"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$._embedded.auditLogDTOList.length()").value(1))
-        .andExpect(jsonPath("$._embedded.auditLogDTOList[0].action").value("LOGOUT"));
+        .andExpect(jsonPath("$._embedded.audit-logs.length()").value(1))
+        .andExpect(jsonPath("$._embedded.audit-logs[0].action").value("LOGOUT"));
   }
 
   @Test
@@ -79,8 +79,8 @@ class AuditControllerTest {
     mockMvc
         .perform(get(AUDIT_LOGS_ENDPOINT).param("actor", "intruder"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$._embedded.auditLogDTOList.length()").value(1))
-        .andExpect(jsonPath("$._embedded.auditLogDTOList[0].actor").value("intruder"));
+        .andExpect(jsonPath("$._embedded.audit-logs.length()").value(1))
+        .andExpect(jsonPath("$._embedded.audit-logs[0].actor").value("intruder"));
   }
 
   @Test
@@ -91,8 +91,8 @@ class AuditControllerTest {
     mockMvc
         .perform(get(AUDIT_LOGS_ENDPOINT).param("search", "fhir"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$._embedded.auditLogDTOList.length()").value(1))
-        .andExpect(jsonPath("$._embedded.auditLogDTOList[0].details").value("Changed FHIR URL"));
+        .andExpect(jsonPath("$._embedded.audit-logs.length()").value(1))
+        .andExpect(jsonPath("$._embedded.audit-logs[0].details").value("Changed FHIR URL"));
   }
 
   @Test
@@ -104,7 +104,7 @@ class AuditControllerTest {
     mockMvc
         .perform(get(AUDIT_LOGS_ENDPOINT).param("page", "0").param("size", "2"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$._embedded.auditLogDTOList.length()").value(2))
+        .andExpect(jsonPath("$._embedded.audit-logs.length()").value(2))
         .andExpect(jsonPath("$.page.totalElements").value(3))
         .andExpect(jsonPath("$.page.totalPages").value(2))
         .andExpect(jsonPath("$._links.next").exists());

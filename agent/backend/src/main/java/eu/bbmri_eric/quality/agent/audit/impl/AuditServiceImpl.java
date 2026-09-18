@@ -52,6 +52,18 @@ class AuditServiceImpl implements AuditService {
   @Transactional
   public void record(
       AuditAction action, String actor, String details, String module, Long entityId) {
+    record(action, actor, null, details, module, entityId);
+  }
+
+  @Override
+  @Transactional
+  public void record(
+      AuditAction action,
+      String actor,
+      Long actorId,
+      String details,
+      String module,
+      Long entityId) {
     String principal = actor != null ? actor : SYSTEM_ACTOR;
 
     Map<String, Object> data = new LinkedHashMap<>();
@@ -63,6 +75,9 @@ class AuditServiceImpl implements AuditService {
     }
     if (entityId != null) {
       data.put("entityId", entityId);
+    }
+    if (actorId != null) {
+      data.put("actorId", actorId);
     }
 
     // Published as a Spring Boot AuditEvent rather than saved directly, so this shares the same

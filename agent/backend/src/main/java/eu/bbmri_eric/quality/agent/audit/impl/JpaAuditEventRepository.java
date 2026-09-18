@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 /**
  * Persists Spring Boot {@link AuditEvent}s (both our own, published via {@code AuditService}, and
  * ones Spring Security publishes automatically, e.g. authentication success/failure) into the
- * existing {@code audit_log_entry} table.
+ * existing {@code audit_log} table.
  *
  * <p>Registering this bean makes Spring Boot's {@code AuditAutoConfiguration} back off from
  * creating its default in-memory repository and wire an {@code AuditListener} that forwards every
@@ -49,6 +49,10 @@ class JpaAuditEventRepository implements AuditEventRepository {
     Object entityId = data.get("entityId");
     if (entityId instanceof Number number) {
       entry.setEntityId(number.longValue());
+    }
+    Object actorId = data.get("actorId");
+    if (actorId instanceof Number number) {
+      entry.setActorId(number.longValue());
     }
 
     auditLogRepository.save(entry);
@@ -89,6 +93,9 @@ class JpaAuditEventRepository implements AuditEventRepository {
     }
     if (entry.getEntityId() != null) {
       data.put("entityId", entry.getEntityId());
+    }
+    if (entry.getActorId() != null) {
+      data.put("actorId", entry.getActorId());
     }
     String type = entry.getAction() != null ? entry.getAction().name() : AuditAction.OTHER.name();
     return new AuditEvent(
