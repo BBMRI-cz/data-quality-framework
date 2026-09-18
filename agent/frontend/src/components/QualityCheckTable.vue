@@ -59,7 +59,7 @@
           <input
             type="checkbox"
             class="form-check-input"
-            aria-label="Select quality check"
+            :aria-label="`Select ${item.name || 'quality check'}`"
             :checked="selectedIds.includes(item.id)"
             @click.stop
             @change="toggleSelect(item.id)"

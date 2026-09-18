@@ -154,6 +154,7 @@
   );
 
   watch(selectedCategoryName, () => {
+    tableRef.value?.clearSelection();
     router.replace({ query: { ...route.query, page: '0' } });
   });
 
