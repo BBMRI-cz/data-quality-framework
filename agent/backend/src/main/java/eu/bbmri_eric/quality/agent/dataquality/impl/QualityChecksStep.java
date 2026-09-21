@@ -55,7 +55,7 @@ class QualityChecksStep implements ReportPipelineStep {
 
   private @NonNull List<DataQualityCheck> compileChecksToRun(DataStore dataStore) {
     List<DataQualityCheck> dataQualityChecks = new ArrayList<>();
-    for (QualityCheck qualityCheck : repository.findAll()) {
+    for (QualityCheck qualityCheck : repository.findAllByActive(true)) {
       if (qualityCheck.getType() == QualityCheckType.CQL && dataStore instanceof FHIRServer) {
         dataQualityChecks.add(qualityCheck);
       } else if (qualityCheck.getType() == QualityCheckType.JAVA

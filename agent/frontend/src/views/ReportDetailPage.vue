@@ -34,163 +34,176 @@
 
       <!-- Report details -->
       <template v-else-if="report">
-        <!-- Stats Cards -->
-        <div class="stats-grid mb-4">
-          <StatCard
-            :number="report.numberOfEntities?.toLocaleString() || 'N/A'"
-            label="Patients"
-            number-class="text-primary"
-          />
-          <StatCard
-            :number="report.numberOfSecondaryEntities?.toLocaleString() || 'N/A'"
-            label="Samples"
-            number-class="text-primary"
-          />
-          <StatCard
-            :number="resultSummary.total"
-            label="Total Checks"
-            number-class="text-secondary"
-          />
-          <StatCard :number="countErrors()" label="Errors" number-class="text-danger" />
-          <StatCard :number="countWarnings()" label="Warnings" number-class="text-warning" />
-          <StatCard :number="countPassed()" label="Passed" number-class="text-success" />
-          <StatCard
-            :number="formatEpsilon(report.epsilonBudget)"
-            label="Privacy Budget Allocated"
-            number-class="text-primary"
-          />
-          <StatCard
-            :number="formatEpsilon(calculateEpsilonUsed())"
-            label="Privacy Budget Used"
-            :number-class="isOverBudget() ? 'text-danger' : 'text-success'"
-          />
+        <!-- Generation in progress -->
+        <div v-if="isGenerating" class="text-center py-5">
+          <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem">
+            <span class="visually-hidden">Generating report...</span>
+          </div>
+          <h5 class="mt-3">Report is being generated</h5>
+          <p class="text-muted mb-0">
+            This page refreshes automatically as soon as the report is ready.
+          </p>
         </div>
 
-        <div class="mb-4">
-          <div class="filter-label">Status:</div>
-          <FilterComponent v-model="selectedStatus" :elements="statuses" />
-        </div>
+        <template v-else>
+          <!-- Stats Cards -->
+          <div class="stats-grid mb-4">
+            <StatCard
+              :number="report.numberOfEntities?.toLocaleString() || 'N/A'"
+              label="Patients"
+              number-class="text-primary"
+            />
+            <StatCard
+              :number="report.numberOfSecondaryEntities?.toLocaleString() || 'N/A'"
+              label="Samples"
+              number-class="text-primary"
+            />
+            <StatCard
+              :number="resultSummary.total"
+              label="Total Checks"
+              number-class="text-secondary"
+            />
+            <StatCard :number="countErrors()" label="Errors" number-class="text-danger" />
+            <StatCard :number="countWarnings()" label="Warnings" number-class="text-warning" />
+            <StatCard :number="countPassed()" label="Passed" number-class="text-success" />
+            <StatCard
+              :number="formatEpsilon(report.epsilonBudget)"
+              label="Privacy Budget Allocated"
+              number-class="text-primary"
+            />
+            <StatCard
+              :number="formatEpsilon(calculateEpsilonUsed())"
+              label="Privacy Budget Used"
+              :number-class="isOverBudget() ? 'text-danger' : 'text-success'"
+            />
+          </div>
 
-        <!-- Results Section -->
-        <div class="card border-0 shadow-sm">
-          <div class="card-header bg-white border-bottom" style="padding: 0; border: none"></div>
-          <div class="card-body">
-            <div v-if="filteredResults.length === 0" class="text-center py-4 text-muted">
-              <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
-              <p class="mb-0">No results available</p>
-            </div>
-            <div v-else class="results-container">
-              <div
-                v-for="result in filteredResults"
-                :id="getCheckIdKey(result)"
-                :key="getCheckIdKey(result)"
-                :class="['result-card', 'card', 'mb-3', getResultClass(report, result)]"
-              >
-                <div class="card-body">
-                  <div class="d-flex justify-content-between align-items-start">
-                    <div class="flex-grow-1">
+          <div class="mb-4">
+            <div class="filter-label">Status:</div>
+            <FilterComponent v-model="selectedStatus" :elements="statuses" />
+          </div>
+
+          <!-- Results Section -->
+          <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom" style="padding: 0; border: none"></div>
+            <div class="card-body">
+              <div v-if="filteredResults.length === 0" class="text-center py-4 text-muted">
+                <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
+                <p class="mb-0">No results available</p>
+              </div>
+              <div v-else class="results-container">
+                <div
+                  v-for="result in filteredResults"
+                  :id="getCheckIdKey(result)"
+                  :key="getCheckIdKey(result)"
+                  :class="['result-card', 'card', 'mb-3', getResultClass(report, result)]"
+                >
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <div class="flex-grow-1">
+                        <button
+                          v-if="checkExists(result.checkId)"
+                          class="btn btn-link check-link p-0 mb-2"
+                          :title="result.checkDescription || 'Click to edit check'"
+                          @click="navigateToCheck(result.checkId)"
+                        >
+                          {{ result.checkName }}
+                        </button>
+                        <h6 v-else class="card-title mb-2">{{ result.checkName }}</h6>
+                        <div v-if="result.checkDescription" class="check-description mb-2">
+                          <p class="text-muted small mb-0">{{ result.checkDescription }}</p>
+                        </div>
+                        <div class="result-details">
+                          <div class="detail-row">
+                            <span class="detail-label">Occurrence Rate:</span>
+                            <span class="detail-value">{{
+                              formatOccurrenceRate(report, result)
+                            }}</span>
+                          </div>
+                          <div v-if="formatPatientCount(result)" class="detail-row">
+                            <span class="detail-label">Number of patients:</span>
+                            <span class="detail-value">{{ formatPatientCount(result) }}</span>
+                          </div>
+                          <div v-if="formatObfuscatedCount(result)" class="detail-row">
+                            <span class="detail-label">Obfuscated:</span>
+                            <span class="detail-value">{{ formatObfuscatedCount(result) }}</span>
+                          </div>
+                          <div v-if="getResultError(report, result)" class="detail-row">
+                            <span class="detail-label text-danger">Error:</span>
+                            <span class="detail-value text-danger">{{
+                              getResultError(report, result)
+                            }}</span>
+                          </div>
+                        </div>
+                      </div>
                       <button
-                        v-if="checkExists(result.checkId)"
-                        class="btn btn-link check-link p-0 mb-2"
-                        :title="result.checkDescription || 'Click to edit check'"
-                        @click="navigateToCheck(result.checkId)"
+                        v-if="Array.isArray(result.patients) && result.patients.length > 0"
+                        class="btn btn-sm btn-outline-secondary ms-3"
+                        :title="
+                          openIds[getCheckIdKey(result)] ? 'Hide Patient IDs' : 'Show Patient IDs'
+                        "
+                        @click="toggleIds(getCheckIdKey(result))"
                       >
-                        {{ result.checkName }}
+                        <i class="bi bi-person-lines-fill"></i>
                       </button>
-                      <h6 v-else class="card-title mb-2">{{ result.checkName }}</h6>
-                      <div v-if="result.checkDescription" class="check-description mb-2">
-                        <p class="text-muted small mb-0">{{ result.checkDescription }}</p>
-                      </div>
-                      <div class="result-details">
-                        <div class="detail-row">
-                          <span class="detail-label">Occurrence Rate:</span>
-                          <span class="detail-value">{{
-                            formatOccurrenceRate(report, result)
-                          }}</span>
-                        </div>
-                        <div v-if="formatPatientCount(result)" class="detail-row">
-                          <span class="detail-label">Number of patients:</span>
-                          <span class="detail-value">{{ formatPatientCount(result) }}</span>
-                        </div>
-                        <div v-if="formatObfuscatedCount(result)" class="detail-row">
-                          <span class="detail-label">Obfuscated:</span>
-                          <span class="detail-value">{{ formatObfuscatedCount(result) }}</span>
-                        </div>
-                        <div v-if="getResultError(report, result)" class="detail-row">
-                          <span class="detail-label text-danger">Error:</span>
-                          <span class="detail-value text-danger">{{
-                            getResultError(report, result)
-                          }}</span>
-                        </div>
-                      </div>
                     </div>
-                    <button
-                      v-if="Array.isArray(result.patients) && result.patients.length > 0"
-                      class="btn btn-sm btn-outline-secondary ms-3"
-                      :title="
-                        openIds[getCheckIdKey(result)] ? 'Hide Patient IDs' : 'Show Patient IDs'
-                      "
-                      @click="toggleIds(getCheckIdKey(result))"
-                    >
-                      <i class="bi bi-person-lines-fill"></i>
-                    </button>
-                  </div>
 
-                  <!-- Patient IDs Section -->
-                  <div
-                    v-if="
-                      Array.isArray(result.patients) &&
-                      result.patients.length > 0 &&
-                      openIds[getCheckIdKey(result)]
-                    "
-                    class="patient-ids-section mt-3"
-                  >
-                    <hr class="my-3" />
-                    <h6 class="mb-2">
-                      <i class="bi bi-people-fill me-2"></i>Patient Identifiers ({{
-                        result.patients.length
-                      }})
-                    </h6>
-                    <div class="table-responsive">
-                      <table class="table table-sm table-hover table-borderless text-center mb-0">
-                        <tbody>
-                          <tr v-for="(row, rowIndex) in patientTableRows(result)" :key="rowIndex">
-                            <td
-                              v-for="(patient, colIndex) in row"
-                              :key="colIndex"
-                              class="patient-cell"
-                            >
-                              <a
-                                v-if="patient"
-                                href="#"
-                                class="patient-link"
-                                @click.prevent="showPatientDetail(patient)"
-                              >
-                                {{ patient }}
-                              </a>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                    <nav
-                      v-if="result.patients.length > pageSize"
-                      class="d-flex justify-content-center mt-3"
+                    <!-- Patient IDs Section -->
+                    <div
+                      v-if="
+                        Array.isArray(result.patients) &&
+                        result.patients.length > 0 &&
+                        openIds[getCheckIdKey(result)]
+                      "
+                      class="patient-ids-section mt-3"
                     >
-                      <Pagination
-                        :current-page="idPage[getCheckIdKey(result)] || 1"
-                        :page-size="pageSize"
-                        :total-pages="Math.ceil((result.patients?.length || 0) / pageSize)"
-                        :max-visible-buttons="5"
-                        @page-changed="(page) => changePage(getCheckIdKey(result), page)"
-                      />
-                    </nav>
+                      <hr class="my-3" />
+                      <h6 class="mb-2">
+                        <i class="bi bi-people-fill me-2"></i>Patient Identifiers ({{
+                          result.patients.length
+                        }})
+                      </h6>
+                      <div class="table-responsive">
+                        <table class="table table-sm table-hover table-borderless text-center mb-0">
+                          <tbody>
+                            <tr v-for="(row, rowIndex) in patientTableRows(result)" :key="rowIndex">
+                              <td
+                                v-for="(patient, colIndex) in row"
+                                :key="colIndex"
+                                class="patient-cell"
+                              >
+                                <a
+                                  v-if="patient"
+                                  href="#"
+                                  class="patient-link"
+                                  @click.prevent="showPatientDetail(patient)"
+                                >
+                                  {{ patient }}
+                                </a>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <nav
+                        v-if="result.patients.length > pageSize"
+                        class="d-flex justify-content-center mt-3"
+                      >
+                        <Pagination
+                          :current-page="idPage[getCheckIdKey(result)] || 1"
+                          :page-size="pageSize"
+                          :total-pages="Math.ceil((result.patients?.length || 0) / pageSize)"
+                          :max-visible-buttons="5"
+                          @page-changed="(page) => changePage(getCheckIdKey(result), page)"
+                        />
+                      </nav>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </template>
       </template>
     </div>
 
@@ -199,7 +212,7 @@
 </template>
 
 <script setup>
-  import { ref, computed, onMounted, nextTick } from 'vue';
+  import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import { api } from '@/api';
   import PageHeader from '@/components/PageHeader.vue';
@@ -236,6 +249,31 @@
 
   const statuses = [CHECK_STATUS.PASSED, CHECK_STATUS.WARNING, CHECK_STATUS.FAILED];
   const resultSummary = computed(() => getResultSummary(report.value));
+  const isGenerating = computed(() => report.value?.status === 'GENERATING');
+
+  const GENERATING_POLL_INTERVAL_MS = 2000;
+  let pollTimer = null;
+
+  const stopPolling = () => {
+    if (pollTimer !== null) {
+      clearTimeout(pollTimer);
+      pollTimer = null;
+    }
+  };
+
+  const scheduleGenerationPoll = (reportId) => {
+    stopPolling();
+    pollTimer = setTimeout(async () => {
+      try {
+        report.value = await reportStore.fetchReportById(reportId);
+        if (report.value?.status === 'GENERATING') {
+          scheduleGenerationPoll(reportId);
+        }
+      } catch (err) {
+        error.value = `Failed to refresh report: ${err.message || 'Unknown error'}`;
+      }
+    }, GENERATING_POLL_INTERVAL_MS);
+  };
 
   const checkExists = (checkId) => {
     return qualityChecks.value.some((check) => check.id === checkId);
@@ -372,6 +410,9 @@
       loading.value = true;
       const reportId = route.params.id;
       report.value = await reportStore.fetchReportById(reportId);
+      if (report.value?.status === 'GENERATING') {
+        scheduleGenerationPoll(reportId);
+      }
 
       // Load all quality checks
       try {
@@ -390,6 +431,8 @@
       loading.value = false;
     }
   });
+
+  onBeforeUnmount(stopPolling);
 </script>
 
 <style scoped>

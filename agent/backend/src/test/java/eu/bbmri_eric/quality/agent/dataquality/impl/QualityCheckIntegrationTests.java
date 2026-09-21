@@ -3,6 +3,7 @@ package eu.bbmri_eric.quality.agent.dataquality.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -13,8 +14,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.agent.dataquality.QualityCheckType;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Category;
 import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
+import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckBulkUpdateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckUpdateDTO;
+import java.util.Arrays;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -239,6 +243,154 @@ class QualityCheckIntegrationTests {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateDTO)))
         .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void update_existingQualityCheck_togglesActive() throws Exception {
+    QualityCheck savedCheck =
+        qualityCheckRepository.save(
+            new QualityCheck("Active Test", "Initially active", "define Test: true"));
+    assertThat(savedCheck.isActive()).isTrue();
+
+    QualityCheckUpdateDTO updateDTO = new QualityCheckUpdateDTO();
+    updateDTO.setActive(false);
+
+    mockMvc
+        .perform(
+            put(API_QUALITY_CHECKS + "/{id}", savedCheck.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateDTO)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.active").value(false));
+
+    assertThat(qualityCheckRepository.findById(savedCheck.getId()).orElseThrow().isActive())
+        .isFalse();
+  }
+
+  @Test
+  void updateAll_existingChecks_updatesActiveFlagsAndPreservesOtherFields() throws Exception {
+    QualityCheck first =
+        qualityCheckRepository.save(
+            new QualityCheck("First Check", "First Description", "define First: true"));
+    QualityCheck second =
+        qualityCheckRepository.save(
+            new QualityCheck("Second Check", "Second Description", "define Second: true"));
+
+    QualityCheckBulkUpdateDTO firstUpdate = new QualityCheckBulkUpdateDTO();
+    firstUpdate.setId(first.getId());
+    firstUpdate.setActive(false);
+    QualityCheckBulkUpdateDTO secondUpdate = new QualityCheckBulkUpdateDTO();
+    secondUpdate.setId(second.getId());
+    secondUpdate.setActive(false);
+
+    mockMvc
+        .perform(
+            patch(API_QUALITY_CHECKS)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(List.of(firstUpdate, secondUpdate))))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(2))
+        .andExpect(jsonPath("$[0].active").value(false))
+        .andExpect(jsonPath("$[1].active").value(false));
+
+    QualityCheck updatedFirst = qualityCheckRepository.findById(first.getId()).orElseThrow();
+    QualityCheck updatedSecond = qualityCheckRepository.findById(second.getId()).orElseThrow();
+    assertThat(updatedFirst.isActive()).isFalse();
+    assertThat(updatedSecond.isActive()).isFalse();
+    assertThat(updatedFirst.getName()).isEqualTo("First Check");
+    assertThat(updatedFirst.getDescription()).isEqualTo("First Description");
+    assertThat(updatedSecond.getName()).isEqualTo("Second Check");
+    assertThat(updatedSecond.getDescription()).isEqualTo("Second Description");
+  }
+
+  @Test
+  void updateAll_nonExistingCheck_returnsNotFoundAndAppliesNoChanges() throws Exception {
+    QualityCheck savedCheck =
+        qualityCheckRepository.save(
+            new QualityCheck("Existing Check", "Should stay active", "define Test: true"));
+
+    QualityCheckBulkUpdateDTO existingUpdate = new QualityCheckBulkUpdateDTO();
+    existingUpdate.setId(savedCheck.getId());
+    existingUpdate.setActive(false);
+    QualityCheckBulkUpdateDTO missingUpdate = new QualityCheckBulkUpdateDTO();
+    missingUpdate.setId(99999L);
+    missingUpdate.setActive(false);
+
+    mockMvc
+        .perform(
+            patch(API_QUALITY_CHECKS)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(List.of(existingUpdate, missingUpdate))))
+        .andExpect(status().isNotFound());
+
+    assertThat(qualityCheckRepository.findById(savedCheck.getId()).orElseThrow().isActive())
+        .isTrue();
+  }
+
+  @Test
+  void updateAll_missingId_returnsBadRequest() throws Exception {
+    QualityCheckBulkUpdateDTO updateDTO = new QualityCheckBulkUpdateDTO();
+    updateDTO.setActive(false);
+
+    mockMvc
+        .perform(
+            patch(API_QUALITY_CHECKS)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(List.of(updateDTO))))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void updateAll_emptyList_returnsBadRequest() throws Exception {
+    mockMvc
+        .perform(patch(API_QUALITY_CHECKS).contentType(MediaType.APPLICATION_JSON).content("[]"))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void updateAll_checkWithCategory_preservesCategory() throws Exception {
+    Category category = categoryRepository.save(new Category("Data Completeness", "#FF5733"));
+    QualityCheck savedCheck =
+        qualityCheckRepository.save(
+            new QualityCheck("Categorized Check", "Has a category", "define Test: true"));
+    savedCheck.setCategory(category);
+    savedCheck = qualityCheckRepository.save(savedCheck);
+
+    QualityCheckBulkUpdateDTO updateDTO = new QualityCheckBulkUpdateDTO();
+    updateDTO.setId(savedCheck.getId());
+    updateDTO.setActive(false);
+
+    mockMvc
+        .perform(
+            patch(API_QUALITY_CHECKS)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(List.of(updateDTO))))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].active").value(false))
+        .andExpect(jsonPath("$[0].category.id").value(category.getId()));
+
+    QualityCheck updated = qualityCheckRepository.findById(savedCheck.getId()).orElseThrow();
+    assertThat(updated.isActive()).isFalse();
+    assertThat(updated.getCategory()).isNotNull();
+    assertThat(updated.getCategory().getId()).isEqualTo(category.getId());
+  }
+
+  @Test
+  void repository_findAllByActive_returnsOnlyActiveChecks() {
+    QualityCheck activeCheck =
+        qualityCheckRepository.save(
+            new QualityCheck("Active Query Check", "Is active", "define Test: true"));
+    QualityCheck inactiveCheck =
+        new QualityCheck("Inactive Query Check", "Is inactive", "define Test: true");
+    inactiveCheck.setActive(false);
+    inactiveCheck = qualityCheckRepository.save(inactiveCheck);
+
+    List<Long> activeIds =
+        Arrays.stream(qualityCheckRepository.findAllByActive(true))
+            .map(QualityCheck::getId)
+            .toList();
+
+    assertThat(activeIds).contains(activeCheck.getId()).doesNotContain(inactiveCheck.getId());
   }
 
   @Test

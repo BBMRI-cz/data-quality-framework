@@ -39,6 +39,11 @@ public class QualityCheckDTO {
   @Schema(description = "Epsilon budget for differential privacy", example = "1.0")
   private Double epsilonBudget;
 
+  @Schema(
+      description = "Whether the check is active and included in report generation",
+      example = "true")
+  private boolean active;
+
   @Schema(description = "Category for grouping quality checks")
   private CategoryDTO category;
 
