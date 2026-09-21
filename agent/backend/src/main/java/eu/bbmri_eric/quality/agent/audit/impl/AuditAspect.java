@@ -1,7 +1,6 @@
-package eu.bbmri_eric.quality.agent.audit.aspect;
+package eu.bbmri_eric.quality.agent.audit.impl;
 
 import eu.bbmri_eric.quality.agent.audit.AuditActorIdResolver;
-import eu.bbmri_eric.quality.agent.audit.AuditService;
 import eu.bbmri_eric.quality.agent.audit.Audited;
 import eu.bbmri_eric.quality.agent.audit.CurrentActor;
 import java.lang.reflect.Parameter;
@@ -18,18 +17,18 @@ import org.springframework.stereotype.Component;
 
 /**
  * Records an audit log entry for every method annotated with {@link Audited}, once it returns
- * successfully, so the annotated service itself does not need to depend on {@link AuditService}.
+ * successfully, so the annotated service itself does not need to depend on {@code AuditRecorder}.
  */
 @Aspect
 @Component
 class AuditAspect {
 
-  private final AuditService auditService;
+  private final AuditRecorder auditRecorder;
   private final ObjectProvider<AuditActorIdResolver> actorIdResolver;
   private final ExpressionParser expressionParser = new SpelExpressionParser();
 
-  AuditAspect(AuditService auditService, ObjectProvider<AuditActorIdResolver> actorIdResolver) {
-    this.auditService = auditService;
+  AuditAspect(AuditRecorder auditRecorder, ObjectProvider<AuditActorIdResolver> actorIdResolver) {
+    this.auditRecorder = auditRecorder;
     this.actorIdResolver = actorIdResolver;
   }
 
@@ -39,7 +38,7 @@ class AuditAspect {
     String module = audited.module().isBlank() ? null : audited.module();
     Authentication authentication = CurrentActor.authentication();
     String actor = authentication == null ? null : authentication.getName();
-    auditService.record(
+    auditRecorder.record(
         audited.action(), actor, resolveActorId(authentication), null, module, entityId);
   }
 

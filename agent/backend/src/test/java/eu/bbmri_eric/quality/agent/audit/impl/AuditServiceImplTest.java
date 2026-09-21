@@ -3,7 +3,6 @@ package eu.bbmri_eric.quality.agent.audit.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import eu.bbmri_eric.quality.agent.audit.AuditAction;
-import eu.bbmri_eric.quality.agent.audit.AuditService;
 import eu.bbmri_eric.quality.agent.audit.domain.AuditLogEntry;
 import eu.bbmri_eric.quality.agent.audit.dto.AuditLogDTO;
 import eu.bbmri_eric.quality.agent.audit.dto.AuditLogFilterDTO;
@@ -17,7 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 @SpringBootTest
 class AuditServiceImplTest {
 
-  @Autowired private AuditService auditService;
+  @Autowired private AuditServiceImpl auditService;
   @Autowired private AuditLogRepository auditLogRepository;
 
   @BeforeEach

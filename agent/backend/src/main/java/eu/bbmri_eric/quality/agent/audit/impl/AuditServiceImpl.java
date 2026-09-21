@@ -24,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 /** Service implementation for recording and querying audit log entries. */
 @Service
 @Transactional
-class AuditServiceImpl implements AuditService {
+class AuditServiceImpl implements AuditService, AuditRecorder {
 
   private static final Logger logger = LoggerFactory.getLogger(AuditServiceImpl.class);
   private static final String SYSTEM_ACTOR = "SYSTEM";
@@ -80,9 +80,6 @@ class AuditServiceImpl implements AuditService {
       data.put("actorId", actorId);
     }
 
-    // Published as a Spring Boot AuditEvent rather than saved directly, so this shares the same
-    // persistence path (JpaAuditEventRepository, via the auto-configured AuditListener) as audit
-    // events Spring Security publishes automatically, e.g. authentication success/failure.
     eventPublisher.publishEvent(
         new AuditApplicationEvent(new AuditEvent(principal, action.name(), data)));
     logger.debug("Recorded audit log entry: action={}, actor={}", action, principal);

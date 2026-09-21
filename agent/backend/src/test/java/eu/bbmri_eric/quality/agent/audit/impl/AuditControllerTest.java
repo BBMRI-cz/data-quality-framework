@@ -5,7 +5,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import eu.bbmri_eric.quality.agent.audit.AuditAction;
-import eu.bbmri_eric.quality.agent.audit.AuditService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +22,7 @@ class AuditControllerTest {
   private static final String AUDIT_LOGS_ENDPOINT = "/api/audit-logs";
 
   @Autowired private MockMvc mockMvc;
-  @Autowired private AuditService auditService;
+  @Autowired private AuditServiceImpl auditService;
   @Autowired private AuditLogRepository auditLogRepository;
 
   @BeforeEach
