@@ -23,7 +23,10 @@ class AuditRecorderImplTest {
   @Test
   void record_withActor_persistsEntryWithGivenActor() {
     auditRecorder.record(
-        AuditRecord.of(AuditAction.LOGIN_SUCCESS).actor("admin", null).details("Logged in").build());
+        AuditRecord.of(AuditAction.LOGIN_SUCCESS)
+            .actor("admin", null)
+            .details("Logged in")
+            .build());
 
     AuditLogEntry entry = auditLogRepository.findAll().getFirst();
     assertThat(entry.getAction()).isEqualTo(AuditAction.LOGIN_SUCCESS);
@@ -34,7 +37,8 @@ class AuditRecorderImplTest {
 
   @Test
   void record_withNullActor_persistsSystemAsActor() {
-    auditRecorder.record(AuditRecord.of(AuditAction.AGENT_STARTED).details("Agent started").build());
+    auditRecorder.record(
+        AuditRecord.of(AuditAction.AGENT_STARTED).details("Agent started").build());
 
     AuditLogEntry entry = auditLogRepository.findAll().getFirst();
     assertThat(entry.getActor()).isEqualTo("SYSTEM");

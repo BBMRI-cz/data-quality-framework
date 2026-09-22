@@ -33,6 +33,7 @@ class AuditRecorderImpl implements AuditRecorder {
     entry.setEntityId(auditRecord.entityId);
 
     auditLogRepository.save(entry);
-    logger.debug("Recorded audit log entry: action={}, actor={}", entry.getAction(), entry.getActor());
+    logger.debug(
+        "Recorded audit log entry: action={}, actor={}", entry.getAction(), entry.getActor());
   }
 }

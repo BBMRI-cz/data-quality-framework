@@ -26,8 +26,13 @@ class AuditServiceImplTest {
 
   @Test
   void findAll_withoutFilter_returnsAllEntries() {
-    auditRecorder.record(AuditRecord.of(AuditAction.LOGIN_SUCCESS).actor("admin", null).details("Logged in").build());
-    auditRecorder.record(AuditRecord.of(AuditAction.LOGOUT).actor("admin", null).details("Logged out").build());
+    auditRecorder.record(
+        AuditRecord.of(AuditAction.LOGIN_SUCCESS)
+            .actor("admin", null)
+            .details("Logged in")
+            .build());
+    auditRecorder.record(
+        AuditRecord.of(AuditAction.LOGOUT).actor("admin", null).details("Logged out").build());
 
     PageResponse<AuditLogDTO> result = auditService.findAll(new AuditLogFilterDTO());
 
@@ -37,8 +42,13 @@ class AuditServiceImplTest {
 
   @Test
   void findAll_filteredByAction_returnsOnlyMatchingEntries() {
-    auditRecorder.record(AuditRecord.of(AuditAction.LOGIN_SUCCESS).actor("admin", null).details("Logged in").build());
-    auditRecorder.record(AuditRecord.of(AuditAction.LOGOUT).actor("admin", null).details("Logged out").build());
+    auditRecorder.record(
+        AuditRecord.of(AuditAction.LOGIN_SUCCESS)
+            .actor("admin", null)
+            .details("Logged in")
+            .build());
+    auditRecorder.record(
+        AuditRecord.of(AuditAction.LOGOUT).actor("admin", null).details("Logged out").build());
 
     AuditLogFilterDTO filter = new AuditLogFilterDTO();
     filter.setAction(AuditAction.LOGOUT);
@@ -50,8 +60,16 @@ class AuditServiceImplTest {
 
   @Test
   void findAll_filteredByActor_returnsOnlyMatchingEntries() {
-    auditRecorder.record(AuditRecord.of(AuditAction.LOGIN_SUCCESS).actor("admin", null).details("Logged in").build());
-    auditRecorder.record(AuditRecord.of(AuditAction.LOGIN_FAILURE).actor("intruder", null).details("Bad password").build());
+    auditRecorder.record(
+        AuditRecord.of(AuditAction.LOGIN_SUCCESS)
+            .actor("admin", null)
+            .details("Logged in")
+            .build());
+    auditRecorder.record(
+        AuditRecord.of(AuditAction.LOGIN_FAILURE)
+            .actor("intruder", null)
+            .details("Bad password")
+            .build());
 
     AuditLogFilterDTO filter = new AuditLogFilterDTO();
     filter.setActor("intruder");
@@ -63,8 +81,13 @@ class AuditServiceImplTest {
 
   @Test
   void findAll_filteredBySearch_matchesDetailsCaseInsensitively() {
-    auditRecorder.record(AuditRecord.of(AuditAction.SETTINGS_UPDATED).actor("admin", null).details("Changed FHIR URL").build());
-    auditRecorder.record(AuditRecord.of(AuditAction.LOGOUT).actor("admin", null).details("Logged out").build());
+    auditRecorder.record(
+        AuditRecord.of(AuditAction.SETTINGS_UPDATED)
+            .actor("admin", null)
+            .details("Changed FHIR URL")
+            .build());
+    auditRecorder.record(
+        AuditRecord.of(AuditAction.LOGOUT).actor("admin", null).details("Logged out").build());
 
     AuditLogFilterDTO filter = new AuditLogFilterDTO();
     filter.setSearch("fhir");
@@ -76,7 +99,11 @@ class AuditServiceImplTest {
 
   @Test
   void findAll_filteredByDateRange_excludesEntriesOutsideRange() {
-    auditRecorder.record(AuditRecord.of(AuditAction.LOGIN_SUCCESS).actor("admin", null).details("Logged in").build());
+    auditRecorder.record(
+        AuditRecord.of(AuditAction.LOGIN_SUCCESS)
+            .actor("admin", null)
+            .details("Logged in")
+            .build());
     LocalDateTime future = LocalDateTime.now().plusDays(1);
 
     AuditLogFilterDTO filter = new AuditLogFilterDTO();
