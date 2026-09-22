@@ -1,8 +1,7 @@
 package eu.bbmri_eric.quality.agent.audit.impl;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -18,6 +17,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.ObjectProvider;
@@ -56,14 +56,13 @@ class AuditAspectTest {
 
     aspect.recordAuditedMethod(joinPoint, audited, null);
 
-    verify(auditRecorder)
-        .record(
-            eq(AuditAction.QUALITY_CHECK_CREATED),
-            eq("admin"),
-            eq(7L),
-            isNull(),
-            eq("dataquality"),
-            eq(42L));
+    AuditRecord recorded = captureRecord();
+    assertThat(recorded.action).isEqualTo(AuditAction.QUALITY_CHECK_CREATED);
+    assertThat(recorded.actor).isEqualTo("admin");
+    assertThat(recorded.actorId).isEqualTo(7L);
+    assertThat(recorded.details).isNull();
+    assertThat(recorded.module).isEqualTo("dataquality");
+    assertThat(recorded.entityId).isEqualTo(42L);
   }
 
   @Test
@@ -75,15 +74,25 @@ class AuditAspectTest {
 
     aspect.recordAuditedMethod(joinPoint, audited, null);
 
-    verify(auditRecorder)
-        .record(
-            eq(AuditAction.QUALITY_CHECK_DELETED),
-            isNull(),
-            isNull(),
-            isNull(),
-            isNull(),
-            isNull());
+    AuditRecord recorded = captureRecord();
+    assertThat(recorded.action).isEqualTo(AuditAction.QUALITY_CHECK_DELETED);
+    assertThat(recorded.actor).isNull();
+    assertThat(recorded.actorId).isNull();
+    assertThat(recorded.entityId).isNull();
+    assertThat(recorded.details).isNull();
     verifyNoInteractions(actorIdResolverProvider);
+  }
+
+  @Test
+  void recordAuditedMethod_withDetails_recordsDetails() throws Exception {
+    Method method = TestTarget.class.getDeclaredMethod("withDetails");
+    Audited audited = method.getAnnotation(Audited.class);
+    JoinPoint joinPoint = mock(JoinPoint.class);
+
+    aspect.recordAuditedMethod(joinPoint, audited, null);
+
+    AuditRecord recorded = captureRecord();
+    assertThat(recorded.details).isEqualTo("setting changed to enabled");
   }
 
   @Test
@@ -97,14 +106,10 @@ class AuditAspectTest {
 
     aspect.recordAuditedMethod(joinPoint, audited, null);
 
-    verify(auditRecorder)
-        .record(
-            eq(AuditAction.QUALITY_CHECK_DELETED),
-            eq("admin"),
-            isNull(),
-            isNull(),
-            isNull(),
-            isNull());
+    AuditRecord recorded = captureRecord();
+    assertThat(recorded.action).isEqualTo(AuditAction.QUALITY_CHECK_DELETED);
+    assertThat(recorded.actor).isEqualTo("admin");
+    assertThat(recorded.actorId).isNull();
   }
 
   @Test
@@ -115,8 +120,9 @@ class AuditAspectTest {
 
     aspect.recordAuditedMethod(joinPoint, audited, 99L);
 
-    verify(auditRecorder)
-        .record(eq(AuditAction.REPORT_CREATED), isNull(), isNull(), isNull(), isNull(), eq(99L));
+    AuditRecord recorded = captureRecord();
+    assertThat(recorded.action).isEqualTo(AuditAction.REPORT_CREATED);
+    assertThat(recorded.entityId).isEqualTo(99L);
   }
 
   @Test
@@ -127,8 +133,9 @@ class AuditAspectTest {
 
     aspect.recordAuditedMethod(joinPoint, audited, null);
 
-    verify(auditRecorder)
-        .record(eq(AuditAction.OTHER), isNull(), isNull(), isNull(), isNull(), isNull());
+    AuditRecord recorded = captureRecord();
+    assertThat(recorded.action).isEqualTo(AuditAction.OTHER);
+    assertThat(recorded.entityId).isNull();
   }
 
   @Test
@@ -139,8 +146,15 @@ class AuditAspectTest {
 
     aspect.recordAuditedMethod(joinPoint, audited, null);
 
-    verify(auditRecorder)
-        .record(eq(AuditAction.OTHER), isNull(), isNull(), isNull(), isNull(), isNull());
+    AuditRecord recorded = captureRecord();
+    assertThat(recorded.action).isEqualTo(AuditAction.OTHER);
+    assertThat(recorded.entityId).isNull();
+  }
+
+  private AuditRecord captureRecord() {
+    ArgumentCaptor<AuditRecord> captor = ArgumentCaptor.forClass(AuditRecord.class);
+    verify(auditRecorder).record(captor.capture());
+    return captor.getValue();
   }
 
   private static JoinPoint joinPointFor(Method method, Object... args) {
@@ -159,6 +173,9 @@ class AuditAspectTest {
 
     @Audited(action = AuditAction.QUALITY_CHECK_DELETED)
     void withoutEntityId();
+
+    @Audited(action = AuditAction.SETTINGS_UPDATED, details = "setting changed to enabled")
+    void withDetails();
 
     @Audited(action = AuditAction.REPORT_CREATED, entityId = "#result")
     void withResultEntityId();

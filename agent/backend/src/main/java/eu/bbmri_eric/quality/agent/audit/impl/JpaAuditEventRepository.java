@@ -15,9 +15,8 @@ import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.stereotype.Component;
 
 /**
- * Persists Spring Boot {@link AuditEvent}s (both our own, published via {@code AuditService}, and
- * ones Spring Security publishes automatically, e.g. authentication success/failure) into the
- * existing {@code audit_log} table.
+ * Persists Spring Boot {@link AuditEvent}s published automatically by Spring Security (e.g.
+ * authentication success/failure) into the {@code audit_log} table.
  *
  * <p>Registering this bean makes Spring Boot's {@code AuditAutoConfiguration} back off from
  * creating its default in-memory repository and wire an {@code AuditListener} that forwards every

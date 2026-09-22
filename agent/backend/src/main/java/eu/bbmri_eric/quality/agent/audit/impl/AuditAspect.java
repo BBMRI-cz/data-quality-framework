@@ -2,7 +2,7 @@ package eu.bbmri_eric.quality.agent.audit.impl;
 
 import eu.bbmri_eric.quality.agent.audit.AuditActorIdResolver;
 import eu.bbmri_eric.quality.agent.audit.Audited;
-import eu.bbmri_eric.quality.agent.audit.CurrentActor;
+import eu.bbmri_eric.quality.agent.common.CurrentUser;
 import java.lang.reflect.Parameter;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
@@ -36,10 +36,16 @@ class AuditAspect {
   void recordAuditedMethod(JoinPoint joinPoint, Audited audited, Object result) {
     Long entityId = resolveEntityId(audited.entityId(), joinPoint, result);
     String module = audited.module().isBlank() ? null : audited.module();
-    Authentication authentication = CurrentActor.authentication();
+    String details = audited.details().isBlank() ? null : audited.details();
+    Authentication authentication = CurrentUser.authentication();
     String actor = authentication == null ? null : authentication.getName();
     auditRecorder.record(
-        audited.action(), actor, resolveActorId(authentication), null, module, entityId);
+        AuditRecord.of(audited.action())
+            .actor(actor, resolveActorId(authentication))
+            .module(module)
+            .entityId(entityId)
+            .details(details)
+            .build());
   }
 
   private Long resolveActorId(Authentication authentication) {

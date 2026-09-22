@@ -13,6 +13,11 @@ import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * Represents a single audit log entry, recording an action performed by a user or system.
+ * <p>This entity captures the details of an action, including the actor, timestamp, action type,
+ * and any relevant details or associated entity IDs. It is used for auditing and tracking changes within the system.
+ */
 @Getter
 @Setter
 @Entity

@@ -1,12 +1,12 @@
-package eu.bbmri_eric.quality.agent.audit;
+package eu.bbmri_eric.quality.agent.common;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-/** Resolves the currently authenticated user for audit purposes. */
-public final class CurrentActor {
+/** Provides access to the currently authenticated user from the Spring Security context. */
+public final class CurrentUser {
 
-  private CurrentActor() {}
+  private CurrentUser() {}
 
   /**
    * @return the current authenticated username, or {@code null} if there is none (unauthenticated
@@ -19,8 +19,7 @@ public final class CurrentActor {
 
   /**
    * @return the current {@link Authentication}, or {@code null} if there is none (unauthenticated,
-   *     anonymous, or system-initiated action). Useful together with {@link AuditActorIdResolver}
-   *     to resolve the actor's ID without this module depending on a specific principal type.
+   *     anonymous, or system-initiated action)
    */
   public static Authentication authentication() {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

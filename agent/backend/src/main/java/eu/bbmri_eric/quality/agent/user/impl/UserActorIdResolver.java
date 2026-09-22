@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 
 /** Resolves the current {@code User}'s ID from a {@link CustomUserDetails} principal. */
 @Component
-class UserAuditActorIdResolver implements AuditActorIdResolver {
+class UserActorIdResolver implements AuditActorIdResolver {
 
   @Override
   public Long resolveActorId(Authentication authentication) {

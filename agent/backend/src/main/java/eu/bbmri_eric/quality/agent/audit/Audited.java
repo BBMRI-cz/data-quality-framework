@@ -29,4 +29,8 @@ public @interface Audited {
    * is recorded.
    */
   String entityId() default "";
+
+  /** Details of general interest about the action, e.g. the new value of a changed property.
+   */
+  String details() default "";
 }

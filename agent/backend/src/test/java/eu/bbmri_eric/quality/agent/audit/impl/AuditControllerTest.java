@@ -22,7 +22,7 @@ class AuditControllerTest {
   private static final String AUDIT_LOGS_ENDPOINT = "/api/audit-logs";
 
   @Autowired private MockMvc mockMvc;
-  @Autowired private AuditServiceImpl auditService;
+  @Autowired private AuditRecorderImpl auditRecorder;
   @Autowired private AuditLogRepository auditLogRepository;
 
   @BeforeEach
@@ -47,7 +47,7 @@ class AuditControllerTest {
 
   @Test
   void findAll_withEntries_returnsEmbeddedList() throws Exception {
-    auditService.record(AuditAction.LOGIN_SUCCESS, "admin", "Logged in");
+    auditRecorder.record(AuditRecord.of(AuditAction.LOGIN_SUCCESS).actor("admin", null).details("Logged in").build());
 
     mockMvc
         .perform(get(AUDIT_LOGS_ENDPOINT))
@@ -60,8 +60,8 @@ class AuditControllerTest {
 
   @Test
   void findAll_filteredByAction_returnsOnlyMatchingEntries() throws Exception {
-    auditService.record(AuditAction.LOGIN_SUCCESS, "admin", "Logged in");
-    auditService.record(AuditAction.LOGOUT, "admin", "Logged out");
+    auditRecorder.record(AuditRecord.of(AuditAction.LOGIN_SUCCESS).actor("admin", null).details("Logged in").build());
+    auditRecorder.record(AuditRecord.of(AuditAction.LOGOUT).actor("admin", null).details("Logged out").build());
 
     mockMvc
         .perform(get(AUDIT_LOGS_ENDPOINT).param("action", "LOGOUT"))
@@ -72,8 +72,8 @@ class AuditControllerTest {
 
   @Test
   void findAll_filteredByActor_returnsOnlyMatchingEntries() throws Exception {
-    auditService.record(AuditAction.LOGIN_SUCCESS, "admin", "Logged in");
-    auditService.record(AuditAction.LOGIN_FAILURE, "intruder", "Bad password");
+    auditRecorder.record(AuditRecord.of(AuditAction.LOGIN_SUCCESS).actor("admin", null).details("Logged in").build());
+    auditRecorder.record(AuditRecord.of(AuditAction.LOGIN_FAILURE).actor("intruder", null).details("Bad password").build());
 
     mockMvc
         .perform(get(AUDIT_LOGS_ENDPOINT).param("actor", "intruder"))
@@ -84,8 +84,8 @@ class AuditControllerTest {
 
   @Test
   void findAll_withSearch_matchesDetailsCaseInsensitively() throws Exception {
-    auditService.record(AuditAction.SETTINGS_UPDATED, "admin", "Changed FHIR URL");
-    auditService.record(AuditAction.LOGOUT, "admin", "Logged out");
+    auditRecorder.record(AuditRecord.of(AuditAction.SETTINGS_UPDATED).actor("admin", null).details("Changed FHIR URL").build());
+    auditRecorder.record(AuditRecord.of(AuditAction.LOGOUT).actor("admin", null).details("Logged out").build());
 
     mockMvc
         .perform(get(AUDIT_LOGS_ENDPOINT).param("search", "fhir"))
@@ -97,7 +97,7 @@ class AuditControllerTest {
   @Test
   void findAll_withPagination_returnsPagedResults() throws Exception {
     for (int i = 0; i < 3; i++) {
-      auditService.record(AuditAction.LOGIN_SUCCESS, "admin", "Login " + i);
+      auditRecorder.record(AuditRecord.of(AuditAction.LOGIN_SUCCESS).actor("admin", null).details("Login " + i).build());
     }
 
     mockMvc
