@@ -1,11 +1,11 @@
-FROM node:24.18.0@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059 AS frontend-builder
+FROM node:26.10.0@sha256:a723b54c35a76e947095a20a67d39585bb09c862e6b1adeb8a9f518f95e34fb0 AS frontend-builder
 WORKDIR /app/frontend
 COPY agent/frontend/package*.json ./
 RUN npm ci --silent
 COPY agent/frontend/ .
 RUN npm run build --silent
 
-FROM maven:3.9.16-eclipse-temurin-25-noble@sha256:7e461cec477077c1d9e50b13df8aef9018764410f4c4cd7c34803f10c4c99e4c AS backend-builder
+FROM maven:3-eclipse-temurin-24-noble@sha256:a137a467ec89b5713d0be817b55bdba6b4d6ef16e3d05565a79bc08d8e775a1c AS backend-builder
 ARG ARTIFACT_VERSION=unknown
 WORKDIR /app
 COPY .git ./.git
