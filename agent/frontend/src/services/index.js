@@ -1,6 +1,7 @@
 export {
   authService,
   authenticate,
+  logout,
   validateServerUrl,
   getAppInfo,
   changePassword,

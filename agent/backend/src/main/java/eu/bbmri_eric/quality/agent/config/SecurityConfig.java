@@ -97,8 +97,8 @@ class SecurityConfig {
 
   /**
    * Makes the {@link AuthenticationManager} publish {@code AuthenticationSuccessEvent}/{@code
-   * AbstractAuthenticationFailureEvent}s on every {@code authenticate()} call, which Spring Boot's
-   * {@code AuthenticationAuditListener} turns into audit events recorded by the audit module.
+   * AbstractAuthenticationFailureEvent}s on every {@code authenticate()} call; the audit module
+   * records the failures (successful logins are recorded via {@code @Audited}).
    */
   @Bean
   AuthenticationEventPublisher authenticationEventPublisher(ApplicationEventPublisher publisher) {
