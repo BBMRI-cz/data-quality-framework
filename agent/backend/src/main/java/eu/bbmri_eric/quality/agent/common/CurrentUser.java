@@ -1,31 +1,24 @@
 package eu.bbmri_eric.quality.agent.common;
 
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import java.util.Optional;
 
-/** Provides access to the currently authenticated user from the Spring Security context. */
-public final class CurrentUser {
-
-  private CurrentUser() {}
-
-  /**
-   * @return the current authenticated username, or {@code null} if there is none (unauthenticated
-   *     or system-initiated action)
-   */
-  public static String getUsername() {
-    Authentication authentication = getAuthentication();
-    return authentication == null ? null : authentication.getName();
-  }
+/**
+ * Provides access to the currently authenticated user from the Spring Security context.
+ *
+ * <p>Implemented by the {@code user} module, so other modules can obtain the current user without
+ * depending on its principal type.
+ */
+public interface CurrentUser {
 
   /**
-   * @return the current {@link Authentication}, or {@code null} if there is none (unauthenticated,
-   *     anonymous, or system-initiated action)
+   * @return the username of the currently authenticated user, or empty if there is none
+   *     (unauthenticated, anonymous, or system-initiated action)
    */
-  public static Authentication getAuthentication() {
-    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    if (authentication == null || !authentication.isAuthenticated()) {
-      return null;
-    }
-    return "anonymousUser".equals(authentication.getName()) ? null : authentication;
-  }
+  Optional<String> getUsername();
+
+  /**
+   * @return the ID of the {@code User} behind the current authentication, or empty if there is no
+   *     authenticated user or its principal is not a recognized user type
+   */
+  Optional<Long> getUserId();
 }

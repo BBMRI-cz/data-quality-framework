@@ -2,17 +2,14 @@ package eu.bbmri_eric.quality.agent.audit.impl;
 
 import eu.bbmri_eric.quality.agent.audit.Audited;
 import eu.bbmri_eric.quality.agent.common.CurrentUser;
-import eu.bbmri_eric.quality.agent.common.UserIdResolver;
 import java.lang.reflect.Parameter;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 /**
@@ -24,12 +21,12 @@ import org.springframework.stereotype.Component;
 class AuditAspect {
 
   private final AuditRecorder auditRecorder;
-  private final ObjectProvider<UserIdResolver> userIdResolver;
+  private final CurrentUser currentUser;
   private final ExpressionParser expressionParser = new SpelExpressionParser();
 
-  AuditAspect(AuditRecorder auditRecorder, ObjectProvider<UserIdResolver> userIdResolver) {
+  AuditAspect(AuditRecorder auditRecorder, CurrentUser currentUser) {
     this.auditRecorder = auditRecorder;
-    this.userIdResolver = userIdResolver;
+    this.currentUser = currentUser;
   }
 
   @AfterReturning(value = "@annotation(audited)", returning = "result")
@@ -37,23 +34,13 @@ class AuditAspect {
     Long entityId = resolveEntityId(audited.entityId(), joinPoint, result);
     String module = audited.module().isBlank() ? null : audited.module();
     String details = audited.details().isBlank() ? null : audited.details();
-    Authentication authentication = CurrentUser.getAuthentication();
-    String actor = authentication == null ? null : authentication.getName();
     auditRecorder.record(
         AuditRecord.of(audited.action())
-            .actor(actor, resolveActorId(authentication))
+            .actor(currentUser.getUsername().orElse(null), currentUser.getUserId().orElse(null))
             .module(module)
             .entityId(entityId)
             .details(details)
             .build());
-  }
-
-  private Long resolveActorId(Authentication authentication) {
-    if (authentication == null) {
-      return null;
-    }
-    UserIdResolver resolver = userIdResolver.getIfAvailable();
-    return resolver == null ? null : resolver.resolveUserId(authentication).orElse(null);
   }
 
   private Long resolveEntityId(String expression, JoinPoint joinPoint, Object result) {

@@ -38,18 +38,21 @@ class AuthenticationContextServiceImpl implements AuthenticationContextService {
   private final PasswordEncoder passwordEncoder;
   private final AuthenticationManager authenticationManager;
   private final JwtUtil jwtUtil;
+  private final CurrentUser currentUser;
 
   AuthenticationContextServiceImpl(
       UserRepository userRepository,
       ModelMapper modelMapper,
       PasswordEncoder passwordEncoder,
       AuthenticationManager authenticationManager,
-      JwtUtil jwtUtil) {
+      JwtUtil jwtUtil,
+      CurrentUser currentUser) {
     this.userRepository = userRepository;
     this.modelMapper = modelMapper;
     this.passwordEncoder = passwordEncoder;
     this.authenticationManager = authenticationManager;
     this.jwtUtil = jwtUtil;
+    this.currentUser = currentUser;
   }
 
   @Override
@@ -75,12 +78,10 @@ class AuthenticationContextServiceImpl implements AuthenticationContextService {
       entityId = "#result",
       details = "Logged out")
   public Long logout() {
-    Authentication authentication = CurrentUser.getAuthentication();
-    if (authentication == null
-        || !(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
-      throw new AuthenticationCredentialsNotFoundException("No valid authentication found");
-    }
-    return userDetails.getUser().getUserId();
+    return currentUser
+        .getUserId()
+        .orElseThrow(
+            () -> new AuthenticationCredentialsNotFoundException("No valid authentication found"));
   }
 
   @Override
