@@ -1,8 +1,8 @@
 package eu.bbmri_eric.quality.agent.audit.impl;
 
-import eu.bbmri_eric.quality.agent.audit.AuditActorIdResolver;
 import eu.bbmri_eric.quality.agent.audit.Audited;
 import eu.bbmri_eric.quality.agent.common.CurrentUser;
+import eu.bbmri_eric.quality.agent.common.UserIdResolver;
 import java.lang.reflect.Parameter;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
@@ -24,12 +24,12 @@ import org.springframework.stereotype.Component;
 class AuditAspect {
 
   private final AuditRecorder auditRecorder;
-  private final ObjectProvider<AuditActorIdResolver> actorIdResolver;
+  private final ObjectProvider<UserIdResolver> userIdResolver;
   private final ExpressionParser expressionParser = new SpelExpressionParser();
 
-  AuditAspect(AuditRecorder auditRecorder, ObjectProvider<AuditActorIdResolver> actorIdResolver) {
+  AuditAspect(AuditRecorder auditRecorder, ObjectProvider<UserIdResolver> userIdResolver) {
     this.auditRecorder = auditRecorder;
-    this.actorIdResolver = actorIdResolver;
+    this.userIdResolver = userIdResolver;
   }
 
   @AfterReturning(value = "@annotation(audited)", returning = "result")
@@ -52,8 +52,8 @@ class AuditAspect {
     if (authentication == null) {
       return null;
     }
-    AuditActorIdResolver resolver = actorIdResolver.getIfAvailable();
-    return resolver == null ? null : resolver.resolveActorId(authentication);
+    UserIdResolver resolver = userIdResolver.getIfAvailable();
+    return resolver == null ? null : resolver.resolveUserId(authentication).orElse(null);
   }
 
   private Long resolveEntityId(String expression, JoinPoint joinPoint, Object result) {

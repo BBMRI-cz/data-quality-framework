@@ -2,6 +2,8 @@ package eu.bbmri_eric.quality.agent.audit.impl;
 
 import eu.bbmri_eric.quality.agent.audit.domain.AuditLogEntry;
 import java.time.LocalDateTime;
+import org.modelmapper.ModelMapper;
+import org.modelmapper.convention.MatchingStrategies;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -15,22 +17,27 @@ class AuditRecorderImpl implements AuditRecorder {
   private static final String SYSTEM_ACTOR = "SYSTEM";
 
   private final AuditLogRepository auditLogRepository;
+  private final ModelMapper modelMapper;
 
-  AuditRecorderImpl(AuditLogRepository auditLogRepository) {
+  AuditRecorderImpl(AuditLogRepository auditLogRepository, ModelMapper modelMapper) {
     this.auditLogRepository = auditLogRepository;
+    this.modelMapper = modelMapper;
+    modelMapper.createTypeMap(
+        AuditRecord.class,
+        AuditLogEntry.class,
+        modelMapper.getConfiguration().copy().setMatchingStrategy(MatchingStrategies.STRICT));
   }
 
   @Override
   @Transactional
   public void record(AuditRecord auditRecord) {
-    AuditLogEntry entry = new AuditLogEntry();
-    entry.setTimestamp(auditRecord.timestamp != null ? auditRecord.timestamp : LocalDateTime.now());
-    entry.setActor(auditRecord.actor != null ? auditRecord.actor : SYSTEM_ACTOR);
-    entry.setActorId(auditRecord.actorId);
-    entry.setAction(auditRecord.action);
-    entry.setDetails(auditRecord.details);
-    entry.setModule(auditRecord.module);
-    entry.setEntityId(auditRecord.entityId);
+    AuditLogEntry entry = modelMapper.map(auditRecord, AuditLogEntry.class);
+    if (entry.getTimestamp() == null) {
+      entry.setTimestamp(LocalDateTime.now());
+    }
+    if (entry.getActor() == null) {
+      entry.setActor(SYSTEM_ACTOR);
+    }
 
     auditLogRepository.save(entry);
     logger.debug(

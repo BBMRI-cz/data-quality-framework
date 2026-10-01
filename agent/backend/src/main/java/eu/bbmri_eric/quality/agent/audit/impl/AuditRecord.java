@@ -2,8 +2,13 @@ package eu.bbmri_eric.quality.agent.audit.impl;
 
 import eu.bbmri_eric.quality.agent.audit.AuditAction;
 import java.time.LocalDateTime;
+import lombok.Getter;
 
-/** Holds the data for a single audit log entry to be recorded via {@link AuditRecorder}. */
+/**
+ * Holds the data for a single audit log entry to be recorded via {@link AuditRecorder}. The getters
+ * let {@code ModelMapper} map it onto an {@code AuditLogEntry}.
+ */
+@Getter
 class AuditRecord {
 
   final AuditAction action;

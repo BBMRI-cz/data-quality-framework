@@ -8,9 +8,10 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import eu.bbmri_eric.quality.agent.audit.AuditAction;
-import eu.bbmri_eric.quality.agent.audit.AuditActorIdResolver;
 import eu.bbmri_eric.quality.agent.audit.Audited;
+import eu.bbmri_eric.quality.agent.common.UserIdResolver;
 import java.lang.reflect.Method;
+import java.util.Optional;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.junit.jupiter.api.AfterEach;
@@ -29,14 +30,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 class AuditAspectTest {
 
   @Mock private AuditRecorder auditRecorder;
-  @Mock private ObjectProvider<AuditActorIdResolver> actorIdResolverProvider;
-  @Mock private AuditActorIdResolver actorIdResolver;
+  @Mock private ObjectProvider<UserIdResolver> userIdResolverProvider;
+  @Mock private UserIdResolver userIdResolver;
 
   private AuditAspect aspect;
 
   @BeforeEach
   void setUp() {
-    aspect = new AuditAspect(auditRecorder, actorIdResolverProvider);
+    aspect = new AuditAspect(auditRecorder, userIdResolverProvider);
   }
 
   @AfterEach
@@ -48,8 +49,8 @@ class AuditAspectTest {
   void recordAuditedMethod_withAuthenticatedUser_recordsActorAndResolvedActorId() throws Exception {
     SecurityContextHolder.getContext()
         .setAuthentication(new TestingAuthenticationToken("admin", null, "ROLE_ADMIN"));
-    when(actorIdResolverProvider.getIfAvailable()).thenReturn(actorIdResolver);
-    when(actorIdResolver.resolveActorId(any(Authentication.class))).thenReturn(7L);
+    when(userIdResolverProvider.getIfAvailable()).thenReturn(userIdResolver);
+    when(userIdResolver.resolveUserId(any(Authentication.class))).thenReturn(Optional.of(7L));
     Method method = TestTarget.class.getDeclaredMethod("withParamEntityId", long.class);
     Audited audited = method.getAnnotation(Audited.class);
     JoinPoint joinPoint = joinPointFor(method, 42L);
@@ -80,7 +81,7 @@ class AuditAspectTest {
     assertThat(recorded.actorId).isNull();
     assertThat(recorded.entityId).isNull();
     assertThat(recorded.details).isNull();
-    verifyNoInteractions(actorIdResolverProvider);
+    verifyNoInteractions(userIdResolverProvider);
   }
 
   @Test
@@ -99,7 +100,7 @@ class AuditAspectTest {
   void recordAuditedMethod_authenticatedWithNoResolverBean_recordsNullActorId() throws Exception {
     SecurityContextHolder.getContext()
         .setAuthentication(new TestingAuthenticationToken("admin", null, "ROLE_ADMIN"));
-    when(actorIdResolverProvider.getIfAvailable()).thenReturn(null);
+    when(userIdResolverProvider.getIfAvailable()).thenReturn(null);
     Method method = TestTarget.class.getDeclaredMethod("withoutEntityId");
     Audited audited = method.getAnnotation(Audited.class);
     JoinPoint joinPoint = mock(JoinPoint.class);
