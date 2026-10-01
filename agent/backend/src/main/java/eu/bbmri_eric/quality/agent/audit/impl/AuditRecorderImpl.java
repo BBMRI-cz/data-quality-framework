@@ -24,7 +24,7 @@ class AuditRecorderImpl implements AuditRecorder {
   @Transactional
   public void record(AuditRecord auditRecord) {
     AuditLogEntry entry = new AuditLogEntry();
-    entry.setTimestamp(LocalDateTime.now());
+    entry.setTimestamp(auditRecord.timestamp != null ? auditRecord.timestamp : LocalDateTime.now());
     entry.setActor(auditRecord.actor != null ? auditRecord.actor : SYSTEM_ACTOR);
     entry.setActorId(auditRecord.actorId);
     entry.setAction(auditRecord.action);

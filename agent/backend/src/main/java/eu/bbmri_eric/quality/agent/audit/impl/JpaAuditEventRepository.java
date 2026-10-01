@@ -15,12 +15,13 @@ import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.stereotype.Component;
 
 /**
- * Persists Spring Boot {@link AuditEvent}s published automatically by Spring Security (e.g.
- * authentication success/failure) into the {@code audit_log} table.
+ * Adapts Spring Boot's {@link AuditEventRepository} SPI to the audit module: writes go through
+ * {@link AuditRecorder} (the same path {@code AuditAspect} uses), and reads query {@link
+ * AuditLogRepository} directly since {@code AuditService} only exposes a DTO-paged view.
  *
  * <p>Registering this bean makes Spring Boot's {@code AuditAutoConfiguration} back off from
  * creating its default in-memory repository and wire an {@code AuditListener} that forwards every
- * published {@code AuditApplicationEvent} here.
+ * published {@code AuditApplicationEvent} (e.g. authentication success/failure) here.
  */
 @Component
 class JpaAuditEventRepository implements AuditEventRepository {
@@ -28,33 +29,30 @@ class JpaAuditEventRepository implements AuditEventRepository {
   private static final Logger logger = LoggerFactory.getLogger(JpaAuditEventRepository.class);
 
   private final AuditLogRepository auditLogRepository;
+  private final AuditRecorder auditRecorder;
 
-  JpaAuditEventRepository(AuditLogRepository auditLogRepository) {
+  JpaAuditEventRepository(AuditLogRepository auditLogRepository, AuditRecorder auditRecorder) {
     this.auditLogRepository = auditLogRepository;
+    this.auditRecorder = auditRecorder;
   }
 
   @Override
   public void add(AuditEvent event) {
-    AuditLogEntry entry = new AuditLogEntry();
-    entry.setTimestamp(LocalDateTime.ofInstant(event.getTimestamp(), ZoneOffset.UTC));
-    entry.setActor(event.getPrincipal());
-    entry.setAction(mapType(event.getType()));
-
     Map<String, Object> data = event.getData();
     Object details = data.get("details");
-    entry.setDetails(details != null ? details.toString() : null);
     Object module = data.get("module");
-    entry.setModule(module != null ? module.toString() : null);
     Object entityId = data.get("entityId");
-    if (entityId instanceof Number number) {
-      entry.setEntityId(number.longValue());
-    }
     Object actorId = data.get("actorId");
-    if (actorId instanceof Number number) {
-      entry.setActorId(number.longValue());
-    }
 
-    auditLogRepository.save(entry);
+    auditRecorder.record(
+        AuditRecord.of(mapType(event.getType()))
+            .actor(
+                event.getPrincipal(), actorId instanceof Number number ? number.longValue() : null)
+            .module(module != null ? module.toString() : null)
+            .entityId(entityId instanceof Number number ? number.longValue() : null)
+            .details(details != null ? details.toString() : null)
+            .timestamp(LocalDateTime.ofInstant(event.getTimestamp(), ZoneOffset.UTC))
+            .build());
   }
 
   @Override

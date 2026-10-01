@@ -12,8 +12,8 @@ public final class CurrentUser {
    * @return the current authenticated username, or {@code null} if there is none (unauthenticated
    *     or system-initiated action)
    */
-  public static String username() {
-    Authentication authentication = authentication();
+  public static String getUsername() {
+    Authentication authentication = getAuthentication();
     return authentication == null ? null : authentication.getName();
   }
 
@@ -21,7 +21,7 @@ public final class CurrentUser {
    * @return the current {@link Authentication}, or {@code null} if there is none (unauthenticated,
    *     anonymous, or system-initiated action)
    */
-  public static Authentication authentication() {
+  public static Authentication getAuthentication() {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     if (authentication == null || !authentication.isAuthenticated()) {
       return null;

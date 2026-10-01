@@ -1,6 +1,7 @@
 package eu.bbmri_eric.quality.agent.audit.impl;
 
 import eu.bbmri_eric.quality.agent.audit.AuditAction;
+import java.time.LocalDateTime;
 
 /** Holds the data for a single audit log entry to be recorded via {@link AuditRecorder}. */
 class AuditRecord {
@@ -11,6 +12,7 @@ class AuditRecord {
   final String details;
   final String module;
   final Long entityId;
+  final LocalDateTime timestamp;
 
   private AuditRecord(Builder builder) {
     this.action = builder.action;
@@ -19,6 +21,7 @@ class AuditRecord {
     this.details = builder.details;
     this.module = builder.module;
     this.entityId = builder.entityId;
+    this.timestamp = builder.timestamp;
   }
 
   static Builder of(AuditAction action) {
@@ -33,6 +36,7 @@ class AuditRecord {
     private String details;
     private String module;
     private Long entityId;
+    private LocalDateTime timestamp;
 
     private Builder(AuditAction action) {
       this.action = action;
@@ -56,6 +60,11 @@ class AuditRecord {
 
     Builder entityId(Long entityId) {
       this.entityId = entityId;
+      return this;
+    }
+
+    Builder timestamp(LocalDateTime timestamp) {
+      this.timestamp = timestamp;
       return this;
     }
 

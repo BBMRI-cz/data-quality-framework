@@ -37,7 +37,7 @@ class AuditAspect {
     Long entityId = resolveEntityId(audited.entityId(), joinPoint, result);
     String module = audited.module().isBlank() ? null : audited.module();
     String details = audited.details().isBlank() ? null : audited.details();
-    Authentication authentication = CurrentUser.authentication();
+    Authentication authentication = CurrentUser.getAuthentication();
     String actor = authentication == null ? null : authentication.getName();
     auditRecorder.record(
         AuditRecord.of(audited.action())
