@@ -14,4 +14,4 @@ export {
   setAuthToken,
   setUserData,
 } from './auth.js';
-export { authenticate, validateServerUrl, getAppInfo } from '@/services/authService.js';
+export { authenticate, logout, validateServerUrl, getAppInfo } from '@/services/authService.js';

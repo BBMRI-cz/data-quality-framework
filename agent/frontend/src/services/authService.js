@@ -3,7 +3,7 @@
  * Handles login/logout API calls
  */
 import { api } from '@/api/client.js';
-import { setAuthToken, setUserData } from '@/api/auth.js';
+import { clearAuth, setAuthToken, setUserData } from '@/api/auth.js';
 
 /**
  * Authenticates a user with username and password
@@ -39,6 +39,24 @@ export async function authenticate(username, password) {
       throw new Error('Invalid username or password');
     }
     throw error;
+  }
+}
+
+/**
+ * Logs out the current user: records the logout on the backend, then discards the token.
+ * Tokens are stateless, so a failed backend call is logged but never blocks the logout.
+ * @returns {Promise<void>}
+ */
+export async function logout() {
+  try {
+    const res = await api.post('/api/auth/logout', null, { validateStatus: () => true });
+    if (res.status >= 400) {
+      console.error('Logout could not be recorded:', res.status);
+    }
+  } catch (error) {
+    console.error('Logout could not be recorded:', error);
+  } finally {
+    clearAuth();
   }
 }
 
@@ -123,6 +141,7 @@ export async function getAppInfo() {
 
 export const authService = {
   authenticate,
+  logout,
   changePassword,
   validateServerUrl,
   getAppInfo,

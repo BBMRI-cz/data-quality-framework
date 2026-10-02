@@ -35,7 +35,11 @@
                 >Required</span
               >
             </button>
-            <button class="dropdown-item-custom dropdown-item-signout" @click="handleLogout">
+            <button
+              class="dropdown-item-custom dropdown-item-signout"
+              :disabled="loggingOut"
+              @click="handleLogout"
+            >
               <i class="bi bi-box-arrow-right me-2"></i>
               Sign Out
             </button>
@@ -52,7 +56,7 @@
   import { ref, onMounted, onUnmounted } from 'vue';
   import { useRouter } from 'vue-router';
   import { storeToRefs } from 'pinia';
-  import { clearAuth, getUsername } from '@/api';
+  import { getUsername, logout } from '@/api';
   import { useUserStore } from '@/stores/userStore.js';
   import PasswordChangeModal from './PasswordChangeModal.vue';
   import { notificationService } from '@/services/notificationService.js';
@@ -66,9 +70,12 @@
   const showDropdown = ref(false);
   const showPasswordModal = ref(false);
   const showTooltip = ref(false);
+  const loggingOut = ref(false);
 
-  const handleLogout = () => {
-    clearAuth();
+  const handleLogout = async () => {
+    loggingOut.value = true;
+    await logout();
+    loggingOut.value = false;
     notificationService.info('Signed Out', 'You have been successfully signed out.');
     router.push('/login');
   };
