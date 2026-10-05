@@ -1,5 +1,7 @@
 package eu.bbmri_eric.quality.agent.dataquality.impl;
 
+import eu.bbmri_eric.quality.agent.audit.AuditAction;
+import eu.bbmri_eric.quality.agent.audit.Audited;
 import eu.bbmri_eric.quality.agent.common.EventPublisher;
 import eu.bbmri_eric.quality.agent.common.dto.FilterDTO;
 import eu.bbmri_eric.quality.agent.common.dto.PageResponse;
@@ -62,6 +64,11 @@ class ReportServiceImpl implements ReportService {
 
   @Override
   @Transactional
+  @Audited(
+      action = AuditAction.REPORT_CREATED,
+      module = "dataquality",
+      entityId = "#result.id",
+      details = "Report created")
   public ReportDTO create(ReportCreateDTO createDTO) {
     Report report = new Report();
     report.setEpsilonBudget(settingsService.getSettings().getEpsilon());
