@@ -1,6 +1,7 @@
 package eu.bbmri_eric.quality.agent.audit.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import eu.bbmri_eric.quality.agent.audit.AuditAction;
 import eu.bbmri_eric.quality.agent.audit.domain.AuditLogEntry;
@@ -15,7 +16,9 @@ import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckUpdateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportCreateDTO;
 import jakarta.transaction.Transactional;
+import java.time.Duration;
 import java.util.List;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +36,7 @@ class DataQualityAuditIntegrationTest {
 
   private static final String DATAQUALITY_MODULE = "dataquality";
   private static final String ADMIN_USER = "admin";
+  private static final String SYSTEM_ACTOR = "SYSTEM";
 
   @Autowired private AuditLogRepository auditLogRepository;
   @Autowired private CategoryService categoryService;
@@ -41,6 +45,11 @@ class DataQualityAuditIntegrationTest {
 
   @BeforeEach
   void setUp() {
+    auditLogRepository.deleteAll();
+  }
+
+  @AfterEach
+  void tearDown() {
     auditLogRepository.deleteAll();
   }
 
@@ -96,6 +105,29 @@ class DataQualityAuditIntegrationTest {
     Long id = reportService.create(new ReportCreateDTO()).getId();
 
     assertRecorded(AuditAction.REPORT_CREATED, id, "Report created");
+  }
+
+  @Test
+  @Transactional(Transactional.TxType.NOT_SUPPORTED)
+  void reportPipeline_recordsReportGeneratedAuditEntryWithSystemActor() {
+    Long id = reportService.create(new ReportCreateDTO()).getId();
+
+    await()
+        .atMost(Duration.ofSeconds(30))
+        .pollInterval(Duration.ofMillis(500))
+        .untilAsserted(
+            () ->
+                assertThat(auditLogRepository.findAll())
+                    .filteredOn(entry -> entry.getAction() == AuditAction.REPORT_GENERATED)
+                    .singleElement()
+                    .satisfies(
+                        entry -> {
+                          assertThat(entry.getActor()).isEqualTo(SYSTEM_ACTOR);
+                          assertThat(entry.getActorId()).isNull();
+                          assertThat(entry.getModule()).isEqualTo(DATAQUALITY_MODULE);
+                          assertThat(entry.getEntityId()).isEqualTo(id);
+                          assertThat(entry.getDetails()).isEqualTo("Report generated");
+                        }));
   }
 
   private void assertRecorded(AuditAction action, Long entityId, String details) {
