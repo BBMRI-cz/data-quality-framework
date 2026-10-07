@@ -13,90 +13,104 @@
       </router-link>
 
       <!-- Navigation Menu -->
-      <nav class="sidebar-nav">
-        <router-link
-          to="/dashboard"
-          class="nav-link"
-          :class="{ active: $route.path === '/dashboard' }"
-          @click="closeMobileMenu"
-        >
-          <i class="bi bi-pie-chart-fill"></i>
-          <span>Overview</span>
-        </router-link>
-        <router-link
-          to="/quality-checks"
-          class="nav-link"
-          :class="{ active: $route.path === '/quality-checks' }"
-          @click="closeMobileMenu"
-        >
-          <i class="bi bi-check-square-fill"></i>
-          <span>Quality Checks</span>
-        </router-link>
-        <router-link
-          to="/reports"
-          class="nav-link"
-          :class="{ active: $route.path === '/reports' }"
-          @click="closeMobileMenu"
-        >
-          <i class="bi bi-file-earmark-text-fill"></i>
-          <span>Reports</span>
-        </router-link>
-        <router-link
-          to="/servers"
-          class="nav-link"
-          :class="{ active: $route.path.startsWith('/servers') }"
-          @click="closeMobileMenu"
-        >
-          <i class="bi bi-hdd-network-fill"></i>
-          <span>Central Servers</span>
-        </router-link>
-        <router-link
-          to="/categories"
-          class="nav-link"
-          :class="{ active: $route.path.startsWith('/categories') }"
-          @click="closeMobileMenu"
-        >
-          <i class="bi bi-tags-fill"></i>
-          <span>Categories</span>
-        </router-link>
+      <div class="sidebar-nav-wrapper">
+        <nav ref="navRef" class="sidebar-nav custom-scrollbar-dark" @scroll="checkScroll">
+          <router-link
+            to="/dashboard"
+            class="nav-link"
+            :class="{ active: $route.path === '/dashboard' }"
+            @click="closeMobileMenu"
+          >
+            <i class="bi bi-pie-chart-fill"></i>
+            <span>Overview</span>
+          </router-link>
+          <router-link
+            to="/quality-checks"
+            class="nav-link"
+            :class="{ active: $route.path === '/quality-checks' }"
+            @click="closeMobileMenu"
+          >
+            <i class="bi bi-check-square-fill"></i>
+            <span>Quality Checks</span>
+          </router-link>
+          <router-link
+            to="/reports"
+            class="nav-link"
+            :class="{ active: $route.path === '/reports' }"
+            @click="closeMobileMenu"
+          >
+            <i class="bi bi-file-earmark-text-fill"></i>
+            <span>Reports</span>
+          </router-link>
+          <router-link
+            to="/servers"
+            class="nav-link"
+            :class="{ active: $route.path.startsWith('/servers') }"
+            @click="closeMobileMenu"
+          >
+            <i class="bi bi-hdd-network-fill"></i>
+            <span>Central Servers</span>
+          </router-link>
+          <router-link
+            to="/categories"
+            class="nav-link"
+            :class="{ active: $route.path.startsWith('/categories') }"
+            @click="closeMobileMenu"
+          >
+            <i class="bi bi-tags-fill"></i>
+            <span>Categories</span>
+          </router-link>
 
-        <!-- Settings Section (non-clickable parent) -->
-        <div class="nav-section">
-          <div class="nav-section-title">
-            <i class="bi bi-gear-fill"></i>
-            <span>Settings</span>
+          <!-- Settings Section (non-clickable parent) -->
+          <div class="nav-section">
+            <div class="nav-section-title">
+              <i class="bi bi-gear-fill"></i>
+              <span>Settings</span>
+            </div>
+            <div class="nav-section-items">
+              <router-link
+                to="/settings"
+                class="nav-link nav-sublink"
+                :class="{ active: $route.path === '/settings' }"
+                @click="closeMobileMenu"
+              >
+                <i class="bi bi-database-fill-gear"></i>
+                <span>Database</span>
+              </router-link>
+              <router-link
+                to="/privacy"
+                class="nav-link nav-sublink"
+                :class="{ active: $route.path === '/privacy' }"
+                @click="closeMobileMenu"
+              >
+                <i class="bi bi-person-fill-lock"></i>
+                <span>Differential Privacy</span>
+              </router-link>
+              <router-link
+                to="/diagnostics"
+                class="nav-link nav-sublink"
+                :class="{ active: $route.path === '/diagnostics' }"
+                @click="closeMobileMenu"
+              >
+                <i class="bi bi-activity"></i>
+                <span>Diagnostics</span>
+              </router-link>
+              <router-link
+                to="/audit-log"
+                class="nav-link nav-sublink"
+                :class="{ active: $route.path === '/audit-log' }"
+                @click="closeMobileMenu"
+              >
+                <i class="bi bi-journal-text"></i>
+                <span>Audit Log</span>
+              </router-link>
+            </div>
           </div>
-          <div class="nav-section-items">
-            <router-link
-              to="/settings"
-              class="nav-link nav-sublink"
-              :class="{ active: $route.path === '/settings' }"
-              @click="closeMobileMenu"
-            >
-              <i class="bi bi-database-fill-gear"></i>
-              <span>Database</span>
-            </router-link>
-            <router-link
-              to="/privacy"
-              class="nav-link nav-sublink"
-              :class="{ active: $route.path === '/privacy' }"
-              @click="closeMobileMenu"
-            >
-              <i class="bi bi-person-fill-lock"></i>
-              <span>Differential Privacy</span>
-            </router-link>
-            <router-link
-              to="/diagnostics"
-              class="nav-link nav-sublink"
-              :class="{ active: $route.path === '/diagnostics' }"
-              @click="closeMobileMenu"
-            >
-              <i class="bi bi-activity"></i>
-              <span>Diagnostics</span>
-            </router-link>
-          </div>
+        </nav>
+        <div v-show="canScrollDown" class="scroll-indicator" @click="scrollNavDown">
+          <i class="bi bi-chevron-down"></i>
         </div>
-      </nav>
+      </div>
 
       <!-- Copyright -->
       <div class="sidebar-footer">
@@ -115,10 +129,13 @@
 </template>
 
 <script setup>
-  import { ref } from 'vue';
+  import { ref, onMounted, onUnmounted } from 'vue';
   import Copyright from './Copyright.vue';
 
   const showMobileMenu = ref(false);
+  const canScrollDown = ref(false);
+  const navRef = ref(null);
+  let resizeObserver = null;
 
   const toggleMobileMenu = () => {
     showMobileMenu.value = !showMobileMenu.value;
@@ -127,6 +144,28 @@
   const closeMobileMenu = () => {
     showMobileMenu.value = false;
   };
+
+  const checkScroll = () => {
+    if (!navRef.value) return;
+    const { scrollTop, scrollHeight, clientHeight } = navRef.value;
+    canScrollDown.value = scrollHeight - scrollTop - clientHeight > 10;
+  };
+
+  const scrollNavDown = () => {
+    navRef.value?.scrollBy({ top: 100, behavior: 'smooth' });
+  };
+
+  onMounted(() => {
+    checkScroll();
+    if (navRef.value) {
+      resizeObserver = new ResizeObserver(checkScroll);
+      resizeObserver.observe(navRef.value);
+    }
+  });
+
+  onUnmounted(() => {
+    resizeObserver?.disconnect();
+  });
 </script>
 
 <style scoped>
@@ -203,12 +242,35 @@
     font-size: 0.875rem;
   }
 
-  .sidebar-nav {
+  .sidebar-nav-wrapper {
     flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .sidebar-nav {
+    height: 100%;
     display: flex;
     flex-direction: column;
     gap: var(--spacing-sm);
     padding: 0 var(--spacing-md);
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .scroll-indicator {
+    position: absolute;
+    bottom: 4px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .scroll-indicator i {
+    color: white;
+    font-size: 1rem;
   }
 
   .nav-link {
@@ -224,6 +286,7 @@
     transition: all var(--transition-base);
     position: relative;
     overflow: hidden;
+    flex-shrink: 0;
   }
 
   .nav-link i {
@@ -261,6 +324,7 @@
   }
 
   .nav-section {
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
     gap: var(--spacing-xs);

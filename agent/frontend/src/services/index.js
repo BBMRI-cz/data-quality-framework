@@ -6,6 +6,7 @@ export {
   getAppInfo,
   changePassword,
 } from './authService.js';
+export { auditService } from './auditService.js';
 export { categoryService } from './categoryService.js';
 export { diagnosticsService } from './diagnosticsService.js';
 export { healthService } from './healthService.js';

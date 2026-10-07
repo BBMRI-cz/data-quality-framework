@@ -327,3 +327,29 @@ body {
     padding: var(--spacing-sm) var(--spacing-sm);
   }
 }
+
+/* Thin dark scrollbar, shared with the server frontend (e.g. the sidebar navigation) */
+.custom-scrollbar-dark {
+  scrollbar-width: thin;
+  scrollbar-color: #4d4d4d #1a1a1a;
+}
+
+.custom-scrollbar-dark::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar-dark::-webkit-scrollbar-track {
+  background: #1a1a1a;
+  border-radius: 4px;
+}
+
+.custom-scrollbar-dark::-webkit-scrollbar-thumb {
+  background: #4d4d4d;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.custom-scrollbar-dark::-webkit-scrollbar-thumb:hover {
+  background: #666666;
+}
