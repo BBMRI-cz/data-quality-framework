@@ -3,6 +3,7 @@ package eu.bbmri_eric.quality.agent.audit;
 import eu.bbmri_eric.quality.agent.audit.dto.AuditLogDTO;
 import eu.bbmri_eric.quality.agent.audit.dto.AuditLogFilterDTO;
 import eu.bbmri_eric.quality.agent.common.dto.PageResponse;
+import java.io.Writer;
 
 /**
  * Service interface for querying audit log entries.
@@ -21,4 +22,13 @@ public interface AuditService {
    * @return a page response containing filtered audit log entries
    */
   PageResponse<AuditLogDTO> findAll(AuditLogFilterDTO filter);
+
+  /**
+   * Writes every audit log entry matching the filter to the writer as CSV, ignoring the filter's
+   * pagination. Entries are written in the filter's sort order (newest first by default).
+   *
+   * @param filter the audit-specific filter
+   * @param writer the destination of the CSV output
+   */
+  void exportCsv(AuditLogFilterDTO filter, Writer writer);
 }

@@ -5,7 +5,10 @@ import eu.bbmri_eric.quality.agent.audit.domain.AuditLogEntry;
 import eu.bbmri_eric.quality.agent.audit.dto.AuditLogDTO;
 import eu.bbmri_eric.quality.agent.audit.dto.AuditLogFilterDTO;
 import eu.bbmri_eric.quality.agent.common.dto.PageResponse;
+import jakarta.persistence.EntityManager;
+import java.io.Writer;
 import java.util.List;
+import java.util.stream.Stream;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,10 +23,13 @@ class AuditServiceImpl implements AuditService {
 
   private final AuditLogRepository auditLogRepository;
   private final ModelMapper modelMapper;
+  private final EntityManager entityManager;
 
-  AuditServiceImpl(AuditLogRepository auditLogRepository, ModelMapper modelMapper) {
+  AuditServiceImpl(
+      AuditLogRepository auditLogRepository, ModelMapper modelMapper, EntityManager entityManager) {
     this.auditLogRepository = auditLogRepository;
     this.modelMapper = modelMapper;
+    this.entityManager = entityManager;
   }
 
   @Override
@@ -36,7 +42,28 @@ class AuditServiceImpl implements AuditService {
     return new PageResponse<>(content, page.getNumber(), page.getSize(), page.getTotalElements());
   }
 
+  @Override
+  public void exportCsv(AuditLogFilterDTO filter, Writer writer) {
+    AuditLogCsvWriter csvWriter = new AuditLogCsvWriter(writer);
+    csvWriter.writeHeader();
+
+    try (Stream<AuditLogEntry> entries =
+        auditLogRepository.findBy(
+            AuditLogSpecification.fromFilter(filter),
+            query -> query.sortBy(createSort(filter)).stream())) {
+      entries.forEach(
+          entry -> {
+            csvWriter.write(modelMapper.map(entry, AuditLogDTO.class));
+            entityManager.detach(entry);
+          });
+    }
+  }
+
   private PageRequest createPageRequest(AuditLogFilterDTO filter) {
+    return PageRequest.of(filter.getPage(), filter.getSize(), createSort(filter));
+  }
+
+  private Sort createSort(AuditLogFilterDTO filter) {
     Sort.Direction direction =
         filter.getOrder() == null || filter.getOrder().name().equalsIgnoreCase("ASC")
             ? Sort.Direction.ASC
@@ -48,7 +75,6 @@ class AuditServiceImpl implements AuditService {
       direction = Sort.Direction.DESC;
     }
 
-    Sort sort = Sort.by(direction, sortProperty);
-    return PageRequest.of(filter.getPage(), filter.getSize(), sort);
+    return Sort.by(direction, sortProperty);
   }
 }
