@@ -328,28 +328,27 @@ body {
   }
 }
 
-/* Thin dark scrollbar, shared with the server frontend (e.g. the sidebar navigation) */
 .custom-scrollbar-dark {
-  scrollbar-width: thin;
-  scrollbar-color: #4d4d4d #1a1a1a;
+  scrollbar-width: auto;
+  scrollbar-color: var(--color-gray-600) transparent;
 }
 
 .custom-scrollbar-dark::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 .custom-scrollbar-dark::-webkit-scrollbar-track {
-  background: #1a1a1a;
-  border-radius: 4px;
+  background: transparent;
+  border-radius: var(--radius-sm);
 }
 
 .custom-scrollbar-dark::-webkit-scrollbar-thumb {
-  background: #4d4d4d;
-  border-radius: 4px;
-  transition: background 0.2s ease;
+  background: var(--color-gray-600);
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-base);
 }
 
 .custom-scrollbar-dark::-webkit-scrollbar-thumb:hover {
-  background: #666666;
+  background: var(--color-gray-500);
 }

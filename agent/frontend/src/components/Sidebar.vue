@@ -107,9 +107,15 @@
             </div>
           </div>
         </nav>
-        <div v-show="canScrollDown" class="scroll-indicator" @click="scrollNavDown">
-          <i class="bi bi-chevron-down"></i>
-        </div>
+        <button
+          v-show="canScrollDown"
+          type="button"
+          class="scroll-indicator btn border-0 bg-transparent p-0"
+          aria-label="Scroll navigation down"
+          @click="scrollNavDown"
+        >
+          <i class="bi bi-chevron-down" aria-hidden="true"></i>
+        </button>
       </div>
 
       <!-- Copyright -->

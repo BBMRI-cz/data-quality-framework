@@ -110,16 +110,7 @@
           <span class="total-count ms-1">({{ pagination.totalElements }} total)</span>
         </template>
         <template #timestamp="{ value }">
-          <span class="text-nowrap">{{ formatAuditTimestamp(value) }}</span>
-        </template>
-        <template #actor="{ item }">
-          <span class="text-nowrap">
-            <i
-              :class="item.actorId == null ? 'bi bi-cpu' : 'bi bi-person-fill'"
-              class="actor-icon"
-            ></i>
-            {{ item.actor }}
-          </span>
+          <span class="text-nowrap">{{ formatDateShort(value) }} {{ formatTime(value) }}</span>
         </template>
         <template #action="{ value }">
           <span class="badge" :class="getAuditActionBadgeClass(value)">
@@ -148,11 +139,8 @@
   import ActionButton from '@/components/ActionButton.vue';
   import { auditService } from '@/services/auditService.js';
   import { notificationService } from '@/services/notificationService.js';
-  import {
-    formatAuditAction,
-    formatAuditTimestamp,
-    getAuditActionBadgeClass,
-  } from '@/utils/auditUtils.js';
+  import { formatAuditAction, getAuditActionBadgeClass } from '@/utils/auditUtils.js';
+  import { formatDateShort, formatTime } from '@/utils/stringUtils.js';
   import { downloadBlob } from '@/utils/downloadUtils.js';
 
   const PAGE_SIZE = 20;
@@ -194,7 +182,7 @@
     search: filters.search.trim(),
     action: filters.action,
     dateFrom: filters.dateFrom ? `${filters.dateFrom}T00:00:00` : '',
-    dateTo: filters.dateTo ? `${filters.dateTo}T23:59:59` : '',
+    dateTo: filters.dateTo ? `${filters.dateTo}T23:59:59.999999999` : '',
   }));
 
   const getPageFromUrl = () => {
@@ -402,11 +390,6 @@
     text-transform: none;
     letter-spacing: normal;
     color: var(--color-gray-400);
-  }
-
-  .actor-icon {
-    color: var(--color-primary);
-    margin-right: var(--spacing-xs);
   }
 
   .badge {

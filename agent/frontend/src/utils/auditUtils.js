@@ -27,20 +27,3 @@ export function getAuditActionBadgeClass(action) {
   }
   return 'bg-secondary';
 }
-
-/**
- * Formats a timestamp with date and seconds (e.g. "Oct 6, 2026, 01:21:55 PM")
- * @param {string} dateString - ISO date-time string
- * @returns {string} Formatted date-time
- */
-export function formatAuditTimestamp(dateString) {
-  if (!dateString) return '';
-  return new Date(dateString).toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
-}
