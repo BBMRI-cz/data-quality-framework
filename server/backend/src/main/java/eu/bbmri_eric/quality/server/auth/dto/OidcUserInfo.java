@@ -1,0 +1,29 @@
+package eu.bbmri_eric.quality.server.auth.dto;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+/** DTO representing user information from the OIDC userinfo endpoint. */
+public record OidcUserInfo(
+    @JsonProperty("sub") String subject,
+    @JsonProperty("preferred_username") String preferredUsername,
+    @JsonProperty("name") String name,
+    @JsonProperty("email") String email,
+    @JsonProperty("given_name") String givenName,
+    @JsonProperty("family_name") String familyName) {
+
+  /**
+   * Returns the givenName + familyName from the user info, or falls back to Name or subject if full
+   * name is not available.
+   *
+   * @return username
+   */
+  public String getFullName() {
+    if ((givenName != null && !givenName.isBlank())
+        && (familyName != null && !familyName.isBlank())) {
+      return givenName + " " + familyName;
+    } else if (name != null && !name.isBlank()) {
+      return name;
+    }
+    return subject;
+  }
+}
