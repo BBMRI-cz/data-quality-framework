@@ -1,7 +1,8 @@
-package eu.bbmri_eric.quality.server.user;
+package eu.bbmri_eric.quality.server.user.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import eu.bbmri_eric.quality.server.user.LoginAttemptService;
 import org.junit.jupiter.api.Test;
 
 class LoginAttemptServiceImplTest {
@@ -48,7 +49,7 @@ class LoginAttemptServiceImplTest {
     }
     assertThat(service.isBlocked(ip)).isTrue();
 
-    ((LoginAttemptServiceImpl) service).clear();
+    service.clear();
     assertThat(service.isBlocked(ip)).isFalse();
   }
 }

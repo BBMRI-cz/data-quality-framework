@@ -1,5 +1,6 @@
-package eu.bbmri_eric.quality.server.user;
+package eu.bbmri_eric.quality.server.user.impl;
 
+import eu.bbmri_eric.quality.server.user.domain.User;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 

@@ -1,6 +1,7 @@
-package eu.bbmri_eric.quality.server.user;
+package eu.bbmri_eric.quality.server.user.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import eu.bbmri_eric.quality.server.user.UserRole;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 import java.util.Objects;

@@ -1,4 +1,4 @@
-package eu.bbmri_eric.quality.server.user;
+package eu.bbmri_eric.quality.server.user.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -6,6 +6,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
+import eu.bbmri_eric.quality.server.user.domain.User;
+import eu.bbmri_eric.quality.server.user.exception.UserNotFoundException;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

@@ -1,5 +1,6 @@
-package eu.bbmri_eric.quality.server.user;
+package eu.bbmri_eric.quality.server.user.impl;
 
+import eu.bbmri_eric.quality.server.user.LoginAttemptService;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -66,7 +67,8 @@ class LoginAttemptServiceImpl implements LoginAttemptService {
   }
 
   /** Clears all tracked attempts. Intended for test teardown only. */
-  void clear() {
+  @Override
+  public void clear() {
     attempts.clear();
   }
 

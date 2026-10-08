@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.server.common;
 
+import eu.bbmri_eric.quality.server.user.exception.UserNotFoundException;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -102,7 +103,7 @@ public class GlobalRestExceptionHandler {
     return problemDetail;
   }
 
-  @ExceptionHandler(eu.bbmri_eric.quality.server.user.UserNotFoundException.class)
+  @ExceptionHandler(UserNotFoundException.class)
   @ApiResponse(
       responseCode = "404",
       description = "User Not Found",
@@ -110,8 +111,7 @@ public class GlobalRestExceptionHandler {
           @Content(
               mediaType = "application/problem+json",
               schema = @Schema(implementation = ProblemDetail.class)))
-  public ProblemDetail handleCustomUserNotFound(
-      eu.bbmri_eric.quality.server.user.UserNotFoundException ex) {
+  public ProblemDetail handleCustomUserNotFound(UserNotFoundException ex) {
     logger.debug("User not found: {}", ex.getMessage());
     ProblemDetail problemDetail =
         ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());

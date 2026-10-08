@@ -1,7 +1,15 @@
-package eu.bbmri_eric.quality.server.user;
+package eu.bbmri_eric.quality.server.user.impl;
 
 import eu.bbmri_eric.quality.server.common.dto.FilterDTO;
 import eu.bbmri_eric.quality.server.common.dto.PageResponse;
+import eu.bbmri_eric.quality.server.user.AuthenticationContextService;
+import eu.bbmri_eric.quality.server.user.UserRole;
+import eu.bbmri_eric.quality.server.user.UserService;
+import eu.bbmri_eric.quality.server.user.domain.User;
+import eu.bbmri_eric.quality.server.user.dto.PasswordChangeRequest;
+import eu.bbmri_eric.quality.server.user.dto.UserCreateDTO;
+import eu.bbmri_eric.quality.server.user.dto.UserDTO;
+import eu.bbmri_eric.quality.server.user.exception.UserNotFoundException;
 import jakarta.transaction.Transactional;
 import java.security.SecureRandom;
 import java.util.List;

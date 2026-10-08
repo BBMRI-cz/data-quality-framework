@@ -1,4 +1,4 @@
-package eu.bbmri_eric.quality.server.user;
+package eu.bbmri_eric.quality.server.user.dto;
 
 import java.util.Objects;
 

@@ -1,5 +1,6 @@
-package eu.bbmri_eric.quality.server.user;
+package eu.bbmri_eric.quality.server.user.dto;
 
+import eu.bbmri_eric.quality.server.user.domain.User;
 import java.util.Collection;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -10,7 +11,7 @@ public class CustomUserDetails implements UserDetails {
   private final UserDTO user;
   private final String password;
 
-  CustomUserDetails(User user) {
+  public CustomUserDetails(User user) {
     this.user = new UserDTO(user.getUsername(), user.getId());
     this.password = user.getPassword();
     this.user.setRoles(user.getRoles());

@@ -1,6 +1,6 @@
 package eu.bbmri_eric.quality.server.common.auth;
 
-import eu.bbmri_eric.quality.server.user.UserDTO;
+import eu.bbmri_eric.quality.server.user.dto.UserDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**

@@ -1,5 +1,8 @@
-package eu.bbmri_eric.quality.server.user;
+package eu.bbmri_eric.quality.server.user.controller;
 
+import eu.bbmri_eric.quality.server.user.UserService;
+import eu.bbmri_eric.quality.server.user.dto.PasswordChangeRequest;
+import eu.bbmri_eric.quality.server.user.dto.UserDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;

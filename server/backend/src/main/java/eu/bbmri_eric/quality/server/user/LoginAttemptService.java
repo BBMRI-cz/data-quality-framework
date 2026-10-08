@@ -28,4 +28,6 @@ public interface LoginAttemptService {
    * @return true if the IP is currently blocked, false otherwise
    */
   boolean isBlocked(String ip);
+
+  void clear();
 }

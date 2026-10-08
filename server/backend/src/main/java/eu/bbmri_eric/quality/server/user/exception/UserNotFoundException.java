@@ -1,4 +1,4 @@
-package eu.bbmri_eric.quality.server.user;
+package eu.bbmri_eric.quality.server.user.exception;
 
 /** Exception thrown when a user cannot be found. */
 public class UserNotFoundException extends RuntimeException {

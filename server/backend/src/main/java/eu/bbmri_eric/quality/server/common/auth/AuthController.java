@@ -1,7 +1,7 @@
 package eu.bbmri_eric.quality.server.common.auth;
 
-import eu.bbmri_eric.quality.server.user.UserDTO;
 import eu.bbmri_eric.quality.server.user.UserDetailService;
+import eu.bbmri_eric.quality.server.user.dto.UserDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;

@@ -1,8 +1,8 @@
 package eu.bbmri_eric.quality.server.common.auth;
 
-import eu.bbmri_eric.quality.server.user.UserDTO;
-import eu.bbmri_eric.quality.server.user.UserNotFoundException;
 import eu.bbmri_eric.quality.server.user.UserService;
+import eu.bbmri_eric.quality.server.user.dto.UserDTO;
+import eu.bbmri_eric.quality.server.user.exception.UserNotFoundException;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;

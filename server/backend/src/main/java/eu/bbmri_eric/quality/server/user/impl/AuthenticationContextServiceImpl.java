@@ -1,5 +1,7 @@
-package eu.bbmri_eric.quality.server.user;
+package eu.bbmri_eric.quality.server.user.impl;
 
+import eu.bbmri_eric.quality.server.user.AuthenticationContextService;
+import eu.bbmri_eric.quality.server.user.dto.UserDTO;
 import java.util.Objects;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
