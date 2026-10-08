@@ -1,5 +1,8 @@
-package eu.bbmri_eric.quality.server.auth;
+package eu.bbmri_eric.quality.server.auth.controller;
 
+import eu.bbmri_eric.quality.server.auth.dto.LoginRequest;
+import eu.bbmri_eric.quality.server.auth.dto.LoginResponse;
+import eu.bbmri_eric.quality.server.auth.impl.JwtUtilImpl;
 import eu.bbmri_eric.quality.server.user.UserDetailService;
 import eu.bbmri_eric.quality.server.user.dto.UserDTO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,12 +23,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
   private final AuthenticationManager authenticationManager;
-  private final JwtUtil jwtService;
+  private final JwtUtilImpl jwtService;
   private final UserDetailService userDetailService;
 
   public AuthController(
       AuthenticationManager authenticationManager,
-      JwtUtil jwtService,
+      JwtUtilImpl jwtService,
       UserDetailService userDetailService) {
     this.authenticationManager = authenticationManager;
     this.jwtService = jwtService;

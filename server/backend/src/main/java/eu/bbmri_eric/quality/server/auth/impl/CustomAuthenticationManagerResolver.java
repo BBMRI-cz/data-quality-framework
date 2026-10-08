@@ -1,4 +1,4 @@
-package eu.bbmri_eric.quality.server.auth;
+package eu.bbmri_eric.quality.server.auth.impl;
 
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.proc.DefaultJOSEObjectTypeVerifier;
@@ -34,7 +34,7 @@ class CustomAuthenticationManagerResolver
       LoggerFactory.getLogger(CustomAuthenticationManagerResolver.class);
   private static final String INTERNAL_ISSUER = "quality-server";
 
-  private final JwtUtil jwtUtil;
+  private final JwtUtilImpl jwtUtil;
   private final JwtAuthenticationConverter jwtAuthenticationConverter;
   private final OidcIssuerProvider oidcIssuerProvider;
   private final Map<String, AuthenticationManager> authManagers;
@@ -44,7 +44,7 @@ class CustomAuthenticationManagerResolver
   private volatile String currentOidcIssuer = null;
 
   CustomAuthenticationManagerResolver(
-      JwtUtil jwtUtil,
+      JwtUtilImpl jwtUtil,
       JwtAuthenticationConverter jwtAuthenticationConverter,
       UserDetailsService userDetailsService,
       OidcIssuerProvider oidcIssuerProvider) {

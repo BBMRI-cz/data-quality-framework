@@ -1,5 +1,7 @@
-package eu.bbmri_eric.quality.server.auth;
+package eu.bbmri_eric.quality.server.auth.impl;
 
+import eu.bbmri_eric.quality.server.auth.OidcUserInfoService;
+import eu.bbmri_eric.quality.server.auth.dto.OidcUserInfo;
 import eu.bbmri_eric.quality.server.user.UserService;
 import eu.bbmri_eric.quality.server.user.dto.UserDTO;
 import eu.bbmri_eric.quality.server.user.exception.UserNotFoundException;

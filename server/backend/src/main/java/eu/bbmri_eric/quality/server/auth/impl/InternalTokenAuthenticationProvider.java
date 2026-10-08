@@ -1,5 +1,6 @@
-package eu.bbmri_eric.quality.server.auth;
+package eu.bbmri_eric.quality.server.auth.impl;
 
+import eu.bbmri_eric.quality.server.auth.JwtUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -24,7 +25,7 @@ class InternalTokenAuthenticationProvider implements AuthenticationProvider {
   private final UserDetailsService userDetailsService;
 
   public InternalTokenAuthenticationProvider(
-      JwtUtil jwtUtil, UserDetailsService userDetailsService) {
+      JwtUtilImpl jwtUtil, UserDetailsService userDetailsService) {
     this.jwtUtil = jwtUtil;
     this.userDetailsService = userDetailsService;
   }

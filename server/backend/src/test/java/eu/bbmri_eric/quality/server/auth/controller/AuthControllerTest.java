@@ -1,4 +1,4 @@
-package eu.bbmri_eric.quality.server.user.controller;
+package eu.bbmri_eric.quality.server.auth.controller;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.fail;

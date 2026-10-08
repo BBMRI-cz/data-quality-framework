@@ -1,9 +1,11 @@
-package eu.bbmri_eric.quality.server.auth;
+package eu.bbmri_eric.quality.server.auth.impl;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import eu.bbmri_eric.quality.server.auth.OidcUserInfoService;
+import eu.bbmri_eric.quality.server.auth.dto.OidcUserInfo;
 import eu.bbmri_eric.quality.server.setting.OidcIssuerProvider;
 import eu.bbmri_eric.quality.server.setting.OidcSettingsUpdatedEvent;
 import java.nio.charset.StandardCharsets;

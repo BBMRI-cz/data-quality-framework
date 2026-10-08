@@ -1,4 +1,4 @@
-package eu.bbmri_eric.quality.server.auth;
+package eu.bbmri_eric.quality.server.auth.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -10,8 +10,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import eu.bbmri_eric.quality.server.auth.InternalTokenAuthenticationProvider;
-import eu.bbmri_eric.quality.server.auth.JwtUtil;
 import io.jsonwebtoken.JwtException;
 import java.util.Collections;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,7 +33,7 @@ import org.springframework.security.oauth2.server.resource.authentication.Bearer
 @ExtendWith(MockitoExtension.class)
 class InternalTokenAuthenticationProviderTest {
 
-  @Mock private JwtUtil jwtUtil;
+  @Mock private JwtUtilImpl jwtUtil;
 
   @Mock private UserDetailsService userDetailsService;
 

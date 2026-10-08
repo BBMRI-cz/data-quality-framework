@@ -1,8 +1,7 @@
-package eu.bbmri_eric.quality.server.auth;
+package eu.bbmri_eric.quality.server.auth.impl;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import eu.bbmri_eric.quality.server.auth.JwtUtil;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.security.SignatureException;
 import java.util.Base64;
@@ -17,12 +16,12 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 /** Unit tests for JwtService focusing on signature validation and token security. */
 class JwtServiceTest {
 
-  private JwtUtil jwtService;
+  private JwtUtilImpl jwtService;
   private Authentication authentication;
 
   @BeforeEach
   void setUp() {
-    jwtService = new JwtUtil(3600000);
+    jwtService = new JwtUtilImpl(3600000);
     authentication =
         new UsernamePasswordAuthenticationToken(
             "testuser",
@@ -112,7 +111,7 @@ class JwtServiceTest {
   void validateToken_withDifferentServiceInstance_fails() {
     String token = jwtService.generateToken(authentication);
 
-    JwtUtil differentService = new JwtUtil(3600000);
+    JwtUtilImpl differentService = new JwtUtilImpl(3600000);
 
     assertFalse(differentService.validateToken(token, "testuser"));
 
