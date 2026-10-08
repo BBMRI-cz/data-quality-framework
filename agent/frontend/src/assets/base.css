@@ -327,28 +327,3 @@ body {
     padding: var(--spacing-sm) var(--spacing-sm);
   }
 }
-
-.custom-scrollbar-dark {
-  scrollbar-width: auto;
-  scrollbar-color: var(--color-gray-600) transparent;
-}
-
-.custom-scrollbar-dark::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-
-.custom-scrollbar-dark::-webkit-scrollbar-track {
-  background: transparent;
-  border-radius: var(--radius-sm);
-}
-
-.custom-scrollbar-dark::-webkit-scrollbar-thumb {
-  background: var(--color-gray-600);
-  border-radius: var(--radius-sm);
-  transition: background var(--transition-base);
-}
-
-.custom-scrollbar-dark::-webkit-scrollbar-thumb:hover {
-  background: var(--color-gray-500);
-}

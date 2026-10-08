@@ -14,7 +14,7 @@
 
       <!-- Navigation Menu -->
       <div class="sidebar-nav-wrapper">
-        <nav ref="navRef" class="sidebar-nav custom-scrollbar-dark" @scroll="checkScroll">
+        <nav ref="navRef" class="sidebar-nav" @scroll="checkScroll">
           <router-link
             to="/dashboard"
             class="nav-link"
@@ -262,6 +262,28 @@
     padding: 0 var(--spacing-md);
     overflow-y: auto;
     overflow-x: hidden;
+    scrollbar-width: auto;
+    scrollbar-color: var(--color-gray-600) transparent;
+  }
+
+  .sidebar-nav::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  .sidebar-nav::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: var(--radius-sm);
+  }
+
+  .sidebar-nav::-webkit-scrollbar-thumb {
+    background: var(--color-gray-600);
+    border-radius: var(--radius-sm);
+    transition: background var(--transition-base);
+  }
+
+  .sidebar-nav::-webkit-scrollbar-thumb:hover {
+    background: var(--color-gray-500);
   }
 
   .scroll-indicator {
