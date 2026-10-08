@@ -1,4 +1,4 @@
-package eu.bbmri_eric.quality.server.common.auth;
+package eu.bbmri_eric.quality.server.auth;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;

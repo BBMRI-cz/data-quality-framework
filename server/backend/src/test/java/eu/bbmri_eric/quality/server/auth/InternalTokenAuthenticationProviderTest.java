@@ -1,4 +1,4 @@
-package eu.bbmri_eric.quality.server.common.auth;
+package eu.bbmri_eric.quality.server.auth;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -10,6 +10,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import eu.bbmri_eric.quality.server.auth.InternalTokenAuthenticationProvider;
+import eu.bbmri_eric.quality.server.auth.JwtUtil;
 import io.jsonwebtoken.JwtException;
 import java.util.Collections;
 import org.junit.jupiter.api.BeforeEach;

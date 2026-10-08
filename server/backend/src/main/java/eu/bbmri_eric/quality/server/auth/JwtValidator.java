@@ -1,4 +1,4 @@
-package eu.bbmri_eric.quality.server.common.auth;
+package eu.bbmri_eric.quality.server.auth;
 
 import java.time.Duration;
 import org.slf4j.Logger;

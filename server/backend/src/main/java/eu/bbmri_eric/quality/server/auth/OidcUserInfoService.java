@@ -1,4 +1,4 @@
-package eu.bbmri_eric.quality.server.common.auth;
+package eu.bbmri_eric.quality.server.auth;
 
 /** Service interface for fetching OIDC user information from the userinfo endpoint. */
 interface OidcUserInfoService {

@@ -1,7 +1,8 @@
-package eu.bbmri_eric.quality.server.common.auth;
+package eu.bbmri_eric.quality.server.auth;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import eu.bbmri_eric.quality.server.auth.JwtUtil;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.security.SignatureException;
 import java.util.Base64;

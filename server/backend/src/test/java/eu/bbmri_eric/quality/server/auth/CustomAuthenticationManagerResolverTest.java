@@ -1,9 +1,12 @@
-package eu.bbmri_eric.quality.server.common.auth;
+package eu.bbmri_eric.quality.server.auth;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import eu.bbmri_eric.quality.server.auth.CustomAuthenticationManagerResolver;
+import eu.bbmri_eric.quality.server.auth.JwtAuthenticationConverter;
+import eu.bbmri_eric.quality.server.auth.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
