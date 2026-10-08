@@ -10,20 +10,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
 import java.util.List;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.PagedModel;
-import org.springframework.http.ContentDisposition;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 @RestController
 @RequestMapping("/api/audit-logs")
@@ -66,17 +61,9 @@ class AuditController {
             description = "CSV file with the matching audit log entries",
             content = @Content(mediaType = "text/csv"))
       })
-  public void exportCsv(@ParameterObject AuditLogFilterDTO filter, HttpServletResponse response)
-      throws IOException {
-    response.setContentType("text/csv");
-    response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-    response.setHeader(
-        HttpHeaders.CONTENT_DISPOSITION,
-        ContentDisposition.attachment()
-            .filename("audit-log-" + LocalDate.now() + ".csv")
-            .build()
-            .toString());
-    auditService.exportCsv(filter, response.getWriter());
+  public ResponseEntity<StreamingResponseBody> exportCsv(
+      @ParameterObject AuditLogFilterDTO filter) {
+    return auditService.exportCsv(filter);
   }
 
   @GetMapping("/actions")

@@ -1,10 +1,12 @@
 package eu.bbmri_eric.quality.agent.audit.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import eu.bbmri_eric.quality.agent.audit.AuditAction;
@@ -20,6 +22,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.RequestBuilder;
+import org.springframework.test.web.servlet.ResultActions;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -193,8 +198,7 @@ class AuditControllerTest {
             .build());
 
     String csv =
-        mockMvc
-            .perform(get(EXPORT_ENDPOINT))
+        performExport(get(EXPORT_ENDPOINT))
             .andExpect(status().isOk())
             .andExpect(content().contentTypeCompatibleWith("text/csv"))
             .andExpect(
@@ -226,8 +230,7 @@ class AuditControllerTest {
         AuditRecord.of(AuditAction.LOGOUT).actor("admin", null).details("Logged out").build());
 
     String csv =
-        mockMvc
-            .perform(
+        performExport(
                 get(EXPORT_ENDPOINT)
                     .param("action", "LOGIN_SUCCESS")
                     .param("page", "0")
@@ -256,5 +259,10 @@ class AuditControllerTest {
         .andExpect(jsonPath("$.length()").value(AuditAction.values().length))
         .andExpect(jsonPath("$[0]").value(AuditAction.values()[0].name()))
         .andExpect(jsonPath("$[*]").value(Matchers.hasItem("OTHER")));
+  }
+
+  private ResultActions performExport(RequestBuilder request) throws Exception {
+    MvcResult result = mockMvc.perform(request).andExpect(request().asyncStarted()).andReturn();
+    return mockMvc.perform(asyncDispatch(result));
   }
 }

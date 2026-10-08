@@ -3,6 +3,7 @@ package eu.bbmri_eric.quality.agent.config;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -61,7 +62,9 @@ class SecurityConfig {
         .addFilterBefore(loginRateLimitFilter, UsernamePasswordAuthenticationFilter.class)
         .authorizeHttpRequests(
             auth ->
-                auth.requestMatchers(HttpMethod.OPTIONS, "/**")
+                auth.dispatcherTypeMatchers(DispatcherType.ASYNC)
+                    .permitAll()
+                    .requestMatchers(HttpMethod.OPTIONS, "/**")
                     .permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/auth/login")
                     .permitAll()

@@ -6,15 +6,25 @@ import eu.bbmri_eric.quality.agent.audit.dto.AuditLogDTO;
 import eu.bbmri_eric.quality.agent.audit.dto.AuditLogFilterDTO;
 import eu.bbmri_eric.quality.agent.common.dto.PageResponse;
 import jakarta.persistence.EntityManager;
+import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Stream;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 /** Service implementation for querying audit log entries. */
 @Service
@@ -24,12 +34,18 @@ class AuditServiceImpl implements AuditService {
   private final AuditLogRepository auditLogRepository;
   private final ModelMapper modelMapper;
   private final EntityManager entityManager;
+  private final TransactionTemplate readOnlyTransaction;
 
   AuditServiceImpl(
-      AuditLogRepository auditLogRepository, ModelMapper modelMapper, EntityManager entityManager) {
+      AuditLogRepository auditLogRepository,
+      ModelMapper modelMapper,
+      EntityManager entityManager,
+      PlatformTransactionManager transactionManager) {
     this.auditLogRepository = auditLogRepository;
     this.modelMapper = modelMapper;
     this.entityManager = entityManager;
+    this.readOnlyTransaction = new TransactionTemplate(transactionManager);
+    this.readOnlyTransaction.setReadOnly(true);
   }
 
   @Override
@@ -43,7 +59,25 @@ class AuditServiceImpl implements AuditService {
   }
 
   @Override
-  public void exportCsv(AuditLogFilterDTO filter, Writer writer) {
+  public ResponseEntity<StreamingResponseBody> exportCsv(AuditLogFilterDTO filter) {
+    StreamingResponseBody body =
+        outputStream -> {
+          Writer writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8);
+          readOnlyTransaction.executeWithoutResult(status -> writeCsv(filter, writer));
+          writer.flush();
+        };
+    return ResponseEntity.ok()
+        .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
+        .header(
+            HttpHeaders.CONTENT_DISPOSITION,
+            ContentDisposition.attachment()
+                .filename("audit-log-" + LocalDate.now() + ".csv")
+                .build()
+                .toString())
+        .body(body);
+  }
+
+  private void writeCsv(AuditLogFilterDTO filter, Writer writer) {
     AuditLogCsvWriter csvWriter = new AuditLogCsvWriter(writer);
     csvWriter.writeHeader();
 
