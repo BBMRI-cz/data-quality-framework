@@ -1,6 +1,6 @@
-package eu.bbmri_eric.quality.server.user.impl;
+package eu.bbmri_eric.quality.server.auth.impl;
 
-import eu.bbmri_eric.quality.server.user.LoginAttemptService;
+import eu.bbmri_eric.quality.server.auth.LoginAttemptService;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;

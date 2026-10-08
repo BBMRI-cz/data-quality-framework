@@ -1,4 +1,4 @@
-package eu.bbmri_eric.quality.server.user;
+package eu.bbmri_eric.quality.server.auth;
 
 /**
  * Tracks failed login attempts per client IP for brute-force protection. Provides methods to record

@@ -1,7 +1,6 @@
-package eu.bbmri_eric.quality.server.user;
+package eu.bbmri_eric.quality.server.user.impl;
 
 import eu.bbmri_eric.quality.server.user.dto.CustomUserDetails;
-import eu.bbmri_eric.quality.server.user.impl.UserRepository;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

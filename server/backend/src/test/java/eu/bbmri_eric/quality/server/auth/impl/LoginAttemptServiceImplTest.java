@@ -1,8 +1,8 @@
-package eu.bbmri_eric.quality.server.user.impl;
+package eu.bbmri_eric.quality.server.auth.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import eu.bbmri_eric.quality.server.user.LoginAttemptService;
+import eu.bbmri_eric.quality.server.auth.LoginAttemptService;
 import org.junit.jupiter.api.Test;
 
 class LoginAttemptServiceImplTest {

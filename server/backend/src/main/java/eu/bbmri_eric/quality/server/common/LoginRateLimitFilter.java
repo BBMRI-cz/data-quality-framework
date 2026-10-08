@@ -1,7 +1,7 @@
 package eu.bbmri_eric.quality.server.common;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.bbmri_eric.quality.server.user.LoginAttemptService;
+import eu.bbmri_eric.quality.server.auth.LoginAttemptService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
