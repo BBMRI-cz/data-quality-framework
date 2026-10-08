@@ -35,7 +35,6 @@ public class JwtUtilImpl implements eu.bbmri_eric.quality.server.auth.JwtUtil {
     this.jwtExpiration = jwtExpiration;
   }
 
-
   @Override
   public String generateToken(Authentication authentication) {
     String authorities =
@@ -56,12 +55,10 @@ public class JwtUtilImpl implements eu.bbmri_eric.quality.server.auth.JwtUtil {
         .compact();
   }
 
-
   @Override
   public String extractUsername(String token) {
     return extractClaims(token).getSubject();
   }
-
 
   @Override
   public boolean validateToken(String token, String username) {
