@@ -1,5 +1,8 @@
-package eu.bbmri_eric.quality.server.common;
+package eu.bbmri_eric.quality.server.config;
 
+import eu.bbmri_eric.quality.server.common.EntityAlreadyExistsException;
+import eu.bbmri_eric.quality.server.common.EntityNotFoundException;
+import eu.bbmri_eric.quality.server.common.TooManyRequestsException;
 import eu.bbmri_eric.quality.server.user.exception.UserNotFoundException;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;

@@ -1,4 +1,4 @@
-package eu.bbmri_eric.quality.server.common;
+package eu.bbmri_eric.quality.server.config;
 
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 

@@ -1,4 +1,4 @@
-package eu.bbmri_eric.quality.server.common;
+package eu.bbmri_eric.quality.server.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.server.auth.LoginAttemptService;

@@ -1,4 +1,4 @@
-package eu.bbmri_eric.quality.server.common;
+package eu.bbmri_eric.quality.server.config;
 
 import java.util.Arrays;
 import java.util.List;

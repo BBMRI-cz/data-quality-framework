@@ -1,4 +1,4 @@
-package eu.bbmri_eric.quality.server.common;
+package eu.bbmri_eric.quality.server.config;
 
 import eu.bbmri_eric.quality.server.dataquality.domain.Agent;
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentDTO;
