@@ -2,9 +2,14 @@ package eu.bbmri_eric.quality.server.common;
 
 import eu.bbmri_eric.quality.server.common.dto.FilterDTO;
 import eu.bbmri_eric.quality.server.common.dto.PageResponse;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.hateoas.IanaLinkRelations;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.PagedModel;
@@ -14,6 +19,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 /** Utility for building pagination links using Spring HATEOAS link relations. */
 public final class LinkBuilder {
+  private static final Logger log = LoggerFactory.getLogger(LinkBuilder.class);
+
   private LinkBuilder() {}
 
   /**
@@ -38,6 +45,9 @@ public final class LinkBuilder {
   /**
    * Get page links for HATEOAS response models.
    *
+   * <p>All non-null fields of the given filter (including subclasses of {@link FilterDTO}) are
+   * serialized into every link, so paging preserves domain-specific filters.
+   *
    * @param baseUri base uri of the request, e.g. /api/resources
    * @param filterDTO filter DTO containing the filter parameters
    * @param pageMetadata page metadata
@@ -48,26 +58,31 @@ public final class LinkBuilder {
     List<Link> links = new ArrayList<>();
 
     int currentPage = (int) pageMetadata.getNumber();
-    links.add(
-        Link.of(createBaseUriBuilder(baseUri, copyWithPage(filterDTO, currentPage)))
-            .withRel(IanaLinkRelations.CURRENT));
-    if (currentPage > 0) {
+    int originalPage = filterDTO.getPage();
+    try {
+      filterDTO.setPage(currentPage);
       links.add(
-          Link.of(createBaseUriBuilder(baseUri, copyWithPage(filterDTO, 0)))
-              .withRel(IanaLinkRelations.FIRST));
-      links.add(
-          Link.of(createBaseUriBuilder(baseUri, copyWithPage(filterDTO, currentPage - 1)))
-              .withRel(IanaLinkRelations.PREVIOUS));
-    }
+          Link.of(createBaseUriBuilder(baseUri, filterDTO)).withRel(IanaLinkRelations.CURRENT));
+      if (currentPage > 0) {
+        filterDTO.setPage(0);
+        links.add(
+            Link.of(createBaseUriBuilder(baseUri, filterDTO)).withRel(IanaLinkRelations.FIRST));
+        filterDTO.setPage(currentPage - 1);
+        links.add(
+            Link.of(createBaseUriBuilder(baseUri, filterDTO)).withRel(IanaLinkRelations.PREVIOUS));
+      }
 
-    long lastPage = Math.max(pageMetadata.getTotalPages() - 1, 0);
-    if (currentPage < lastPage) {
-      links.add(
-          Link.of(createBaseUriBuilder(baseUri, copyWithPage(filterDTO, currentPage + 1)))
-              .withRel(IanaLinkRelations.NEXT));
-      links.add(
-          Link.of(createBaseUriBuilder(baseUri, copyWithPage(filterDTO, (int) lastPage)))
-              .withRel(IanaLinkRelations.LAST));
+      long lastPage = Math.max(pageMetadata.getTotalPages() - 1, 0);
+      if (currentPage < lastPage) {
+        filterDTO.setPage(currentPage + 1);
+        links.add(
+            Link.of(createBaseUriBuilder(baseUri, filterDTO)).withRel(IanaLinkRelations.NEXT));
+        filterDTO.setPage((int) lastPage);
+        links.add(
+            Link.of(createBaseUriBuilder(baseUri, filterDTO)).withRel(IanaLinkRelations.LAST));
+      }
+    } finally {
+      filterDTO.setPage(originalPage);
     }
 
     return links;
@@ -82,20 +97,35 @@ public final class LinkBuilder {
 
   private static MultiValueMap<String, String> getQueryParams(FilterDTO filterDTO) {
     MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
-
-    queryParams.add("page", String.valueOf(filterDTO.getPage()));
-    queryParams.add("size", String.valueOf(filterDTO.getSize()));
-    if (filterDTO.getSort() != null && !filterDTO.getSort().isBlank()) {
-      queryParams.add("sort", filterDTO.getSort());
+    Class<?> type = filterDTO.getClass();
+    while (type != null && type != Object.class) {
+      for (Field field : type.getDeclaredFields()) {
+        if (!Modifier.isStatic(field.getModifiers())) {
+          addQueryParam(queryParams, field, filterDTO);
+        }
+      }
+      type = type.getSuperclass();
     }
-    if (filterDTO.getOrder() != null) {
-      queryParams.add("order", filterDTO.getOrder().name());
-    }
-
     return queryParams;
   }
 
-  private static FilterDTO copyWithPage(FilterDTO filterDTO, int page) {
-    return new FilterDTO(page, filterDTO.getSize(), filterDTO.getSort(), filterDTO.getOrder());
+  private static void addQueryParam(
+      MultiValueMap<String, String> queryParams, Field field, FilterDTO filterDTO) {
+    try {
+      field.setAccessible(true);
+      Object value = field.get(filterDTO);
+      if (value == null) {
+        return;
+      }
+      if (value instanceof Collection<?> collection) {
+        for (Object item : collection) {
+          queryParams.add(field.getName(), String.valueOf(item));
+        }
+      } else {
+        queryParams.add(field.getName(), String.valueOf(value));
+      }
+    } catch (IllegalAccessException e) {
+      log.error("Error while getting query param '{}'", field.getName(), e);
+    }
   }
 }

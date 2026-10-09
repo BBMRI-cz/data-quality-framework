@@ -3,13 +3,14 @@ package eu.bbmri_eric.quality.server.user.controller;
 import eu.bbmri_eric.quality.server.user.UserService;
 import eu.bbmri_eric.quality.server.user.dto.PasswordChangeRequest;
 import eu.bbmri_eric.quality.server.user.dto.UserDTO;
+import eu.bbmri_eric.quality.server.user.dto.UserFilterDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.List;
-import org.springframework.hateoas.CollectionModel;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -31,12 +32,16 @@ public class UserController {
     this.linkBuilder = linkBuilder;
   }
 
-  @Operation(summary = "Get all users", description = "Retrieves all users in the system.")
+  @Operation(
+      summary = "Get all users",
+      description =
+          "Retrieves all users in the system with pagination, optional text search on username "
+              + "and subject ID, and optional role filtering. Sortable fields: id, username, "
+              + "subjectId, agentId")
   @GetMapping("/api/v1/users")
-  public ResponseEntity<CollectionModel<EntityModel<UserDTO>>> findAll() {
-    List<UserDTO> users = userService.findAll();
-    CollectionModel<EntityModel<UserDTO>> userModels = linkBuilder.toCollectionModel(users);
-    return ResponseEntity.ok(CollectionModel.of(userModels));
+  public ResponseEntity<PagedModel<EntityModel<UserDTO>>> findAll(
+      @Valid @ParameterObject UserFilterDTO filter) {
+    return ResponseEntity.ok(linkBuilder.toPagedModel(userService.findAll(filter), filter));
   }
 
   @Operation(summary = "Get user by ID", description = "Retrieves a specific user by their ID.")

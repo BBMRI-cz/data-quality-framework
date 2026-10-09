@@ -1,5 +1,9 @@
 package eu.bbmri_eric.quality.server.user.controller;
 
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -9,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.server.auth.dto.LoginRequest;
+import eu.bbmri_eric.quality.server.user.UserRole;
 import eu.bbmri_eric.quality.server.user.domain.User;
 import eu.bbmri_eric.quality.server.user.dto.PasswordChangeRequest;
 import eu.bbmri_eric.quality.server.user.impl.UserRepository;
@@ -284,6 +289,285 @@ public class UserControllerTest {
   }
 
   @Test
+  void getAllUsers_searchByUsername_returnsOnlyMatchingUser() throws Exception {
+    String token = authenticateAndGetToken();
+    createTestUsers();
+
+    mockMvc
+        .perform(
+            get("/api/v1/users")
+                .param("search", "smith")
+                .header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.page.totalElements").value(1))
+        .andExpect(jsonPath("$._embedded.userDTOList", hasSize(1)))
+        .andExpect(jsonPath("$._embedded.userDTOList[0].username", is("alice.smith")));
+  }
+
+  @Test
+  void getAllUsers_searchByUsernameCaseInsensitive_returnsOnlyMatchingUser() throws Exception {
+    String token = authenticateAndGetToken();
+    createTestUsers();
+
+    mockMvc
+        .perform(
+            get("/api/v1/users")
+                .param("search", "ALICE")
+                .header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.page.totalElements").value(1))
+        .andExpect(jsonPath("$._embedded.userDTOList[0].username", is("alice.smith")));
+  }
+
+  @Test
+  void getAllUsers_searchBySubjectId_returnsOnlyMatchingUser() throws Exception {
+    String token = authenticateAndGetToken();
+    createTestUsers();
+
+    mockMvc
+        .perform(
+            get("/api/v1/users")
+                .param("search", "subject-bbb-222")
+                .header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.page.totalElements").value(1))
+        .andExpect(jsonPath("$._embedded.userDTOList[0].username", is("bob.jones")));
+  }
+
+  @Test
+  void getAllUsers_searchWithoutMatch_returnsEmptyPage() throws Exception {
+    String token = authenticateAndGetToken();
+    createTestUsers();
+
+    mockMvc
+        .perform(
+            get("/api/v1/users")
+                .param("search", "no-such-user")
+                .header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.page.totalElements").value(0));
+  }
+
+  @Test
+  void getAllUsers_blankSearch_returnsAllUsers() throws Exception {
+    String token = authenticateAndGetToken();
+    createTestUsers();
+
+    mockMvc
+        .perform(
+            get("/api/v1/users").param("search", "  ").header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.page.totalElements").value(4))
+        .andExpect(jsonPath("$._embedded.userDTOList", hasSize(4)));
+  }
+
+  @Test
+  void getAllUsers_filterBySingleRole_returnsOnlyUsersWithRole() throws Exception {
+    String token = authenticateAndGetToken();
+    createTestUsers();
+
+    mockMvc
+        .perform(
+            get("/api/v1/users").param("roles", "admin").header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.page.totalElements").value(1))
+        .andExpect(jsonPath("$._embedded.userDTOList", hasSize(1)))
+        .andExpect(jsonPath("$._embedded.userDTOList[0].username", is(ADMIN_USER)));
+  }
+
+  @Test
+  void getAllUsers_filterByRoleCaseInsensitive_excludesUsersWithoutRole() throws Exception {
+    String token = authenticateAndGetToken();
+    createTestUsers();
+
+    mockMvc
+        .perform(
+            get("/api/v1/users")
+                .param("roles", "human_user")
+                .header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.page.totalElements").value(3))
+        .andExpect(jsonPath("$._embedded.userDTOList", hasSize(3)))
+        .andExpect(
+            jsonPath(
+                "$._embedded.userDTOList[*].username",
+                containsInAnyOrder(ADMIN_USER, "alice.smith", "bob.jones")));
+  }
+
+  @Test
+  void getAllUsers_filterByMultipleRoles_returnsDistinctUsersWithAnyRole() throws Exception {
+    String token = authenticateAndGetToken();
+    createTestUsers();
+
+    // admin has both ADMIN and HUMAN_USER but must appear only once
+    mockMvc
+        .perform(
+            get("/api/v1/users")
+                .param("roles", "admin,human_user")
+                .header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.page.totalElements").value(3))
+        .andExpect(jsonPath("$._embedded.userDTOList", hasSize(3)))
+        .andExpect(
+            jsonPath(
+                "$._embedded.userDTOList[*].username",
+                containsInAnyOrder(ADMIN_USER, "alice.smith", "bob.jones")));
+  }
+
+  @Test
+  void getAllUsers_filterByInvalidRole_returnsBadRequest() throws Exception {
+    String token = authenticateAndGetToken();
+
+    mockMvc
+        .perform(
+            get("/api/v1/users")
+                .param("roles", "not_a_role")
+                .header("Authorization", "Bearer " + token))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void getAllUsers_searchAndRoleCombined_returnsIntersection() throws Exception {
+    String token = authenticateAndGetToken();
+    createTestUsers();
+
+    mockMvc
+        .perform(
+            get("/api/v1/users")
+                .param("search", "jones")
+                .param("roles", "human_user")
+                .header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.page.totalElements").value(1))
+        .andExpect(jsonPath("$._embedded.userDTOList[0].username", is("bob.jones")));
+
+    // bob.jones matches the search but does not have the ADMIN role
+    mockMvc
+        .perform(
+            get("/api/v1/users")
+                .param("search", "jones")
+                .param("roles", "admin")
+                .header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.page.totalElements").value(0));
+  }
+
+  @Test
+  void getAllUsers_withPagination_returnsRequestedPage() throws Exception {
+    String token = authenticateAndGetToken();
+    createTestUsers();
+
+    mockMvc
+        .perform(
+            get("/api/v1/users")
+                .param("size", "2")
+                .param("page", "1")
+                .param("sort", "username")
+                .header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.page.number").value(1))
+        .andExpect(jsonPath("$.page.totalElements").value(4))
+        .andExpect(
+            jsonPath("$._embedded.userDTOList[*].username", contains("alice.smith", "bob.jones")));
+  }
+
+  @Test
+  void getAllUsers_sortedByUsernameDesc_returnsUsersInDescendingOrder() throws Exception {
+    String token = authenticateAndGetToken();
+    createTestUsers();
+
+    mockMvc
+        .perform(
+            get("/api/v1/users")
+                .param("sort", "username")
+                .param("order", "DESC")
+                .header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(
+            jsonPath(
+                "$._embedded.userDTOList[*].username",
+                contains("bob.jones", "alice.smith", "agent-bot", ADMIN_USER)));
+  }
+
+  @Test
+  void getAllUsers_withInvalidSortField_returnsBadRequest() throws Exception {
+    String token = authenticateAndGetToken();
+
+    mockMvc
+        .perform(
+            get("/api/v1/users")
+                .param("sort", "doesNotExist")
+                .header("Authorization", "Bearer " + token))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void getAllUsers_searchWithLikeWildcards_matchesLiterally() throws Exception {
+    String token = authenticateAndGetToken();
+    createTestUsers();
+    User percentageUser = new User("nico%le", "subject-ddd-444");
+    percentageUser.addRole(UserRole.HUMAN_USER);
+    userRepository.save(percentageUser);
+
+    // '%' must be treated as a literal character, not as a wildcard matching everything
+    mockMvc
+        .perform(
+            get("/api/v1/users").param("search", "%").header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.page.totalElements").value(1))
+        .andExpect(jsonPath("$._embedded.userDTOList[0].username", is("nico%le")));
+
+    // A trailing '%' must not widen the match (would match alice.smith if it were a wildcard)
+    mockMvc
+        .perform(
+            get("/api/v1/users")
+                .param("search", "alice%")
+                .header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.page.totalElements").value(0));
+  }
+
+  @Test
+  void getAllUsers_filteredAndPaginated_paginationLinksPreserveFilters() throws Exception {
+    String token = authenticateAndGetToken();
+    createTestUsers();
+
+    // search=subject matches alice and bob (agent-bot has no HUMAN_USER role), so size=1 paginates
+    mockMvc
+        .perform(
+            get("/api/v1/users")
+                .param("search", "subject")
+                .param("roles", "human_user")
+                .param("size", "1")
+                .param("page", "0")
+                .header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.page.totalElements").value(2))
+        .andExpect(jsonPath("$._links.next.href", containsString("search=subject")))
+        .andExpect(jsonPath("$._links.next.href", containsString("roles=HUMAN_USER")))
+        .andExpect(jsonPath("$._links.next.href", containsString("page=1")))
+        .andExpect(jsonPath("$._links.last.href", containsString("search=subject")))
+        .andExpect(jsonPath("$._links.last.href", containsString("roles=HUMAN_USER")))
+        .andExpect(jsonPath("$._links.current.href", containsString("search=subject")))
+        .andExpect(jsonPath("$._links.current.href", containsString("roles=HUMAN_USER")));
+
+    mockMvc
+        .perform(
+            get("/api/v1/users")
+                .param("search", "subject")
+                .param("roles", "human_user")
+                .param("size", "1")
+                .param("page", "1")
+                .header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$._links.first.href", containsString("search=subject")))
+        .andExpect(jsonPath("$._links.first.href", containsString("roles=HUMAN_USER")))
+        .andExpect(jsonPath("$._links.previous.href", containsString("search=subject")))
+        .andExpect(jsonPath("$._links.previous.href", containsString("roles=HUMAN_USER")))
+        .andExpect(jsonPath("$._links.previous.href", containsString("page=0")));
+  }
+
+  @Test
   void getUserById_withValidTokenAndExistingUser_returnsUser() throws Exception {
     String token = authenticateAndGetToken();
     User adminUser = userRepository.findByUsername(ADMIN_USER).orElseThrow();
@@ -317,6 +601,23 @@ public class UserControllerTest {
     mockMvc
         .perform(get("/api/v1/users/1").header("Authorization", "Bearer invalid-token"))
         .andExpect(status().isUnauthorized());
+  }
+
+  /**
+   * Creates test fixture users in addition to the seeded admin user (which has both ADMIN and
+   * HUMAN_USER roles): two regular users with the HUMAN_USER role and one agent user without any
+   * role.
+   */
+  private void createTestUsers() {
+    User alice = new User("alice.smith", "subject-aaa-111");
+    alice.addRole(UserRole.HUMAN_USER);
+    userRepository.save(alice);
+
+    User bob = new User("bob.jones", "subject-bbb-222");
+    bob.addRole(UserRole.HUMAN_USER);
+    userRepository.save(bob);
+
+    userRepository.save(new User("agent-bot", "subject-ccc-333"));
   }
 
   /** Helper method to authenticate and extract JWT token from response */

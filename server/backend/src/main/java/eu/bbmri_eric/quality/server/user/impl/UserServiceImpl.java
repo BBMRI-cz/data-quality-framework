@@ -9,17 +9,21 @@ import eu.bbmri_eric.quality.server.user.domain.User;
 import eu.bbmri_eric.quality.server.user.dto.PasswordChangeRequest;
 import eu.bbmri_eric.quality.server.user.dto.UserCreateDTO;
 import eu.bbmri_eric.quality.server.user.dto.UserDTO;
+import eu.bbmri_eric.quality.server.user.dto.UserFilterDTO;
 import eu.bbmri_eric.quality.server.user.exception.UserNotFoundException;
-import jakarta.transaction.Transactional;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Objects;
 import org.apache.commons.lang3.NotImplementedException;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -27,6 +31,11 @@ public class UserServiceImpl implements UserService {
   private static final String CHARACTERS =
       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
   private static final int DEFAULT_PASSWORD_LENGTH = 12;
+
+  /** Fields of {@link User} that clients are allowed to sort by. */
+  private static final List<String> SORTABLE_FIELDS =
+      List.of("id", "username", "subjectId", "agentId");
+
   private final SecureRandom secureRandom = new SecureRandom();
 
   private final UserRepository userRepository;
@@ -160,8 +169,40 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
-  public PageResponse<UserDTO> findAll(FilterDTO filter) {
-    throw new NotImplementedException("Not yet implemented");
+  @Transactional(readOnly = true)
+  public PageResponse<UserDTO> findAll(UserFilterDTO filter) {
+    FilterDTO normalizedFilter = normalizeFilter(filter);
+    Sort.Direction direction =
+        normalizedFilter.getOrder() == FilterDTO.SortOrder.DESC
+            ? Sort.Direction.DESC
+            : Sort.Direction.ASC;
+
+    Sort sort = Sort.by(direction, normalizedFilter.getSort());
+    PageRequest pageRequest =
+        PageRequest.of(normalizedFilter.getPage(), normalizedFilter.getSize(), sort);
+    Page<User> page = userRepository.findAll(UserSpecification.fromFilter(filter), pageRequest);
+
+    List<UserDTO> content =
+        page.getContent().stream().map(user -> modelMapper.map(user, UserDTO.class)).toList();
+    return new PageResponse<>(content, page.getNumber(), page.getSize(), page.getTotalElements());
+  }
+
+  private FilterDTO normalizeFilter(FilterDTO filter) {
+    if (filter.getOrder() == null) {
+      filter.setOrder(FilterDTO.SortOrder.ASC);
+    }
+
+    if (filter.getSort() == null || filter.getSort().isBlank()) {
+      filter.setSort("id");
+    }
+
+    if (!SORTABLE_FIELDS.contains(filter.getSort())) {
+      throw new IllegalArgumentException(
+          "Unsupported sort field: '%s'. Supported fields: %s"
+              .formatted(filter.getSort(), SORTABLE_FIELDS));
+    }
+
+    return filter;
   }
 
   @Override
