@@ -1,5 +1,7 @@
 package eu.bbmri_eric.quality.agent.dataquality.impl;
 
+import eu.bbmri_eric.quality.agent.audit.AuditAction;
+import eu.bbmri_eric.quality.agent.audit.Audited;
 import eu.bbmri_eric.quality.agent.common.dto.FilterDTO;
 import eu.bbmri_eric.quality.agent.common.dto.PageResponse;
 import eu.bbmri_eric.quality.agent.common.exception.EntityNotFoundException;
@@ -43,6 +45,11 @@ class QualityCheckServiceImpl implements QualityCheckService {
 
   @Override
   @Transactional
+  @Audited(
+      action = AuditAction.QUALITY_CHECK_CREATED,
+      module = "dataquality",
+      entityId = "#result.id",
+      details = "Quality check created")
   public QualityCheckDTO create(QualityCheckCreateDTO createDTO) {
     QualityCheck qualityCheck = modelMapper.map(createDTO, QualityCheck.class);
     qualityCheck.setId(null);
@@ -128,6 +135,13 @@ class QualityCheckServiceImpl implements QualityCheckService {
 
   @Override
   @Transactional
+  @Audited(
+      action = AuditAction.QUALITY_CHECK_UPDATED,
+      module = "dataquality",
+      entityId = "#id",
+      details = "Quality check updated",
+      diff = "#target.findById(#id)",
+      sensitive = "query")
   public QualityCheckDTO update(Long id, QualityCheckUpdateDTO updateDTO) {
     QualityCheck qualityCheck =
         qualityCheckRepository
@@ -142,6 +156,10 @@ class QualityCheckServiceImpl implements QualityCheckService {
 
   @Override
   @Transactional
+  @Audited(
+      action = AuditAction.QUALITY_CHECK_UPDATED,
+      module = "dataquality",
+      details = "Quality checks bulk updated")
   public List<QualityCheckDTO> updateAll(List<QualityCheckBulkUpdateDTO> updateDTOs) {
     List<QualityCheckDTO> updated = updateDTOs.stream().map(this::updatePartially).toList();
     logger.info("Bulk updated {} quality checks", updated.size());
@@ -187,6 +205,11 @@ class QualityCheckServiceImpl implements QualityCheckService {
 
   @Override
   @Transactional
+  @Audited(
+      action = AuditAction.QUALITY_CHECK_DELETED,
+      module = "dataquality",
+      entityId = "#id",
+      details = "Quality check deleted")
   public void delete(Long id) {
     if (!qualityCheckRepository.existsById(id)) {
       throw new QualityCheckNotFoundException(id);

@@ -1,5 +1,7 @@
 package eu.bbmri_eric.quality.agent.dataquality.impl;
 
+import eu.bbmri_eric.quality.agent.audit.AuditAction;
+import eu.bbmri_eric.quality.agent.audit.Audited;
 import eu.bbmri_eric.quality.agent.common.EventPublisher;
 import eu.bbmri_eric.quality.agent.dataquality.ReportPipelineStep;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
@@ -19,6 +21,11 @@ class FinishingStep implements ReportPipelineStep {
   }
 
   @Override
+  @Audited(
+      action = AuditAction.REPORT_GENERATED,
+      module = "dataquality",
+      entityId = "#result.id",
+      details = "Report generated")
   public Report execute(Report report) {
     log.info("Finishing report generation for report id: {}", report.getId());
     report.setStatus(ReportStatus.GENERATED);

@@ -1,5 +1,7 @@
 package eu.bbmri_eric.quality.agent.dataquality.impl;
 
+import eu.bbmri_eric.quality.agent.audit.AuditAction;
+import eu.bbmri_eric.quality.agent.audit.Audited;
 import eu.bbmri_eric.quality.agent.common.dto.FilterDTO;
 import eu.bbmri_eric.quality.agent.common.dto.PageResponse;
 import eu.bbmri_eric.quality.agent.common.exception.EntityAlreadyExistsException;
@@ -33,6 +35,11 @@ class CategoryServiceImpl implements CategoryService {
   }
 
   @Override
+  @Audited(
+      action = AuditAction.QUALITY_CHECK_CATEGORY_CREATED,
+      module = "dataquality",
+      entityId = "#result.id",
+      details = "Category created")
   public CategoryDTO create(CategoryCreateDTO categoryCreateDTO) {
     Objects.requireNonNull(categoryCreateDTO, "CategoryCreateDTO cannot be null");
 
@@ -74,6 +81,12 @@ class CategoryServiceImpl implements CategoryService {
   }
 
   @Override
+  @Audited(
+      action = AuditAction.QUALITY_CHECK_CATEGORY_UPDATED,
+      module = "dataquality",
+      entityId = "#id",
+      details = "Category updated",
+      diff = "#target.findById(#id)")
   public CategoryDTO update(Long id, CategoryUpdateDTO categoryUpdateDTO) {
     Objects.requireNonNull(id, "ID cannot be null");
     Objects.requireNonNull(categoryUpdateDTO, "CategoryUpdateDTO cannot be null");
@@ -104,6 +117,11 @@ class CategoryServiceImpl implements CategoryService {
   }
 
   @Override
+  @Audited(
+      action = AuditAction.QUALITY_CHECK_CATEGORY_DELETED,
+      module = "dataquality",
+      entityId = "#id",
+      details = "Category deleted")
   public void delete(Long id) {
     Objects.requireNonNull(id, "ID cannot be null");
     if (!categoryRepository.existsById(id)) {
