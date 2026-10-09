@@ -76,21 +76,11 @@ public class UserServiceImpl implements UserService {
   @Override
   @Transactional
   public UserDTO createBySubjectId(String subjectId, String username) {
-    // Idempotent upsert: concurrent first logins for the same OIDC subject must not raise
-    // unique constraint violations. When the row already existed, the insert is skipped
-    // and the existing user is returned unchanged.
-    int inserted = userRepository.insertUserIgnoringConflicts(username, subjectId);
-    User user =
-        userRepository
-            .findBySubjectId(subjectId)
-            .orElseThrow(
-                () -> new UserNotFoundException("User not found with subject ID: " + subjectId));
-    if (inserted > 0) {
-      user.addRole(UserRole.ADMIN);
-      user.addRole(UserRole.HUMAN_USER);
-      user = userRepository.save(user);
-    }
-    return modelMapper.map(user, UserDTO.class);
+    User user = new User(username, subjectId);
+    user.addRole(UserRole.ADMIN);
+    user.addRole(UserRole.HUMAN_USER);
+    User savedUser = userRepository.save(user);
+    return modelMapper.map(savedUser, UserDTO.class);
   }
 
   @Override
