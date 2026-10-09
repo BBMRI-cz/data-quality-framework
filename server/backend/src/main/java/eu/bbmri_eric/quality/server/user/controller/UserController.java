@@ -1,9 +1,9 @@
 package eu.bbmri_eric.quality.server.user.controller;
 
-import eu.bbmri_eric.quality.server.common.dto.FilterDTO;
 import eu.bbmri_eric.quality.server.user.UserService;
 import eu.bbmri_eric.quality.server.user.dto.PasswordChangeRequest;
 import eu.bbmri_eric.quality.server.user.dto.UserDTO;
+import eu.bbmri_eric.quality.server.user.dto.UserFilterDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,10 +34,12 @@ public class UserController {
 
   @Operation(
       summary = "Get all users",
-      description = "Retrieves all users in the system with pagination")
+      description =
+          "Retrieves all users in the system with pagination, optional text search on username "
+              + "and subject ID, and optional role filtering")
   @GetMapping("/api/v1/users")
   public ResponseEntity<PagedModel<EntityModel<UserDTO>>> findAll(
-      @Valid @ParameterObject FilterDTO filter) {
+      @Valid @ParameterObject UserFilterDTO filter) {
     return ResponseEntity.ok(linkBuilder.toPagedModel(userService.findAll(filter), filter));
   }
 

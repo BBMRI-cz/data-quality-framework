@@ -9,6 +9,7 @@ import eu.bbmri_eric.quality.server.user.domain.User;
 import eu.bbmri_eric.quality.server.user.dto.PasswordChangeRequest;
 import eu.bbmri_eric.quality.server.user.dto.UserCreateDTO;
 import eu.bbmri_eric.quality.server.user.dto.UserDTO;
+import eu.bbmri_eric.quality.server.user.dto.UserFilterDTO;
 import eu.bbmri_eric.quality.server.user.exception.UserNotFoundException;
 import java.security.SecureRandom;
 import java.util.List;
@@ -164,7 +165,7 @@ public class UserServiceImpl implements UserService {
 
   @Override
   @Transactional(readOnly = true)
-  public PageResponse<UserDTO> findAll(FilterDTO filter) {
+  public PageResponse<UserDTO> findAll(UserFilterDTO filter) {
     FilterDTO normalizedFilter = normalizeFilter(filter);
     Sort.Direction direction =
         normalizedFilter.getOrder() == FilterDTO.SortOrder.DESC
@@ -174,7 +175,7 @@ public class UserServiceImpl implements UserService {
     Sort sort = Sort.by(direction, normalizedFilter.getSort());
     PageRequest pageRequest =
         PageRequest.of(normalizedFilter.getPage(), normalizedFilter.getSize(), sort);
-    Page<User> page = userRepository.findAll(pageRequest);
+    Page<User> page = userRepository.findAll(UserSpecification.fromFilter(filter), pageRequest);
 
     List<UserDTO> content =
         page.getContent().stream().map(user -> modelMapper.map(user, UserDTO.class)).toList();

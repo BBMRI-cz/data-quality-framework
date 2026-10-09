@@ -4,9 +4,9 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 import eu.bbmri_eric.quality.server.common.LinkBuilder;
-import eu.bbmri_eric.quality.server.common.dto.FilterDTO;
 import eu.bbmri_eric.quality.server.common.dto.PageResponse;
 import eu.bbmri_eric.quality.server.user.dto.UserDTO;
+import eu.bbmri_eric.quality.server.user.dto.UserFilterDTO;
 import java.util.List;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
@@ -31,7 +31,7 @@ public class UserLinkBuilder {
   }
 
   public PagedModel<EntityModel<UserDTO>> toPagedModel(
-      PageResponse<UserDTO> pageResponse, FilterDTO filter) {
+      PageResponse<UserDTO> pageResponse, UserFilterDTO filter) {
     List<EntityModel<UserDTO>> userModels =
         pageResponse.getContent().stream().map(this::toModel).toList();
 
