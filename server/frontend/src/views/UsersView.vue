@@ -27,7 +27,7 @@
       <div class="col-12 col-sm-6 col-lg-4">
         <StatsCard
           label="Total Users"
-          :value="users.length"
+          :value="totalUsers"
           icon="bi bi-people"
           color="var(--color-primary)"
         />
@@ -35,25 +35,31 @@
     </div>
 
     <div class="mb-3 mb-md-4">
-      <SearchBar v-model="searchQuery" placeholder="Search users..." />
+      <SearchBar v-model="searchQuery" placeholder="Search by username or subject ID..." />
+    </div>
+
+    <div class="mb-3 mb-md-4">
+      <LabeledValuesFilter v-model="selectedRole" label="Roles:" :categories="roleOptions" />
     </div>
 
     <PaginatedTable
       title="System Users"
       :columns="tableColumns"
       :items="tableRows"
-      :total-items="filteredUsers.length"
+      :page="currentPage"
+      :page-size="pageSize"
+      :total-items="totalUsers"
       :loading="loading"
       :error="error"
       :empty-title="emptyTitle"
       :empty-text="emptyText"
       item-key="id"
       item-label="users"
-      :paginate="false"
       @row-click="viewUserDetail"
+      @page-change="onPageChange"
     >
       <template #header-meta>
-        <Badge :text="`${filteredUsers.length} users`" variant="secondary" size="small" />
+        <Badge :text="`${totalUsers} users`" variant="secondary" size="small" />
       </template>
 
       <template #cell-username="{ value }">
@@ -73,40 +79,39 @@
 </template>
 
 <script setup>
-  import { ref, computed, onMounted } from 'vue';
+  import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
   import { useRouter } from 'vue-router';
   import { apiService } from '@/services/apiService.js';
   import PageHeader from '@/components/ui/PageHeader.vue';
   import StatsCard from '@/components/ui/StatsCard.vue';
   import SearchBar from '@/components/ui/SearchBar.vue';
+  import LabeledValuesFilter from '@/components/ui/LabeledValuesFilter.vue';
   import PaginatedTable from '@/components/ui/PaginatedTable.vue';
   import Badge from '@/components/ui/Badge.vue';
 
+  const SEARCH_DEBOUNCE_MS = 300;
+  const DEFAULT_ROLE = 'HUMAN_USER';
+  const roleOptions = ['HUMAN_USER', 'ADMIN'];
+
   const router = useRouter();
   const users = ref([]);
+  const totalUsers = ref(0);
+  const currentPage = ref(0);
+  const pageSize = ref(10);
+  const searchQuery = ref('');
+  const selectedRole = ref(DEFAULT_ROLE);
   const loading = ref(false);
   const error = ref(null);
-  const searchQuery = ref('');
+  let searchDebounceTimer = null;
+
   const tableColumns = [
     { key: 'username', label: 'Username' },
     { key: 'subjectId', label: 'Subject ID' },
     { key: 'roles', label: 'Roles' },
   ];
 
-  const filteredUsers = computed(() => {
-    if (!searchQuery.value) {
-      return users.value;
-    }
-
-    const query = searchQuery.value.toLowerCase();
-    return users.value.filter(
-      (user) =>
-        user.username?.toLowerCase().includes(query) || user.agentId?.toLowerCase().includes(query)
-    );
-  });
-
   const tableRows = computed(() =>
-    filteredUsers.value.map((user) => ({
+    users.value.map((user) => ({
       ...user,
       roles: user.roles || [],
     }))
@@ -114,23 +119,35 @@
 
   const emptyTitle = computed(() => 'No Users Found');
   const emptyText = computed(() =>
-    searchQuery.value ? 'Try adjusting your search criteria' : 'No users are configured yet'
+    searchQuery.value ? 'Try adjusting your search criteria' : 'No users match the selected filters'
   );
+
+  const buildQueryParams = () => {
+    const params = {
+      page: currentPage.value,
+      size: pageSize.value,
+      sort: 'username',
+      order: 'ASC',
+    };
+    const query = searchQuery.value.trim();
+    if (query) {
+      params.search = query;
+    }
+    if (selectedRole.value) {
+      params.roles = selectedRole.value;
+    }
+    return params;
+  };
 
   const loadUsers = async () => {
     loading.value = true;
     error.value = null;
 
     try {
-      const data = await apiService.getUsers();
+      const data = await apiService.getUsers(buildQueryParams());
       // Handle HAL format response
-      if (data._embedded && data._embedded.userDTOList) {
-        users.value = data._embedded.userDTOList;
-      } else if (Array.isArray(data)) {
-        users.value = data;
-      } else {
-        users.value = [];
-      }
+      users.value = data?._embedded?.userDTOList || (Array.isArray(data) ? data : []);
+      totalUsers.value = data?.page?.totalElements ?? users.value.length;
     } catch (err) {
       error.value = err.message || 'Failed to load users';
       console.error('Error loading users:', err);
@@ -139,7 +156,17 @@
     }
   };
 
+  const reloadFromFirstPage = () => {
+    currentPage.value = 0;
+    loadUsers();
+  };
+
   const refreshUsers = () => {
+    reloadFromFirstPage();
+  };
+
+  const onPageChange = (page) => {
+    currentPage.value = page;
     loadUsers();
   };
 
@@ -151,7 +178,14 @@
     router.push(`/users/${user.id}`);
   };
 
-  onMounted(() => {
-    loadUsers();
+  watch(searchQuery, () => {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(reloadFromFirstPage, SEARCH_DEBOUNCE_MS);
   });
+
+  watch(selectedRole, reloadFromFirstPage);
+
+  onMounted(loadUsers);
+
+  onUnmounted(() => clearTimeout(searchDebounceTimer));
 </script>
