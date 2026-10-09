@@ -11,8 +11,10 @@ import java.util.List;
  * @param <CreateDTO> the type used for creating entities
  * @param <UpdateDTO> the type used for updating entities
  * @param <ID> the type of the entity's identifier
+ * @param <Filter> the type used for filtering entities, typically {@link FilterDTO} or a subclass
+ *     with domain-specific filter fields
  */
-public interface CRUDService<T, CreateDTO, UpdateDTO, ID> {
+public interface CRUDService<T, CreateDTO, UpdateDTO, ID, Filter extends FilterDTO> {
 
   /**
    * Creates a new entity.
@@ -44,11 +46,12 @@ public interface CRUDService<T, CreateDTO, UpdateDTO, ID> {
   /**
    * Retrieves entities with pagination and sorting.
    *
-   * @param filter the filter containing pagination and sorting parameters
+   * @param filter the filter containing pagination, sorting, and optional domain-specific filter
+   *     parameters
    * @return a page response containing entities and pagination metadata
    * @throws IllegalArgumentException if the filter is null or contains invalid data
    */
-  PageResponse<T> findAll(FilterDTO filter);
+  PageResponse<T> findAll(Filter filter);
 
   /**
    * Updates an existing entity.

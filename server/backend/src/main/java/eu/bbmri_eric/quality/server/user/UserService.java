@@ -4,9 +4,11 @@ import eu.bbmri_eric.quality.server.common.CRUDService;
 import eu.bbmri_eric.quality.server.user.dto.PasswordChangeRequest;
 import eu.bbmri_eric.quality.server.user.dto.UserCreateDTO;
 import eu.bbmri_eric.quality.server.user.dto.UserDTO;
+import eu.bbmri_eric.quality.server.user.dto.UserFilterDTO;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-public interface UserService extends CRUDService<UserDTO, UserCreateDTO, UserDTO, Long> {
+public interface UserService
+    extends CRUDService<UserDTO, UserCreateDTO, UserDTO, Long, UserFilterDTO> {
   UserDTO createUser(UserCreateDTO userCreateDTO);
 
   /**

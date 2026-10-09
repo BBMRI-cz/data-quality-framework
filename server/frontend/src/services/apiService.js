@@ -257,8 +257,8 @@ class ApiService {
     return response.data;
   }
 
-  async getUsers() {
-    const response = await api.get(USERS_URL);
+  async getUsers(params = {}) {
+    const response = await api.get(USERS_URL, { params });
     return response.data;
   }
 
