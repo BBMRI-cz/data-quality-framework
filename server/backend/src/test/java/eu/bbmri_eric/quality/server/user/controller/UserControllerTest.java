@@ -2,6 +2,7 @@ package eu.bbmri_eric.quality.server.user.controller;
 
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.*;
@@ -486,6 +487,84 @@ public class UserControllerTest {
             jsonPath(
                 "$._embedded.userDTOList[*].username",
                 contains("bob.jones", "alice.smith", "agent-bot", ADMIN_USER)));
+  }
+
+  @Test
+  void getAllUsers_withInvalidSortField_returnsBadRequest() throws Exception {
+    String token = authenticateAndGetToken();
+
+    mockMvc
+        .perform(
+            get("/api/v1/users")
+                .param("sort", "doesNotExist")
+                .header("Authorization", "Bearer " + token))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void getAllUsers_searchWithLikeWildcards_matchesLiterally() throws Exception {
+    String token = authenticateAndGetToken();
+    createTestUsers();
+    User percentageUser = new User("nico%le", "subject-ddd-444");
+    percentageUser.addRole(UserRole.HUMAN_USER);
+    userRepository.save(percentageUser);
+
+    // '%' must be treated as a literal character, not as a wildcard matching everything
+    mockMvc
+        .perform(
+            get("/api/v1/users").param("search", "%").header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.page.totalElements").value(1))
+        .andExpect(jsonPath("$._embedded.userDTOList[0].username", is("nico%le")));
+
+    // A trailing '%' must not widen the match (would match alice.smith if it were a wildcard)
+    mockMvc
+        .perform(
+            get("/api/v1/users")
+                .param("search", "alice%")
+                .header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.page.totalElements").value(0));
+  }
+
+  @Test
+  void getAllUsers_filteredAndPaginated_paginationLinksPreserveFilters() throws Exception {
+    String token = authenticateAndGetToken();
+    createTestUsers();
+
+    // search=subject matches alice and bob (agent-bot has no HUMAN_USER role), so size=1 paginates
+    mockMvc
+        .perform(
+            get("/api/v1/users")
+                .param("search", "subject")
+                .param("roles", "human_user")
+                .param("size", "1")
+                .param("page", "0")
+                .header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.page.totalElements").value(2))
+        .andExpect(jsonPath("$._links.next.href", containsString("search=subject")))
+        .andExpect(jsonPath("$._links.next.href", containsString("roles=HUMAN_USER")))
+        .andExpect(jsonPath("$._links.next.href", containsString("page=1")))
+        .andExpect(jsonPath("$._links.last.href", containsString("search=subject")))
+        .andExpect(jsonPath("$._links.last.href", containsString("roles=HUMAN_USER")))
+        .andExpect(jsonPath("$._links.current.href", containsString("search=subject")))
+        .andExpect(jsonPath("$._links.current.href", containsString("roles=HUMAN_USER")));
+
+    mockMvc
+        .perform(
+            get("/api/v1/users")
+                .param("search", "subject")
+                .param("roles", "human_user")
+                .param("size", "1")
+                .param("page", "1")
+                .header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$._links.first.href", containsString("search=subject")))
+        .andExpect(jsonPath("$._links.first.href", containsString("roles=HUMAN_USER")))
+        .andExpect(jsonPath("$._links.previous.href", containsString("search=subject")))
+        .andExpect(jsonPath("$._links.previous.href", containsString("roles=HUMAN_USER")))
+        .andExpect(jsonPath("$._links.previous.href", containsString("page=0")));
   }
 
   @Test

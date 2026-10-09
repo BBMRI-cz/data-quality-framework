@@ -31,6 +31,11 @@ public class UserServiceImpl implements UserService {
   private static final String CHARACTERS =
       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
   private static final int DEFAULT_PASSWORD_LENGTH = 12;
+
+  /** Fields of {@link User} that clients are allowed to sort by. */
+  private static final List<String> SORTABLE_FIELDS =
+      List.of("id", "username", "subjectId", "agentId");
+
   private final SecureRandom secureRandom = new SecureRandom();
 
   private final UserRepository userRepository;
@@ -189,6 +194,12 @@ public class UserServiceImpl implements UserService {
 
     if (filter.getSort() == null || filter.getSort().isBlank()) {
       filter.setSort("id");
+    }
+
+    if (!SORTABLE_FIELDS.contains(filter.getSort())) {
+      throw new IllegalArgumentException(
+          "Unsupported sort field: '%s'. Supported fields: %s"
+              .formatted(filter.getSort(), SORTABLE_FIELDS));
     }
 
     return filter;

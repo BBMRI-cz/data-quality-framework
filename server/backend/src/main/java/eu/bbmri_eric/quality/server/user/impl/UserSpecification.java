@@ -27,11 +27,11 @@ class UserSpecification {
 
       String search = filter.getSearch();
       if (search != null && !search.isBlank()) {
-        String pattern = "%" + search.toLowerCase(Locale.ROOT) + "%";
+        String pattern = "%" + escapeLikePattern(search.toLowerCase(Locale.ROOT)) + "%";
         predicates.add(
             criteriaBuilder.or(
-                criteriaBuilder.like(criteriaBuilder.lower(root.get("username")), pattern),
-                criteriaBuilder.like(criteriaBuilder.lower(root.get("subjectId")), pattern)));
+                criteriaBuilder.like(criteriaBuilder.lower(root.get("username")), pattern, '\\'),
+                criteriaBuilder.like(criteriaBuilder.lower(root.get("subjectId")), pattern, '\\')));
       }
 
       Set<UserRole> roles = filter.getRoles();
@@ -42,5 +42,16 @@ class UserSpecification {
 
       return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
     };
+  }
+
+  /**
+   * Escapes SQL LIKE special characters ({@code \}, {@code %}, {@code _}) so that user input is
+   * matched literally. The backslash is the escape character used by the LIKE predicates.
+   *
+   * @param value the unescaped search text
+   * @return the escaped text safe for use in a LIKE pattern with {@code \} as escape character
+   */
+  private static String escapeLikePattern(String value) {
+    return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
   }
 }

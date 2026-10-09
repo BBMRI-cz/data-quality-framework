@@ -36,7 +36,8 @@ public class UserController {
       summary = "Get all users",
       description =
           "Retrieves all users in the system with pagination, optional text search on username "
-              + "and subject ID, and optional role filtering")
+              + "and subject ID, and optional role filtering. Sortable fields: id, username, "
+              + "subjectId, agentId")
   @GetMapping("/api/v1/users")
   public ResponseEntity<PagedModel<EntityModel<UserDTO>>> findAll(
       @Valid @ParameterObject UserFilterDTO filter) {

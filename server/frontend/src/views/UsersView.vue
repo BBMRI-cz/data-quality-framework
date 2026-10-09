@@ -103,6 +103,7 @@
   const loading = ref(false);
   const error = ref(null);
   let searchDebounceTimer = null;
+  let loadRequestCounter = 0;
 
   const tableColumns = [
     { key: 'username', label: 'Username' },
@@ -140,19 +141,25 @@
   };
 
   const loadUsers = async () => {
+    const requestId = ++loadRequestCounter;
     loading.value = true;
     error.value = null;
 
     try {
       const data = await apiService.getUsers(buildQueryParams());
+      // Ignore the response if a newer request has superseded this one
+      if (requestId !== loadRequestCounter) return;
       // Handle HAL format response
       users.value = data?._embedded?.userDTOList || (Array.isArray(data) ? data : []);
       totalUsers.value = data?.page?.totalElements ?? users.value.length;
     } catch (err) {
+      if (requestId !== loadRequestCounter) return;
       error.value = err.message || 'Failed to load users';
       console.error('Error loading users:', err);
     } finally {
-      loading.value = false;
+      if (requestId === loadRequestCounter) {
+        loading.value = false;
+      }
     }
   };
 
