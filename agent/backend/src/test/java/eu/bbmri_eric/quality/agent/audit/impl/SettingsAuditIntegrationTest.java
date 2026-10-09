@@ -26,7 +26,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-/** Verifies that updating the settings produces an audit log entry via {@code @Audited}. */
+/**
+ * Verifies that updating the settings produces an audit log entry describing what changed, via
+ * {@code @Audited(diff = ...)}.
+ */
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
@@ -39,6 +42,8 @@ class SettingsAuditIntegrationTest {
   private static final String ADMIN_PASS = "adminpass";
   private static final String TEST_IP = "127.0.0.1";
   private static final String SYSTEM_ACTOR = "SYSTEM";
+  private static final String PASSWORD = "dGVzdHBhc3M=";
+  private static final String NEW_PASSWORD = "bmV3cGFzcw==";
 
   @Autowired private MockMvc mockMvc;
   @Autowired private ObjectMapper objectMapper;
@@ -48,6 +53,7 @@ class SettingsAuditIntegrationTest {
 
   @BeforeEach
   void setUp() {
+    settingsService.updateSettings(validSettingsDTO());
     auditLogRepository.deleteAll();
   }
 
@@ -60,13 +66,17 @@ class SettingsAuditIntegrationTest {
   void updateSettings_authenticated_recordsSettingsUpdatedAuditEntry() throws Exception {
     JsonNode loginResponse = login();
     Long adminId = loginResponse.get("user").get("userId").asLong();
+    SettingsDTO dto = validSettingsDTO();
+    dto.setEpsilon(0.25);
+    dto.setNoiseMechanism(NoiseMechanism.LAPLACE);
+    dto.setFhirPassword(NEW_PASSWORD);
 
     mockMvc
         .perform(
             put(SETTINGS_ENDPOINT)
                 .header("Authorization", "Bearer " + loginResponse.get("token").asText())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(validSettingsDTO())))
+                .content(objectMapper.writeValueAsString(dto)))
         .andExpect(status().isOk());
 
     List<AuditLogEntry> entries =
@@ -81,8 +91,24 @@ class SettingsAuditIntegrationTest {
               assertThat(entry.getActorId()).isEqualTo(adminId);
               assertThat(entry.getModule()).isEqualTo(SETTINGS_MODULE);
               assertThat(entry.getEntityId()).isNull();
-              assertThat(entry.getDetails()).isEqualTo("Settings updated");
+              assertThat(entry.getDetails())
+                  .startsWith("Settings updated: ")
+                  .contains("epsilon from 0.5 to 0.25")
+                  .contains("noiseMechanism from GAUSSIAN to LAPLACE")
+                  .contains("fhirPassword changed")
+                  .doesNotContain(PASSWORD)
+                  .doesNotContain(NEW_PASSWORD)
+                  .doesNotContain("fhirUrl")
+                  .doesNotContain("delta");
             });
+  }
+
+  @Test
+  void updateSettings_withoutChanges_doesNotRecordAuditEntry() {
+    settingsService.updateSettings(validSettingsDTO());
+
+    assertThat(auditLogRepository.findAll())
+        .noneMatch(entry -> entry.getAction() == AuditAction.SETTINGS_UPDATED);
   }
 
   @Test
@@ -105,7 +131,10 @@ class SettingsAuditIntegrationTest {
 
   @Test
   void updateSettings_withoutAuthenticatedUser_recordsSystemActor() {
-    settingsService.updateSettings(validSettingsDTO());
+    SettingsDTO dto = validSettingsDTO();
+    dto.setMinThreshold(30);
+
+    settingsService.updateSettings(dto);
 
     assertThat(auditLogRepository.findAll())
         .filteredOn(entry -> entry.getAction() == AuditAction.SETTINGS_UPDATED)
@@ -115,6 +144,8 @@ class SettingsAuditIntegrationTest {
               assertThat(entry.getActor()).isEqualTo(SYSTEM_ACTOR);
               assertThat(entry.getActorId()).isNull();
               assertThat(entry.getModule()).isEqualTo(SETTINGS_MODULE);
+              assertThat(entry.getDetails())
+                  .isEqualTo("Settings updated: minThreshold from 20 to 30");
             });
   }
 
@@ -122,7 +153,7 @@ class SettingsAuditIntegrationTest {
     return SettingsDTO.builder()
         .fhirUrl("http://localhost:8080/fhir")
         .fhirUsername("testuser")
-        .fhirPassword("dGVzdHBhc3M=")
+        .fhirPassword(PASSWORD)
         .epsilon(0.5)
         .delta(1.0E-8)
         .minThreshold(20)

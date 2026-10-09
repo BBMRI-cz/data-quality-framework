@@ -173,7 +173,7 @@ docker compose up -d                       # Start agent, server, and PostgreSQL
 - **Update styling**: Edit Bootstrap classes or add custom styles to `base.css` (both frontends share styling patterns)
 - **Connect to FHIR endpoint**: Use HAPI FHIR client in appropriate agent module; add configuration via `application.yml`
 - **Debug module boundaries**: Use Spring Modulith's module export mechanism; check generated `spring-modulith/` documentation
-- **Audit-log a service method**: Annotate the implementation method with `@Audited(action = ..., module = ..., entityId = "#id")` (SpEL over params/`#result`); `AuditAspect` records the entry after successful return using the current authenticated user as actor — the service itself does not depend on `AuditService`
+- **Audit-log a service method**: Annotate the implementation method with `@Audited(action = ..., module = ..., entityId = "#id")` (SpEL over params/`#result`); `AuditAspect` records the entry after successful return using the current authenticated user as actor — the service itself does not depend on `AuditService`. Add `diff = "#target.getX()"` (evaluated before and after; `sensitive = {...}` hides values, `*password*` always hidden) to record what changed in `details`; unchanged calls are not recorded
 
 ## Debugging & Common Issues
 
