@@ -3,10 +3,14 @@ package eu.bbmri_eric.quality.server.user.controller;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
+import eu.bbmri_eric.quality.server.common.LinkBuilder;
+import eu.bbmri_eric.quality.server.common.dto.FilterDTO;
+import eu.bbmri_eric.quality.server.common.dto.PageResponse;
 import eu.bbmri_eric.quality.server.user.dto.UserDTO;
 import java.util.List;
-import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -26,10 +30,25 @@ public class UserLinkBuilder {
     return model;
   }
 
-  public CollectionModel<EntityModel<UserDTO>> toCollectionModel(List<UserDTO> users) {
-    var entityModels = users.stream().map(this::toModel).toList();
+  public PagedModel<EntityModel<UserDTO>> toPagedModel(
+      PageResponse<UserDTO> pageResponse, FilterDTO filter) {
+    List<EntityModel<UserDTO>> userModels =
+        pageResponse.getContent().stream().map(this::toModel).toList();
 
-    return CollectionModel.of(entityModels)
-        .add(linkTo(methodOn(UserController.class).findAll()).withSelfRel());
+    PagedModel.PageMetadata metadata =
+        new PagedModel.PageMetadata(
+            pageResponse.getSize(),
+            pageResponse.getPage(),
+            pageResponse.getTotalElements(),
+            pageResponse.getTotalPages());
+
+    PagedModel<EntityModel<UserDTO>> pagedModel = PagedModel.of(userModels, metadata);
+    Link selfLink = linkTo(methodOn(UserController.class).findAll(filter)).withSelfRel();
+
+    pagedModel.add(selfLink);
+    List<Link> paginationLinks = LinkBuilder.getPageLinks(selfLink.toUri(), filter, pageResponse);
+    pagedModel.add(paginationLinks);
+
+    return pagedModel;
   }
 }
