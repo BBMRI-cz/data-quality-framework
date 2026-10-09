@@ -1,13 +1,16 @@
 package eu.bbmri_eric.quality.agent.audit.controller;
 
+import eu.bbmri_eric.quality.agent.audit.AuditAction;
 import eu.bbmri_eric.quality.agent.audit.AuditService;
 import eu.bbmri_eric.quality.agent.audit.dto.AuditLogDTO;
 import eu.bbmri_eric.quality.agent.audit.dto.AuditLogFilterDTO;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.PagedModel;
@@ -15,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 @RestController
 @RequestMapping("/api/audit-logs")
@@ -42,5 +46,33 @@ class AuditController {
   public ResponseEntity<PagedModel<EntityModel<AuditLogDTO>>> findAll(
       @ParameterObject AuditLogFilterDTO filter) {
     return ResponseEntity.ok(linkBuilder.toPagedModel(auditService.findAll(filter), filter));
+  }
+
+  @GetMapping(value = "/export", produces = "text/csv")
+  @Operation(
+      summary = "Export audit log entries as CSV",
+      description =
+          "Downloads every audit log entry matching the filters as a CSV file, newest first."
+              + " Pagination parameters are ignored.")
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "CSV file with the matching audit log entries",
+            content = @Content(mediaType = "text/csv"))
+      })
+  public ResponseEntity<StreamingResponseBody> exportCsv(
+      @ParameterObject AuditLogFilterDTO filter) {
+    return auditService.exportCsv(filter);
+  }
+
+  @GetMapping("/actions")
+  @Operation(
+      summary = "List audit actions",
+      description = "Retrieves every audit action an entry can have, e.g. for filtering")
+  @ApiResponses(
+      value = {@ApiResponse(responseCode = "200", description = "List of audit actions retrieved")})
+  public ResponseEntity<List<AuditAction>> findActions() {
+    return ResponseEntity.ok(List.of(AuditAction.values()));
   }
 }
