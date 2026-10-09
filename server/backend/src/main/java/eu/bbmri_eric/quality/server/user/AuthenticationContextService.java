@@ -1,5 +1,7 @@
 package eu.bbmri_eric.quality.server.user;
 
+import eu.bbmri_eric.quality.server.user.dto.UserDTO;
+
 /**
  * Service interface for authentication context operations. Provides abstraction for
  * authentication-related functionality.
