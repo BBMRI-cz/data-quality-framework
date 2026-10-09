@@ -28,6 +28,7 @@ export default [
         URL: 'readonly',
         atob: 'readonly',
         btoa: 'readonly',
+        ResizeObserver: 'readonly',
       },
     },
     rules: {

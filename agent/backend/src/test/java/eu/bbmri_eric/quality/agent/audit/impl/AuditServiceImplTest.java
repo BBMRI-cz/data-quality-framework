@@ -6,11 +6,17 @@ import eu.bbmri_eric.quality.agent.audit.AuditAction;
 import eu.bbmri_eric.quality.agent.audit.dto.AuditLogDTO;
 import eu.bbmri_eric.quality.agent.audit.dto.AuditLogFilterDTO;
 import eu.bbmri_eric.quality.agent.common.dto.PageResponse;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 @SpringBootTest
 class AuditServiceImplTest {
@@ -111,5 +117,32 @@ class AuditServiceImplTest {
     PageResponse<AuditLogDTO> result = auditService.findAll(filter);
 
     assertThat(result.getContent()).isEmpty();
+  }
+
+  @Test
+  void exportCsv_returnsCsvAttachmentStreamingMatchingEntries() throws Exception {
+    auditRecorder.record(
+        AuditRecord.of(AuditAction.LOGIN_SUCCESS)
+            .actor("admin", null)
+            .details("Logged in")
+            .build());
+    auditRecorder.record(
+        AuditRecord.of(AuditAction.LOGOUT).actor("admin", null).details("Logged out").build());
+    AuditLogFilterDTO filter = new AuditLogFilterDTO();
+    filter.setAction(AuditAction.LOGOUT);
+
+    ResponseEntity<StreamingResponseBody> response = auditService.exportCsv(filter);
+    ByteArrayOutputStream output = new ByteArrayOutputStream();
+    response.getBody().writeTo(output);
+
+    assertThat(response.getHeaders().getContentType())
+        .isEqualTo(new MediaType("text", "csv", StandardCharsets.UTF_8));
+    assertThat(response.getHeaders().getContentDisposition().getFilename())
+        .isEqualTo("audit-log-" + LocalDate.now() + ".csv");
+    assertThat(output.toString(StandardCharsets.UTF_8).lines().toList())
+        .hasSize(2)
+        .last()
+        .asString()
+        .endsWith(",LOGOUT,,,Logged out");
   }
 }

@@ -2,6 +2,8 @@ package eu.bbmri_eric.quality.agent.settings.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.bbmri_eric.quality.agent.audit.AuditAction;
+import eu.bbmri_eric.quality.agent.audit.Audited;
 import eu.bbmri_eric.quality.agent.common.EventPublisher;
 import eu.bbmri_eric.quality.agent.settings.NoiseMechanism;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
@@ -47,6 +49,12 @@ public class SettingsServiceImpl implements SettingsService {
   }
 
   @Override
+  @Audited(
+      action = AuditAction.SETTINGS_UPDATED,
+      module = "settings",
+      details = "Settings updated",
+      diff = "#target.getSettings()",
+      sensitive = {"fhirPassword", "sqlPassword"})
   public SettingsDTO updateSettings(SettingsDTO dto) {
     updateSettingsFromDto(dto);
     SettingsDTO updated = getSettings();
