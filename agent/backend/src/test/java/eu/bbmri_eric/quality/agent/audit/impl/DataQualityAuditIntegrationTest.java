@@ -60,7 +60,10 @@ class DataQualityAuditIntegrationTest {
     categoryService.delete(id);
 
     assertRecorded(AuditAction.QUALITY_CHECK_CATEGORY_CREATED, id, "Category created");
-    assertRecorded(AuditAction.QUALITY_CHECK_CATEGORY_UPDATED, id, "Category updated");
+    assertRecorded(
+        AuditAction.QUALITY_CHECK_CATEGORY_UPDATED,
+        id,
+        "Category updated: name from Completeness to Accuracy; colorHex from #FF5733 to #33FF57");
     assertRecorded(AuditAction.QUALITY_CHECK_CATEGORY_DELETED, id, "Category deleted");
   }
 
@@ -79,8 +82,51 @@ class DataQualityAuditIntegrationTest {
     qualityCheckService.delete(id);
 
     assertRecorded(AuditAction.QUALITY_CHECK_CREATED, id, "Quality check created");
-    assertRecorded(AuditAction.QUALITY_CHECK_UPDATED, id, "Quality check updated");
+    assertRecorded(
+        AuditAction.QUALITY_CHECK_UPDATED,
+        id,
+        "Quality check updated: name from Age check to Age check v2");
     assertRecorded(AuditAction.QUALITY_CHECK_DELETED, id, "Quality check deleted");
+  }
+
+  @Test
+  void updateCategory_withoutChanges_doesNotRecordAuditEntry() {
+    Long id = categoryService.create(new CategoryCreateDTO("Completeness", "#FF5733")).getId();
+
+    categoryService.update(id, new CategoryUpdateDTO("Completeness", "#FF5733"));
+
+    assertThat(auditLogRepository.findAll())
+        .noneMatch(entry -> entry.getAction() == AuditAction.QUALITY_CHECK_CATEGORY_UPDATED);
+  }
+
+  @Test
+  void updateQualityCheck_queryAndCategoryChanged_recordsCategoryPathsAndHidesQuery() {
+    Long categoryId =
+        categoryService.create(new CategoryCreateDTO("Completeness", "#FF5733")).getId();
+    Long id =
+        qualityCheckService
+            .create(
+                new QualityCheckCreateDTO(
+                    "Age check", "desc", "old query", QualityCheckType.CQL, 10, 30, 1.0))
+            .getId();
+    QualityCheckUpdateDTO updateDTO =
+        new QualityCheckUpdateDTO(
+            "Age check", "desc", "new query", QualityCheckType.CQL, 10, 30, 1.0);
+    updateDTO.setCategoryId(categoryId);
+
+    qualityCheckService.update(id, updateDTO);
+
+    assertThat(auditLogRepository.findAll())
+        .filteredOn(entry -> entry.getAction() == AuditAction.QUALITY_CHECK_UPDATED)
+        .singleElement()
+        .satisfies(
+            entry ->
+                assertThat(entry.getDetails())
+                    .startsWith("Quality check updated: ")
+                    .contains("query changed")
+                    .contains("category.id from (empty) to " + categoryId)
+                    .contains("category.name from (empty) to Completeness")
+                    .doesNotContain("old query", "new query", "Age check"));
   }
 
   @Test

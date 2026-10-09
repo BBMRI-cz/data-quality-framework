@@ -139,7 +139,9 @@ class QualityCheckServiceImpl implements QualityCheckService {
       action = AuditAction.QUALITY_CHECK_UPDATED,
       module = "dataquality",
       entityId = "#id",
-      details = "Quality check updated")
+      details = "Quality check updated",
+      diff = "#target.findById(#id)",
+      sensitive = "query")
   public QualityCheckDTO update(Long id, QualityCheckUpdateDTO updateDTO) {
     QualityCheck qualityCheck =
         qualityCheckRepository

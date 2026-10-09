@@ -67,4 +67,40 @@ class AuditDiffTest {
     assertThat(AuditDiff.describe(before, after, Set.of()))
         .isEqualTo("removed from x to (empty); added from (empty) to y");
   }
+
+  @Test
+  void describe_withNestedObjects_comparesTheirPropertiesByPath() {
+    Map<String, Object> before = new LinkedHashMap<>();
+    before.put("name", "Age check");
+    before.put("category", Map.of("id", 1, "name", "Completeness"));
+    Map<String, Object> after = new LinkedHashMap<>();
+    after.put("name", "Age check");
+    after.put("category", Map.of("id", 2, "name", "Accuracy"));
+
+    assertThat(AuditDiff.describe(before, after, Set.of()))
+        .contains("category.id from 1 to 2")
+        .contains("category.name from Completeness to Accuracy")
+        .doesNotContain("Age check");
+  }
+
+  @Test
+  void describe_withNestedObjectAddedOrRemoved_listsItsProperties() {
+    Map<String, Object> before = new HashMap<>();
+    before.put("category", null);
+    Map<String, Object> after = Map.of("category", Map.of("name", "Accuracy"));
+
+    assertThat(AuditDiff.describe(before, after, Set.of()))
+        .isEqualTo("category.name from (empty) to Accuracy");
+    assertThat(AuditDiff.describe(after, before, Set.of()))
+        .isEqualTo("category.name from Accuracy to (empty)");
+  }
+
+  @Test
+  void describe_withSensitiveNestedProperty_hidesItsValue() {
+    Map<String, Object> before = Map.of("server", Map.of("token", "old"));
+    Map<String, Object> after = Map.of("server", Map.of("token", "new"));
+
+    assertThat(AuditDiff.describe(before, after, Set.of("server.token")))
+        .isEqualTo("server.token changed");
+  }
 }

@@ -85,7 +85,8 @@ class CategoryServiceImpl implements CategoryService {
       action = AuditAction.QUALITY_CHECK_CATEGORY_UPDATED,
       module = "dataquality",
       entityId = "#id",
-      details = "Category updated")
+      details = "Category updated",
+      diff = "#target.findById(#id)")
   public CategoryDTO update(Long id, CategoryUpdateDTO categoryUpdateDTO) {
     Objects.requireNonNull(id, "ID cannot be null");
     Objects.requireNonNull(categoryUpdateDTO, "CategoryUpdateDTO cannot be null");
