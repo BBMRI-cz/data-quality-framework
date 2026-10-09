@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.lang.NonNull;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
@@ -138,7 +139,7 @@ class JwtAuthenticationConverter implements Converter<Jwt, AbstractAuthenticatio
       try {
         // To catch concurrent writes
         return userService.createBySubjectId(identity.identityId(), identity.username());
-      } catch (JpaSystemException ex) {
+      } catch (DataIntegrityViolationException ex) {
         return userService.findBySubjectId(identity.identityId());
       }
     }
