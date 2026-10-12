@@ -48,8 +48,9 @@ public @interface Audited {
 
   /**
    * Properties of the {@link #diff()} snapshot whose values must not be recorded; only the fact
-   * that they changed is. Properties whose name contains {@code password} are always treated as
-   * sensitive.
+   * that they changed is. Use it for secrets and for long values such as queries. Nested properties
+   * are named by their dotted path, e.g. {@code server.token}. Properties whose name contains
+   * {@code password} are always treated as sensitive.
    */
   String[] sensitive() default {};
 }
