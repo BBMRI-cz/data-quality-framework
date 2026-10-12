@@ -130,7 +130,43 @@ class DataQualityAuditIntegrationTest {
   }
 
   @Test
-  void updateAll_recordsBulkUpdateAuditEntry() {
+  void updateAll_recordsAuditEntryForEachUpdatedCheck() {
+    Long firstId =
+        qualityCheckService
+            .create(
+                new QualityCheckCreateDTO(
+                    "Age check", "desc", "query", QualityCheckType.CQL, 10, 30, 1.0))
+            .getId();
+    Long secondId =
+        qualityCheckService
+            .create(
+                new QualityCheckCreateDTO(
+                    "Sex check", "desc", "query", QualityCheckType.CQL, 10, 30, 1.0))
+            .getId();
+    QualityCheckBulkUpdateDTO firstUpdate = new QualityCheckBulkUpdateDTO();
+    firstUpdate.setId(firstId);
+    firstUpdate.setName("Age check v2");
+    QualityCheckBulkUpdateDTO secondUpdate = new QualityCheckBulkUpdateDTO();
+    secondUpdate.setId(secondId);
+    secondUpdate.setName("Sex check v2");
+
+    qualityCheckService.updateAll(List.of(firstUpdate, secondUpdate));
+
+    assertThat(auditLogRepository.findAll())
+        .filteredOn(entry -> entry.getAction() == AuditAction.QUALITY_CHECK_UPDATED)
+        .hasSize(2);
+    assertRecorded(
+        AuditAction.QUALITY_CHECK_UPDATED,
+        firstId,
+        "Quality check bulk updated: name from Age check to Age check v2");
+    assertRecorded(
+        AuditAction.QUALITY_CHECK_UPDATED,
+        secondId,
+        "Quality check bulk updated: name from Sex check to Sex check v2");
+  }
+
+  @Test
+  void updateAll_unchangedCheck_doesNotRecordAuditEntry() {
     Long id =
         qualityCheckService
             .create(
@@ -139,11 +175,12 @@ class DataQualityAuditIntegrationTest {
             .getId();
     QualityCheckBulkUpdateDTO updateDTO = new QualityCheckBulkUpdateDTO();
     updateDTO.setId(id);
-    updateDTO.setName("Age check v2");
+    updateDTO.setName("Age check");
 
     qualityCheckService.updateAll(List.of(updateDTO));
 
-    assertRecorded(AuditAction.QUALITY_CHECK_UPDATED, null, "Quality checks bulk updated");
+    assertThat(auditLogRepository.findAll())
+        .noneMatch(entry -> entry.getAction() == AuditAction.QUALITY_CHECK_UPDATED);
   }
 
   @Test

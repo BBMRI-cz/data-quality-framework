@@ -18,6 +18,7 @@ import java.util.List;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -32,15 +33,18 @@ class QualityCheckServiceImpl implements QualityCheckService {
   private final QualityCheckRepository qualityCheckRepository;
   private final CategoryRepository categoryRepository;
   private final ModelMapper modelMapper;
+  private final QualityCheckServiceImpl self;
   private static final Logger logger = LoggerFactory.getLogger(QualityCheckServiceImpl.class);
 
   QualityCheckServiceImpl(
       QualityCheckRepository qualityCheckRepository,
       CategoryRepository categoryRepository,
-      ModelMapper modelMapper) {
+      ModelMapper modelMapper,
+      @Lazy QualityCheckServiceImpl self) {
     this.qualityCheckRepository = qualityCheckRepository;
     this.categoryRepository = categoryRepository;
     this.modelMapper = modelMapper;
+    this.self = self;
   }
 
   @Override
@@ -156,12 +160,8 @@ class QualityCheckServiceImpl implements QualityCheckService {
 
   @Override
   @Transactional
-  @Audited(
-      action = AuditAction.QUALITY_CHECK_UPDATED,
-      module = "dataquality",
-      details = "Quality checks bulk updated")
   public List<QualityCheckDTO> updateAll(List<QualityCheckBulkUpdateDTO> updateDTOs) {
-    List<QualityCheckDTO> updated = updateDTOs.stream().map(this::updatePartially).toList();
+    List<QualityCheckDTO> updated = updateDTOs.stream().map(self::updatePartially).toList();
     logger.info("Bulk updated {} quality checks", updated.size());
     return updated;
   }
@@ -169,9 +169,16 @@ class QualityCheckServiceImpl implements QualityCheckService {
   /**
    * Applies a partial update to a single quality check. Unlike the full replace in {@link
    * #update(Long, QualityCheckUpdateDTO)}, a {@code null} category ID leaves the assigned category
-   * untouched instead of clearing it.
+   * untouched instead of clearing it. Public and called via {@code self} so each update is audited.
    */
-  private QualityCheckDTO updatePartially(QualityCheckBulkUpdateDTO updateDTO) {
+  @Audited(
+      action = AuditAction.QUALITY_CHECK_UPDATED,
+      module = "dataquality",
+      entityId = "#updateDTO.id",
+      details = "Quality check bulk updated",
+      diff = "#target.findById(#updateDTO.id)",
+      sensitive = "query")
+  public QualityCheckDTO updatePartially(QualityCheckBulkUpdateDTO updateDTO) {
     QualityCheck qualityCheck =
         qualityCheckRepository
             .findById(updateDTO.getId())
