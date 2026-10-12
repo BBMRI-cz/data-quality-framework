@@ -33,7 +33,14 @@ class QualityCheckServiceImpl implements QualityCheckService {
   private final QualityCheckRepository qualityCheckRepository;
   private final CategoryRepository categoryRepository;
   private final ModelMapper modelMapper;
+
+  /**
+   * This bean's own Spring proxy. Calls via {@code this} bypass the proxy, so aspect
+   * {@code @Audited} on {@link #updatePartially} would not run; calling through {@code self} makes
+   * them apply.
+   */
   private final QualityCheckServiceImpl self;
+
   private static final Logger logger = LoggerFactory.getLogger(QualityCheckServiceImpl.class);
 
   QualityCheckServiceImpl(
