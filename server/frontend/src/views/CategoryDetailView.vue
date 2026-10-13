@@ -15,7 +15,7 @@
             <i class="bi bi-arrow-left me-2"></i>Back to Categories
           </button>
           <button
-            v-if="!isNew"
+            v-if="!isNew && authStore.isAdmin"
             class="btn btn-outline-danger btn-sm d-flex align-items-center"
             :disabled="saving"
             @click="showDeleteModal = true"
@@ -45,55 +45,57 @@
             <div class="card-header bg-white border-bottom py-3">
               <h5 class="mb-0 fw-semibold">
                 <i class="bi bi-pencil text-primary me-2"></i>
-                {{ isNew ? 'Create Category' : 'Edit Category' }}
+                {{ isNew ? 'Create Category' : authStore.isAdmin ? 'Edit Category' : 'Category' }}
               </h5>
             </div>
             <div class="card-body p-4">
-              <div class="row g-4">
-                <!-- Name Field -->
-                <div class="col-12">
-                  <label class="form-label fw-semibold">Name</label>
-                  <input
-                    v-model="editForm.name"
-                    type="text"
-                    class="form-control"
-                    :class="{ 'is-invalid': validationErrors.name }"
-                    placeholder="Enter category name"
-                  />
-                  <div v-if="validationErrors.name" class="invalid-feedback">
-                    {{ validationErrors.name }}
-                  </div>
-                </div>
-
-                <!-- Color Field -->
-                <div class="col-12">
-                  <label class="form-label fw-semibold">Color</label>
-                  <div class="d-flex gap-3 align-items-center">
+              <fieldset :disabled="!authStore.isAdmin">
+                <div class="row g-4">
+                  <!-- Name Field -->
+                  <div class="col-12">
+                    <label class="form-label fw-semibold">Name</label>
                     <input
-                      v-model="editForm.colorHex"
-                      type="color"
-                      class="form-control form-control-color"
-                      title="Choose your color"
-                    />
-                    <input
-                      v-model="editForm.colorHex"
+                      v-model="editForm.name"
                       type="text"
                       class="form-control"
-                      :class="{ 'is-invalid': validationErrors.colorHex }"
-                      placeholder="#000000"
-                      style="max-width: 150px"
+                      :class="{ 'is-invalid': validationErrors.name }"
+                      placeholder="Enter category name"
                     />
+                    <div v-if="validationErrors.name" class="invalid-feedback">
+                      {{ validationErrors.name }}
+                    </div>
                   </div>
-                  <div v-if="validationErrors.colorHex" class="invalid-feedback d-block">
-                    {{ validationErrors.colorHex }}
+
+                  <!-- Color Field -->
+                  <div class="col-12">
+                    <label class="form-label fw-semibold">Color</label>
+                    <div class="d-flex gap-3 align-items-center">
+                      <input
+                        v-model="editForm.colorHex"
+                        type="color"
+                        class="form-control form-control-color"
+                        title="Choose your color"
+                      />
+                      <input
+                        v-model="editForm.colorHex"
+                        type="text"
+                        class="form-control"
+                        :class="{ 'is-invalid': validationErrors.colorHex }"
+                        placeholder="#000000"
+                        style="max-width: 150px"
+                      />
+                    </div>
+                    <div v-if="validationErrors.colorHex" class="invalid-feedback d-block">
+                      {{ validationErrors.colorHex }}
+                    </div>
                   </div>
                 </div>
-              </div>
+              </fieldset>
             </div>
           </div>
 
           <!-- Action Buttons -->
-          <div class="action-buttons d-flex gap-3 justify-content-center">
+          <div v-if="authStore.isAdmin" class="action-buttons d-flex gap-3 justify-content-center">
             <button
               class="btn btn-action btn-save"
               :disabled="saving || (!isNew && !hasChanges)"
@@ -136,6 +138,7 @@
 
 <script setup>
   import { ref, reactive, computed, onMounted } from 'vue';
+  import { authStore } from '@/stores/authStore.js';
   import { useRoute, useRouter } from 'vue-router';
   import { useHead } from '@unhead/vue';
   import { apiService } from '@/services/apiService.js';

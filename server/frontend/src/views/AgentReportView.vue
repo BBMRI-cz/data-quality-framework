@@ -7,7 +7,7 @@
           :title="agentName"
           :subtitle="`Agent ID: ${agentId}`"
           icon="bi bi-file-earmark-text-fill"
-          :editable="true"
+          :editable="authStore.isAdmin"
           @update:title="handleUpdateAgentName"
         />
       </div>
@@ -32,6 +32,7 @@
             View Logs
           </button>
           <button
+            v-if="authStore.isAdmin"
             class="btn btn-outline-danger btn-sm d-flex align-items-center"
             :disabled="processing"
             @click="confirmDeleteAgent"
@@ -57,7 +58,7 @@
               <p class="mb-0 small mt-1">This agent is awaiting approval to join the network</p>
             </div>
           </div>
-          <div class="d-flex gap-2 ms-3">
+          <div v-if="authStore.isAdmin" class="d-flex gap-2 ms-3">
             <button
               class="btn btn-success btn-sm d-flex align-items-center"
               :disabled="processing"
@@ -224,6 +225,7 @@
 
 <script setup>
   import { ref, onMounted, computed } from 'vue';
+  import { authStore } from '@/stores/authStore.js';
   import { useRoute, useRouter } from 'vue-router';
   import StatsCard from '@/components/ui/StatsCard.vue';
   import PaginatedTable from '@/components/ui/PaginatedTable.vue';

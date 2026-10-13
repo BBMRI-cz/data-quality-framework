@@ -28,47 +28,49 @@
         </li>
       </ul>
 
-      <hr class="my-4" />
+      <template v-if="authStore.isAdmin">
+        <hr class="my-4" />
 
-      <h6 class="fw-semibold mb-3">
-        <i class="bi bi-plus-circle me-1"></i>
-        Add New Version
-      </h6>
-      <div class="mb-3">
-        <label for="new-version-type" class="form-label">Query Type</label>
-        <select
-          id="new-version-type"
-          v-model="newVersionType"
-          class="form-select"
-          :disabled="savingVersion"
+        <h6 class="fw-semibold mb-3">
+          <i class="bi bi-plus-circle me-1"></i>
+          Add New Version
+        </h6>
+        <div class="mb-3">
+          <label for="new-version-type" class="form-label">Query Type</label>
+          <select
+            id="new-version-type"
+            v-model="newVersionType"
+            class="form-select"
+            :disabled="savingVersion"
+          >
+            <option v-for="type in QUERY_TYPES" :key="type" :value="type">
+              {{ formatQueryType(type) }}
+            </option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <textarea
+            v-model="newVersionQuery"
+            class="form-control font-monospace"
+            rows="4"
+            placeholder="Enter the query for the new version..."
+            :disabled="savingVersion"
+          ></textarea>
+        </div>
+        <button
+          class="btn btn-primary"
+          :disabled="!newVersionQuery.trim() || savingVersion"
+          @click="requestAddVersion"
         >
-          <option v-for="type in QUERY_TYPES" :key="type" :value="type">
-            {{ formatQueryType(type) }}
-          </option>
-        </select>
-      </div>
-      <div class="mb-3">
-        <textarea
-          v-model="newVersionQuery"
-          class="form-control font-monospace"
-          rows="4"
-          placeholder="Enter the query for the new version..."
-          :disabled="savingVersion"
-        ></textarea>
-      </div>
-      <button
-        class="btn btn-primary"
-        :disabled="!newVersionQuery.trim() || savingVersion"
-        @click="requestAddVersion"
-      >
-        <span
-          v-if="savingVersion"
-          class="spinner-border spinner-border-sm me-2"
-          role="status"
-        ></span>
-        <i v-else class="bi bi-plus-lg me-2"></i>
-        Add Version
-      </button>
+          <span
+            v-if="savingVersion"
+            class="spinner-border spinner-border-sm me-2"
+            role="status"
+          ></span>
+          <i v-else class="bi bi-plus-lg me-2"></i>
+          Add Version
+        </button>
+      </template>
     </div>
 
     <ConfirmModal
@@ -102,6 +104,7 @@
 
 <script setup>
   import { ref, computed } from 'vue';
+  import { authStore } from '@/stores/authStore.js';
   import { apiService } from '@/services/apiService.js';
   import { notificationService } from '@/services/notificationService.js';
   import { QUERY_TYPES, formatQueryType } from '@/utils/queryTypeUtils.js';
