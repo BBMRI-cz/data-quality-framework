@@ -84,9 +84,9 @@ services:
     volumes:
       - ./secrets:/run/secrets:ro
     environment:
-      - CENTRAL_SERVER_KEY_PATH=/run/secrets/signing.p12
-      - CENTRAL_SERVER_KEY_PASSWORD=${KEYSTORE_PASSWORD}
-      - CENTRAL_SERVER_KEY_ALIAS=central-signing
+      CENTRAL_SERVER_KEY_PATH: /run/secrets/signing.p12
+      CENTRAL_SERVER_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
+      CENTRAL_SERVER_KEY_ALIAS: central-signing
 ```
 
 ::: warning Keep the Password Secret
@@ -96,6 +96,29 @@ secret reference, an env file, or a secrets manager to inject it at runtime.
 
 The alias in `CENTRAL_SERVER_KEY_ALIAS` must match the alias used when generating the keystore (`central-signing` in the
 example above). The keystore file should match the key type expected by the server (an EC key on curve `secp256r1`).
+
+### Extracting the Public Key
+
+Agent operators need the server's public key to verify signed manifests. It is exposed at the unauthenticated endpoint
+`GET /api/v1/public-key`, but you can also extract it directly from the keystore using `openssl`:
+
+```bash
+openssl pkcs12 -in signing.p12 -passin pass:testpass -nokeys | \
+  openssl x509 -pubkey -noout > central-signing.pub.pem
+```
+
+Replace `signing.p12` with the path to the keystore and `testpass` with the keystore password
+(`CENTRAL_SERVER_KEY_PASSWORD`). The first command reads the certificate from the keystore (`-nokeys` skips the
+private key), and the second extracts just the public key in PEM format.
+
+Share only the resulting `central-signing.pub.pem` with agent operators. They paste its `-----BEGIN PUBLIC KEY-----`
+block into the **Public Key** section of the server's detail page in their agent (see
+[Manifests](../manifests.md#trusted-central-servers)).
+
+::: warning Keep the Keystore Secret
+Only the extracted public key should be shared — never the `signing.p12` file or its password, which protect the
+server's private signing key.
+:::
 
 ## See Also
 
