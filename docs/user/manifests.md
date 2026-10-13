@@ -63,13 +63,12 @@ This section lists public keys of central servers operated by trusted partners. 
 If your server is not listed yet, ask your server operator for the key — every server also exposes it directly at
 `GET /api/v1/public-key`.
 
-_No trusted servers published yet. Entries will appear here as servers are onboarded, using the following format:_
-
-**Server name** (server URL) — operated by organization
+**Central Data Quality Server** (https://quality-dashboard.bbmri-eric.eu/) — operated by BBMRI-ERIC
 
 ```text
 -----BEGIN PUBLIC KEY-----
-...
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAESJFJVtYIiEeuLde0IUHS1hdZjvSI
+JRW1R7+W2Zu0gHjmX/B3Rd20o6696PYBMh7WQi2rEfDEn7tchd9GyDr+og==
 -----END PUBLIC KEY-----
 ```
 
