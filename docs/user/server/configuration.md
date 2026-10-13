@@ -102,12 +102,12 @@ example above). The keystore file should match the key type expected by the serv
 Agent operators need the server's public key to verify signed manifests. It is exposed at the unauthenticated endpoint
 `GET /api/v1/public-key`, but you can also extract it directly from the keystore using `openssl`:
 
-```bash
-openssl pkcs12 -in signing.p12 -passin pass:testpass -nokeys | \
+~~~bash
+openssl pkcs12 -in signing.p12 -nokeys | \
   openssl x509 -pubkey -noout > central-signing.pub.pem
-```
+~~~
 
-Replace `signing.p12` with the path to the keystore and `testpass` with the keystore password
+Replace `signing.p12` with the path to the keystore. When prompted, enter the keystore password
 (`CENTRAL_SERVER_KEY_PASSWORD`). The first command reads the certificate from the keystore (`-nokeys` skips the
 private key), and the second extracts just the public key in PEM format.
 
