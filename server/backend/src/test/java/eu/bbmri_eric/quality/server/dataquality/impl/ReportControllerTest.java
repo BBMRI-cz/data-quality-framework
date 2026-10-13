@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -14,6 +15,9 @@ import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheckVersion;
 import eu.bbmri_eric.quality.server.dataquality.domain.Report;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckResultDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.ReportCreateRequest;
+import eu.bbmri_eric.quality.server.user.UserRole;
+import eu.bbmri_eric.quality.server.user.domain.User;
+import eu.bbmri_eric.quality.server.user.impl.UserRepository;
 import eu.bbmri_eric.quality.server.util.IntegrationTest;
 import java.util.Collections;
 import java.util.Comparator;
@@ -43,6 +47,7 @@ class ReportControllerTest {
   @Autowired private ReportRepository reportRepository;
   @Autowired private AgentRepository agentRepository;
   @Autowired private QualityCheckRepository qualityCheckRepository;
+  @Autowired private UserRepository userRepository;
 
   private String testAgentId;
   private Agent testAgent;
@@ -286,8 +291,45 @@ class ReportControllerTest {
 
   @Test
   @WithMockUser(roles = "USER")
-  void findAll_shouldReturnForbiddenForUserWithoutAdminRole() throws Exception {
+  void findAll_shouldReturnForbiddenForUserWithoutHumanUserOrAdminRole() throws Exception {
     mockMvc.perform(get(API_V1_REPORTS)).andExpect(status().isForbidden());
+  }
+
+  @Test
+  @WithMockUser(roles = "HUMAN_USER")
+  void findAll_shouldAllowHumanUserRole() throws Exception {
+    seedReportsWithTotals(10, 20);
+    mockMvc
+        .perform(get(API_V1_REPORTS))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$._embedded.reports.length()").value(2));
+  }
+
+  @Test
+  @WithMockUser(roles = "HUMAN_USER")
+  void findByAgentId_shouldAllowHumanUserRole() throws Exception {
+    testAgent.addReport(new Report());
+    mockMvc
+        .perform(get(API_V1_AGENTS_REPORTS, testAgentId))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$._embedded.reports.length()").value(1));
+  }
+
+  @Test
+  void create_shouldReturnForbiddenForHumanUser() throws Exception {
+    User viewer = new User("viewer", "subject-viewer");
+    viewer.addRole(UserRole.HUMAN_USER);
+    userRepository.save(viewer);
+    ReportCreateRequest createRequest =
+        new ReportCreateRequest(List.of(new QualityCheckResultDTO("hash1", 0.95)));
+    mockMvc
+        .perform(
+            post(API_V1_AGENTS_REPORTS, testAgentId)
+                .with(user("viewer").roles("HUMAN_USER"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createRequest)))
+        .andExpect(status().isForbidden());
+    assertTrue(reportRepository.findAll().isEmpty());
   }
 
   @Test

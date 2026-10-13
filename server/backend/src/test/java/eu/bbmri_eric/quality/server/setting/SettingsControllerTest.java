@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 class SettingsControllerTest {
 
   public static final String API_V1_SETTINGS = "/api/v1/settings";
+  public static final String API_V1_SETTINGS_OIDC = "/api/v1/settings/oidc";
 
   @Autowired private MockMvc mockMvc;
   @Autowired private ObjectMapper objectMapper;
@@ -63,6 +64,28 @@ class SettingsControllerTest {
   void patchSettings_withUserRole_shouldReturn403() throws Exception {
     mockMvc
         .perform(patch(API_V1_SETTINGS).contentType(MediaType.APPLICATION_JSON).content("{}"))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
+  @WithMockUser(roles = "HUMAN_USER")
+  void getSettings_withHumanUserRole_shouldReturn403() throws Exception {
+    mockMvc.perform(get(API_V1_SETTINGS)).andExpect(status().isForbidden());
+  }
+
+  @Test
+  @WithMockUser(roles = "HUMAN_USER")
+  void patchSettings_withHumanUserRole_shouldReturn403() throws Exception {
+    mockMvc
+        .perform(patch(API_V1_SETTINGS).contentType(MediaType.APPLICATION_JSON).content("{}"))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
+  @WithMockUser(roles = "HUMAN_USER")
+  void patchOidcSettings_withHumanUserRole_shouldReturn403() throws Exception {
+    mockMvc
+        .perform(patch(API_V1_SETTINGS_OIDC).contentType(MediaType.APPLICATION_JSON).content("{}"))
         .andExpect(status().isForbidden());
   }
 

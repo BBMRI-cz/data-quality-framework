@@ -6,6 +6,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -274,6 +275,20 @@ public class UserControllerTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$._embedded").exists())
         .andExpect(jsonPath("$._embedded.userDTOList").isArray());
+  }
+
+  @Test
+  void getAllUsers_asHumanUser_returnsForbidden() throws Exception {
+    mockMvc
+        .perform(get("/api/v1/users").with(user("viewer").roles("HUMAN_USER")))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
+  void getUserById_asHumanUser_returnsForbidden() throws Exception {
+    mockMvc
+        .perform(get("/api/v1/users/1").with(user("viewer").roles("HUMAN_USER")))
+        .andExpect(status().isForbidden());
   }
 
   @Test

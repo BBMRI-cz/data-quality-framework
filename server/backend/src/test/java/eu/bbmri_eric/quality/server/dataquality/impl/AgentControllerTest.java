@@ -13,7 +13,9 @@ import eu.bbmri_eric.quality.server.dataquality.domain.AgentStatus;
 import eu.bbmri_eric.quality.server.dataquality.domain.Report;
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentRegistrationRequest;
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentUpdateRequest;
+import eu.bbmri_eric.quality.server.user.UserRole;
 import eu.bbmri_eric.quality.server.user.UserService;
+import eu.bbmri_eric.quality.server.user.domain.User;
 import eu.bbmri_eric.quality.server.user.dto.UserCreateDTO;
 import eu.bbmri_eric.quality.server.user.impl.UserRepository;
 import java.util.UUID;
@@ -44,6 +46,8 @@ class AgentControllerIntegrationTest {
 
   @Autowired private UserService userService;
   @Autowired private UserRepository userRepository;
+
+  private static final String HUMAN_USERNAME = "viewer";
 
   @BeforeEach
   void setUp() {
@@ -166,6 +170,31 @@ class AgentControllerIntegrationTest {
   @WithMockUser(roles = {})
   void listAll_shouldReturnForbiddenWhenUserHasNoRole() throws Exception {
     mockMvc.perform(get(API_V_1_AGENTS)).andExpect(status().isForbidden());
+  }
+
+  @Test
+  @WithMockUser(roles = "HUMAN_USER")
+  void listAll_shouldReturnAgentsForHumanUser() throws Exception {
+    String agentId = UUID.randomUUID().toString();
+    agentRepository.save(new Agent(agentId));
+
+    mockMvc
+        .perform(get(API_V_1_AGENTS))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$._embedded.agents.length()").value(1))
+        .andExpect(jsonPath("$._embedded.agents[0].id").value(agentId));
+  }
+
+  @Test
+  void findById_shouldReturnAgentForHumanUser() throws Exception {
+    String agentId = UUID.randomUUID().toString();
+    agentRepository.save(new Agent(agentId));
+    saveHumanUser();
+
+    mockMvc
+        .perform(get(API_V_1_AGENTS_ID, agentId).with(user(HUMAN_USERNAME).roles("HUMAN_USER")))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(agentId));
   }
 
   @Test
@@ -318,6 +347,25 @@ class AgentControllerIntegrationTest {
                 .content(objectMapper.writeValueAsString(updateRequest)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.id").value(agentId));
+  }
+
+  @Test
+  void update_shouldReturnForbiddenForHumanUser() throws Exception {
+    String agentId = UUID.randomUUID().toString();
+    agentRepository.save(new Agent(agentId));
+    saveHumanUser();
+    AgentUpdateRequest updateRequest = new AgentUpdateRequest("New Name", AgentStatus.ACTIVE);
+
+    mockMvc
+        .perform(
+            patch(API_V_1_AGENTS_ID, agentId)
+                .with(user(HUMAN_USERNAME).roles("HUMAN_USER"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateRequest)))
+        .andExpect(status().isForbidden());
+
+    Agent unchanged = agentRepository.findById(agentId).orElseThrow();
+    assertEquals(AgentStatus.PENDING, unchanged.getStatus());
   }
 
   @Test
@@ -618,5 +666,11 @@ class AgentControllerIntegrationTest {
 
     assertTrue(agentRepository.findById(agentId).isEmpty());
     assertTrue(userRepository.findByAgentId(agentId).isEmpty());
+  }
+
+  private void saveHumanUser() {
+    User viewer = new User(HUMAN_USERNAME, "subject-viewer");
+    viewer.addRole(UserRole.HUMAN_USER);
+    userRepository.save(viewer);
   }
 }
