@@ -215,7 +215,7 @@ router.beforeEach((to, _from) => {
     return '/login';
   }
   if (to.meta.requiresAdmin && !authStore.isAdmin) {
-    return '/dashboard';
+    return { name: 'NotFound' };
   }
 });
 
