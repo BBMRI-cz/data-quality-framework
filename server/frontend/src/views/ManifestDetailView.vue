@@ -11,6 +11,7 @@
         >
           <template #actions>
             <button
+              v-if="authStore.isAdmin"
               class="btn btn-primary btn-sm"
               :disabled="loading || !cryptoReady"
               :title="cryptoError || ''"
@@ -85,6 +86,7 @@
 
 <script setup>
   import { ref, computed, onMounted } from 'vue';
+  import { authStore } from '@/stores/authStore.js';
   import { useRoute, useRouter } from 'vue-router';
   import { useHead } from '@unhead/vue';
   import { apiService } from '@/services/apiService.js';

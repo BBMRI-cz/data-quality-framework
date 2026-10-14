@@ -15,7 +15,7 @@
             <i class="bi bi-arrow-left me-2"></i>Back to Groups
           </button>
           <button
-            v-if="!isNew"
+            v-if="!isNew && authStore.isAdmin"
             class="btn btn-outline-danger btn-sm d-flex align-items-center"
             :disabled="saving"
             @click="showDeleteModal = true"
@@ -45,26 +45,28 @@
             <div class="card-header bg-white border-bottom py-3">
               <h5 class="mb-0 fw-semibold">
                 <i class="bi bi-pencil text-primary me-2"></i>
-                {{ isNew ? 'Create Group' : 'Edit Group' }}
+                {{ isNew ? 'Create Group' : authStore.isAdmin ? 'Edit Group' : 'Group' }}
               </h5>
             </div>
             <div class="card-body p-4">
-              <div class="row g-4">
-                <!-- Name Field -->
-                <div class="col-12">
-                  <label class="form-label fw-semibold">Name</label>
-                  <input
-                    v-model="editForm.name"
-                    type="text"
-                    class="form-control"
-                    :class="{ 'is-invalid': validationErrors.name }"
-                    placeholder="Enter group name"
-                  />
-                  <div v-if="validationErrors.name" class="invalid-feedback">
-                    {{ validationErrors.name }}
+              <fieldset :disabled="!authStore.isAdmin">
+                <div class="row g-4">
+                  <!-- Name Field -->
+                  <div class="col-12">
+                    <label class="form-label fw-semibold">Name</label>
+                    <input
+                      v-model="editForm.name"
+                      type="text"
+                      class="form-control"
+                      :class="{ 'is-invalid': validationErrors.name }"
+                      placeholder="Enter group name"
+                    />
+                    <div v-if="validationErrors.name" class="invalid-feedback">
+                      {{ validationErrors.name }}
+                    </div>
                   </div>
                 </div>
-              </div>
+              </fieldset>
             </div>
           </div>
 
@@ -74,7 +76,7 @@
               <div class="d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 fw-semibold">
                   <i class="bi bi-people-fill text-primary me-2"></i>
-                  Assign Agents
+                  {{ authStore.isAdmin ? 'Assign Agents' : 'Agents' }}
                 </h5>
                 <Badge
                   :text="`${editForm.agentIds.length} / ${filteredAgents.length} selected`"
@@ -116,7 +118,7 @@
                         </button>
                       </div>
                     </div>
-                    <div class="col-md-4">
+                    <div v-if="authStore.isAdmin" class="col-md-4">
                       <div class="d-flex gap-2">
                         <button
                           class="btn btn-outline-primary btn-sm flex-fill"
@@ -171,6 +173,7 @@
                         class="form-check-input"
                         type="checkbox"
                         :value="agent.id"
+                        :disabled="!authStore.isAdmin"
                         @click.stop
                       />
                     </div>
@@ -195,7 +198,7 @@
           </div>
 
           <!-- Action Buttons -->
-          <div class="action-buttons d-flex gap-3 justify-content-center">
+          <div v-if="authStore.isAdmin" class="action-buttons d-flex gap-3 justify-content-center">
             <button
               class="btn btn-action btn-save"
               :disabled="saving || (!isNew && !hasChanges)"
@@ -238,6 +241,7 @@
 
 <script setup>
   import { ref, reactive, computed, onMounted, watch } from 'vue';
+  import { authStore } from '@/stores/authStore.js';
   import { useRoute, useRouter } from 'vue-router';
   import { useHead } from '@unhead/vue';
   import { apiService } from '@/services/apiService.js';
@@ -446,6 +450,7 @@
   };
 
   const toggleAgent = (agentId) => {
+    if (!authStore.isAdmin) return;
     const index = editForm.agentIds.indexOf(agentId);
     if (index > -1) {
       editForm.agentIds.splice(index, 1);

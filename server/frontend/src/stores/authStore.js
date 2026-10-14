@@ -10,6 +10,10 @@ export const authStore = reactive({
   redirectPath: null,
   mode: null,
 
+  get isAdmin() {
+    return this.user?.roles?.includes('ADMIN') ?? false;
+  },
+
   init() {
     const savedUser = localStorage.getItem('user');
     const savedToken = localStorage.getItem('authToken');

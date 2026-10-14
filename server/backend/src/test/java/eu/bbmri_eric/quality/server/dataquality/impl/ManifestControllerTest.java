@@ -390,6 +390,17 @@ class ManifestControllerTest {
   }
 
   @Test
+  @WithMockUser(roles = "HUMAN_USER")
+  void findVersions_shouldReturnVersionsForHumanUser() throws Exception {
+    mockMvc
+        .perform(get(API_V1_MANIFEST_VERSIONS, testManifest.getId()))
+        .andExpect(status().isOk())
+        .andExpect(
+            jsonPath("$._links.self.href")
+                .value("http://localhost/api/v1/manifests/" + testManifest.getId() + "/versions"));
+  }
+
+  @Test
   @WithMockUser(roles = "ADMIN")
   void findVersionQualityChecks_shouldReturnLinkedQualityChecks() throws Exception {
     mockMvc

@@ -11,7 +11,12 @@
           <i class="bi bi-arrow-clockwise"></i>
           <span class="d-none d-md-inline ms-1">Refresh</span>
         </button>
-        <button class="btn btn-primary btn-sm ms-2" :disabled="loading" @click="showCreate = true">
+        <button
+          v-if="authStore.isAdmin"
+          class="btn btn-primary btn-sm ms-2"
+          :disabled="loading"
+          @click="showCreate = true"
+        >
           <i class="bi bi-plus-lg"></i>
           <span class="d-none d-md-inline ms-1">New Manifest</span>
         </button>
@@ -95,6 +100,7 @@
 
 <script setup>
   import { ref, computed, onMounted } from 'vue';
+  import { authStore } from '@/stores/authStore.js';
   import { useRouter } from 'vue-router';
   import { apiService } from '@/services/apiService.js';
   import { notificationService } from '@/services/notificationService.js';

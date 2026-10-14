@@ -79,6 +79,7 @@
             <span>Groups</span>
           </router-link>
           <router-link
+            v-if="authStore.isAdmin"
             to="/users"
             class="nav-link"
             :class="{ active: $route.name === 'Users' }"
@@ -102,6 +103,7 @@
               <span>Profile</span>
             </router-link>
             <router-link
+              v-if="authStore.isAdmin"
               to="/settings"
               class="nav-link nav-subitem"
               :class="{ active: $route.name === 'Settings' }"
@@ -111,6 +113,7 @@
               <span>General</span>
             </router-link>
             <router-link
+              v-if="authStore.isAdmin"
               to="/oidc-settings"
               class="nav-link nav-subitem"
               :class="{ active: $route.name === 'OidcSettings' }"
@@ -150,6 +153,7 @@
 <script setup>
   import { ref, onMounted, onUnmounted } from 'vue';
   import Copyright from './Copyright.vue';
+  import { authStore } from '@/stores/authStore.js';
 
   const showMobileMenu = ref(false);
   const canScrollDown = ref(false);

@@ -47,145 +47,157 @@
             <div class="card-header bg-white border-bottom py-3">
               <h5 class="mb-0 fw-semibold">
                 <i class="bi bi-pencil text-primary me-2"></i>
-                {{ isNew ? 'Create Quality Check' : 'Edit Quality Check' }}
+                {{
+                  isNew
+                    ? 'Create Quality Check'
+                    : authStore.isAdmin
+                      ? 'Edit Quality Check'
+                      : 'Quality Check'
+                }}
               </h5>
             </div>
             <div class="card-body p-4">
-              <div class="row g-4">
-                <!-- Name Field -->
-                <div class="col-12">
-                  <label class="form-label fw-semibold">Name</label>
-                  <input
-                    v-model="editForm.name"
-                    type="text"
-                    class="form-control"
-                    :class="{ 'is-invalid': validationErrors.name }"
-                    placeholder="Enter check name"
-                  />
-                  <div v-if="validationErrors.name" class="invalid-feedback">
-                    {{ validationErrors.name }}
-                  </div>
-                </div>
-
-                <!-- Description Field -->
-                <div class="col-12">
-                  <label class="form-label fw-semibold">Description</label>
-                  <textarea
-                    v-model="editForm.description"
-                    class="form-control"
-                    rows="3"
-                    placeholder="Enter check description"
-                  ></textarea>
-                </div>
-
-                <!-- Category Field -->
-                <div class="col-12">
-                  <label class="form-label fw-semibold">Category</label>
-                  <select v-model="editForm.categoryId" class="form-select">
-                    <option :value="null">No Category</option>
-                    <option v-for="category in categories" :key="category.id" :value="category.id">
-                      {{ category.name }}
-                    </option>
-                  </select>
-                </div>
-
-                <!-- Warning Threshold -->
-                <div class="col-md-6">
-                  <label class="form-label fw-semibold">
-                    <i class="bi bi-exclamation-triangle text-warning me-1"></i>
-                    Warning Threshold
-                  </label>
-                  <div class="input-group">
+              <fieldset :disabled="!authStore.isAdmin">
+                <div class="row g-4">
+                  <!-- Name Field -->
+                  <div class="col-12">
+                    <label class="form-label fw-semibold">Name</label>
                     <input
-                      v-model.number="editForm.warningThreshold"
-                      type="number"
-                      step="1"
-                      min="0"
-                      max="100"
+                      v-model="editForm.name"
+                      type="text"
                       class="form-control"
-                      :class="{ 'is-invalid': validationErrors.warningThreshold }"
+                      :class="{ 'is-invalid': validationErrors.name }"
+                      placeholder="Enter check name"
                     />
-                    <span class="input-group-text">%</span>
+                    <div v-if="validationErrors.name" class="invalid-feedback">
+                      {{ validationErrors.name }}
+                    </div>
                   </div>
-                  <div v-if="validationErrors.warningThreshold" class="invalid-feedback d-block">
-                    {{ validationErrors.warningThreshold }}
-                  </div>
-                  <small class="form-text text-muted">
-                    Value between 0 and 100 (e.g., 5 for 5%)
-                  </small>
-                </div>
 
-                <!-- Error Threshold -->
-                <div class="col-md-6">
-                  <label class="form-label fw-semibold">
-                    <i class="bi bi-x-circle text-danger me-1"></i>
-                    Error Threshold
-                  </label>
-                  <div class="input-group">
-                    <input
-                      v-model.number="editForm.errorThreshold"
-                      type="number"
-                      step="1"
-                      min="0"
-                      max="100"
+                  <!-- Description Field -->
+                  <div class="col-12">
+                    <label class="form-label fw-semibold">Description</label>
+                    <textarea
+                      v-model="editForm.description"
                       class="form-control"
-                      :class="{ 'is-invalid': validationErrors.errorThreshold }"
-                    />
-                    <span class="input-group-text">%</span>
+                      rows="3"
+                      placeholder="Enter check description"
+                    ></textarea>
                   </div>
-                  <div v-if="validationErrors.errorThreshold" class="invalid-feedback d-block">
-                    {{ validationErrors.errorThreshold }}
-                  </div>
-                  <small class="form-text text-muted">
-                    Value between 0 and 100 (e.g., 10 for 10%)
-                  </small>
-                </div>
 
-                <!-- Keywords Section -->
-                <div v-if="!isNew" class="col-12">
-                  <label class="form-label fw-semibold"> Keywords </label>
-                  <div class="keywords-container">
-                    <Badge
-                      v-for="keyword in keywords"
-                      :key="keyword"
-                      :text="keyword"
-                      variant="primary"
-                      closable
-                      @remove="removeKeyword"
-                    />
+                  <!-- Category Field -->
+                  <div class="col-12">
+                    <label class="form-label fw-semibold">Category</label>
+                    <select v-model="editForm.categoryId" class="form-select">
+                      <option :value="null">No Category</option>
+                      <option
+                        v-for="category in categories"
+                        :key="category.id"
+                        :value="category.id"
+                      >
+                        {{ category.name }}
+                      </option>
+                    </select>
                   </div>
-                  <div class="keyword-input-container mt-2">
+
+                  <!-- Warning Threshold -->
+                  <div class="col-md-6">
+                    <label class="form-label fw-semibold">
+                      <i class="bi bi-exclamation-triangle text-warning me-1"></i>
+                      Warning Threshold
+                    </label>
                     <div class="input-group">
                       <input
-                        v-model="newKeyword"
-                        type="text"
+                        v-model.number="editForm.warningThreshold"
+                        type="number"
+                        step="1"
+                        min="0"
+                        max="100"
                         class="form-control"
-                        placeholder="Add new keyword..."
-                        :disabled="saving"
-                        @keyup.enter="addKeyword"
+                        :class="{ 'is-invalid': validationErrors.warningThreshold }"
                       />
-                      <button
-                        class="btn btn-primary"
-                        type="button"
-                        :disabled="!newKeyword.trim() || saving"
-                        @click="addKeyword"
-                      >
-                        <i class="bi bi-plus-lg"></i>
-                      </button>
+                      <span class="input-group-text">%</span>
+                    </div>
+                    <div v-if="validationErrors.warningThreshold" class="invalid-feedback d-block">
+                      {{ validationErrors.warningThreshold }}
                     </div>
                     <small class="form-text text-muted">
-                      Press Enter or click + to add keywords. Changes are saved when you click Save
-                      Changes.
+                      Value between 0 and 100 (e.g., 5 for 5%)
                     </small>
                   </div>
-                  <div v-if="keywords.length === 0" class="text-muted mt-2">
-                    <i class="bi bi-inbox me-1"></i>No keywords added yet
+
+                  <!-- Error Threshold -->
+                  <div class="col-md-6">
+                    <label class="form-label fw-semibold">
+                      <i class="bi bi-x-circle text-danger me-1"></i>
+                      Error Threshold
+                    </label>
+                    <div class="input-group">
+                      <input
+                        v-model.number="editForm.errorThreshold"
+                        type="number"
+                        step="1"
+                        min="0"
+                        max="100"
+                        class="form-control"
+                        :class="{ 'is-invalid': validationErrors.errorThreshold }"
+                      />
+                      <span class="input-group-text">%</span>
+                    </div>
+                    <div v-if="validationErrors.errorThreshold" class="invalid-feedback d-block">
+                      {{ validationErrors.errorThreshold }}
+                    </div>
+                    <small class="form-text text-muted">
+                      Value between 0 and 100 (e.g., 10 for 10%)
+                    </small>
                   </div>
-                  <small class="form-text text-muted">
-                    Keywords help with NLP-based search and filtering
-                  </small>
+
+                  <!-- Keywords Section -->
+                  <div v-if="!isNew" class="col-12">
+                    <label class="form-label fw-semibold"> Keywords </label>
+                    <div class="keywords-container">
+                      <Badge
+                        v-for="keyword in keywords"
+                        :key="keyword"
+                        :text="keyword"
+                        variant="primary"
+                        :closable="authStore.isAdmin"
+                        @remove="removeKeyword"
+                      />
+                    </div>
+                    <div v-if="authStore.isAdmin" class="keyword-input-container mt-2">
+                      <div class="input-group">
+                        <input
+                          v-model="newKeyword"
+                          type="text"
+                          class="form-control"
+                          placeholder="Add new keyword..."
+                          :disabled="saving"
+                          @keyup.enter="addKeyword"
+                        />
+                        <button
+                          class="btn btn-primary"
+                          type="button"
+                          :disabled="!newKeyword.trim() || saving"
+                          @click="addKeyword"
+                        >
+                          <i class="bi bi-plus-lg"></i>
+                        </button>
+                      </div>
+                      <small class="form-text text-muted">
+                        Press Enter or click + to add keywords. Changes are saved when you click
+                        Save Changes.
+                      </small>
+                    </div>
+                    <div v-if="keywords.length === 0" class="text-muted mt-2">
+                      <i class="bi bi-inbox me-1"></i>No keywords added yet
+                    </div>
+                    <small class="form-text text-muted">
+                      Keywords help with NLP-based search and filtering
+                    </small>
+                  </div>
                 </div>
-              </div>
+              </fieldset>
             </div>
           </div>
 
@@ -198,7 +210,7 @@
           />
 
           <!-- Action Buttons -->
-          <div class="action-buttons d-flex gap-3 justify-content-center">
+          <div v-if="authStore.isAdmin" class="action-buttons d-flex gap-3 justify-content-center">
             <button
               class="btn btn-action btn-save"
               :disabled="saving || (!isNew && !hasChanges)"
@@ -229,6 +241,7 @@
 
 <script setup>
   import { ref, reactive, computed, onMounted } from 'vue';
+  import { authStore } from '@/stores/authStore.js';
   import { useRoute, useRouter } from 'vue-router';
   import { useHead } from '@unhead/vue';
   import { apiService } from '@/services/apiService.js';

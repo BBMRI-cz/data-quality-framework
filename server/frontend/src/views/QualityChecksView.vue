@@ -11,7 +11,12 @@
           <i class="bi bi-arrow-clockwise"></i>
           <span class="d-none d-md-inline ms-1">Refresh</span>
         </button>
-        <button class="btn btn-primary btn-sm ms-2" :disabled="loading" @click="createCheck">
+        <button
+          v-if="authStore.isAdmin"
+          class="btn btn-primary btn-sm ms-2"
+          :disabled="loading"
+          @click="createCheck"
+        >
           <i class="bi bi-plus-lg"></i>
           <span class="d-none d-md-inline ms-1">New Check</span>
         </button>
@@ -70,6 +75,7 @@
 
 <script setup>
   import { onMounted } from 'vue';
+  import { authStore } from '@/stores/authStore.js';
   import Badge from '@/components/ui/Badge.vue';
   import StatsCard from '@/components/ui/StatsCard.vue';
   import PaginatedTable from '@/components/ui/PaginatedTable.vue';

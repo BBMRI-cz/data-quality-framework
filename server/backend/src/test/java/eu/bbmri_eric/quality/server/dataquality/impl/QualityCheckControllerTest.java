@@ -396,6 +396,12 @@ class QualityCheckControllerTest {
   }
 
   @Test
+  @WithMockUser(roles = "USER")
+  void findAll_shouldReturnForbiddenForUserWithoutHumanUserOrAdminRole() throws Exception {
+    mockMvc.perform(get(API_V1_QUALITY_CHECKS)).andExpect(status().isForbidden());
+  }
+
+  @Test
   void update_shouldReturnUnauthorizedWhenNotAuthenticated() throws Exception {
     QualityCheckUpdateDTO updateDTO =
         new QualityCheckUpdateDTO("Updated Quality Check", "Updated description", 0.75, 0.45, null);
@@ -901,6 +907,27 @@ class QualityCheckControllerTest {
   @WithMockUser(roles = "ADMIN")
   void findVersions_shouldReturnNotFoundWhenQualityCheckDoesNotExist() throws Exception {
     mockMvc.perform(get(API_V1_QUALITY_CHECKS_VERSIONS, 99999L)).andExpect(status().isNotFound());
+  }
+
+  @Test
+  @WithMockUser(roles = "HUMAN_USER")
+  void findVersions_shouldReturnVersionsForHumanUser() throws Exception {
+    testQualityCheck.addVersion(
+        new QualityCheckVersion(testQualityCheck, 1, "SELECT COUNT(*) FROM patients"));
+    qualityCheckRepository.save(testQualityCheck);
+
+    mockMvc
+        .perform(get(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$._embedded.qualityCheckVersions.length()").value(1));
+  }
+
+  @Test
+  @WithMockUser(roles = "USER")
+  void findVersions_shouldReturnForbiddenForUserWithoutHumanUserOrAdminRole() throws Exception {
+    mockMvc
+        .perform(get(API_V1_QUALITY_CHECKS_VERSIONS, testQualityCheck.getId()))
+        .andExpect(status().isForbidden());
   }
 
   private static String hashOf(String query) {

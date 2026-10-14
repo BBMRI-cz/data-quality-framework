@@ -71,7 +71,7 @@ const routes = [
     path: '/quality-checks/new',
     name: 'QualityCheckCreate',
     component: QualityCheckDetailView,
-    meta: { requiresAuth: true, title: 'Create Quality Check' },
+    meta: { requiresAuth: true, requiresAdmin: true, title: 'Create Quality Check' },
   },
   {
     path: '/quality-checks/:id',
@@ -95,7 +95,7 @@ const routes = [
     path: '/manifests/:id/publish',
     name: 'ManifestVersionPublish',
     component: ManifestVersionPublishView,
-    meta: { requiresAuth: true, title: 'Publish Manifest Version' },
+    meta: { requiresAuth: true, requiresAdmin: true, title: 'Publish Manifest Version' },
   },
   {
     path: '/categories',
@@ -107,7 +107,7 @@ const routes = [
     path: '/categories/new',
     name: 'CategoryCreate',
     component: CategoryDetailView,
-    meta: { requiresAuth: true, title: 'Create Category' },
+    meta: { requiresAuth: true, requiresAdmin: true, title: 'Create Category' },
   },
   {
     path: '/categories/:id',
@@ -125,7 +125,7 @@ const routes = [
     path: '/groups/new',
     name: 'GroupCreate',
     component: GroupDetailView,
-    meta: { requiresAuth: true, title: 'Create Group' },
+    meta: { requiresAuth: true, requiresAdmin: true, title: 'Create Group' },
   },
   {
     path: '/groups/:id',
@@ -137,31 +137,31 @@ const routes = [
     path: '/users',
     name: 'Users',
     component: UsersView,
-    meta: { requiresAuth: true, title: 'Users' },
+    meta: { requiresAuth: true, requiresAdmin: true, title: 'Users' },
   },
   {
     path: '/users/new',
     name: 'NewUser',
     component: UserDetailView,
-    meta: { requiresAuth: true, title: 'Create User' },
+    meta: { requiresAuth: true, requiresAdmin: true, title: 'Create User' },
   },
   {
     path: '/users/:id',
     name: 'UserDetail',
     component: UserDetailView,
-    meta: { requiresAuth: true, title: 'User Detail' },
+    meta: { requiresAuth: true, requiresAdmin: true, title: 'User Detail' },
   },
   {
     path: '/settings',
     name: 'Settings',
     component: Settings,
-    meta: { requiresAuth: true, title: 'Settings' },
+    meta: { requiresAuth: true, requiresAdmin: true, title: 'Settings' },
   },
   {
     path: '/oidc-settings',
     name: 'OidcSettings',
     component: OidcSettings,
-    meta: { requiresAuth: true, title: 'OIDC Settings' },
+    meta: { requiresAuth: true, requiresAdmin: true, title: 'OIDC Settings' },
   },
   {
     path: '/logged-in',
@@ -213,6 +213,9 @@ router.beforeEach((to, _from) => {
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     authStore.setRedirectPath(to.fullPath);
     return '/login';
+  }
+  if (to.meta.requiresAdmin && !authStore.isAdmin) {
+    return { name: 'NotFound' };
   }
 });
 
