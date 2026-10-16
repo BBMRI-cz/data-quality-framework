@@ -5,14 +5,15 @@ from __future__ import annotations
 import os
 import tempfile
 from dataclasses import dataclass
+from typing import Literal
 
 from .config import Settings
 
 
 @dataclass(frozen=True)
 class HealthStatus:
-    status: str  # "UP" | "DOWN"
-    details: dict
+    status: Literal["UP", "DOWN"]
+    details: dict[str, bool]
 
 
 def check_health(settings: Settings) -> HealthStatus:

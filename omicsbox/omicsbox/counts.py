@@ -8,6 +8,7 @@ to derive them. ``secondary_entities`` can be set explicitly or derived from
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Literal
 
 from .config import Settings
 
@@ -22,8 +23,7 @@ class Counts:
 
     patients: int | None
     secondary_entities: int | None
-    configured: bool
-    source: str  # "env" | "derived" | "unconfigured"
+    source: Literal["env", "derived", "unconfigured"]
 
 
 def resolve_counts(settings: Settings) -> Counts:
@@ -31,16 +31,11 @@ def resolve_counts(settings: Settings) -> Counts:
     patients = settings.patient_count
     if settings.secondary_entity_count is not None:
         secondary = settings.secondary_entity_count
-        source = "env"
+        source: Literal["env", "derived", "unconfigured"] = "env"
     elif patients is not None:
         secondary = patients * settings.images_per_patient
         source = "derived"
     else:
         secondary = None
         source = "unconfigured"
-    return Counts(
-        patients=patients,
-        secondary_entities=secondary,
-        configured=source != "unconfigured",
-        source=source,
-    )
+    return Counts(patients=patients, secondary_entities=secondary, source=source)

@@ -16,16 +16,32 @@ services:
       - /tmp:noexec,nosuid,size=100m
     environment:
       - PYTHONDONTWRITEBYTECODE=1
+      # Caller authentication for /run, /counts and /entities.
+      # Recommended in every non-local setup; unset = auth disabled (warning on startup).
+      # - OMICSBOX_API_TOKEN=change-me
       # Entity counts returned by GET /counts; leave unset for "unconfigured".
       # - OMICSBOX_PATIENT_COUNT=100
       # - OMICSBOX_IMAGES_PER_PATIENT=3
       # - OMICSBOX_SECONDARY_ENTITY_COUNT=300  # optional explicit override
-      # - TIMEOUT=60
-      # - MAX_REQUEST_BYTES=5242880
-      # - MAX_OUTPUT_BYTES=1048576
+      # - OMICSBOX_TIMEOUT=60                  # per-script timeout (seconds)
+      # - OMICSBOX_RUN_QUEUE_TIMEOUT=120       # how long concurrent callers wait
+      # - OMICSBOX_MAX_REQUEST_BYTES=5242880
+      # - OMICSBOX_MAX_OUTPUT_BYTES=1048576
+      # - OMICSBOX_THREADS=8
     restart: unless-stopped
+    pids_limit: 256
     cpus: '2'
     mem_limit: 2G
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import sys,urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health').status==200 else 1)"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 networks:
   isolated:
     internal: true

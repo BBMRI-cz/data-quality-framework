@@ -118,6 +118,51 @@ jobs:
       - working-directory: server/backend
         run: mvn --quiet clean com.spotify.fmt:fmt-maven-plugin:check
 
+  lint-omicsbox:
+    name: Code Format (OmicsBox)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - working-directory: omicsbox
+        run: |
+          pip install ruff==0.17.1
+          ruff check
+          ruff format --check
+
+  test-omicsbox:
+    name: Unit Tests (OmicsBox)
+    runs-on: ubuntu-latest
+    needs:
+      - lint-omicsbox
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - working-directory: omicsbox
+        run: pip install -r requirements.txt -r requirements-dev.txt
+
+      - working-directory: omicsbox
+        run: python -m pytest tests/ --cov=omicsbox --cov-report=xml --cov-report=term
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./omicsbox/coverage.xml
+          flags: omicsbox
+          name: omicsbox-coverage
+          fail_ci_if_error: false
+
   test:
     name: Unit & Integration Tests (Agent)
     runs-on: ubuntu-latest

@@ -8,14 +8,16 @@ RUN apt-get update \
         libxext6 \
         libxrender1 \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-COPY requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir --no-input -r /tmp/requirements.txt \
-    && rm /tmp/requirements.txt
+COPY requirements.txt requirements-imaging.txt /tmp/
+RUN pip install --no-cache-dir --no-input \
+        -r /tmp/requirements.txt \
+        -r /tmp/requirements-imaging.txt \
+    && rm /tmp/requirements.txt /tmp/requirements-imaging.txt
 RUN groupadd --gid 9999 sandbox \
     && useradd --uid 9999 --gid sandbox --shell /usr/sbin/nologin --create-home sandbox
 WORKDIR /sandbox
+COPY omicsbox /sandbox/omicsbox
+COPY main.py /sandbox/main.py
 USER sandbox
-COPY --chown=sandbox:sandbox omicsbox /sandbox/omicsbox
-COPY --chown=sandbox:sandbox main.py /sandbox/main.py
 EXPOSE 8000
 CMD ["python", "main.py"]
