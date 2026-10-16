@@ -57,6 +57,7 @@
             :options="[
               { value: 'CQL', label: 'CQL (Clinical Quality Language)' },
               { value: 'SQL', label: 'SQL (Structured Query Language)' },
+              { value: 'PYTHON', label: 'Python' },
               { value: 'JAVA', label: 'Java (Built-in Check)' },
             ]"
           />
