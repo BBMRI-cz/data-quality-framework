@@ -6,7 +6,7 @@ result contract: a single JSON object printed as the LAST line of stdout.
 
 Contract fields:
     count (int):       number of affected entities (the raw check result)
-    entityType (str):  what was counted, e.g. "File" or "Patient"
+    entityType (str):  what was counted; the sandbox supports "file"
     ids (list[str]):   identifiers of the affected entities
     error (str|null):  set by the script to describe a check-level error
 
@@ -15,7 +15,7 @@ the check as failed, so always emit the JSON document exactly once and as
 the last line of stdout.
 
 Run inside the sandbox with:
-    curl -s -X POST --data-binary @examples/example_check.py http://localhost:8000/run
+    curl -s -X POST --data-binary @examples/example_check.py http://localhost:8080/run
 """
 
 import json
@@ -36,7 +36,7 @@ def main() -> None:
         json.dumps(
             {
                 "count": len(missing),
-                "entityType": "File",
+                "entityType": "file",
                 "ids": sorted(missing),
                 "error": None,
             }

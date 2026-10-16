@@ -6,8 +6,6 @@ from omicsbox.config import Settings
 def _base_kwargs():
     return dict(
         data_dir="/sandbox/data",
-        host="127.0.0.1",
-        port=8000,
         threads=2,
         api_token=None,
         timeout_seconds=30,
@@ -22,8 +20,6 @@ def _base_kwargs():
 def test_defaults():
     settings = Settings.from_env({})
     assert settings.data_dir == "/sandbox/data"
-    assert settings.host == "0.0.0.0"
-    assert settings.port == 8000
     assert settings.threads == 8
     assert settings.api_token is None
     assert settings.timeout_seconds == 60
@@ -38,8 +34,6 @@ def test_overrides():
     settings = Settings.from_env(
         {
             "OMICSBOX_DATA_DIR": "/data",
-            "OMICSBOX_HOST": "127.0.0.1",
-            "OMICSBOX_PORT": "9000",
             "OMICSBOX_THREADS": "4",
             "OMICSBOX_API_TOKEN": "secret",
             "OMICSBOX_TIMEOUT": "5",
@@ -51,8 +45,6 @@ def test_overrides():
         }
     )
     assert settings.data_dir == "/data"
-    assert settings.host == "127.0.0.1"
-    assert settings.port == 9000
     assert settings.threads == 4
     assert settings.api_token == "secret"
     assert settings.timeout_seconds == 5
@@ -75,8 +67,6 @@ def test_empty_strings_are_unset():
         {"OMICSBOX_TIMEOUT": "0"},
         {"OMICSBOX_TIMEOUT": "-5"},
         {"OMICSBOX_TIMEOUT": "abc"},
-        {"OMICSBOX_PORT": "0"},
-        {"OMICSBOX_PORT": "99999"},
         {"OMICSBOX_THREADS": "0"},
         {"OMICSBOX_RUN_QUEUE_TIMEOUT": "-1"},
         {"OMICSBOX_MAX_REQUEST_BYTES": "0"},
@@ -95,14 +85,12 @@ def test_invalid_env_values_raise(env):
 @pytest.mark.parametrize(
     "overrides",
     [
-        {"port": 0},
         {"threads": 0},
         {"timeout_seconds": 0},
         {"run_queue_timeout_seconds": -1},
         {"max_request_bytes": 0},
         {"patient_count": -1},
         {"data_dir": ""},
-        {"host": ""},
     ],
 )
 def test_constructor_validates(overrides):

@@ -14,6 +14,9 @@ services:
       - ${OMICSBOX_DATA_PATH:-./data}:/sandbox/data:ro
     tmpfs:
       - /tmp:noexec,nosuid,size=100m
+    # Waitress + app settings are forwarded from the shell or a .env file
+    # (each is only set in the container when set on the host). The data
+    # path is owned by the volume mount above, hence no OMICSBOX_DATA_DIR.
     environment:
       - PYTHONDONTWRITEBYTECODE=1
     restart: unless-stopped

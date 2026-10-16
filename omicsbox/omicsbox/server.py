@@ -66,7 +66,10 @@ def _authenticate(settings: Settings) -> tuple[Response, int] | None:
     if token is None:
         return None
     provided = request.headers.get("Authorization", "")
-    if provided.startswith("Bearer ") and hmac.compare_digest(provided[7:], token):
+    token_bytes = token.encode("utf-8")
+    if provided.startswith("Bearer ") and hmac.compare_digest(
+        provided[7:].encode("utf-8"), token_bytes
+    ):
         return None
     return _error("unauthorized", 401)
 

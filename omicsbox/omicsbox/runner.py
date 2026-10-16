@@ -1,25 +1,4 @@
-"""Isolated execution of user-provided Python scripts.
-
-Isolation model (the sandbox is a long-running service, one script at a time):
-
-* every run gets a private ``TemporaryDirectory`` for its script, captured
-  output, and a private ``TMPDIR`` scratch area; the directory tree is
-  deleted when the run ends, so no run can poison a later one
-* after **every** run — not only timeouts — leftover processes are killed
-  with ``kill(-1, SIGKILL)`` and orphans are reaped with ``waitpid``. That
-  catches background children, ``setsid`` daemons, and anything else the
-  script spawned: the container is single-purpose and the server runs as
-  PID 1, so every other process it can signal belongs to a script, and the
-  server itself is immune (signals to PID 1 from without are ignored by the
-  kernel; ``kill(-1)`` excludes the caller and PID 1)
-* process cleanup is enabled only when the server is PID 1 (i.e. inside the
-  container) so local development and the test suite are never affected
-* shared-tmp files a script dropped outside its run directory are purged
-  after the run (container mode only)
-* resource limits (process count, file size) are applied to every child;
-  the container-level ``pids_limit`` is defense in depth
-* children receive a minimal environment, never the server environment
-"""
+"""Isolated execution of user-provided Python scripts."""
 
 from __future__ import annotations
 
@@ -34,7 +13,7 @@ import tempfile
 import threading
 import time
 from dataclasses import dataclass
-from typing import Literal
+from typing import BinaryIO, Literal
 
 from .config import Settings
 
@@ -47,7 +26,6 @@ MAX_SCRIPT_PROCESSES = 128
 MAX_SCRIPT_FILE_BYTES = 64 * 1024 * 1024
 
 _RUN_DIR_PREFIX = "omicsbox-run-"
-_HEALTH_PROBE_PREFIX = ".healthcheck-"
 
 
 def in_container() -> bool:
@@ -81,9 +59,35 @@ def _truncate(data: bytes, limit: int) -> str:
     return data[:limit].decode("utf-8", errors="replace") + TRUNCATION_MARKER
 
 
-def _read_capped(path: str, limit: int) -> bytes:
-    with open(path, "rb") as f:
-        return f.read(limit + 1)
+def _read_capped(output: BinaryIO, limit: int) -> bytes:
+    """Read captured output through the server's own handle.
+
+    The handle refers to the file the server opened, so results cannot be
+    hijacked or blocked by a script replacing the path (e.g. with a FIFO,
+    whose reopen would wait for a writer forever).
+    """
+    output.seek(0)
+    return output.read(limit + 1)
+
+
+def _force_remove_tree(path: str) -> None:
+    """Remove a leftover tree even if the script revoked permissions on it.
+
+    As the owner of its leftovers the server can always restore access with
+    chmod. The repair pass must chmod a directory before it is traversed —
+    ``os.walk`` yields parents first, exactly when the children are fixed.
+    """
+    os.chmod(path, 0o700)  # entry point must be traversable for os.walk
+    for root, dirs, _files in os.walk(path):
+        for name in dirs:
+            child = os.path.join(root, name)
+            if os.path.islink(child):
+                continue  # never chmod through a link; rmtree unlinks it
+            try:
+                os.chmod(child, 0o700)
+            except OSError:
+                pass  # vanished mid-walk; rmtree below surfaces real errors
+    shutil.rmtree(path)
 
 
 def _kill_process_group(pgid: int) -> None:
@@ -114,23 +118,25 @@ def _kill_leftover_processes() -> None:
 
 
 def _purge_tmp_leftovers(keep_dir: str) -> None:
-    """Remove files scripts dropped in shared tmp outside their run directory.
+    """Remove everything scripts dropped in shared tmp outside the run dir.
 
-    Only entries that could not possibly belong to the server are removed:
-    the current run directory is excluded by path and the health probe's
-    transient files by name prefix. Container mode only.
+    Only the current run directory is excluded; health-probe files are not
+    special-cased because the probe tolerates a mid-probe unlink. Raises
+    OSError when an entry cannot be removed: a persistent leftover could
+    poison later runs or fill the tmpfs, so the caller must fail the run
+    instead of silently carrying state forward. Container mode only.
     """
     base = tempfile.gettempdir()
     for entry in os.scandir(base):
-        if entry.path == keep_dir or entry.name.startswith(_HEALTH_PROBE_PREFIX):
+        if entry.path == keep_dir:
             continue
         try:
             if entry.is_dir(follow_symlinks=False):
-                shutil.rmtree(entry.path, ignore_errors=True)
+                _force_remove_tree(entry.path)
             else:
                 os.unlink(entry.path)
-        except OSError:
-            continue
+        except FileNotFoundError:
+            continue  # lost a race with the health probe; already gone
 
 
 class ScriptRunner:
@@ -207,7 +213,7 @@ class ScriptRunner:
                 )
             stdout_path = os.path.join(run_dir, "stdout")
             stderr_path = os.path.join(run_dir, "stderr")
-            with open(stdout_path, "wb") as stdout_f, open(stderr_path, "wb") as stderr_f:
+            with open(stdout_path, "w+b") as stdout_f, open(stderr_path, "w+b") as stderr_f:
                 try:
                     proc = subprocess.Popen(
                         [sys.executable, "-I", script_path],
@@ -239,11 +245,21 @@ class ScriptRunner:
                     proc.wait()
                 if cleanup:
                     _kill_leftover_processes()
-                    _purge_tmp_leftovers(keep_dir=run_dir)
+                    try:
+                        _purge_tmp_leftovers(keep_dir=run_dir)
+                    except OSError as e:
+                        log.error("failed to purge tmp leftovers: %s", e)
+                        return RunResult(
+                            "",
+                            "sandbox cleanup failed",
+                            -1,
+                            _elapsed_ms(start),
+                            "spawn_error",
+                        )
                 duration_ms = _elapsed_ms(start)
                 max_out = settings.max_output_bytes
-                stdout = _truncate(_read_capped(stdout_path, max_out), max_out)
-                stderr = _truncate(_read_capped(stderr_path, max_out), max_out)
+                stdout = _truncate(_read_capped(stdout_f, max_out), max_out)
+                stderr = _truncate(_read_capped(stderr_f, max_out), max_out)
                 if timed_out:
                     stderr += TIMEOUT_MARKER.format(settings.timeout_seconds)
                 return RunResult(

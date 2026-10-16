@@ -15,8 +15,6 @@ def make_settings(tmp_path):
             data_dir.mkdir(exist_ok=True)
         kwargs = dict(
             data_dir=str(data_dir),
-            host="127.0.0.1",
-            port=8000,
             threads=2,
             api_token=None,
             timeout_seconds=30,

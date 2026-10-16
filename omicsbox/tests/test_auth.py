@@ -57,3 +57,17 @@ def test_entities_requires_token(make_client):
 def test_health_is_public(make_client):
     client = make_client(api_token="secret-token")
     assert client.get("/health").status_code == 200
+
+
+def test_non_ascii_authorization_rejected_with_401(make_client):
+    # compare_digest raises TypeError on non-ASCII str; must not become a 500
+    client = make_client(api_token="secret-token")
+    resp = client.get("/counts", headers={"Authorization": "Bearer secret-töken"})
+    assert resp.status_code == 401
+    assert resp.get_json() == {"error": "unauthorized"}
+
+
+def test_non_ascii_configured_token_accepted(make_client):
+    client = make_client(api_token="sekret-tökén")
+    resp = client.get("/counts", headers={"Authorization": "Bearer sekret-tökén"})
+    assert resp.status_code == 200

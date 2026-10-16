@@ -15,7 +15,9 @@ docker compose up -d --build
 
 Put your omics data into `./data` (or point `OMICSBOX_DATA_PATH` at it).
 Configuration happens via environment variables — see `compose.yaml` for the
-available options (auth token, entity counts, timeouts, caps).
+available options (auth token, entity counts, timeouts, caps). Set them in
+the shell or in a `.env` file next to `compose.yaml`. The service always
+binds to port 8080 inside the container.
 
 ## Testing
 

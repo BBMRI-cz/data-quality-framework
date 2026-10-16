@@ -1,9 +1,11 @@
 import io
 import json
 import os
+import tempfile
 import threading
 import time
 
+from omicsbox import runner
 from omicsbox.server import create_app
 
 
@@ -125,6 +127,51 @@ def test_missing_data_dir_returns_spawn_error(make_client, tmp_path):
     assert body["returncode"] == -1
     assert body["status"] == "spawn_error"
     assert "failed to launch script process" in body["stderr"]
+
+
+def test_script_replacing_output_paths_with_fifos_does_not_deadlock(make_client):
+    # regression: a script could swap the run dir's stdout/stderr for FIFOs;
+    # reopening them by path would then block forever and wedge the sandbox.
+    script = (
+        b"import os\n"
+        b"run_dir = os.path.dirname(os.environ['TMPDIR'])\n"
+        b"print('before-swap', flush=True)\n"
+        b"os.unlink(os.path.join(run_dir, 'stdout'))\n"
+        b"os.mkfifo(os.path.join(run_dir, 'stdout'))\n"
+        b"os.unlink(os.path.join(run_dir, 'stderr'))\n"
+        b"os.mkfifo(os.path.join(run_dir, 'stderr'))\n"
+    )
+    body = _post_script(make_client(), script).get_json()
+    assert body["returncode"] == 0
+    assert "before-swap" in body["stdout"]
+
+
+def test_purge_tmp_leftovers_removes_everything_except_run_dir(tmp_path, monkeypatch):
+    monkeypatch.setattr(tempfile, "gettempdir", lambda: str(tmp_path))
+    keep = tmp_path / "run"
+    keep.mkdir()
+    # scripts must not be able to hide leftovers behind the probe's prefix
+    (tmp_path / ".healthcheck-bait").touch()
+    (tmp_path / "stray.txt").touch()
+    nested = tmp_path / "protected" / "nested"
+    nested.mkdir(parents=True)
+    (nested / "loot.bin").write_bytes(b"x")
+    (tmp_path / "protected").chmod(0)  # permission games: owner can restore
+    runner._purge_tmp_leftovers(keep_dir=str(keep))
+    assert [p.name for p in tmp_path.iterdir()] == ["run"]
+
+
+def test_failed_cleanup_fails_the_run(make_client, monkeypatch):
+    monkeypatch.setattr(runner, "in_container", lambda: True)
+    monkeypatch.setattr(runner, "_kill_leftover_processes", lambda: None)
+
+    def boom(keep_dir):
+        raise OSError("denied")
+
+    monkeypatch.setattr(runner, "_purge_tmp_leftovers", boom)
+    body = _post_script(make_client(), b"print('x')").get_json()
+    assert body["status"] == "spawn_error"
+    assert body["stderr"] == "sandbox cleanup failed"
 
 
 def test_script_environment_is_minimal_and_tmp_is_private(make_client):

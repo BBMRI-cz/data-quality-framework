@@ -8,8 +8,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 
 DEFAULT_DATA_DIR = "/sandbox/data"
-DEFAULT_HOST = "0.0.0.0"
-DEFAULT_PORT = 8000
+HOST = "0.0.0.0"
+PORT = 8080
 DEFAULT_THREADS = 8
 DEFAULT_TIMEOUT_SECONDS = 60
 DEFAULT_RUN_QUEUE_TIMEOUT_SECONDS = 120
@@ -17,8 +17,6 @@ DEFAULT_MAX_REQUEST_BYTES = 5 * 1024 * 1024
 DEFAULT_MAX_OUTPUT_BYTES = 1024 * 1024
 
 ENV_DATA_DIR = "OMICSBOX_DATA_DIR"
-ENV_HOST = "OMICSBOX_HOST"
-ENV_PORT = "OMICSBOX_PORT"
 ENV_THREADS = "OMICSBOX_THREADS"
 ENV_API_TOKEN = "OMICSBOX_API_TOKEN"
 ENV_TIMEOUT = "OMICSBOX_TIMEOUT"
@@ -35,8 +33,6 @@ class Settings:
     """Immutable runtime configuration of the sandbox service."""
 
     data_dir: str
-    host: str
-    port: int
     threads: int
     api_token: str | None
     timeout_seconds: int
@@ -50,10 +46,6 @@ class Settings:
         """Validate all values; raises ValueError on the first invalid one."""
         if not self.data_dir:
             raise ValueError(f"{ENV_DATA_DIR} must not be empty")
-        if not self.host:
-            raise ValueError(f"{ENV_HOST} must not be empty")
-        if not 1 <= self.port <= 65535:
-            raise ValueError(f"{ENV_PORT} must be between 1 and 65535")
         if self.threads < 1:
             raise ValueError(f"{ENV_THREADS} must be a positive integer")
         if self.timeout_seconds <= 0:
@@ -92,8 +84,6 @@ class Settings:
 
         return cls(
             data_dir=env.get(ENV_DATA_DIR) or DEFAULT_DATA_DIR,
-            host=env.get(ENV_HOST) or DEFAULT_HOST,
-            port=int_with_default(ENV_PORT, DEFAULT_PORT),
             threads=int_with_default(ENV_THREADS, DEFAULT_THREADS),
             api_token=api_token,
             timeout_seconds=int_with_default(ENV_TIMEOUT, DEFAULT_TIMEOUT_SECONDS),
