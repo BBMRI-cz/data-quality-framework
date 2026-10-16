@@ -181,12 +181,40 @@ class CentralServerClientImplTest {
   }
 
   @Test
-  void getManifestVersionQualityChecks_unsupportedQueryType_leavesTypeNull() {
+  void getManifestVersionQualityChecks_pythonQueryType_mapsToPython() {
     stubLogin();
     QualityCheckListResponse.RemoteQualityCheckVersion version =
         new QualityCheckListResponse.RemoteQualityCheckVersion();
     version.setQuery("print('hello')");
     version.setType("PYTHON");
+    QualityCheckListResponse.RemoteQualityCheck check =
+        new QualityCheckListResponse.RemoteQualityCheck();
+    check.setId(1L);
+    check.setVersions(List.of(version));
+    QualityCheckListResponse.EmbeddedQualityChecks embedded =
+        new QualityCheckListResponse.EmbeddedQualityChecks();
+    embedded.setQualityChecks(List.of(check));
+    QualityCheckListResponse response = new QualityCheckListResponse();
+    response.setEmbedded(embedded);
+    when(restTemplate.exchange(
+            eq(SERVER_URL + "/api/v1/manifests/7/versions/42/quality-checks"),
+            eq(HttpMethod.GET),
+            any(HttpEntity.class),
+            eq(QualityCheckListResponse.class)))
+        .thenReturn(new ResponseEntity<>(response, HttpStatus.OK));
+
+    List<QualityCheckDTO> checks = client.getManifestVersionQualityChecks(7L, 42L);
+
+    assertThat(checks.getFirst().getType()).isEqualTo(QualityCheckType.PYTHON);
+  }
+
+  @Test
+  void getManifestVersionQualityChecks_unsupportedQueryType_leavesTypeNull() {
+    stubLogin();
+    QualityCheckListResponse.RemoteQualityCheckVersion version =
+        new QualityCheckListResponse.RemoteQualityCheckVersion();
+    version.setQuery("print('hello')");
+    version.setType("RUBY");
     QualityCheckListResponse.RemoteQualityCheck check =
         new QualityCheckListResponse.RemoteQualityCheck();
     check.setId(1L);

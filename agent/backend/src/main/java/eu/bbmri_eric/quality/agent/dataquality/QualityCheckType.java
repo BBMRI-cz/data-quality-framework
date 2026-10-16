@@ -7,5 +7,8 @@ public enum QualityCheckType {
 
   /** Java-based built-in check implementation. */
   JAVA,
-  SQL
+  SQL,
+
+  /** Python script based check. */
+  PYTHON
 }

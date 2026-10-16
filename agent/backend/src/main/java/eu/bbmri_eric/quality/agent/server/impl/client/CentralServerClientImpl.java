@@ -233,6 +233,7 @@ class CentralServerClientImpl implements CentralServerClient {
     return switch (type) {
       case "CQL" -> QualityCheckType.CQL;
       case "SQL" -> QualityCheckType.SQL;
+      case "PYTHON" -> QualityCheckType.PYTHON;
       default -> null;
     };
   }
