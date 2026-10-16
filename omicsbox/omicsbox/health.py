@@ -43,5 +43,5 @@ def _probe_tmp_writable() -> bool:
         try:
             os.unlink(path)
         except OSError:
-            pass
+            pass  # best-effort cleanup; a leftover empty probe file is harmless
     return True

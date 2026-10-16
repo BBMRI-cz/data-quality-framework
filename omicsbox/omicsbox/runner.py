@@ -91,7 +91,7 @@ def _kill_process_group(pgid: int) -> None:
     try:
         os.killpg(pgid, signal.SIGKILL)
     except (ProcessLookupError, PermissionError, OSError):
-        pass
+        pass  # the group may already be gone or inaccessible; nothing to do
 
 
 def _kill_leftover_processes() -> None:

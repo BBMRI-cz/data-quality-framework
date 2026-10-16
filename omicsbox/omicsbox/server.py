@@ -80,7 +80,10 @@ def create_app(settings: Settings, runner: ScriptRunner | None = None) -> Flask:
     @app.errorhandler(HTTPException)
     def handle_http_error(e: HTTPException) -> tuple[Response, int]:
         code = e.code or 500
-        return _error(_ERROR_MESSAGES.get(code, e.description or e.name), code)
+        message = _ERROR_MESSAGES.get(
+            code, "internal server error" if code >= 500 else "request failed"
+        )
+        return _error(message, code)
 
     @app.before_request
     def require_auth() -> tuple[Response, int] | None:
@@ -97,8 +100,8 @@ def create_app(settings: Settings, runner: ScriptRunner | None = None) -> Flask:
             return _error("payload too large", 413)
         try:
             body = _read_script_body()
-        except ValueError as e:
-            return _error(str(e), 400)
+        except ValueError:
+            return _error("expected 'file' field in multipart request", 400)
         if not body:
             return _error("empty script body", 400)
         script_hash = hashlib.sha256(body).hexdigest()
@@ -134,9 +137,10 @@ def create_app(settings: Settings, runner: ScriptRunner | None = None) -> Flask:
         try:
             metadata = get_entity_metadata(settings.data_dir, entity_type, entity_id)
         except EntityLookupError as e:
-            return _error(str(e), 400)
-        except EntityNotFoundError as e:
-            return _error(str(e), 404)
+            log.info("entity lookup rejected id=%r: %s", entity_id, e)
+            return _error("invalid entity id", 400)
+        except EntityNotFoundError:
+            return _error("not found", 404)
         return jsonify(asdict(metadata))
 
     return app
