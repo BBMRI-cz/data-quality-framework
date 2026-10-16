@@ -19,6 +19,7 @@ env:
   NODE_VERSION: '24.18.0'
   JAVA_VERSION: '25'
   JAVA_DISTRIBUTION: 'temurin'
+  PYTHON_VERSION: '3.13'
   BLAZECTL_VERSION: v1.2.0
   BLAZECTL_CHECKSUM: c0b2bf0b35c60ff0aa1d66f638d5b8d3a77c506211643932e4132784069cc759
 
@@ -124,9 +125,9 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
-          python-version: '3.13'
+          python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
 
       - working-directory: omicsbox
@@ -143,9 +144,9 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
-          python-version: '3.13'
+          python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
 
       - working-directory: omicsbox
@@ -155,7 +156,7 @@ jobs:
         run: python -m pytest tests/ --cov=omicsbox --cov-report=xml --cov-report=term
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v7
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./omicsbox/coverage.xml
@@ -193,7 +194,7 @@ jobs:
         run: mvn --quiet test
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v7
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./agent/backend/target/site/jacoco/jacoco.xml
