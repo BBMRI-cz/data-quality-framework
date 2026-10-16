@@ -15,6 +15,7 @@ RUN groupadd --gid 9999 sandbox \
     && useradd --uid 9999 --gid sandbox --shell /usr/sbin/nologin --create-home sandbox
 WORKDIR /sandbox
 USER sandbox
+COPY --chown=sandbox:sandbox omicsbox /sandbox/omicsbox
 COPY --chown=sandbox:sandbox main.py /sandbox/main.py
 EXPOSE 8000
 CMD ["python", "main.py"]
