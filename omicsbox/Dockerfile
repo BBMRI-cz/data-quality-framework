@@ -19,5 +19,8 @@ WORKDIR /sandbox
 COPY omicsbox /sandbox/omicsbox
 COPY main.py /sandbox/main.py
 USER sandbox
+# python:3.13-slim ships no curl/wget, so probe via urllib.
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 --start-period=10s \
+    CMD python -c "import sys,urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health').status==200 else 1)"
 EXPOSE 8000
 CMD ["python", "main.py"]
