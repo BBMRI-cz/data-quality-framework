@@ -29,6 +29,12 @@ This is a federated data quality framework with a decentralized architecture:
   - `backend/` - Spring Boot 3.5.7 application (PostgreSQL database)
   - `frontend/` - Vue 3 + Vite web UI for viewing aggregated metrics
 
+- **`omicsbox/`** - Python sandbox for executing PYTHON-type quality checks against mounted omics data
+  - `main.py` - thin entry point; the service lives in the `omicsbox/` package (`config`, `counts`, `entities`, `health`, `runner`, `server` modules)
+  - `tests/` - pytest suite (run with `.venv/bin/python -m pytest tests/` after `.venv/bin/pip install -r requirements-dev.txt`)
+  - `examples/` - example check scripts demonstrating the stdout JSON result contract
+  - Runs as a hardened, offline Docker container (`compose up -d`); acts as a datastore for the agent (health/counts/entity endpoints + script execution)
+
 ## Technology Stack
 
 - **Java**: 25 (target and source)

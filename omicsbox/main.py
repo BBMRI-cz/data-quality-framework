@@ -1,170 +1,81 @@
-import os
+#!/usr/bin/env python3
+"""Entry point of the omicsbox sandbox service."""
+
+import logging
 import signal
-import subprocess
 import sys
-import tempfile
-import threading
-import time
-from dataclasses import asdict, dataclass
 
-from flask import Flask, jsonify, request
-from werkzeug.exceptions import InternalServerError
-from werkzeug.serving import make_server
+from waitress import serve
 
-HOST = "0.0.0.0"
-PORT = 8000
-MAX_SIZE = 5 * 1024 * 1024
-TIMEOUT = 60
-DATA_DIR = "/sandbox/data"
-MAX_OUTPUT_SIZE = 1024 * 1024
+from omicsbox.config import HOST, PORT, Settings
+from omicsbox.counts import resolve_counts
+from omicsbox.server import create_app
 
-app = Flask(__name__)
-app.config["MAX_CONTENT_LENGTH"] = MAX_SIZE
+log = logging.getLogger("omicsbox")
 
-server = None
+_PR_SET_DUMPABLE = 4  # from <sys/prctl.h>
 
 
-@dataclass(frozen=True)
-class RunResult:
-    stdout: str
-    stderr: str
-    returncode: int
-    duration_ms: int
+def _install_signal_handlers() -> None:
+    """Exit cleanly on SIGTERM so `docker stop` doesn't wait out the grace period.
+
+    The server is the container's PID 1; the kernel otherwise ignores SIGTERM
+    sent to it (PID 1 only receives signals it handles).
+    """
+
+    def on_term(_signum, _frame):
+        log.info("received termination signal, shutting down")
+        sys.exit(0)
+
+    signal.signal(signal.SIGTERM, on_term)
 
 
-@dataclass(frozen=True)
-class ErrorResponse:
-    error: str
+def _hide_process_secrets() -> None:
+    """Mark this process non-dumpable (Linux); best-effort no-op elsewhere.
 
-
-def _schedule_shutdown():
-    if server is not None:
-        threading.Thread(target=server.shutdown, daemon=True).start()
-
-
-def _read_body() -> bytes:
-    if request.files:
-        file = request.files.get("file")
-        if file is None:
-            raise ValueError("expected 'file' field in multipart request")
-        return file.read()
-    return request.get_data()
-
-
-def _truncate_output(data: bytes) -> str:
-    text = data.decode("utf-8", errors="replace")
-    if len(text) > MAX_OUTPUT_SIZE:
-        truncated = text[:MAX_OUTPUT_SIZE]
-        return truncated + f"\n[output truncated: {len(text) - MAX_OUTPUT_SIZE} additional characters]"
-    return text
-
-
-def _run_script(body: bytes) -> RunResult:
-    os.makedirs(DATA_DIR, exist_ok=True)
-    with tempfile.NamedTemporaryFile(
-        mode="wb", suffix=".py", dir="/tmp", delete=False
-    ) as f:
-        f.write(body)
-        script_path = f.name
-
-    stdout_fd, stdout_path = tempfile.mkstemp(suffix=".out", dir="/tmp")
-    stderr_fd, stderr_path = tempfile.mkstemp(suffix=".err", dir="/tmp")
-    try:
-        start = time.time()
-        proc = subprocess.Popen(
-            [sys.executable, "-I", script_path],
-            stdout=stdout_fd,
-            stderr=stderr_fd,
-            stdin=subprocess.DEVNULL,
-            cwd=DATA_DIR,
-            start_new_session=True,
-        )
-        os.close(stdout_fd)
-        stdout_fd = -1
-        os.close(stderr_fd)
-        stderr_fd = -1
-        try:
-            returncode = proc.wait(timeout=TIMEOUT)
-            duration_ms = round((time.time() - start) * 1000)
-        except subprocess.TimeoutExpired:
-            try:
-                os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            proc.wait()
-            duration_ms = round((time.time() - start) * 1000)
-            return RunResult(
-                stdout="",
-                stderr="execution timed out",
-                returncode=-1,
-                duration_ms=duration_ms,
-            )
-
-        with open(stdout_path, "rb") as out, open(stderr_path, "rb") as err:
-            stdout_data = out.read(MAX_OUTPUT_SIZE + 1)
-            stderr_data = err.read(MAX_OUTPUT_SIZE + 1)
-
-        return RunResult(
-            stdout=_truncate_output(stdout_data),
-            stderr=_truncate_output(stderr_data),
-            returncode=returncode,
-            duration_ms=duration_ms,
-        )
-    finally:
-        for fd in (stdout_fd, stderr_fd):
-            if fd != -1:
-                try:
-                    os.close(fd)
-                except OSError:
-                    pass
-        for path in (script_path, stdout_path, stderr_path):
-            try:
-                os.unlink(path)
-            except OSError:
-                pass
-
-
-@app.route("/run", methods=["POST"])
-def run():
-    content_length = request.content_length
-    if content_length is None or content_length <= 0 or content_length > MAX_SIZE:
-        _schedule_shutdown()
-        return jsonify(asdict(ErrorResponse("invalid content length"))), 400
+    Scripts run under the same uid as the server and could otherwise read
+    its environment — including OMICSBOX_API_TOKEN — via /proc/<pid>/environ.
+    """
+    import ctypes
 
     try:
-        body = _read_body()
+        libc = ctypes.CDLL(None)
+        libc.prctl(_PR_SET_DUMPABLE, 0, 0, 0, 0)
+    except (AttributeError, OSError):
+        pass
+
+
+def main() -> None:
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
+    try:
+        settings = Settings.from_env()
     except ValueError as e:
-        _schedule_shutdown()
-        return jsonify(asdict(ErrorResponse(str(e)))), 400
-
-    result = _run_script(body)
-    _schedule_shutdown()
-    return jsonify(asdict(result))
-
-
-@app.errorhandler(404)
-def not_found(_):
-    _schedule_shutdown()
-    return jsonify(asdict(ErrorResponse("not found"))), 404
-
-
-@app.errorhandler(413)
-def too_large(_):
-    _schedule_shutdown()
-    return jsonify(asdict(ErrorResponse("payload too large"))), 413
-
-
-@app.errorhandler(InternalServerError)
-def server_error(_):
-    _schedule_shutdown()
-    return jsonify(asdict(ErrorResponse("internal server error"))), 500
-
-
-def main():
-    global server
-    print(f"OmicsBox sandbox starting on http://{HOST}:{PORT}")
-    server = make_server(HOST, PORT, app)
-    server.serve_forever()
+        log.error("invalid configuration: %s", e)
+        sys.exit(1)
+    if settings.api_token is None:
+        log.warning(
+            "OMICSBOX_API_TOKEN is not set - running WITHOUT authentication; "
+            "do not use this in production"
+        )
+    _install_signal_handlers()
+    _hide_process_secrets()
+    counts = resolve_counts(settings)
+    log.info(
+        "OmicsBox sandbox listening on %s:%d (patients=%s, secondary=%s)",
+        HOST,
+        PORT,
+        counts.patients,
+        counts.secondary_entities,
+    )
+    serve(
+        create_app(settings),
+        host=HOST,
+        port=PORT,
+        threads=settings.threads,
+        # waitress buffers the body before Flask checks authentication or
+        # its own size limit, so the cap must be applied at the server layer
+        max_request_body_size=settings.max_request_bytes,
+    )
 
 
 if __name__ == "__main__":

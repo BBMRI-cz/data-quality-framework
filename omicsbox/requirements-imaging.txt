@@ -1,0 +1,11 @@
+# Imaging stack available to user scripts (pydicom, wsidicom, ...).
+# The sandbox service itself does not import any of these.
+pydicom==3.0.2
+wsidicom==0.36.1
+openslide-python==1.4.6
+large-image==1.35.4
+large-image-source-dicom==1.35.4
+Pillow==12.3.0
+numpy==2.5.3
+scikit-image==0.26.0
+opencv-python==5.0.0.93
