@@ -43,12 +43,11 @@ def main() -> None:
     _install_signal_handlers()
     counts = resolve_counts(settings)
     log.info(
-        "OmicsBox sandbox listening on %s:%d (patients=%s, secondary=%s, source=%s)",
+        "OmicsBox sandbox listening on %s:%d (patients=%s, secondary=%s)",
         settings.host,
         settings.port,
         counts.patients,
         counts.secondary_entities,
-        counts.source,
     )
     serve(
         create_app(settings),

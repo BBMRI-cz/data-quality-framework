@@ -20,10 +20,9 @@ services:
       # Recommended in every non-local setup; unset = auth disabled (warning on startup).
       # - OMICSBOX_API_TOKEN=change-me
       # Entity counts returned by GET /counts; leave unset for "unconfigured".
-      # - OMICSBOX_PATIENT_COUNT=100
-      # - OMICSBOX_IMAGES_PER_PATIENT=3
-      # - OMICSBOX_SECONDARY_ENTITY_COUNT=300  # optional explicit override
-      # - OMICSBOX_TIMEOUT=60                  # per-script timeout (seconds)
+      # - OMICSBOX_PATIENT_COUNT=100              # number of patients
+      # - OMICSBOX_SECONDARY_ENTITY_COUNT=300     # number of secondary entities
+      # - OMICSBOX_TIMEOUT=60                     # per-script timeout (seconds)
       # - OMICSBOX_RUN_QUEUE_TIMEOUT=120       # how long concurrent callers wait
       # - OMICSBOX_MAX_REQUEST_BYTES=5242880
       # - OMICSBOX_MAX_OUTPUT_BYTES=1048576

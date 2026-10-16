@@ -15,7 +15,6 @@ def _base_kwargs():
         max_request_bytes=1024,
         max_output_bytes=1024,
         patient_count=None,
-        images_per_patient=1,
         secondary_entity_count=None,
     )
 
@@ -32,7 +31,6 @@ def test_defaults():
     assert settings.max_request_bytes == 5 * 1024 * 1024
     assert settings.max_output_bytes == 1024 * 1024
     assert settings.patient_count is None
-    assert settings.images_per_patient == 1
     assert settings.secondary_entity_count is None
 
 
@@ -49,7 +47,6 @@ def test_overrides():
             "OMICSBOX_MAX_REQUEST_BYTES": "100",
             "OMICSBOX_MAX_OUTPUT_BYTES": "10",
             "OMICSBOX_PATIENT_COUNT": "7",
-            "OMICSBOX_IMAGES_PER_PATIENT": "3",
             "OMICSBOX_SECONDARY_ENTITY_COUNT": "21",
         }
     )
@@ -63,7 +60,6 @@ def test_overrides():
     assert settings.max_request_bytes == 100
     assert settings.max_output_bytes == 10
     assert settings.patient_count == 7
-    assert settings.images_per_patient == 3
     assert settings.secondary_entity_count == 21
 
 
@@ -88,7 +84,6 @@ def test_empty_strings_are_unset():
         {"OMICSBOX_PATIENT_COUNT": "-1"},
         {"OMICSBOX_PATIENT_COUNT": "1_0"},  # int() would accept this
         {"OMICSBOX_PATIENT_COUNT": "٥"},  # int() accepts non-ASCII digits
-        {"OMICSBOX_IMAGES_PER_PATIENT": "-1"},
         {"OMICSBOX_SECONDARY_ENTITY_COUNT": "-1"},
     ],
 )

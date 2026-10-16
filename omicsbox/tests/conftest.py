@@ -24,7 +24,6 @@ def make_settings(tmp_path):
             max_request_bytes=5 * 1024 * 1024,
             max_output_bytes=1024 * 1024,
             patient_count=None,
-            images_per_patient=1,
             secondary_entity_count=None,
         )
         kwargs.update(overrides)

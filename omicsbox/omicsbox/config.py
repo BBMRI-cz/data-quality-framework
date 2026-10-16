@@ -26,7 +26,6 @@ ENV_RUN_QUEUE_TIMEOUT = "OMICSBOX_RUN_QUEUE_TIMEOUT"
 ENV_MAX_REQUEST_BYTES = "OMICSBOX_MAX_REQUEST_BYTES"
 ENV_MAX_OUTPUT_BYTES = "OMICSBOX_MAX_OUTPUT_BYTES"
 ENV_PATIENT_COUNT = "OMICSBOX_PATIENT_COUNT"
-ENV_IMAGES_PER_PATIENT = "OMICSBOX_IMAGES_PER_PATIENT"
 ENV_SECONDARY_ENTITY_COUNT = "OMICSBOX_SECONDARY_ENTITY_COUNT"
 _NON_NEGATIVE_INT = re.compile(r"[0-9]+")
 
@@ -45,7 +44,6 @@ class Settings:
     max_request_bytes: int
     max_output_bytes: int
     patient_count: int | None
-    images_per_patient: int
     secondary_entity_count: int | None
 
     def __post_init__(self) -> None:
@@ -68,8 +66,6 @@ class Settings:
             raise ValueError(f"{ENV_MAX_OUTPUT_BYTES} must be a positive integer")
         if self.patient_count is not None and self.patient_count < 0:
             raise ValueError(f"{ENV_PATIENT_COUNT} must be a non-negative integer")
-        if self.images_per_patient < 0:
-            raise ValueError(f"{ENV_IMAGES_PER_PATIENT} must be a non-negative integer")
         if self.secondary_entity_count is not None and self.secondary_entity_count < 0:
             raise ValueError(f"{ENV_SECONDARY_ENTITY_COUNT} must be a non-negative integer")
 
@@ -107,6 +103,5 @@ class Settings:
             max_request_bytes=int_with_default(ENV_MAX_REQUEST_BYTES, DEFAULT_MAX_REQUEST_BYTES),
             max_output_bytes=int_with_default(ENV_MAX_OUTPUT_BYTES, DEFAULT_MAX_OUTPUT_BYTES),
             patient_count=optional_int(ENV_PATIENT_COUNT),
-            images_per_patient=int_with_default(ENV_IMAGES_PER_PATIENT, 1),
             secondary_entity_count=optional_int(ENV_SECONDARY_ENTITY_COUNT),
         )
