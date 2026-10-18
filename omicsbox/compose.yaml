@@ -11,12 +11,13 @@ services:
     networks:
       - isolated
     volumes:
-      - ${OMICSBOX_DATA_PATH:-./data/wsi}:/sandbox/data/wsi:ro
+      - ${OMICSBOX_DATA_PATH:-./data}:/sandbox/data:ro
     tmpfs:
       - /tmp:noexec,nosuid,size=100m
     environment:
       - PYTHONDONTWRITEBYTECODE=1
-    restart: "no"
+    restart: unless-stopped
+    pids_limit: 256
     cpus: '2'
     mem_limit: 2G
 networks:
