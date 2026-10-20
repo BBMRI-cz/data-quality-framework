@@ -44,11 +44,13 @@ import org.springframework.web.client.RestTemplate;
 public class OmicsBoxDataStore implements DataStore {
 
   /**
-   * The sandbox queues a single script run (default queue timeout 120 s) and then executes it
-   * (default script timeout 60 s), so a run can legitimately take up to ~180 s before the sandbox
-   * itself responds.
+   * Checks can legitimately run for a long time: the sandbox queues a single script and executes it
+   * with a configurable timeout ({@code OMICSBOX_TIMEOUT}), which deployments raise for heavy
+   * checks over large corpora. The client must never give up before the sandbox does, so the read
+   * timeout is deliberately far above any realistic sandbox configuration: the sandbox is the one
+   * and only place bounding script execution time.
    */
-  private static final Duration READ_TIMEOUT = Duration.ofSeconds(190);
+  private static final Duration READ_TIMEOUT = Duration.ofHours(24);
 
   private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(10);
 
