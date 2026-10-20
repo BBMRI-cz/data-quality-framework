@@ -9,7 +9,10 @@ public enum DatabaseType {
   FHIR("FHIR"),
 
   /** SQL database connection. */
-  SQL("SQL");
+  SQL("SQL"),
+
+  /** OmicsBox sandbox connection for Python-based quality checks. */
+  OMICSBOX("OMICSBOX");
 
   private final String value;
 

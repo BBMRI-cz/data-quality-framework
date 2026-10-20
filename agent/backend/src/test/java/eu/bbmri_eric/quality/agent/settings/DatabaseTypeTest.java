@@ -41,9 +41,9 @@ class DatabaseTypeTest {
   }
 
   @Test
-  void allValues_shouldHaveTwoTypes() {
+  void allValues_shouldHaveThreeTypes() {
     DatabaseType[] types = DatabaseType.values();
-    assertEquals(2, types.length);
+    assertEquals(3, types.length);
   }
 
   @Test

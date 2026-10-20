@@ -19,12 +19,14 @@ import org.springframework.stereotype.Component;
 @Component
 class DataStoreFactoryImpl implements DataStoreFactory {
   private final SettingsService settingsService;
+  private final RestTemplateBuilder restTemplateBuilder;
   private final BlazeFHIRStore fhirDataStore;
   private OmopDataStore omopDataStore;
   private volatile DataStore currentDataStore;
 
   DataStoreFactoryImpl(SettingsService settingsService, RestTemplateBuilder restTemplateBuilder) {
     this.settingsService = settingsService;
+    this.restTemplateBuilder = restTemplateBuilder;
     this.fhirDataStore = new BlazeFHIRStore(restTemplateBuilder);
   }
 
@@ -64,7 +66,16 @@ class DataStoreFactoryImpl implements DataStoreFactory {
       this.omopDataStore = createSqlDataStore(settings);
       return omopDataStore;
     }
+    if (databaseType == DatabaseType.OMICSBOX) {
+      return createOmicsBoxDataStore(settings);
+    }
     return fhirDataStore;
+  }
+
+  private OmicsBoxDataStore createOmicsBoxDataStore(SettingsDTO settings) {
+    log.info("Creating omicsbox data store for URL: {}", settings.getOmicsboxUrl());
+    return new OmicsBoxDataStore(
+        restTemplateBuilder, settings.getOmicsboxUrl(), settings.getOmicsboxApiToken());
   }
 
   private OmopDataStore createSqlDataStore(SettingsDTO settings) {

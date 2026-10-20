@@ -68,7 +68,7 @@ public class SettingsDTO {
   @Schema(description = "Noise mechanism (LAPLACE or GAUSSIAN)", example = "LAPLACE")
   private NoiseMechanism noiseMechanism;
 
-  @Schema(description = "Database type (FHIR or SQL)", example = "FHIR")
+  @Schema(description = "Database type (FHIR, SQL or OMICSBOX)", example = "FHIR")
   private DatabaseType databaseType;
 
   @Size(max = 500, message = "SQL URL must not exceed 500 characters")
@@ -92,4 +92,19 @@ public class SettingsDTO {
       example = "cGFzc3dvcmQ=",
       requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   private String sqlPassword;
+
+  @Size(max = 500, message = "OmicsBox URL must not exceed 500 characters")
+  @Pattern(regexp = "^$|^https?://.*", message = "OmicsBox URL must be a valid HTTP or HTTPS URL")
+  @Schema(
+      description = "OmicsBox sandbox URL",
+      example = "http://localhost:8080",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private String omicsboxUrl;
+
+  @Size(max = 500, message = "OmicsBox API token must not exceed 500 characters")
+  @Schema(
+      description = "OmicsBox sandbox API token (sent as Bearer token)",
+      example = "changeme",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private String omicsboxApiToken;
 }

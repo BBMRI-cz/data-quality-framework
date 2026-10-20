@@ -3,6 +3,8 @@ services:
   quality-agent:
     image: ghcr.io/bbmri-cz/data-quality-agent:latest
     container_name: quality-agent
+    environment:
+      - SPRING_FLYWAY_LOCATIONS=classpath:db/migration,classpath:db/dev/migration
     cap_drop:
       - ALL
     security_opt:
@@ -11,6 +13,9 @@ services:
       - "127.0.0.1:8081:8081"
     volumes:
       - agent-data:/app/data
+    networks:
+      - default
+      - isolated
     extra_hosts:
       - "host.docker.internal:host-gateway"
   quality-server:
@@ -41,8 +46,42 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+  omicsbox:
+    profiles:
+      - omicsbox
+    build: ./omicsbox
+    image: omicsbox:latest
+    container_name: omicsbox-sandbox
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - isolated
+    volumes:
+      - ${OMICSBOX_DATA_PATH:-./omicsbox/data/wsi}:/sandbox/data:ro
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100m
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - OMICSBOX_API_TOKEN=${OMICSBOX_API_TOKEN:-}
+      - OMICSBOX_PATIENT_COUNT=1
+      - OMICSBOX_SECONDARY_ENTITY_COUNT=1
+    restart: unless-stopped
+    pids_limit: 256
+    cpus: '2'
+    mem_limit: 2G
 volumes:
   agent-data:
     driver: local
   server-db-data:
     driver: local
+networks:
+  isolated:
+    internal: true
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.42.0/24
