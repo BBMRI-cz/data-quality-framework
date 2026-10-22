@@ -1,13 +1,16 @@
 package eu.bbmri_eric.quality.server.user.controller;
 
+import eu.bbmri_eric.quality.server.user.UserRole;
 import eu.bbmri_eric.quality.server.user.UserService;
 import eu.bbmri_eric.quality.server.user.dto.PasswordChangeRequest;
+import eu.bbmri_eric.quality.server.user.dto.UpdateUserRolesDTO;
 import eu.bbmri_eric.quality.server.user.dto.UserDTO;
 import eu.bbmri_eric.quality.server.user.dto.UserFilterDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.PagedModel;
@@ -69,6 +72,32 @@ public class UserController {
           PasswordChangeRequest request) {
     userService.changePassword(userId, request);
     return ResponseEntity.ok().build();
+  }
+
+  @Operation(
+      summary = "Get available roles",
+      description =
+          "Lists every role that can be assigned to a user. Restricted to administrators.")
+  @GetMapping("/api/v1/roles")
+  public ResponseEntity<List<UserRole>> findAllRoles() {
+    return ResponseEntity.ok(userService.findAllRoles());
+  }
+
+  @Operation(
+      summary = "Update user roles",
+      description =
+          "Replaces the roles of a user. Restricted to administrators. HUMAN_USER must always be "
+              + "kept, agent accounts cannot be modified and administrators cannot remove their own "
+              + "ADMIN role.")
+  @PutMapping("/api/v1/users/{userId}/roles")
+  public ResponseEntity<EntityModel<UserDTO>> updateRoles(
+      @Parameter(description = "ID of the user whose roles should be updated", example = "1")
+          @PathVariable
+          Long userId,
+      @Parameter(description = "New roles for the user", required = true) @Valid @RequestBody
+          UpdateUserRolesDTO request) {
+    UserDTO userDTO = userService.updateRoles(userId, request.getRoles());
+    return ResponseEntity.ok(linkBuilder.toModel(userDTO));
   }
 
   @Operation(
