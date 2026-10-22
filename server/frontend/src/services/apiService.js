@@ -8,6 +8,7 @@ const MANIFESTS_URL = '/v1/manifests';
 const CATEGORIES_URL = '/v1/categories';
 const GROUPS_URL = '/v1/groups';
 const USERS_URL = '/v1/users';
+const ROLES_URL = '/v1/roles';
 const USERINFO_URL = '/userinfo';
 const USER_PASSWORD_URL = '/users';
 const PUBLIC_KEY_URL = '/v1/public-key';
@@ -274,6 +275,16 @@ class ApiService {
 
   async updateUser(userId, data) {
     const response = await api.put(`${USERS_URL}/${userId}`, data);
+    return response.data;
+  }
+
+  async getRoles() {
+    const response = await api.get(ROLES_URL);
+    return response.data;
+  }
+
+  async updateUserRoles(userId, roles) {
+    const response = await api.put(`${USERS_URL}/${userId}/roles`, { roles });
     return response.data;
   }
 

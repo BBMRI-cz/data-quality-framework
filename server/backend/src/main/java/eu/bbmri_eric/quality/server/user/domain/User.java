@@ -119,6 +119,19 @@ public class User {
     roles.remove(role);
   }
 
+  /**
+   * Replaces all roles of the user with the given set.
+   *
+   * @param newRoles the new roles, must not be null or empty
+   */
+  public void replaceRoles(Set<UserRole> newRoles) {
+    if (newRoles == null || newRoles.isEmpty()) {
+      throw new IllegalArgumentException("Roles cannot be null or empty");
+    }
+    roles.clear();
+    roles.addAll(newRoles);
+  }
+
   public boolean hasRole(UserRole role) {
     return roles.contains(role);
   }

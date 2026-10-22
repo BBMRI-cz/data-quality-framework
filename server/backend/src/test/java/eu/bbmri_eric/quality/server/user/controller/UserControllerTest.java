@@ -14,12 +14,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.server.auth.dto.LoginRequest;
+import eu.bbmri_eric.quality.server.dataquality.domain.Agent;
 import eu.bbmri_eric.quality.server.user.UserRole;
 import eu.bbmri_eric.quality.server.user.domain.User;
 import eu.bbmri_eric.quality.server.user.dto.PasswordChangeRequest;
 import eu.bbmri_eric.quality.server.user.impl.UserRepository;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +48,7 @@ public class UserControllerTest {
   @Autowired private ObjectMapper objectMapper;
   @Autowired private UserRepository userRepository;
   @Autowired private PasswordEncoder passwordEncoder;
+  @Autowired private EntityManager entityManager;
 
   @AfterEach
   void tearDown() {
@@ -623,6 +627,167 @@ public class UserControllerTest {
    * HUMAN_USER roles): two regular users with the HUMAN_USER role and one agent user without any
    * role.
    */
+  @Test
+  void findAllRoles_asAdmin_returnsEveryRole() throws Exception {
+    String token = authenticateAndGetToken();
+
+    mockMvc
+        .perform(get("/api/v1/roles").header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$", containsInAnyOrder("HUMAN_USER", "ADMIN")));
+  }
+
+  @Test
+  void findAllRoles_asHumanUser_returnsForbidden() throws Exception {
+    mockMvc
+        .perform(get("/api/v1/roles").with(user("viewer").roles("HUMAN_USER")))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
+  void findAllRoles_withoutToken_returnsUnauthorized() throws Exception {
+    mockMvc.perform(get("/api/v1/roles")).andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  void updateRoles_asAdmin_promotesUserToAdmin() throws Exception {
+    String token = authenticateAndGetToken();
+    User alice = new User("alice.smith", "subject-aaa-111");
+    alice.addRole(UserRole.HUMAN_USER);
+    Long aliceId = userRepository.save(alice).getId();
+
+    mockMvc
+        .perform(
+            put("/api/v1/users/" + aliceId + "/roles")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"roles\":[\"HUMAN_USER\",\"ADMIN\"]}"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.roles", containsInAnyOrder("HUMAN_USER", "ADMIN")));
+
+    assertTrue(userRepository.findById(aliceId).orElseThrow().hasRole(UserRole.ADMIN));
+  }
+
+  @Test
+  void updateRoles_asHumanUser_returnsForbidden() throws Exception {
+    mockMvc
+        .perform(
+            put("/api/v1/users/1/roles")
+                .with(user("viewer").roles("HUMAN_USER"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"roles\":[\"ADMIN\"]}"))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
+  void updateRoles_withoutToken_returnsUnauthorized() throws Exception {
+    mockMvc
+        .perform(
+            put("/api/v1/users/1/roles")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"roles\":[\"ADMIN\"]}"))
+        .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  void updateRoles_withEmptyRoles_returnsBadRequest() throws Exception {
+    String token = authenticateAndGetToken();
+    Long adminId = userRepository.findByUsername(ADMIN_USER).orElseThrow().getId();
+
+    mockMvc
+        .perform(
+            put("/api/v1/users/" + adminId + "/roles")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"roles\":[]}"))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void updateRoles_withNullRoleEntry_returnsBadRequest() throws Exception {
+    String token = authenticateAndGetToken();
+    User alice = new User("alice.smith", "subject-aaa-111");
+    alice.addRole(UserRole.HUMAN_USER);
+    Long aliceId = userRepository.save(alice).getId();
+
+    mockMvc
+        .perform(
+            put("/api/v1/users/" + aliceId + "/roles")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"roles\":[\"HUMAN_USER\",null]}"))
+        .andExpect(status().isBadRequest());
+
+    assertEquals(
+        Set.of(UserRole.HUMAN_USER), userRepository.findById(aliceId).orElseThrow().getRoles());
+  }
+
+  @Test
+  void updateRoles_removingHumanUserRole_returnsBadRequest() throws Exception {
+    String token = authenticateAndGetToken();
+    User alice = new User("alice.smith", "subject-aaa-111");
+    alice.addRole(UserRole.HUMAN_USER);
+    Long aliceId = userRepository.save(alice).getId();
+
+    mockMvc
+        .perform(
+            put("/api/v1/users/" + aliceId + "/roles")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"roles\":[\"ADMIN\"]}"))
+        .andExpect(status().isBadRequest());
+
+    assertTrue(userRepository.findById(aliceId).orElseThrow().hasRole(UserRole.HUMAN_USER));
+  }
+
+  @Test
+  void updateRoles_removingOwnAdminRole_returnsBadRequest() throws Exception {
+    String token = authenticateAndGetToken();
+    Long adminId = userRepository.findByUsername(ADMIN_USER).orElseThrow().getId();
+
+    mockMvc
+        .perform(
+            put("/api/v1/users/" + adminId + "/roles")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"roles\":[\"HUMAN_USER\"]}"))
+        .andExpect(status().isBadRequest());
+
+    assertTrue(userRepository.findById(adminId).orElseThrow().hasRole(UserRole.ADMIN));
+  }
+
+  @Test
+  void updateRoles_forAgentAccount_returnsBadRequest() throws Exception {
+    String token = authenticateAndGetToken();
+    Long agentUserId = createAgentAccount().getId();
+
+    mockMvc
+        .perform(
+            put("/api/v1/users/" + agentUserId + "/roles")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"roles\":[\"ADMIN\"]}"))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void updateRoles_forUnknownUser_returnsNotFound() throws Exception {
+    String token = authenticateAndGetToken();
+
+    mockMvc
+        .perform(
+            put("/api/v1/users/999999/roles")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"roles\":[\"ADMIN\"]}"))
+        .andExpect(status().isNotFound());
+  }
+
+  private User createAgentAccount() {
+    entityManager.persist(new Agent("agent-xyz"));
+    return userRepository.save(new User("agent-user", "encoded", "agent-xyz"));
+  }
+
   private void createTestUsers() {
     User alice = new User("alice.smith", "subject-aaa-111");
     alice.addRole(UserRole.HUMAN_USER);

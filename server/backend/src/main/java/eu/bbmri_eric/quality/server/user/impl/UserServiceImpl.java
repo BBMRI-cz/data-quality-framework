@@ -14,6 +14,7 @@ import eu.bbmri_eric.quality.server.user.exception.UserNotFoundException;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import org.apache.commons.lang3.NotImplementedException;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -127,6 +128,36 @@ public class UserServiceImpl implements UserService {
     }
     String encodedPassword = passwordEncoder.encode(passwordChangeRequest.getNewPassword());
     user.setPassword(encodedPassword);
+  }
+
+  @Override
+  @Transactional
+  public UserDTO updateRoles(Long userId, Set<UserRole> roles) {
+    Objects.requireNonNull(userId, "User ID cannot be null");
+    if (roles == null || roles.isEmpty()) {
+      throw new IllegalArgumentException("Roles cannot be null or empty");
+    }
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
+    if (user.getAgentId() != null) {
+      throw new IllegalArgumentException("Roles of agent accounts cannot be changed");
+    }
+    if (!roles.contains(UserRole.HUMAN_USER)) {
+      throw new IllegalArgumentException("The HUMAN_USER role cannot be removed");
+    }
+    UserDTO currentUser = authenticationContextService.getCurrentUser();
+    if (userId.equals(currentUser.getId()) && !roles.contains(UserRole.ADMIN)) {
+      throw new IllegalArgumentException("You cannot remove your own ADMIN role");
+    }
+    user.replaceRoles(roles);
+    return modelMapper.map(userRepository.save(user), UserDTO.class);
+  }
+
+  @Override
+  public List<UserRole> findAllRoles() {
+    return List.of(UserRole.values());
   }
 
   private String generateRandomPassword() {
