@@ -3,6 +3,7 @@ package eu.bbmri_eric.quality.server.user.dto;
 import eu.bbmri_eric.quality.server.user.UserRole;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import java.util.Set;
 
 /** DTO for updating the roles assigned to a user. */
@@ -14,7 +15,7 @@ public class UpdateUserRolesDTO {
       description = "Roles to assign to the user, replacing any existing roles",
       example = "[\"HUMAN_USER\"]",
       requiredMode = Schema.RequiredMode.REQUIRED)
-  private Set<UserRole> roles;
+  private Set<@NotNull UserRole> roles;
 
   public UpdateUserRolesDTO() {}
 

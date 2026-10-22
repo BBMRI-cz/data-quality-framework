@@ -22,6 +22,7 @@ import eu.bbmri_eric.quality.server.user.impl.UserRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -700,6 +701,25 @@ public class UserControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"roles\":[]}"))
         .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void updateRoles_withNullRoleEntry_returnsBadRequest() throws Exception {
+    String token = authenticateAndGetToken();
+    User alice = new User("alice.smith", "subject-aaa-111");
+    alice.addRole(UserRole.HUMAN_USER);
+    Long aliceId = userRepository.save(alice).getId();
+
+    mockMvc
+        .perform(
+            put("/api/v1/users/" + aliceId + "/roles")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"roles\":[\"HUMAN_USER\",null]}"))
+        .andExpect(status().isBadRequest());
+
+    assertEquals(
+        Set.of(UserRole.HUMAN_USER), userRepository.findById(aliceId).orElseThrow().getRoles());
   }
 
   @Test
