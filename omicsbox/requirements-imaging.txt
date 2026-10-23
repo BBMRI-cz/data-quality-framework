@@ -5,7 +5,7 @@ wsidicom==0.36.1
 openslide-python==1.4.6
 large-image==1.35.4
 large-image-source-dicom==1.35.4
-Pillow==12.3.0
+Pillow==13.0.0
 numpy==2.5.3
 scikit-image==0.26.0
 opencv-python==5.0.0.93
