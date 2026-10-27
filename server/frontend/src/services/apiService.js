@@ -14,6 +14,18 @@ const PUBLIC_KEY_URL = '/v1/public-key';
 const INFO_URL = '/info';
 const COUNTS_URL = '/counts';
 
+const triggerDownload = (data, type, filename) => {
+  const blob = new window.Blob([data], { type });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+};
+
 class ApiService {
   async login(username, password) {
     const response = await api.post(AUTH_LOGIN_URL, {
@@ -103,15 +115,15 @@ class ApiService {
     const response = await api.get(`${REPORTS_URL}/${reportId}/summary?format=pdf`, {
       responseType: 'blob',
     });
-    const blob = new window.Blob([response.data], { type: 'application/pdf' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `report-${reportId}-summary.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+    triggerDownload(response.data, 'application/pdf', `report-${reportId}-summary.pdf`);
+  }
+
+  async downloadReportDqvExport(reportId) {
+    const response = await api.get(`${REPORTS_URL}/${reportId}/export`, {
+      responseType: 'blob',
+      headers: { Accept: 'text/turtle' },
+    });
+    triggerDownload(response.data, 'text/turtle', `report-${reportId}.ttl`);
   }
 
   async createQualityCheck(data) {

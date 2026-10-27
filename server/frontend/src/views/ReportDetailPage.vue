@@ -23,6 +23,16 @@
           <span v-if="isDownloading">Downloading...</span>
           <span v-else>Download as PDF</span>
         </button>
+        <button
+          v-if="report"
+          class="btn btn-outline-primary btn-sm"
+          :disabled="isDownloadingDqv"
+          @click="downloadDqvExport"
+        >
+          <i class="bi bi-file-earmark-code me-2"></i>
+          <span v-if="isDownloadingDqv">Downloading...</span>
+          <span v-else>Export DQV (Turtle)</span>
+        </button>
       </div>
 
       <!-- Loading state -->
@@ -158,6 +168,7 @@
   const report = ref(null);
   const agent = ref(null);
   const isDownloading = ref(false);
+  const isDownloadingDqv = ref(false);
   useHead({
     title: computed(() => (report.value?.id ? `Report ${report.value.id}` : 'Report Detail')),
   });
@@ -235,6 +246,22 @@
       );
     } finally {
       isDownloading.value = false;
+    }
+  };
+
+  const downloadDqvExport = async () => {
+    if (!report.value?.id) return;
+    isDownloadingDqv.value = true;
+    try {
+      await apiService.downloadReportDqvExport(report.value.id);
+    } catch (err) {
+      const { notificationService } = await import('@/services/notificationService.js');
+      notificationService.error(
+        'Download Failed',
+        `Failed to download DQV export: ${err?.message || 'Unknown error'}`
+      );
+    } finally {
+      isDownloadingDqv.value = false;
     }
   };
 

@@ -1,6 +1,7 @@
 package eu.bbmri_eric.quality.server.dataquality.controller;
 
 import eu.bbmri_eric.quality.server.common.dto.FilterDTO;
+import eu.bbmri_eric.quality.server.dataquality.ReportDqvService;
 import eu.bbmri_eric.quality.server.dataquality.ReportPdfService;
 import eu.bbmri_eric.quality.server.dataquality.ReportService;
 import eu.bbmri_eric.quality.server.dataquality.dto.ReportCreateRequest;
@@ -23,16 +24,21 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Reports", description = "API for managing data quality reports")
 class ReportController {
 
+  private static final String TEXT_TURTLE_VALUE = "text/turtle";
+
   private final ReportService reportService;
   private final ReportPdfService reportPdfService;
+  private final ReportDqvService reportDqvService;
   private final ReportLinkBuilder linkBuilder;
 
   public ReportController(
       ReportService reportService,
       ReportPdfService reportPdfService,
+      ReportDqvService reportDqvService,
       ReportLinkBuilder linkBuilder) {
     this.reportService = reportService;
     this.reportPdfService = reportPdfService;
+    this.reportDqvService = reportDqvService;
     this.linkBuilder = linkBuilder;
   }
 
@@ -89,5 +95,18 @@ class ReportController {
         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"report-summary.pdf\"")
         .contentType(MediaType.APPLICATION_PDF)
         .body(pdf);
+  }
+
+  @GetMapping(value = "/reports/{id}/export", produces = TEXT_TURTLE_VALUE)
+  @Operation(
+      summary = "Export report as DQV (RDF/Turtle)",
+      description =
+          "Exports a specific report in the W3C Data Quality Vocabulary (DQV), serialized as"
+              + " RDF/Turtle. The export is read-only and never contains query texts, only query"
+              + " hashes and languages.")
+  public ResponseEntity<String> exportDqv(@PathVariable String id) {
+    return ResponseEntity.ok()
+        .contentType(MediaType.parseMediaType(TEXT_TURTLE_VALUE))
+        .body(reportDqvService.exportDqv(id));
   }
 }
