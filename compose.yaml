@@ -58,7 +58,7 @@ services:
     networks:
       - isolated
     volumes:
-      - ${OMICSBOX_DATA_PATH:-./omicsbox/data/wsi}:/sandbox/data:ro
+      - ${OMICSBOX_DATA_PATH:-./omicsbox/data/mican}:/sandbox/data:ro
     tmpfs:
       - /tmp:noexec,nosuid,size=100m
     environment:
