@@ -64,8 +64,9 @@ services:
     environment:
       - PYTHONDONTWRITEBYTECODE=1
       - OMICSBOX_API_TOKEN=${OMICSBOX_API_TOKEN:-}
-      - OMICSBOX_PATIENT_COUNT=1
-      - OMICSBOX_SECONDARY_ENTITY_COUNT=1
+      # Entity totals are recorded only when the operator provides them; unset means unknown.
+      - OMICSBOX_PATIENT_COUNT=${OMICSBOX_PATIENT_COUNT:-}
+      - OMICSBOX_SECONDARY_ENTITY_COUNT=${OMICSBOX_SECONDARY_ENTITY_COUNT:-}
     restart: unless-stopped
     pids_limit: 256
     cpus: '2'

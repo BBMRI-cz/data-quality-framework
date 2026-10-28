@@ -1,9 +1,10 @@
 # Data Sources
 
-The Data Quality Agent connects to a data source and runs data quality checks against it. The `databaseType` setting selects between two families:
+The Data Quality Agent connects to a data source and runs data quality checks against it. The `databaseType` setting selects between these families:
 
 - **FHIR** — a FHIR R4 server queried with CQL.
 - **SQL** — a relational database or a directory of CSV files queried with SQL.
+- **OMICSBOX** — an OmicsBox sandbox executing Python checks against mounted omics data ([under development](#omicsbox-python-checks)).
 
 ## FHIR servers
 
@@ -82,3 +83,32 @@ sqlUrl: jdbc:calcite:model=/opt/omop/model.json
 ```
 
 Note that with a custom model file, identifier quoting and case-sensitivity follow the conventions defined by the model rather than the defaults applied automatically to the `directory=` form.
+
+## OmicsBox (Python checks)
+
+::: warning Under development
+The OmicsBox integration is still under development: the script result contract and the settings may change in upcoming releases, and drilling down from a check result into the affected files is not supported yet.
+:::
+
+When `databaseType` is `OMICSBOX`, the agent runs checks of type `PYTHON` in an OmicsBox sandbox — a hardened, offline HTTP service that executes Python check scripts against a mounted omics data directory (e.g. whole slide images). See the [`omicsbox/`](https://github.com/BBMRI-cz/data-quality-framework/tree/master/omicsbox) directory of the repository for the sandbox itself and example check scripts.
+
+| Setting            | Description                                                                          |
+|:-------------------|:-------------------------------------------------------------------------------------|
+| `omicsboxUrl`      | Base URL of the sandbox HTTP API (e.g. `http://omicsbox:8080`).                       |
+| `omicsboxApiToken` | Bearer token; required only when the sandbox runs with `OMICSBOX_API_TOKEN` set.     |
+
+Deploy a sandbox alongside the agent with the `omicsbox` Compose profile:
+
+```bash
+OMICSBOX_DATA_PATH=/path/to/omics/data docker compose --profile omicsbox up -d
+```
+
+Report entity totals are recorded only when you provide them via `OMICSBOX_PATIENT_COUNT` and `OMICSBOX_SECONDARY_ENTITY_COUNT`; when unset, they are reported as unknown rather than guessed.
+
+Each `PYTHON` check script must print its result as a single JSON object on the **last** line of stdout:
+
+```json
+{"count": 3, "entityType": "file", "ids": ["slide-a/level.dcm"], "error": null}
+```
+
+Scripts whose output does not follow this contract are reported as failed checks.

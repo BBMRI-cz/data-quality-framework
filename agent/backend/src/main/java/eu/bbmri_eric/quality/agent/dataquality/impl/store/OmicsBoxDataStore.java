@@ -128,14 +128,31 @@ public class OmicsBoxDataStore implements DataStore {
     }
     try {
       JSONObject result = parseScriptResult(runResult.getString("stdout"));
-      Set<String> idSet = parseIds(result.optJSONArray("ids"));
-      Integer count = result.has("count") ? result.getInt("count") : idSet.size();
+      validateScriptResult(result);
+      Set<String> idSet = parseIds(result.getJSONArray("ids"));
       String error = result.isNull("error") ? null : result.optString("error", null);
-      return new ResultDTO(count, result.optString("entityType"), idSet, error);
+      return new ResultDTO(result.getInt("count"), result.getString("entityType"), idSet, error);
     } catch (JSONException e) {
       log.warn("Python script did not produce a valid result JSON: {}", e.getMessage());
       return new ResultDTO(
           "Python script did not produce a valid result JSON as the last line of stdout.");
+    }
+  }
+
+  /**
+   * The result contract requires a non-negative {@code count}, a non-blank {@code entityType} and
+   * an {@code ids} array. Output missing any of these never actually reported on the corpus, so it
+   * must not be mistaken for a clean zero-count check.
+   */
+  private static void validateScriptResult(JSONObject result) {
+    if (!result.has("count") || !result.has("ids")) {
+      throw new JSONException("result JSON must contain 'count' and 'ids'");
+    }
+    if (result.getInt("count") < 0) {
+      throw new JSONException("result 'count' must not be negative");
+    }
+    if (result.optString("entityType").isBlank()) {
+      throw new JSONException("result 'entityType' must not be blank");
     }
   }
 
