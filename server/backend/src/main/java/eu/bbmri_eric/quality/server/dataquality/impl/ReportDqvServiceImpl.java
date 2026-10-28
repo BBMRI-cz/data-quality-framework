@@ -10,6 +10,7 @@ import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheckResult;
 import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheckVersion;
 import eu.bbmri_eric.quality.server.dataquality.domain.QueryType;
 import eu.bbmri_eric.quality.server.dataquality.domain.Report;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -121,14 +122,15 @@ class ReportDqvServiceImpl implements ReportDqvService {
     Model model = ModelFactory.createDefaultModel();
     registerPrefixes(model);
     List<QualityCheckResult> results = sortedResults(report);
-    addReport(model, base, report, results);
-    addAgent(model, base, report, agent, results);
+    String exportId = Long.toString(exportedAt.toEpochMilli());
+    addReport(model, base, report, results, exportId);
+    addAgent(model, base, report, agent, results, exportId);
     addServerSoftware(model, base);
     addCategories(model, base, results);
     addVocabularyTerms(model, report, results);
     addChecksAndMetrics(model, base, results);
     addMeasurements(model, base, report, results);
-    addAnnotations(model, base, report, results, exportedAt);
+    addAnnotations(model, base, report, results, exportedAt, exportId);
     return RDFWriter.source(model).lang(Lang.TURTLE).base(base).asString();
   }
 
@@ -171,7 +173,7 @@ class ReportDqvServiceImpl implements ReportDqvService {
   }
 
   private static void addReport(
-      Model model, String base, Report report, List<QualityCheckResult> results) {
+      Model model, String base, Report report, List<QualityCheckResult> results, String exportId) {
     Resource reportResource = model.createResource(reportIri(base, report));
     reportResource.addProperty(
         RDF.type, model.createResource(NS_DQV + "QualityMeasurementDataset"));
@@ -188,14 +190,19 @@ class ReportDqvServiceImpl implements ReportDqvService {
     reportResource.addProperty(
         model.createProperty(NS_PROV, "wasAttributedTo"),
         model.createResource(agentIri(base, report.getAgentId())));
-    for (String part : partIris(base, report, results)) {
+    for (String part : partIris(base, report, results, exportId)) {
       reportResource.addProperty(
           model.createProperty(NS_DCTERMS, "hasPart"), model.createResource(part));
     }
   }
 
   private static void addAgent(
-      Model model, String base, Report report, Agent agent, List<QualityCheckResult> results) {
+      Model model,
+      String base,
+      Report report,
+      Agent agent,
+      List<QualityCheckResult> results,
+      String exportId) {
     String label =
         agent != null && notBlank(agent.getName()) ? agent.getName() : report.getAgentId();
     Resource agentResource = model.createResource(agentIri(base, report.getAgentId()));
@@ -217,7 +224,7 @@ class ReportDqvServiceImpl implements ReportDqvService {
     for (QualityCheckResult result : results) {
       datasetResource.addProperty(
           hasQualityAnnotation,
-          model.createResource(annotationIri(base, report, resultFragment(result))));
+          model.createResource(annotationIri(base, report, result, exportId)));
     }
   }
 
@@ -468,16 +475,24 @@ class ReportDqvServiceImpl implements ReportDqvService {
     measurement.addProperty(RDFS.comment, model.createLiteral(ROUNDING_COMMENT, "en"));
   }
 
+  /**
+   * Adds one {@code dqv:QualityAnnotation} per result. Annotations are a snapshot of the
+   * classification at export time: their IRI is export-specific (see {@code exportedAt}), because
+   * thresholds, category and status are recomputed on every export, and merging two exports must
+   * not attribute conflicting assessments to one annotation. Measurement and metric IRIs remain
+   * stable. The dimension is attached to the metric (the domain of {@code dqv:inDimension}); the
+   * annotation keeps the applied thresholds and the export time instead.
+   */
   private static void addAnnotations(
       Model model,
       String base,
       Report report,
       List<QualityCheckResult> results,
-      Instant exportedAt) {
+      Instant exportedAt,
+      String exportId) {
     for (QualityCheckResult result : results) {
       QualityCheck check = result.getQualityCheck();
-      String fragment = resultFragment(result);
-      Resource annotation = model.createResource(annotationIri(base, report, fragment));
+      Resource annotation = model.createResource(annotationIri(base, report, result, exportId));
       annotation.addProperty(RDF.type, model.createResource(NS_DQV + "QualityAnnotation"));
       annotation.addProperty(
           model.createProperty(NS_OA, "motivatedBy"),
@@ -496,12 +511,10 @@ class ReportDqvServiceImpl implements ReportDqvService {
       // because they live on the editable quality check and may change between exports.
       annotation.addProperty(
           model.createProperty(NS_FDQF, "warningThreshold"),
-          model.createTypedLiteral(check.getWarningThreshold() / 100.0));
+          model.createTypedLiteral(fractionOfPercent(check.getWarningThreshold())));
       annotation.addProperty(
           model.createProperty(NS_FDQF, "errorThreshold"),
-          model.createTypedLiteral(check.getErrorThreshold() / 100.0));
-      annotation.addProperty(
-          model.createProperty(NS_DQV, "inDimension"), dimensionOf(model, base, check));
+          model.createTypedLiteral(fractionOfPercent(check.getErrorThreshold())));
       if (!isComputable(result)) {
         // DQV mandates a value on a measurement, so an uncomputed or non-finite check is expressed
         // as an annotation derived directly from the metric only.
@@ -517,7 +530,7 @@ class ReportDqvServiceImpl implements ReportDqvService {
                 NS_FDQF + statusLocalName(CheckStatus.of(check, result.getResult()))));
         annotation.addProperty(
             model.createProperty(NS_PROV, "wasDerivedFrom"),
-            model.createResource(measurementIri(base, report, fragment)));
+            model.createResource(measurementIri(base, report, resultFragment(result))));
       }
     }
   }
@@ -568,10 +581,10 @@ class ReportDqvServiceImpl implements ReportDqvService {
   }
 
   private static List<String> partIris(
-      String base, Report report, List<QualityCheckResult> results) {
+      String base, Report report, List<QualityCheckResult> results, String exportId) {
     List<String> parts = new ArrayList<>(measurementIris(base, report, results));
     for (QualityCheckResult result : results) {
-      parts.add(annotationIri(base, report, resultFragment(result)));
+      parts.add(annotationIri(base, report, result, exportId));
     }
     return parts;
   }
@@ -622,8 +635,18 @@ class ReportDqvServiceImpl implements ReportDqvService {
     return reportIri(base, report) + "#m-" + fragment;
   }
 
-  private static String annotationIri(String base, Report report, String fragment) {
-    return reportIri(base, report) + "#s-" + fragment;
+  private static String annotationIri(
+      String base, Report report, QualityCheckResult result, String exportId) {
+    return reportIri(base, report) + "#s-" + resultFragment(result) + "-e" + exportId;
+  }
+
+  /** Converts a percentage threshold (e.g. 0.7) into an exact-decimal ratio (e.g. 0.007). */
+  private static double fractionOfPercent(double percent) {
+    // Decimal scaling avoids binary division artifacts (0.7 / 100 is 0.006999999999999999);
+    // non-finite thresholds keep their canonical xsd:double lexical forms (NaN, INF, -INF).
+    return Double.isFinite(percent)
+        ? BigDecimal.valueOf(percent).movePointLeft(2).doubleValue()
+        : percent / 100.0;
   }
 
   private static String resultFragment(QualityCheckResult result) {

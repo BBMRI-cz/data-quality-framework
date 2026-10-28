@@ -133,8 +133,8 @@ class ReportDqvServiceImplTest {
                 prov:wasAttributedTo  <agents/agent-42#agent>;
                 dcterms:hasPart       <reports/__REPORT_ID__#m-patients> , <reports/__REPORT_ID__#m-samples> ,
                                       <reports/__REPORT_ID__#m-1-v2> , <reports/__REPORT_ID__#m-2-v1> ,
-                                      <reports/__REPORT_ID__#s-1-v2> , <reports/__REPORT_ID__#s-2-v1> ,
-                                      <reports/__REPORT_ID__#s-3-v1> .
+                                      <reports/__REPORT_ID__#s-1-v2-e__EXPORT_EPOCH__> , <reports/__REPORT_ID__#s-2-v1-e__EXPORT_EPOCH__> ,
+                                      <reports/__REPORT_ID__#s-3-v1-e__EXPORT_EPOCH__> .
 
             <agents/agent-42#agent>
                 a                prov:SoftwareAgent;
@@ -146,8 +146,8 @@ class ReportDqvServiceImplTest {
                 dcterms:title              "Brno Site";
                 dqv:hasQualityMeasurement  <reports/__REPORT_ID__#m-patients> , <reports/__REPORT_ID__#m-samples> ,
                                            <reports/__REPORT_ID__#m-1-v2> , <reports/__REPORT_ID__#m-2-v1>;
-                dqv:hasQualityAnnotation   <reports/__REPORT_ID__#s-1-v2> , <reports/__REPORT_ID__#s-2-v1> ,
-                                           <reports/__REPORT_ID__#s-3-v1> .
+                dqv:hasQualityAnnotation   <reports/__REPORT_ID__#s-1-v2-e__EXPORT_EPOCH__> , <reports/__REPORT_ID__#s-2-v1-e__EXPORT_EPOCH__> ,
+                                           <reports/__REPORT_ID__#s-3-v1-e__EXPORT_EPOCH__> .
 
             <#server>
                 a           prov:SoftwareAgent;
@@ -269,43 +269,44 @@ class ReportDqvServiceImplTest {
                 dqv:value                   "0.03"^^xsd:double;
                 sdmx-attribute:unitMeasure  om:one .
 
-            <reports/__REPORT_ID__#s-1-v2>
+            <reports/__REPORT_ID__#s-1-v2-e__EXPORT_EPOCH__>
                 a                     dqv:QualityAnnotation;
                 oa:motivatedBy        dqv:qualityAssessment , oa:classifying;
                 oa:hasTarget          <agents/agent-42#dataset>;
                 prov:wasAttributedTo  <#server>;
                 fdqf:warningThreshold "0.02"^^xsd:double;
                 fdqf:errorThreshold   "0.1"^^xsd:double;
-                dqv:inDimension       <categories/1>;
                 oa:hasBody            fdqf:warning;
                 prov:wasDerivedFrom   <reports/__REPORT_ID__#m-1-v2> .
 
-            <reports/__REPORT_ID__#s-2-v1>
+            <reports/__REPORT_ID__#s-2-v1-e__EXPORT_EPOCH__>
                 a                     dqv:QualityAnnotation;
                 oa:motivatedBy        dqv:qualityAssessment , oa:classifying;
                 oa:hasTarget          <agents/agent-42#dataset>;
                 prov:wasAttributedTo  <#server>;
                 fdqf:warningThreshold "0.01"^^xsd:double;
                 fdqf:errorThreshold   "0.02"^^xsd:double;
-                dqv:inDimension       fdqf:uncategorised;
                 oa:hasBody            fdqf:failed;
                 prov:wasDerivedFrom   <reports/__REPORT_ID__#m-2-v1> .
 
-            <reports/__REPORT_ID__#s-3-v1>
+            <reports/__REPORT_ID__#s-3-v1-e__EXPORT_EPOCH__>
                 a                     dqv:QualityAnnotation;
                 oa:motivatedBy        dqv:qualityAssessment , oa:classifying;
                 oa:hasTarget          <agents/agent-42#dataset>;
                 prov:wasAttributedTo  <#server>;
                 fdqf:warningThreshold "0.05"^^xsd:double;
                 fdqf:errorThreshold   "0.15"^^xsd:double;
-                dqv:inDimension       <categories/1>;
                 oa:hasBody            fdqf:notComputed;
                 prov:wasDerivedFrom   <quality-checks/3/versions/1> .
-            """
-            .replace("__REPORT_ID__", report.getId());
+            """;
 
-    Model expected = parse(expectedTurtle);
-    Model actual = stripExportTimes(parse(turtle));
+    Model actualRaw = parse(turtle);
+    Model expected =
+        parse(
+            expectedTurtle
+                .replace("__REPORT_ID__", report.getId())
+                .replace("__EXPORT_EPOCH__", exportEpochOf(actualRaw)));
+    Model actual = stripExportTimes(actualRaw);
     assertTrue(
         actual.isIsomorphicWith(expected),
         "Exported Turtle does not match the expected model.\nActual:\n" + turtle);
@@ -518,6 +519,37 @@ class ReportDqvServiceImplTest {
   }
 
   @Test
+  void exportDqv_shouldExportThresholdsWithoutBinaryArtifact() {
+    // Division by 100 in binary floating point would export 0.7 % as
+    // 0.006999999999999999; decimal scaling must yield the exact 0.007 fraction.
+    QualityCheck check = check(1L, "Check", null, 0.7, 1.3, null, Set.of());
+    QualityCheckVersion version = version(check, 1, "hash", QueryType.UNKNOWN);
+    Report report = new Report();
+    report.setAgentId(AGENT_ID);
+    report.addQualityCheckResult(version, 0.005);
+    ReflectionTestUtils.setField(report, "timestamp", Instant.parse(TIMESTAMP));
+    when(reportRepository.findWithDetailsById(report.getId())).thenReturn(Optional.of(report));
+    when(agentRepository.findById(AGENT_ID)).thenReturn(Optional.empty());
+
+    Model model = parse(service.exportDqv(report.getId()));
+
+    assertEquals(
+        "0.007",
+        model
+            .listObjectsOfProperty(model.createProperty(NS_FDQF, "warningThreshold"))
+            .next()
+            .asLiteral()
+            .getString());
+    assertEquals(
+        "0.013",
+        model
+            .listObjectsOfProperty(model.createProperty(NS_FDQF, "errorThreshold"))
+            .next()
+            .asLiteral()
+            .getString());
+  }
+
+  @Test
   void exportDqv_shouldExposeNonFiniteThresholdsWithoutFailing() {
     QualityCheck check =
         check(1L, "Check", null, Double.NaN, Double.POSITIVE_INFINITY, null, Set.of());
@@ -565,6 +597,21 @@ class ReportDqvServiceImplTest {
     QualityCheckVersion version = new QualityCheckVersion(check, number, "SELECT 1", hash, type);
     check.addVersion(version);
     return version;
+  }
+
+  /** Extracts the per-export epoch suffix shared by all annotation IRIs. */
+  private static String exportEpochOf(Model model) {
+    List<Resource> annotations =
+        model
+            .listSubjectsWithProperty(RDF.type, model.createResource(NS_DQV + "QualityAnnotation"))
+            .toList();
+    assertFalse(annotations.isEmpty(), "Expected at least one annotation");
+    java.util.regex.Matcher matcher =
+        java.util.regex.Pattern.compile("-e(\\d+)$").matcher(annotations.getFirst().getURI());
+    assertTrue(
+        matcher.find(),
+        "Annotation IRI must be specific to the export: " + annotations.getFirst().getURI());
+    return matcher.group(1);
   }
 
   /**
