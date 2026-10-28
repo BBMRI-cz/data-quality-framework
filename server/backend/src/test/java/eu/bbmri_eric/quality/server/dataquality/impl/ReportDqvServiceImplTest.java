@@ -128,7 +128,7 @@ class ReportDqvServiceImplTest {
             <reports/__REPORT_ID__>
                 a                     dqv:QualityMeasurementDataset , dqv:QualityMetadata;
                 dcterms:title         "Data quality report __REPORT_ID__"@en;
-                dcterms:description   "Values are differentially private estimates computed at the data source."@en;
+                dcterms:description   "Counts are rounded up to the nearest 10; check results are noisy ratios computed by the agent."@en;
                 prov:generatedAtTime  "2026-01-15T10:15:30Z"^^xsd:dateTime;
                 prov:wasAttributedTo  <agents/agent-42#agent>;
                 dcterms:hasPart       <reports/__REPORT_ID__#m-patients> , <reports/__REPORT_ID__#m-samples> ,
@@ -212,6 +212,7 @@ class ReportDqvServiceImplTest {
             <quality-checks/1/versions/2>
                 a                     dqv:Metric;
                 dqv:expectedDataType  xsd:double;
+                dqv:inDimension       <categories/1>;
                 dcterms:isVersionOf   <quality-checks/1>;
                 owl:versionInfo       "2";
                 dcterms:identifier    "abc123";
@@ -221,6 +222,7 @@ class ReportDqvServiceImplTest {
             <quality-checks/2/versions/1>
                 a                     dqv:Metric;
                 dqv:expectedDataType  xsd:double;
+                dqv:inDimension       fdqf:uncategorised;
                 dcterms:isVersionOf   <quality-checks/2>;
                 owl:versionInfo       "1";
                 dcterms:identifier    "def456";
@@ -229,6 +231,7 @@ class ReportDqvServiceImplTest {
             <quality-checks/3/versions/1>
                 a                     dqv:Metric;
                 dqv:expectedDataType  xsd:double;
+                dqv:inDimension       <categories/1>;
                 dcterms:isVersionOf   <quality-checks/3>;
                 owl:versionInfo       "1";
                 dcterms:identifier    "ghi789";

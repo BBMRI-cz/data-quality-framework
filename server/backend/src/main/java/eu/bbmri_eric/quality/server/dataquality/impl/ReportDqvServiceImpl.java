@@ -71,7 +71,8 @@ class ReportDqvServiceImpl implements ReportDqvService {
       "https://github.com/bbmri-cz/data-quality-framework/ns/fdqf#";
 
   private static final String REPORT_DESCRIPTION =
-      "Values are differentially private estimates computed at the data source.";
+      "Counts are rounded up to the nearest 10; check results are noisy ratios computed by the"
+          + " agent.";
   private static final String ROUNDING_COMMENT = "Rounded up to the nearest 10.";
   private static final String SUPPRESSION_COMMENT =
       "Differentially private ratio: noisy counts below the agent's suppression threshold are"
@@ -402,6 +403,9 @@ class ReportDqvServiceImpl implements ReportDqvService {
         model.createLiteral(Integer.toString(version.getVersion())));
     metric.addProperty(
         model.createProperty(NS_DCTERMS, "identifier"), model.createLiteral(version.getHash()));
+    // Categories change rarely and are needed to group measurements by dimension in DQV.
+    metric.addProperty(
+        model.createProperty(NS_DQV, "inDimension"), dimensionOf(model, base, check));
     if (hasKnownQueryLanguage(version)) {
       metric.addProperty(
           model.createProperty(NS_FDQF, "queryLanguage"),

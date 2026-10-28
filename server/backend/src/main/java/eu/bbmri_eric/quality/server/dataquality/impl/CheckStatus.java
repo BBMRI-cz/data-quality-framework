@@ -9,7 +9,8 @@ import java.math.BigDecimal;
  * <p>Shared by all result presentations (PDF summary, DQV export) so the classification rule is
  * applied identically everywhere. The comparison is strict {@code >} and performed on the exact
  * decimal percentage to avoid binary floating point artifacts (e.g. {@code 0.07 * 100} evaluating
- * to {@code 7.000000000000001}). Non-finite thresholds never trigger a status downgrade.
+ * to {@code 7.000000000000001}). Non-finite results are FAILED (the same as {@code null} results);
+ * non-finite thresholds never trigger a status downgrade.
  */
 enum CheckStatus {
   PASSED,
@@ -22,11 +23,11 @@ enum CheckStatus {
    * @param check the quality check carrying the thresholds
    * @param result the differentially private ratio in [0, 1], or {@code null} when the check was
    *     not computed
-   * @return the status; {@code null} results are FAILED, preserved for compatibility with the PDF
-   *     summary. Non-finite results are treated as if no comparison applies.
+   * @return the status; {@code null} and non-finite results are FAILED, the same as for the PDF
+   *     summary. Non-finite thresholds are treated as if no comparison applies.
    */
   static CheckStatus of(QualityCheck check, Double result) {
-    if (result == null) {
+    if (result == null || !Double.isFinite(result)) {
       return FAILED;
     }
     if (greaterThan(result, check.getErrorThreshold())) {
