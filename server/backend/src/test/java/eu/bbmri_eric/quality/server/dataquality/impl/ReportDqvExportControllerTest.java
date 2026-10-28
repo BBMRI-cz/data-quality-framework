@@ -68,7 +68,7 @@ class ReportDqvExportControllerTest {
             .perform(get(API_V1_REPORTS_ID_EXPORT, report.getId()).accept(TEXT_TURTLE))
             .andExpect(status().isOk())
             .andExpect(header().string(HttpHeaders.CONTENT_TYPE, "text/turtle;charset=UTF-8"))
-            .andExpect(header().exists(HttpHeaders.CONTENT_DISPOSITION))
+            .andExpect(header().doesNotExist(HttpHeaders.CONTENT_DISPOSITION))
             .andReturn();
 
     String body = result.getResponse().getContentAsString();

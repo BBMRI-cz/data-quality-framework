@@ -81,7 +81,6 @@ class ReportController {
       description = "Retrieves all reports in the system with pagination")
   public ResponseEntity<PagedModel<EntityModel<ReportDTO>>> findAll(
       @Valid @ParameterObject FilterDTO filter) {
-    // TODO: Add support for filtering
     return ResponseEntity.ok(linkBuilder.toPagedModel(reportService.findAll(filter), filter));
   }
 
@@ -106,9 +105,6 @@ class ReportController {
               + " RDF/Turtle. The export is read-only and never contains query texts, only query"
               + " hashes and languages.")
   public ResponseEntity<String> exportDqv(@PathVariable String id) {
-    return ResponseEntity.ok()
-        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"report-" + id + ".ttl\"")
-        .contentType(TEXT_TURTLE)
-        .body(reportDqvService.exportDqv(id));
+    return ResponseEntity.ok().contentType(TEXT_TURTLE).body(reportDqvService.exportDqv(id));
   }
 }
