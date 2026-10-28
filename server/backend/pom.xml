@@ -187,9 +187,8 @@
         </dependency>
         <dependency>
             <groupId>org.apache.jena</groupId>
-            <artifactId>apache-jena-libs</artifactId>
+            <artifactId>jena-arq</artifactId>
             <version>${jena.version}</version>
-            <type>pom</type>
         </dependency>
     </dependencies>
     <dependencyManagement>

@@ -71,6 +71,7 @@ export default defineConfig({
                             items: [
                                 {text: 'Configuration', link: '/user/server/configuration'},
                                 {text: 'Manifests', link: '/user/server/manifests'},
+                                {text: 'DQV Export', link: '/user/server/dqv-export'},
                                 {text: 'OIDC Configuration', link: '/user/oidc-configuration'},
                             ]
                         },

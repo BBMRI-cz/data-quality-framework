@@ -10,8 +10,8 @@ import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheckResult;
 import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheckVersion;
 import eu.bbmri_eric.quality.server.dataquality.domain.QueryType;
 import eu.bbmri_eric.quality.server.dataquality.domain.Report;
-import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -28,6 +28,9 @@ import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.info.BuildProperties;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -35,10 +38,17 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 /**
  * Service implementation for exporting reports in the W3C Data Quality Vocabulary (DQV).
  *
- * <p>A report is rendered as a {@code dqv:QualityMeasurementDataset}. Each valued check result
+ * <p>A report is rendered as a {@code dqv:QualityMeasurementDataset}. Each computed check result
  * becomes a {@code dqv:QualityMeasurement}, and every result is additionally classified with a
- * {@code dqv:QualityAnnotation} derived from the check thresholds (same rule as the PDF summary).
- * Query texts are never serialized; only the query hash and language are exposed on the metric.
+ * {@code dqv:QualityAnnotation} (computed with the shared {@link CheckStatus} rule). Only
+ * version-stable facts (query hash, query language) are attached to the metric IRI; mutable
+ * editorial data (name, description, keywords) lives on the quality check, and the thresholds
+ * applied during classification are attached to the annotation together with the export time, so
+ * repeated exports of the same report never attribute conflicting values to the same metric.
+ *
+ * <p>Query texts are never serialized; only their hash and language are exposed. Results that are
+ * not finite (e.g. a stored {@code NaN}) are exported as not-computed annotations instead of
+ * breaking the export.
  */
 @Service
 class ReportDqvServiceImpl implements ReportDqvService {
@@ -63,14 +73,34 @@ class ReportDqvServiceImpl implements ReportDqvService {
   private static final String REPORT_DESCRIPTION =
       "Values are differentially private estimates computed at the data source.";
   private static final String ROUNDING_COMMENT = "Rounded up to the nearest 10.";
+  private static final String SUPPRESSION_COMMENT =
+      "Differentially private ratio: noisy counts below the agent's suppression threshold are"
+          + " reported as 0.";
+  private static final String WARNING_THRESHOLD_COMMENT =
+      "An affected fraction strictly greater than this value classifies the result as warning;"
+          + " higher fractions indicate worse quality.";
+  private static final String ERROR_THRESHOLD_COMMENT =
+      "An affected fraction strictly greater than this value classifies the result as failed;"
+          + " higher fractions indicate worse quality.";
+  private static final String QUERY_LANGUAGE_COMMENT =
+      "Query language of the metric's query text; the query text itself is never distributed.";
   private static final String UNCATEGORISED_DIMENSION = "uncategorised";
+  private static final String SERVER_LABEL = "Data Quality Server";
 
   private final ReportRepository reportRepository;
   private final AgentRepository agentRepository;
+  private final ObjectProvider<BuildProperties> buildPropertiesProvider;
+  private final String configuredBaseIri;
 
-  public ReportDqvServiceImpl(ReportRepository reportRepository, AgentRepository agentRepository) {
+  public ReportDqvServiceImpl(
+      ReportRepository reportRepository,
+      AgentRepository agentRepository,
+      ObjectProvider<BuildProperties> buildPropertiesProvider,
+      @Value("${app.dqv.base-iri:}") String configuredBaseIri) {
     this.reportRepository = reportRepository;
     this.agentRepository = agentRepository;
+    this.buildPropertiesProvider = buildPropertiesProvider;
+    this.configuredBaseIri = configuredBaseIri;
   }
 
   @Override
@@ -78,13 +108,13 @@ class ReportDqvServiceImpl implements ReportDqvService {
   public String exportDqv(String reportId) {
     Report report =
         reportRepository
-            .findById(reportId)
+            .findWithDetailsById(reportId)
             .orElseThrow(
                 () ->
                     new EntityNotFoundException("Report with ID %s not found".formatted(reportId)));
     Agent agent = agentRepository.findById(report.getAgentId()).orElse(null);
-    String base =
-        ServletUriComponentsBuilder.fromCurrentContextPath().path("/api/v1/").build().toUriString();
+    String base = resolveBaseIri();
+    Instant exportedAt = Instant.now();
     logger.debug("Exporting report {} as DQV (base IRI: {})", reportId, base);
 
     Model model = ModelFactory.createDefaultModel();
@@ -92,12 +122,35 @@ class ReportDqvServiceImpl implements ReportDqvService {
     List<QualityCheckResult> results = sortedResults(report);
     addReport(model, base, report, results);
     addAgent(model, base, report, agent, results);
+    addServerSoftware(model, base);
     addCategories(model, base, results);
     addVocabularyTerms(model, report, results);
     addChecksAndMetrics(model, base, results);
     addMeasurements(model, base, report, results);
-    addAnnotations(model, base, report, results);
+    addAnnotations(model, base, report, results, exportedAt);
     return RDFWriter.source(model).lang(Lang.TURTLE).base(base).asString();
+  }
+
+  private String resolveBaseIri() {
+    if (notBlank(configuredBaseIri)) {
+      return configuredBaseIri.endsWith("/") ? configuredBaseIri : configuredBaseIri + "/";
+    }
+    return ServletUriComponentsBuilder.fromCurrentContextPath()
+        .path("/api/v1/")
+        .build()
+        .toUriString();
+  }
+
+  private void addServerSoftware(Model model, String base) {
+    Resource server = model.createResource(serverIri(base));
+    server.addProperty(RDF.type, model.createResource(NS_PROV + "SoftwareAgent"));
+    server.addProperty(RDFS.label, model.createLiteral(SERVER_LABEL, "en"));
+    BuildProperties properties = buildPropertiesProvider.getIfAvailable();
+    if (properties != null && notBlank(properties.getVersion())) {
+      server.addProperty(
+          model.createProperty(NS_OWL, "versionInfo"),
+          model.createLiteral(properties.getVersion()));
+    }
   }
 
   private static void registerPrefixes(Model model) {
@@ -146,7 +199,7 @@ class ReportDqvServiceImpl implements ReportDqvService {
         agent != null && notBlank(agent.getName()) ? agent.getName() : report.getAgentId();
     Resource agentResource = model.createResource(agentIri(base, report.getAgentId()));
     agentResource.addProperty(RDF.type, model.createResource(NS_PROV + "SoftwareAgent"));
-    agentResource.addProperty(RDFS.label, model.createLiteral(label, "en"));
+    agentResource.addProperty(RDFS.label, model.createLiteral(label));
     if (agent != null && notBlank(agent.getVersion())) {
       agentResource.addProperty(
           model.createProperty(NS_OWL, "versionInfo"), model.createLiteral(agent.getVersion()));
@@ -154,7 +207,7 @@ class ReportDqvServiceImpl implements ReportDqvService {
     Resource datasetResource = model.createResource(datasetIri(base, report.getAgentId()));
     datasetResource.addProperty(RDF.type, model.createResource(NS_DCAT + "Dataset"));
     datasetResource.addProperty(
-        model.createProperty(NS_DCTERMS, "title"), model.createLiteral(label, "en"));
+        model.createProperty(NS_DCTERMS, "title"), model.createLiteral(label));
     Property hasQualityMeasurement = model.createProperty(NS_DQV, "hasQualityMeasurement");
     for (String measurementIri : measurementIris(base, report, results)) {
       datasetResource.addProperty(hasQualityMeasurement, model.createResource(measurementIri));
@@ -186,8 +239,7 @@ class ReportDqvServiceImpl implements ReportDqvService {
       categoryResource.addProperty(RDF.type, model.createResource(NS_DQV + "Dimension"));
       if (notBlank(category.getName())) {
         categoryResource.addProperty(
-            model.createProperty(NS_SKOS, "prefLabel"),
-            model.createLiteral(category.getName(), "en"));
+            model.createProperty(NS_SKOS, "prefLabel"), model.createLiteral(category.getName()));
       }
       categoryResource.addProperty(
           model.createProperty(NS_SKOS, "inScheme"), model.createResource(categoriesIri(base)));
@@ -195,9 +247,10 @@ class ReportDqvServiceImpl implements ReportDqvService {
   }
 
   /**
-   * Declares the FDQF vocabulary terms used by the document. Dimensions and metrics are declared
-   * explicitly because DQV requires every {@code dqv:Metric} to be in at least one {@code
-   * dqv:Dimension}.
+   * Declares the FDQF vocabulary terms used by the document so that the export is self-describing.
+   * Dimensions and metrics must be declared because DQV requires every {@code dqv:Metric} to be in
+   * at least one {@code dqv:Dimension}; status bodies are declared as SKOS concepts in a scheme
+   * following the DQV quality-level pattern.
    */
   private static void addVocabularyTerms(
       Model model, Report report, List<QualityCheckResult> results) {
@@ -207,10 +260,10 @@ class ReportDqvServiceImpl implements ReportDqvService {
           .addProperty(RDF.type, model.createResource(NS_DQV + "Dimension"));
     }
     if (report.getTotalPatients() != null) {
-      addCountMetric(model, "patientCount");
+      addCountMetricDeclaration(model, "patientCount", "Patient count");
     }
     if (report.getTotalSamples() != null) {
-      addCountMetric(model, "sampleCount");
+      addCountMetricDeclaration(model, "sampleCount", "Sample count");
     }
     boolean hasUncategorised =
         results.stream()
@@ -221,67 +274,126 @@ class ReportDqvServiceImpl implements ReportDqvService {
           .createResource(NS_FDQF + UNCATEGORISED_DIMENSION)
           .addProperty(RDF.type, model.createResource(NS_DQV + "Dimension"));
     }
+    if (!results.isEmpty()) {
+      declareStatusTerms(model, results);
+      declareThresholdProperty(model, "warningThreshold", WARNING_THRESHOLD_COMMENT);
+      declareThresholdProperty(model, "errorThreshold", ERROR_THRESHOLD_COMMENT);
+    }
+    boolean hasTypedVersion =
+        results.stream().anyMatch(result -> hasKnownQueryLanguage(result.getVersion()));
+    if (hasTypedVersion) {
+      declareQueryLanguageProperty(model);
+    }
   }
 
-  private static void addCountMetric(Model model, String localName) {
+  private static void addCountMetricDeclaration(Model model, String localName, String label) {
     Resource metric = model.createResource(NS_FDQF + localName);
     metric.addProperty(RDF.type, model.createResource(NS_DQV + "Metric"));
     metric.addProperty(
         model.createProperty(NS_DQV, "inDimension"), model.createResource(NS_FDQF + "volume"));
+    metric.addProperty(
+        model.createProperty(NS_DQV, "expectedDataType"),
+        model.createResource(XSDDatatype.XSDinteger.getURI()));
+    metric.addProperty(
+        model.createProperty(NS_SKOS, "prefLabel"), model.createLiteral(label, "en"));
+  }
+
+  private static void declareStatusTerms(Model model, List<QualityCheckResult> results) {
+    Resource scheme = model.createResource(NS_FDQF + "statuses");
+    scheme.addProperty(RDF.type, model.createResource(NS_SKOS + "ConceptScheme"));
+    Map<String, String> statusLabels =
+        Map.of(
+            "passed", "Passed",
+            "warning", "Warning",
+            "failed", "Failed",
+            "notComputed", "Not computed");
+    for (Map.Entry<String, String> statusLabel : statusLabels.entrySet()) {
+      boolean used =
+          results.stream().anyMatch(result -> statusLabel.getKey().equals(statusLocalName(result)));
+      if (!used) {
+        continue;
+      }
+      Resource concept = model.createResource(NS_FDQF + statusLabel.getKey());
+      concept.addProperty(RDF.type, model.createResource(NS_SKOS + "Concept"));
+      concept.addProperty(
+          model.createProperty(NS_SKOS, "prefLabel"),
+          model.createLiteral(statusLabel.getValue(), "en"));
+      concept.addProperty(model.createProperty(NS_SKOS, "inScheme"), scheme);
+    }
+  }
+
+  private static void declareThresholdProperty(Model model, String localName, String comment) {
+    Resource property = model.createResource(NS_FDQF + localName);
+    property.addProperty(RDF.type, RDF.Property);
+    property.addProperty(RDF.type, model.createResource(NS_OWL + "DatatypeProperty"));
+    property.addProperty(RDFS.range, model.createResource(XSDDatatype.XSDdouble.getURI()));
+    property.addProperty(RDFS.comment, model.createLiteral(comment, "en"));
+  }
+
+  private static void declareQueryLanguageProperty(Model model) {
+    Resource property = model.createResource(NS_FDQF + "queryLanguage");
+    property.addProperty(RDF.type, RDF.Property);
+    property.addProperty(RDF.type, model.createResource(NS_OWL + "DatatypeProperty"));
+    property.addProperty(RDFS.range, model.createResource(XSDDatatype.XSDstring.getURI()));
+    property.addProperty(RDFS.comment, model.createLiteral(QUERY_LANGUAGE_COMMENT, "en"));
   }
 
   private static void addChecksAndMetrics(
       Model model, String base, List<QualityCheckResult> results) {
     Map<Long, QualityCheck> checksById = new TreeMap<>();
+    Map<Long, List<QualityCheckResult>> resultsByCheckId = new TreeMap<>();
     for (QualityCheckResult result : results) {
-      checksById.putIfAbsent(result.getQualityCheck().getId(), result.getQualityCheck());
+      Long checkId = result.getQualityCheck().getId();
+      checksById.putIfAbsent(checkId, result.getQualityCheck());
+      resultsByCheckId.computeIfAbsent(checkId, key -> new ArrayList<>()).add(result);
     }
-    for (QualityCheck check : checksById.values()) {
-      List<String> keywords =
-          check.getKeywords().stream()
-              .map(QualityCheckKeyword::getKeyword)
-              .filter(ReportDqvServiceImpl::notBlank)
-              .distinct()
-              .sorted()
-              .toList();
-      if (!keywords.isEmpty()) {
-        Resource checkResource = model.createResource(checkIri(base, check.getId()));
-        Property keyword = model.createProperty(NS_DCAT, "keyword");
-        for (String keywordValue : keywords) {
-          checkResource.addProperty(keyword, model.createLiteral(keywordValue));
-        }
-      }
-      for (QualityCheckResult result : results) {
-        if (result.getQualityCheck().getId().equals(check.getId())) {
-          addMetric(model, base, result);
-        }
+    for (Map.Entry<Long, QualityCheck> entry : checksById.entrySet()) {
+      addCheck(model, base, entry.getValue());
+      for (QualityCheckResult result : resultsByCheckId.get(entry.getKey())) {
+        addMetric(model, base, result);
       }
     }
   }
 
+  private static void addCheck(Model model, String base, QualityCheck check) {
+    List<String> keywords =
+        check.getKeywords().stream()
+            .map(QualityCheckKeyword::getKeyword)
+            .filter(ReportDqvServiceImpl::notBlank)
+            .distinct()
+            .sorted()
+            .toList();
+    if (!notBlank(check.getName()) && keywords.isEmpty()) {
+      return;
+    }
+    Resource checkResource = model.createResource(checkIri(base, check.getId()));
+    if (notBlank(check.getName())) {
+      checkResource.addProperty(
+          model.createProperty(NS_SKOS, "prefLabel"), model.createLiteral(check.getName()));
+    }
+    if (notBlank(check.getDescription())) {
+      checkResource.addProperty(
+          model.createProperty(NS_SKOS, "definition"), model.createLiteral(check.getDescription()));
+    }
+    Property keyword = model.createProperty(NS_DCAT, "keyword");
+    for (String keywordValue : keywords) {
+      checkResource.addProperty(keyword, model.createLiteral(keywordValue));
+    }
+  }
+
+  /**
+   * Adds a quality check version as a {@code dqv:Metric}. Only version-stable facts are attached:
+   * the query hash and language are immutable for a version, whereas name, thresholds and category
+   * live on the editable {@link QualityCheck} and are therefore exported elsewhere.
+   */
   private static void addMetric(Model model, String base, QualityCheckResult result) {
     QualityCheck check = result.getQualityCheck();
     QualityCheckVersion version = result.getVersion();
     Resource metric = model.createResource(metricIri(base, result));
     metric.addProperty(RDF.type, model.createResource(NS_DQV + "Metric"));
-    if (notBlank(check.getName())) {
-      metric.addProperty(
-          model.createProperty(NS_SKOS, "prefLabel"), model.createLiteral(check.getName(), "en"));
-    }
-    if (notBlank(check.getDescription())) {
-      metric.addProperty(
-          model.createProperty(NS_SKOS, "definition"),
-          model.createLiteral(check.getDescription(), "en"));
-    }
     metric.addProperty(
         model.createProperty(NS_DQV, "expectedDataType"),
         model.createResource(XSDDatatype.XSDdouble.getURI()));
-    Category category = check.getCategory();
-    metric.addProperty(
-        model.createProperty(NS_DQV, "inDimension"),
-        category != null && category.getId() != null
-            ? model.createResource(categoryIri(base, category.getId()))
-            : model.createResource(NS_FDQF + UNCATEGORISED_DIMENSION));
     metric.addProperty(
         model.createProperty(NS_DCTERMS, "isVersionOf"),
         model.createResource(checkIri(base, check.getId())));
@@ -290,19 +402,16 @@ class ReportDqvServiceImpl implements ReportDqvService {
         model.createLiteral(Integer.toString(version.getVersion())));
     metric.addProperty(
         model.createProperty(NS_DCTERMS, "identifier"), model.createLiteral(version.getHash()));
-    if (version.getType() != null && version.getType() != QueryType.UNKNOWN) {
+    if (hasKnownQueryLanguage(version)) {
       metric.addProperty(
           model.createProperty(NS_FDQF, "queryLanguage"),
           model.createLiteral(version.getType().name()));
     }
-    metric.addProperty(
-        model.createProperty(NS_FDQF, "warningThreshold"),
-        model.createTypedLiteral(
-            percentToFraction(check.getWarningThreshold()), XSDDatatype.XSDdouble));
-    metric.addProperty(
-        model.createProperty(NS_FDQF, "errorThreshold"),
-        model.createTypedLiteral(
-            percentToFraction(check.getErrorThreshold()), XSDDatatype.XSDdouble));
+    metric.addProperty(RDFS.comment, model.createLiteral(SUPPRESSION_COMMENT, "en"));
+  }
+
+  private static boolean hasKnownQueryLanguage(QualityCheckVersion version) {
+    return version.getType() != null && version.getType() != QueryType.UNKNOWN;
   }
 
   private static void addMeasurements(
@@ -315,11 +424,11 @@ class ReportDqvServiceImpl implements ReportDqvService {
       addCountMeasurement(model, base, report, "samples", "sampleCount", report.getTotalSamples());
     }
     for (QualityCheckResult result : results) {
-      if (result.getResult() == null) {
+      if (!isComputable(result)) {
         continue;
       }
-      String fragment = resultFragment(result);
-      Resource measurement = model.createResource(measurementIri(base, report, fragment));
+      Resource measurement =
+          model.createResource(measurementIri(base, report, resultFragment(result)));
       measurement.addProperty(RDF.type, model.createResource(NS_DQV + "QualityMeasurement"));
       measurement.addProperty(
           model.createProperty(NS_QB, "dataSet"), model.createResource(reportIri(base, report)));
@@ -330,8 +439,7 @@ class ReportDqvServiceImpl implements ReportDqvService {
           model.createProperty(NS_DQV, "isMeasurementOf"),
           model.createResource(metricIri(base, result)));
       measurement.addProperty(
-          model.createProperty(NS_DQV, "value"),
-          model.createTypedLiteral(formatDouble(result.getResult()), XSDDatatype.XSDdouble));
+          model.createProperty(NS_DQV, "value"), model.createTypedLiteral(result.getResult()));
       measurement.addProperty(
           model.createProperty(NS_SDMX_ATTRIBUTE, "unitMeasure"),
           model.createResource(NS_OM + "one"));
@@ -357,8 +465,13 @@ class ReportDqvServiceImpl implements ReportDqvService {
   }
 
   private static void addAnnotations(
-      Model model, String base, Report report, List<QualityCheckResult> results) {
+      Model model,
+      String base,
+      Report report,
+      List<QualityCheckResult> results,
+      Instant exportedAt) {
     for (QualityCheckResult result : results) {
+      QualityCheck check = result.getQualityCheck();
       String fragment = resultFragment(result);
       Resource annotation = model.createResource(annotationIri(base, report, fragment));
       annotation.addProperty(RDF.type, model.createResource(NS_DQV + "QualityAnnotation"));
@@ -370,9 +483,24 @@ class ReportDqvServiceImpl implements ReportDqvService {
       annotation.addProperty(
           model.createProperty(NS_OA, "hasTarget"),
           model.createResource(datasetIri(base, report.getAgentId())));
-      if (result.getResult() == null) {
-        // DQV mandates a value on a measurement, so an uncomputed check is expressed as an
-        // annotation derived directly from the metric only.
+      annotation.addProperty(
+          model.createProperty(NS_PROV, "wasAttributedTo"), model.createResource(serverIri(base)));
+      annotation.addProperty(
+          model.createProperty(NS_PROV, "generatedAtTime"),
+          model.createTypedLiteral(exportedAt.toString(), XSDDatatype.XSDdateTime));
+      // The thresholds applied at export time are stored on the annotation, not on the metric,
+      // because they live on the editable quality check and may change between exports.
+      annotation.addProperty(
+          model.createProperty(NS_FDQF, "warningThreshold"),
+          model.createTypedLiteral(check.getWarningThreshold() / 100.0));
+      annotation.addProperty(
+          model.createProperty(NS_FDQF, "errorThreshold"),
+          model.createTypedLiteral(check.getErrorThreshold() / 100.0));
+      annotation.addProperty(
+          model.createProperty(NS_DQV, "inDimension"), dimensionOf(model, base, check));
+      if (!isComputable(result)) {
+        // DQV mandates a value on a measurement, so an uncomputed or non-finite check is expressed
+        // as an annotation derived directly from the metric only.
         annotation.addProperty(
             model.createProperty(NS_OA, "hasBody"), model.createResource(NS_FDQF + "notComputed"));
         annotation.addProperty(
@@ -381,7 +509,8 @@ class ReportDqvServiceImpl implements ReportDqvService {
       } else {
         annotation.addProperty(
             model.createProperty(NS_OA, "hasBody"),
-            model.createResource(NS_FDQF + statusLocalName(result)));
+            model.createResource(
+                NS_FDQF + statusLocalName(CheckStatus.of(check, result.getResult()))));
         annotation.addProperty(
             model.createProperty(NS_PROV, "wasDerivedFrom"),
             model.createResource(measurementIri(base, report, fragment)));
@@ -389,17 +518,32 @@ class ReportDqvServiceImpl implements ReportDqvService {
     }
   }
 
+  private static Resource dimensionOf(Model model, String base, QualityCheck check) {
+    Category category = check.getCategory();
+    return category != null && category.getId() != null
+        ? model.createResource(categoryIri(base, category.getId()))
+        : model.createResource(NS_FDQF + UNCATEGORISED_DIMENSION);
+  }
+
+  /** Statuses are only exported for computable results; others are reported as not computed. */
+  private static String statusLocalName(CheckStatus status) {
+    return switch (status) {
+      case PASSED -> "passed";
+      case WARNING -> "warning";
+      case FAILED -> "failed";
+    };
+  }
+
+  private static boolean isComputable(QualityCheckResult result) {
+    Double value = result.getResult();
+    return value != null && Double.isFinite(value);
+  }
+
   private static String statusLocalName(QualityCheckResult result) {
-    // Mirrors the PASSED/WARNING/FAILED rule used by the PDF summary.
-    double percentage = result.getResult() * 100.0;
-    QualityCheck check = result.getQualityCheck();
-    if (percentage > check.getErrorThreshold()) {
-      return "failed";
+    if (!isComputable(result)) {
+      return "notComputed";
     }
-    if (percentage > check.getWarningThreshold()) {
-      return "warning";
-    }
-    return "passed";
+    return statusLocalName(CheckStatus.of(result.getQualityCheck(), result.getResult()));
   }
 
   private static List<String> measurementIris(
@@ -412,7 +556,7 @@ class ReportDqvServiceImpl implements ReportDqvService {
       iris.add(measurementIri(base, report, "samples"));
     }
     for (QualityCheckResult result : results) {
-      if (result.getResult() != null) {
+      if (isComputable(result)) {
         iris.add(measurementIri(base, report, resultFragment(result)));
       }
     }
@@ -448,8 +592,18 @@ class ReportDqvServiceImpl implements ReportDqvService {
     return base + "agents/" + encodeSegment(agentId) + "#dataset";
   }
 
+  private static String serverIri(String base) {
+    return base + "#server";
+  }
+
   private static String checkIri(String base, Long checkId) {
     return base + "quality-checks/" + checkId;
+  }
+
+  private static String metricIri(String base, QualityCheckResult result) {
+    return checkIri(base, result.getQualityCheck().getId())
+        + "/versions/"
+        + result.getVersion().getVersion();
   }
 
   private static String categoriesIri(String base) {
@@ -458,12 +612,6 @@ class ReportDqvServiceImpl implements ReportDqvService {
 
   private static String categoryIri(String base, Long categoryId) {
     return base + "categories/" + categoryId;
-  }
-
-  private static String metricIri(String base, QualityCheckResult result) {
-    return checkIri(base, result.getQualityCheck().getId())
-        + "/versions/"
-        + result.getVersion().getVersion();
   }
 
   private static String measurementIri(String base, Report report, String fragment) {
@@ -476,16 +624,6 @@ class ReportDqvServiceImpl implements ReportDqvService {
 
   private static String resultFragment(QualityCheckResult result) {
     return result.getQualityCheck().getId() + "-v" + result.getVersion().getVersion();
-  }
-
-  /** Formats a ratio (0–1) in canonical {@code xsd:double} lexical form. */
-  private static String formatDouble(double value) {
-    return BigDecimal.valueOf(value).stripTrailingZeros().toPlainString();
-  }
-
-  /** Converts a percentage threshold (e.g. 5.0) into a ratio (e.g. 0.05). */
-  private static String percentToFraction(double percent) {
-    return BigDecimal.valueOf(percent).movePointLeft(2).stripTrailingZeros().toPlainString();
   }
 
   private static boolean notBlank(String value) {

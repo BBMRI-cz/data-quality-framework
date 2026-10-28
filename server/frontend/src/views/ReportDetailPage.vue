@@ -17,9 +17,9 @@
           v-if="report"
           class="btn btn-outline-primary btn-sm"
           :disabled="isDownloading"
-          @click="downloadSummary"
+          @click="downloadFile('pdf')"
         >
-          <i class="bi bi-file-earmark-pdf me-2"></i>
+          <i class="bi bi-file-earmark-pdf me-2" aria-hidden="true"></i>
           <span v-if="isDownloading">Downloading...</span>
           <span v-else>Download as PDF</span>
         </button>
@@ -27,9 +27,9 @@
           v-if="report"
           class="btn btn-outline-primary btn-sm"
           :disabled="isDownloadingDqv"
-          @click="downloadDqvExport"
+          @click="downloadFile('dqv')"
         >
-          <i class="bi bi-file-earmark-code me-2"></i>
+          <i class="bi bi-file-earmark-code me-2" aria-hidden="true"></i>
           <span v-if="isDownloadingDqv">Downloading...</span>
           <span v-else>Export DQV (Turtle)</span>
         </button>
@@ -233,35 +233,21 @@
     router.go(-1);
   };
 
-  const downloadSummary = async () => {
+  const downloadFile = async (kind) => {
     if (!report.value?.id) return;
-    isDownloading.value = true;
+    const downloading = kind === 'dqv' ? isDownloadingDqv : isDownloading;
+    downloading.value = true;
     try {
-      await apiService.downloadReportSummary(report.value.id);
+      if (kind === 'dqv') {
+        await apiService.downloadReportDqvExport(report.value.id);
+      } else {
+        await apiService.downloadReportSummary(report.value.id);
+      }
     } catch (err) {
       const { notificationService } = await import('@/services/notificationService.js');
-      notificationService.error(
-        'Download Failed',
-        `Failed to download report summary: ${err?.message || 'Unknown error'}`
-      );
+      notificationService.error('Download Failed', err?.message || 'Unknown error');
     } finally {
-      isDownloading.value = false;
-    }
-  };
-
-  const downloadDqvExport = async () => {
-    if (!report.value?.id) return;
-    isDownloadingDqv.value = true;
-    try {
-      await apiService.downloadReportDqvExport(report.value.id);
-    } catch (err) {
-      const { notificationService } = await import('@/services/notificationService.js');
-      notificationService.error(
-        'Download Failed',
-        `Failed to download DQV export: ${err?.message || 'Unknown error'}`
-      );
-    } finally {
-      isDownloadingDqv.value = false;
+      downloading.value = false;
     }
   };
 

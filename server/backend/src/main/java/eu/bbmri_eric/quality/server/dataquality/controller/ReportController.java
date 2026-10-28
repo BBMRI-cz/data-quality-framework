@@ -24,7 +24,8 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Reports", description = "API for managing data quality reports")
 class ReportController {
 
-  private static final String TEXT_TURTLE_VALUE = "text/turtle";
+  private static final MediaType TEXT_TURTLE =
+      MediaType.parseMediaType("text/turtle;charset=UTF-8");
 
   private final ReportService reportService;
   private final ReportPdfService reportPdfService;
@@ -97,7 +98,7 @@ class ReportController {
         .body(pdf);
   }
 
-  @GetMapping(value = "/reports/{id}/export", produces = TEXT_TURTLE_VALUE)
+  @GetMapping("/reports/{id}/export")
   @Operation(
       summary = "Export report as DQV (RDF/Turtle)",
       description =
@@ -106,7 +107,8 @@ class ReportController {
               + " hashes and languages.")
   public ResponseEntity<String> exportDqv(@PathVariable String id) {
     return ResponseEntity.ok()
-        .contentType(MediaType.parseMediaType(TEXT_TURTLE_VALUE))
+        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"report-" + id + ".ttl\"")
+        .contentType(TEXT_TURTLE)
         .body(reportDqvService.exportDqv(id));
   }
 }

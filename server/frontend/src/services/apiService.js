@@ -26,6 +26,31 @@ const triggerDownload = (data, type, filename) => {
   window.URL.revokeObjectURL(url);
 };
 
+// With responseType 'blob' the error body is a Blob too; decode it so the
+// server's ProblemDetail message reaches the user instead of a generic one.
+const readBlobErrorMessage = async (err) => {
+  const data = err?.response?.data;
+  if (data instanceof window.Blob) {
+    try {
+      const parsed = JSON.parse(await data.text());
+      return parsed.detail || parsed.title || err.message || 'Unknown error';
+    } catch {
+      return err.message || 'Unknown error';
+    }
+  }
+  return err?.message || 'Unknown error';
+};
+
+const requestDownload = async (url, config, type, filename) => {
+  let response;
+  try {
+    response = await api.get(url, config);
+  } catch (err) {
+    throw new Error(await readBlobErrorMessage(err));
+  }
+  triggerDownload(response.data, type, filename);
+};
+
 class ApiService {
   async login(username, password) {
     const response = await api.post(AUTH_LOGIN_URL, {
@@ -112,18 +137,21 @@ class ApiService {
   }
 
   async downloadReportSummary(reportId) {
-    const response = await api.get(`${REPORTS_URL}/${reportId}/summary?format=pdf`, {
-      responseType: 'blob',
-    });
-    triggerDownload(response.data, 'application/pdf', `report-${reportId}-summary.pdf`);
+    await requestDownload(
+      `${REPORTS_URL}/${reportId}/summary?format=pdf`,
+      { responseType: 'blob' },
+      'application/pdf',
+      `report-${reportId}-summary.pdf`
+    );
   }
 
   async downloadReportDqvExport(reportId) {
-    const response = await api.get(`${REPORTS_URL}/${reportId}/export`, {
-      responseType: 'blob',
-      headers: { Accept: 'text/turtle' },
-    });
-    triggerDownload(response.data, 'text/turtle', `report-${reportId}.ttl`);
+    await requestDownload(
+      `${REPORTS_URL}/${reportId}/export`,
+      { responseType: 'blob', headers: { Accept: 'text/turtle' } },
+      'text/turtle',
+      `report-${reportId}.ttl`
+    );
   }
 
   async createQualityCheck(data) {
