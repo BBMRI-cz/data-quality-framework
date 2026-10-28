@@ -36,6 +36,7 @@
         <fmt.plugin.version>2.29</fmt.plugin.version>
         <git-commit-id.plugin.version>9.0.2</git-commit-id.plugin.version>
         <openhtmltopdf.version>1.0.10</openhtmltopdf.version>
+        <jena.version>6.2.0</jena.version>
     </properties>
     <dependencies>
         <dependency>
@@ -183,6 +184,11 @@
             <groupId>com.openhtmltopdf</groupId>
             <artifactId>openhtmltopdf-pdfbox</artifactId>
             <version>${openhtmltopdf.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jena</groupId>
+            <artifactId>jena-arq</artifactId>
+            <version>${jena.version}</version>
         </dependency>
     </dependencies>
     <dependencyManagement>

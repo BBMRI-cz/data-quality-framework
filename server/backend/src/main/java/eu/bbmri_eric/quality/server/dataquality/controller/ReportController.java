@@ -1,6 +1,7 @@
 package eu.bbmri_eric.quality.server.dataquality.controller;
 
 import eu.bbmri_eric.quality.server.common.dto.FilterDTO;
+import eu.bbmri_eric.quality.server.dataquality.ReportDqvService;
 import eu.bbmri_eric.quality.server.dataquality.ReportPdfService;
 import eu.bbmri_eric.quality.server.dataquality.ReportService;
 import eu.bbmri_eric.quality.server.dataquality.dto.ReportCreateRequest;
@@ -23,16 +24,22 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Reports", description = "API for managing data quality reports")
 class ReportController {
 
+  private static final MediaType TEXT_TURTLE =
+      MediaType.parseMediaType("text/turtle;charset=UTF-8");
+
   private final ReportService reportService;
   private final ReportPdfService reportPdfService;
+  private final ReportDqvService reportDqvService;
   private final ReportLinkBuilder linkBuilder;
 
   public ReportController(
       ReportService reportService,
       ReportPdfService reportPdfService,
+      ReportDqvService reportDqvService,
       ReportLinkBuilder linkBuilder) {
     this.reportService = reportService;
     this.reportPdfService = reportPdfService;
+    this.reportDqvService = reportDqvService;
     this.linkBuilder = linkBuilder;
   }
 
@@ -74,7 +81,6 @@ class ReportController {
       description = "Retrieves all reports in the system with pagination")
   public ResponseEntity<PagedModel<EntityModel<ReportDTO>>> findAll(
       @Valid @ParameterObject FilterDTO filter) {
-    // TODO: Add support for filtering
     return ResponseEntity.ok(linkBuilder.toPagedModel(reportService.findAll(filter), filter));
   }
 
@@ -89,5 +95,16 @@ class ReportController {
         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"report-summary.pdf\"")
         .contentType(MediaType.APPLICATION_PDF)
         .body(pdf);
+  }
+
+  @GetMapping("/reports/{id}/export")
+  @Operation(
+      summary = "Export report as DQV (RDF/Turtle)",
+      description =
+          "Exports a specific report in the W3C Data Quality Vocabulary (DQV), serialized as"
+              + " RDF/Turtle. The export is read-only and never contains query texts, only query"
+              + " hashes and languages.")
+  public ResponseEntity<String> exportDqv(@PathVariable String id) {
+    return ResponseEntity.ok().contentType(TEXT_TURTLE).body(reportDqvService.exportDqv(id));
   }
 }

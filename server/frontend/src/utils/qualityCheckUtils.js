@@ -44,13 +44,18 @@ export function getCheckStatus(result, check) {
   const errorThreshold = check.errorThreshold;
   const warningThreshold = check.warningThreshold;
 
-  // Normalize: if value looks like a fraction (<=1), convert to percentage.
+  // Normalize: if value looks like a fraction (<=1), compare against a scaled
+  // threshold. Comparing against the correctly-rounded division instead of raw * 100
+  // avoids binary floating point artifacts: 0.07 * 100 is 7.000000000000001 in IEEE
+  // doubles, whereas 7 / 100 evaluates to the same double as the literal 0.07, so
+  // decimal boundary values compare exactly. This mirrors the exact-decimal
+  // comparison applied by the backend (CheckStatus).
   const raw = result.result;
-  const percentage = raw <= 1 ? raw * 100 : raw;
+  const divisor = raw <= 1 ? 100 : 1;
 
-  if (percentage > errorThreshold) {
+  if (raw > errorThreshold / divisor) {
     return CheckStatus.FAILED;
-  } else if (percentage > warningThreshold) {
+  } else if (raw > warningThreshold / divisor) {
     return CheckStatus.WARNING;
   } else {
     return CheckStatus.PASSED;
