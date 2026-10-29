@@ -9,6 +9,7 @@ import eu.bbmri_eric.quality.agent.common.exception.EntityNotFoundException;
 import eu.bbmri_eric.quality.agent.dataquality.QualityCheckService;
 import eu.bbmri_eric.quality.agent.dataquality.ReportService;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
+import eu.bbmri_eric.quality.agent.dataquality.domain.ReportStatus;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Result;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ObfuscatedReportDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
@@ -18,6 +19,7 @@ import eu.bbmri_eric.quality.agent.dataquality.dto.ReportDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportResultDetailDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportUpdateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.event.NewReportEvent;
+import eu.bbmri_eric.quality.agent.dataquality.exception.ReportGenerationInProgressException;
 import eu.bbmri_eric.quality.agent.dataquality.exception.ReportNotFoundException;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import java.math.BigDecimal;
@@ -32,6 +34,8 @@ import org.jspecify.annotations.NonNull;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -70,12 +74,37 @@ class ReportServiceImpl implements ReportService {
       entityId = "#result.id",
       details = "Report created")
   public ReportDTO create(ReportCreateDTO createDTO) {
+    reportRepository.findAllByStatusIs(ReportStatus.GENERATING).stream()
+        .findFirst()
+        .ifPresent(
+            generating -> {
+              throw new ReportGenerationInProgressException(generating.getId());
+            });
     Report report = new Report();
     report.setEpsilonBudget(settingsService.getSettings().getEpsilon());
     report = reportRepository.save(report);
     log.info("Created report with id: {}", report.getId());
     publisher.publishEvent(new NewReportEvent(report.getId()));
     return modelMapper.map(report, ReportDTO.class);
+  }
+
+  /**
+   * Marks reports stuck in {@link ReportStatus#GENERATING} as {@link ReportStatus#FAILED} on
+   * application startup. Report generation runs in-process, so after a restart no report can still
+   * be running; without this recovery a crashed generation would block all future reports, since
+   * only one report may be generated at a time.
+   */
+  @Transactional
+  @EventListener(ApplicationReadyEvent.class)
+  public void failStaleGeneratingReportsOnStartup() {
+    List<Report> staleReports = reportRepository.findAllByStatusIs(ReportStatus.GENERATING);
+    if (staleReports.isEmpty()) {
+      return;
+    }
+    log.warn(
+        "Marking {} report(s) stuck in GENERATING as FAILED after restart", staleReports.size());
+    staleReports.forEach(report -> report.setStatus(ReportStatus.FAILED));
+    reportRepository.saveAll(staleReports);
   }
 
   @Override

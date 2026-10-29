@@ -1,10 +1,12 @@
 package eu.bbmri_eric.quality.agent.dataquality.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 import eu.bbmri_eric.quality.agent.dataquality.QualityCheckService;
 import eu.bbmri_eric.quality.agent.dataquality.QualityCheckType;
+import eu.bbmri_eric.quality.agent.dataquality.ReportPipeline;
 import eu.bbmri_eric.quality.agent.dataquality.ReportService;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
 import eu.bbmri_eric.quality.agent.dataquality.domain.ReportStatus;
@@ -12,7 +14,9 @@ import eu.bbmri_eric.quality.agent.dataquality.domain.Result;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ObfuscatedReportDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckResultDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.ReportCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportDTO;
+import eu.bbmri_eric.quality.agent.dataquality.exception.ReportGenerationInProgressException;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -27,7 +31,9 @@ class ReportServiceImplTest {
 
   @Autowired private ReportRepository reportRepository;
   @Autowired private ReportService reportService;
+  @Autowired private ReportServiceImpl reportServiceImpl;
   @MockitoBean private QualityCheckService cqlQueryService;
+  @MockitoBean private ReportPipeline reportPipeline;
 
   private Report testReport;
 
@@ -85,6 +91,58 @@ class ReportServiceImplTest {
     Result result =
         new Result(checkName, checkId, rawValue, obfuscatedValue, 10, 30, 1.0, null, stratum);
     report.addResult(result);
+  }
+
+  @Nested
+  @DisplayName("Create")
+  class Create {
+
+    @Test
+    @DisplayName("should create a report in GENERATING state when none is being generated")
+    void create_whenNoReportIsGenerating_createsReport() {
+      ReportDTO created = reportService.create(new ReportCreateDTO());
+
+      assertThat(created.getId()).isNotNull();
+      Report persisted = reportRepository.findById(created.getId()).orElseThrow();
+      assertThat(persisted.getStatus()).isEqualTo(ReportStatus.GENERATING);
+    }
+
+    @Test
+    @DisplayName("should reject report creation while another report is being generated")
+    void create_whenReportIsGenerating_throws() {
+      Report generating = new Report();
+      generating.setStatus(ReportStatus.GENERATING);
+      reportRepository.save(generating);
+      long countBefore = reportRepository.count();
+
+      assertThatThrownBy(() -> reportService.create(new ReportCreateDTO()))
+          .isInstanceOf(ReportGenerationInProgressException.class)
+          .hasMessageContaining(generating.getId().toString());
+
+      assertThat(reportRepository.count()).isEqualTo(countBefore);
+    }
+
+    @Test
+    @DisplayName("should mark reports stuck in GENERATING as FAILED on startup")
+    void failStaleGeneratingReportsOnStartup_marksThemFailed() {
+      Report stale = new Report();
+      stale.setStatus(ReportStatus.GENERATING);
+      stale = reportRepository.save(stale);
+
+      reportServiceImpl.failStaleGeneratingReportsOnStartup();
+
+      assertThat(reportRepository.findById(stale.getId()).orElseThrow().getStatus())
+          .isEqualTo(ReportStatus.FAILED);
+    }
+
+    @Test
+    @DisplayName("should not touch completed reports on startup")
+    void failStaleGeneratingReportsOnStartup_keepsGeneratedReports() {
+      reportServiceImpl.failStaleGeneratingReportsOnStartup();
+
+      assertThat(reportRepository.findById(testReport.getId()).orElseThrow().getStatus())
+          .isEqualTo(ReportStatus.GENERATED);
+    }
   }
 
   @Nested

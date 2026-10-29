@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
+import eu.bbmri_eric.quality.agent.dataquality.domain.ReportStatus;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
@@ -62,7 +63,9 @@ public class ReportIntegrationTests {
   @Test
   void testGetReportsWithPagination() throws Exception {
     for (int i = 0; i < 15; i++) {
-      reportRepository.save(new Report());
+      Report report = new Report();
+      report.setStatus(ReportStatus.GENERATED);
+      reportRepository.save(report);
     }
     mockMvc
         .perform(get(API_REPORTS).param("page", "0").param("size", "10"))
@@ -96,11 +99,13 @@ public class ReportIntegrationTests {
     reportRepository.deleteAll();
 
     Report olderReport = new Report();
+    olderReport.setStatus(ReportStatus.GENERATED);
     reportRepository.save(olderReport);
 
     Thread.sleep(100);
 
     Report newerReport = new Report();
+    newerReport.setStatus(ReportStatus.GENERATED);
     reportRepository.save(newerReport);
 
     String responseBody =
