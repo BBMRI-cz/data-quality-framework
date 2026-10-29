@@ -23,7 +23,8 @@ import lombok.Setter;
  * <p>This entity encapsulates the results of a data quality assessment, including the timestamp of
  * generation, current status, and a collection of individual quality check results. Each report
  * tracks the epsilon budget used for differential privacy operations and the number of entities
- * assessed.
+ * assessed. The raw entity counts are stored alongside their noisy counterparts; only the noisy
+ * counts, computed once during report generation, may be shared outside the agent.
  */
 @Entity
 @Getter
@@ -44,6 +45,10 @@ public class Report {
   private Integer numberOfEntities;
 
   private Integer numberOfSecondaryEntities;
+
+  private Integer obfuscatedNumberOfEntities;
+
+  private Integer obfuscatedNumberOfSecondaryEntities;
 
   @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
   @JoinColumn(name = "report_id")

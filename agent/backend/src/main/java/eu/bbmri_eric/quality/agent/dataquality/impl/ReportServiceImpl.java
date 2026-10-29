@@ -173,21 +173,21 @@ class ReportServiceImpl implements ReportService {
   public ObfuscatedReportDTO getObfuscatedById(Long id) {
     Report report =
         reportRepository.findById(id).orElseThrow(() -> new ReportNotFoundException(id));
-    Integer roundedPatientCount = roundEntityCount(report.getNumberOfEntities());
-    Integer rounderSampleCount = roundEntityCount(report.getNumberOfSecondaryEntities());
+    Integer obfuscatedPatientCount = report.getObfuscatedNumberOfEntities();
+    Integer obfuscatedSampleCount = report.getObfuscatedNumberOfSecondaryEntities();
     List<QualityCheckDTO> qualityCheckDTOS = qualityCheckService.findAll();
-    var results = prepareObfuscatedResults(report, roundedPatientCount, qualityCheckDTOS);
+    var results = prepareObfuscatedResults(report, obfuscatedPatientCount, qualityCheckDTOS);
     log.debug("Prepared obfuscated report {} with {} results", id, results.size());
-    return new ObfuscatedReportDTO(results, roundedPatientCount, rounderSampleCount);
+    return new ObfuscatedReportDTO(results, obfuscatedPatientCount, obfuscatedSampleCount);
   }
 
   private static @NonNull List<QualityCheckResultDTO> prepareObfuscatedResults(
-      Report report, Integer roundedPatientCount, List<QualityCheckDTO> qualityCheckDTOS) {
+      Report report, Integer obfuscatedPatientCount, List<QualityCheckDTO> qualityCheckDTOS) {
     return (report.getResults() == null ? List.<Result>of() : report.getResults())
         .stream()
             .map(
                 result -> {
-                  Double value = calculateObfuscatedValue(result, roundedPatientCount);
+                  Double value = calculateObfuscatedValue(result, obfuscatedPatientCount);
                   Double boundedValue = null;
                   if (value != null) {
                     double roundedValue =
@@ -199,13 +199,6 @@ class ReportServiceImpl implements ReportService {
                       checkIdLabel, result.getCheckName(), boundedValue);
                 })
             .collect(Collectors.toList());
-  }
-
-  private static Integer roundEntityCount(Integer count) {
-    if (Objects.isNull(count)) {
-      return null;
-    }
-    return ((count + 9) / 10) * 10;
   }
 
   private static Double calculateObfuscatedValue(Result result, Integer numberOfEntities) {

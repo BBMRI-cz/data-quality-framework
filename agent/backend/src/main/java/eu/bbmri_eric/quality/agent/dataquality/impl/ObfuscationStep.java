@@ -92,7 +92,8 @@ class ObfuscationStep implements ReportPipelineStep {
     log.info("Adding obfuscated values for report id: {}", report.getId());
     List<Result> results = report.getResults();
     var settings = settingsService.getSettings();
-    double totalEpsilon = settings.getEpsilon();
+    double totalEpsilon =
+        settings.getEpsilon() * DifferentialPrivacyUtil.CHECK_RESULTS_EPSILON_FRACTION;
     double delta = settings.getDelta();
     NoiseMechanism noiseMechanism = settings.getNoiseMechanism();
     int threshold = settings.getMinThreshold();

@@ -73,14 +73,25 @@ For a comprehensive understanding of differential privacy, see the foundational 
 
 #### Technical Implementation
 
-Our differential privacy implementation uses the **Laplace mechanism** with additional safeguards:
+Our differential privacy implementation uses the **Laplace mechanism** (or optionally the **Gaussian mechanism** for (ε, δ)-differential privacy) with additional safeguards:
 
 **Implementation Location:**
 - **Class**: `eu.bbmri_eric.quality.agent.dataquality.DifferentialPrivacyUtil`
-- **Source**: `agent/backend/src/main/java/eu/bbmri_eric/quality/agent/report/DifferentialPrivacyUtil.java`
-- **Tests**: `agent/backend/src/test/java/eu/bbmri_eric/quality/agent/report/DifferentialPrivacyUtilTest.java`
+- **Source**: `agent/backend/src/main/java/eu/bbmri_eric/quality/agent/dataquality/DifferentialPrivacyUtil.java`
+- **Tests**: `agent/backend/src/test/java/eu/bbmri_eric/quality/agent/dataquality/DifferentialPrivacyUtilTest.java`
 
 The implementation includes comprehensive test coverage to ensure correctness of the differential privacy mechanisms.
+
+#### Protection of Entity Totals
+
+The total patient and sample counts that accompany each report are **also protected with noise** — they are never shared as exact or merely rounded values:
+
+- Each report reserves a share of its privacy budget for the two totals: **20% of ε in total (10% per total)**; the remaining **80% of ε** is split among the quality check results as described below. These shares are defined in `DifferentialPrivacyUtil` (`ENTITY_TOTALS_EPSILON_FRACTION` / `CHECK_RESULTS_EPSILON_FRACTION`), so releasing a full report never exceeds its epsilon budget.
+- Noise is applied to the raw totals **exactly once** during report generation (in the `EntityCountStep` of the report pipeline) and the noisy values are persisted. Re-sending or re-exporting the same report reuses the stored noisy totals, so an observer cannot remove the noise by averaging multiple releases of the same report.
+- The same **low-count suppression** applies to totals as to check counts: noisy counts below the configured minimum threshold are reported as 0.
+- Check results are ratios computed as `noisy check count / noisy patient count`, so no exact count — numerator or denominator — is ever used in a shared metric.
+
+Reports generated before this protection existed (or lacking a noisy total for any other reason) do not fall back to weaker rounding: their totals are simply withheld.
 
 #### Example: Obfuscated Percentage Calculation
 
@@ -94,15 +105,15 @@ To illustrate how differential privacy is applied in practice, consider the foll
    - `noise ~ Laplace(scale = 1 / epsilon)`
    - Suppose the sampled `noise = -1.73`
    - `noisyCount = max(0, trueCount + noise) = max(0, 67 - 1.73) ≈ 65.27`
-4. The agent converts this to an obfuscated percentage:
-   - `percentage = (noisyCount / totalPatients) * 100 ≈ (65.27 / 10,000) * 100 ≈ 0.65%`
-5. Only this **privacy-preserved percentage (≈ 0.65%)** is sent to the Data Quality Server – never the raw count (67).
+4. The agent converts this to an obfuscated percentage, using the **noisy total number of patients** (≈ 10,000 after noise addition) as the denominator:
+   - `percentage = (noisyCount / noisyTotalPatients) * 100 ≈ (65.27 / 10,000) * 100 ≈ 0.65%`
+5. Only this **privacy-preserved percentage (≈ 0.65%)**, together with the noisy totals, is sent to the Data Quality Server – never the raw counts.
 6. The central server stores and displays the obfuscated metric. Individual patient presence or absence cannot be inferred due to the added calibrated noise.
 
 Key points:
 - Small datasets receive proportionally more effective protection because the noise impact is relatively larger.
-- Counts are clipped to zero to avoid negative artifacts after noise addition.
-- Each quality check consumes part of the privacy budget (ε); budgeting strategy can be tuned.
+- Counts (including the entity totals) are clipped to zero to avoid negative artifacts after noise addition.
+- Each quality check and each entity total consumes part of the report's privacy budget (ε); budgeting strategy can be tuned.
 
 > This approach ensures that even if an attacker knows most of the dataset, they cannot reliably determine whether any one patient contributed to the reported metric.
 

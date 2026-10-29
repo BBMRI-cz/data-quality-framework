@@ -128,7 +128,7 @@ class ReportDqvServiceImplTest {
             <reports/__REPORT_ID__>
                 a                     dqv:QualityMeasurementDataset , dqv:QualityMetadata;
                 dcterms:title         "Data quality report __REPORT_ID__"@en;
-                dcterms:description   "Counts are rounded up to the nearest 10; check results are noisy ratios computed by the agent."@en;
+                dcterms:description   "Entity totals and check results are noisy values computed by the agent using differential privacy."@en;
                 prov:generatedAtTime  "2026-01-15T10:15:30Z"^^xsd:dateTime;
                 prov:wasAttributedTo  <agents/agent-42#agent>;
                 dcterms:hasPart       <reports/__REPORT_ID__#m-patients> , <reports/__REPORT_ID__#m-samples> ,
@@ -243,7 +243,7 @@ class ReportDqvServiceImplTest {
                 dqv:computedOn       <agents/agent-42#dataset>;
                 dqv:isMeasurementOf  fdqf:patientCount;
                 dqv:value            "150"^^xsd:integer;
-                rdfs:comment         "Rounded up to the nearest 10."@en .
+                rdfs:comment         "Differentially private count: noisy counts below the agent's suppression threshold are reported as 0."@en .
 
             <reports/__REPORT_ID__#m-samples>
                 a                    dqv:QualityMeasurement;
@@ -251,7 +251,7 @@ class ReportDqvServiceImplTest {
                 dqv:computedOn       <agents/agent-42#dataset>;
                 dqv:isMeasurementOf  fdqf:sampleCount;
                 dqv:value            "420"^^xsd:integer;
-                rdfs:comment         "Rounded up to the nearest 10."@en .
+                rdfs:comment         "Differentially private count: noisy counts below the agent's suppression threshold are reported as 0."@en .
 
             <reports/__REPORT_ID__#m-1-v2>
                 a                           dqv:QualityMeasurement;

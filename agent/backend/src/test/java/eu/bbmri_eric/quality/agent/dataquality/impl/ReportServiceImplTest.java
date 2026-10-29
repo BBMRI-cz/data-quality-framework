@@ -63,6 +63,7 @@ class ReportServiceImplTest {
 
     testReport = new Report();
     testReport.setNumberOfEntities(1000);
+    testReport.setObfuscatedNumberOfEntities(1000);
     testReport.setStatus(ReportStatus.GENERATED);
 
     addResultToReport(testReport, "Check 1", 1L, 150, 155.5, null);
@@ -135,10 +136,11 @@ class ReportServiceImplTest {
     }
 
     @Test
-    @DisplayName("should use obfuscated values, not raw values")
+    @DisplayName("should use obfuscated totals as denominator, not raw counts")
     void shouldUseObfuscatedValues() {
       Report report = new Report();
       report.setNumberOfEntities(100);
+      report.setObfuscatedNumberOfEntities(120);
       report.setStatus(ReportStatus.GENERATED);
 
       addResultToReport(report, "Test Check", 1L, 50, 60.0, null);
@@ -146,7 +148,7 @@ class ReportServiceImplTest {
 
       ObfuscatedReportDTO reportDTO = reportService.getObfuscatedById(savedReport.getId());
 
-      assertThat(reportDTO.getResults().getFirst().getResult()).isEqualTo(0.6);
+      assertThat(reportDTO.getResults().getFirst().getResult()).isEqualTo(0.5);
     }
 
     @Test
@@ -166,6 +168,7 @@ class ReportServiceImplTest {
     void shouldHandleZeroEntities() {
       Report report = new Report();
       report.setNumberOfEntities(0);
+      report.setObfuscatedNumberOfEntities(0);
       report.setStatus(ReportStatus.GENERATED);
       addResultToReport(report, "Test Check", 1L, 0, 0.0, null);
       Report savedReport = reportRepository.save(report);
@@ -192,8 +195,27 @@ class ReportServiceImplTest {
     }
 
     @Test
-    @DisplayName("should round entity counts")
-    void shouldRoundEntityCounts() {
+    @DisplayName("should share obfuscated entity counts instead of raw counts")
+    void shouldShareObfuscatedEntityCounts() {
+      Report report = new Report();
+      report.setNumberOfEntities(678);
+      report.setNumberOfSecondaryEntities(1273);
+      report.setObfuscatedNumberOfEntities(700);
+      report.setObfuscatedNumberOfSecondaryEntities(1290);
+      report.setStatus(ReportStatus.GENERATED);
+      addResultToReport(report, "Test Check", 1L, null, null, null);
+      Report savedReport = reportRepository.save(report);
+      ObfuscatedReportDTO reportDTO = reportService.getObfuscatedById(savedReport.getId());
+      assertThat(reportDTO.getTotalPatients()).isEqualTo(700);
+      assertThat(reportDTO.getTotalSamples()).isEqualTo(1290);
+      assertThat(reportDTO.getTotalPatients()).isNotEqualTo(savedReport.getNumberOfEntities());
+      assertThat(reportDTO.getTotalSamples())
+          .isNotEqualTo(savedReport.getNumberOfSecondaryEntities());
+    }
+
+    @Test
+    @DisplayName("should never expose raw totals for reports without obfuscated counts")
+    void shouldSuppressTotalsWhenObfuscatedCountsMissing() {
       Report report = new Report();
       report.setNumberOfEntities(678);
       report.setNumberOfSecondaryEntities(1273);
@@ -201,9 +223,8 @@ class ReportServiceImplTest {
       addResultToReport(report, "Test Check", 1L, null, null, null);
       Report savedReport = reportRepository.save(report);
       ObfuscatedReportDTO reportDTO = reportService.getObfuscatedById(savedReport.getId());
-      assertThat(savedReport.getNumberOfEntities()).isNotEqualTo(reportDTO.getTotalPatients());
-      assertThat(savedReport.getNumberOfSecondaryEntities())
-          .isNotEqualTo(reportDTO.getTotalSamples());
+      assertThat(reportDTO.getTotalPatients()).isNull();
+      assertThat(reportDTO.getTotalSamples()).isNull();
     }
 
     @Test

@@ -19,3 +19,12 @@ The agent applies **differential privacy** to the quality metrics it reports, so
 ::: warning Gaussian constraint
 When `noiseMechanism` is `GAUSSIAN`, `epsilon` must be `<= 1.0`. If you need a larger privacy budget, use `LAPLACE`.
 :::
+
+### How the privacy budget is spent
+
+The configured `epsilon` is the total privacy budget of a **single report**. Each generated report spends it as follows:
+
+- **80%** is split among the quality check results (individually configured per-check budgets are honored within this share).
+- **20%** is reserved for the noisy entity totals (patient count and sample count), 10% each.
+
+The minThreshold is applied to all noisy counts, including the totals: a site whose noisy patient total falls below the threshold reports it as 0, and its check ratios are reported as 0 as well. See [Privacy & Security](./privacy.md#protection-of-entity-totals) for details.

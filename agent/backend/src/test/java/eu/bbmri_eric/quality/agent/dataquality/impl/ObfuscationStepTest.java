@@ -94,14 +94,14 @@ class ObfuscationStepTest {
   }
 
   @Test
-  void execute_withSingleResult_shouldUseFullEpsilon() {
+  void execute_withSingleResult_shouldUseCheckResultsShareOfEpsilon() {
     settingsService.updateSettings(SettingsDTO.builder().epsilon(1.0).build());
     Report report = new Report();
     Result r1 = new Result("c1", 1L, 50, null, 40, 30, null, null, null);
     report.setResults(new ArrayList<>(List.of(r1)));
     step.execute(report);
     assertThat(r1.getObfuscatedValue()).isNotNull().isNotNegative();
-    assertThat(report.getResults().getFirst().getEpsilon()).isEqualTo(1.0);
+    assertThat(report.getResults().getFirst().getEpsilon()).isEqualTo(0.8);
   }
 
   @Test
@@ -122,7 +122,7 @@ class ObfuscationStepTest {
             r ->
                 r.getObfuscatedValue() != null
                     && r.getObfuscatedValue() >= 0
-                    && r.getEpsilon() == 0.1);
+                    && r.getEpsilon() == 0.08);
   }
 
   @Test
@@ -234,8 +234,8 @@ class ObfuscationStepTest {
 
     step.execute(report);
 
-    assertThat(r1.getEpsilon()).isEqualTo(1.0);
-    assertThat(r2.getEpsilon()).isEqualTo(1.0);
+    assertThat(r1.getEpsilon()).isEqualTo(0.8);
+    assertThat(r2.getEpsilon()).isEqualTo(0.8);
   }
 
   @Test
@@ -254,7 +254,7 @@ class ObfuscationStepTest {
     step.execute(report);
 
     assertThat(r1.getEpsilon()).isEqualTo(0.4);
-    assertThat(r2.getEpsilon()).isEqualTo(0.6);
+    assertThat(r2.getEpsilon()).isEqualTo(0.4);
   }
 
   @Test
@@ -281,15 +281,15 @@ class ObfuscationStepTest {
   }
 
   @Test
-  void execute_withPreferencesSumEqualToBudget_shouldUsePreferredValues() {
+  void execute_withPreferencesConsumingFullCheckBudget_shouldUsePreferredValues() {
     settingsService.updateSettings(SettingsDTO.builder().epsilon(2.0).build());
 
     QualityCheck check1 = new QualityCheck("c1", "Check 1", "query1");
-    check1.setEpsilonBudget(1.2);
+    check1.setEpsilonBudget(1.0);
     qualityCheckRepository.save(check1);
 
     QualityCheck check2 = new QualityCheck("c2", "Check 2", "query2");
-    check2.setEpsilonBudget(0.8);
+    check2.setEpsilonBudget(0.6);
     qualityCheckRepository.save(check2);
 
     Report report = new Report();
@@ -299,8 +299,8 @@ class ObfuscationStepTest {
 
     step.execute(report);
 
-    assertThat(r1.getEpsilon()).isEqualTo(1.2);
-    assertThat(r2.getEpsilon()).isEqualTo(0.8);
+    assertThat(r1.getEpsilon()).isEqualTo(1.0);
+    assertThat(r2.getEpsilon()).isEqualTo(0.6);
   }
 
   @Test
@@ -390,6 +390,6 @@ class ObfuscationStepTest {
 
     step.execute(report);
 
-    assertThat(r1.getObfuscatedValue()).isBetween(80.0, 120.0);
+    assertThat(r1.getObfuscatedValue()).isBetween(75.0, 125.0);
   }
 }

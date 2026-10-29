@@ -14,6 +14,16 @@ public class DifferentialPrivacyUtil {
   private static volatile double LOW_COUNT_THRESHOLD = 10.0;
 
   /**
+   * Fraction of a report's epsilon budget reserved for noising the entity totals (patient count and
+   * secondary entity count). Each total consumes half of this share. Reserving part of the budget
+   * up front keeps the total privacy loss of a single report within its epsilon budget.
+   */
+  public static final double ENTITY_TOTALS_EPSILON_FRACTION = 0.2;
+
+  /** Fraction of a report's epsilon budget available for noising quality check results. */
+  public static final double CHECK_RESULTS_EPSILON_FRACTION = 1.0 - ENTITY_TOTALS_EPSILON_FRACTION;
+
+  /**
    * Sets the low-count suppression threshold.
    *
    * @param threshold the new threshold (must be non-negative)
