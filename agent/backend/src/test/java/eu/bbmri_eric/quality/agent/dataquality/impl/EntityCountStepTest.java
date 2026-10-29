@@ -5,13 +5,11 @@ import static org.mockito.Mockito.when;
 
 import eu.bbmri_eric.quality.agent.dataquality.DataStore;
 import eu.bbmri_eric.quality.agent.dataquality.DataStoreFactory;
-import eu.bbmri_eric.quality.agent.dataquality.DifferentialPrivacyUtil;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
 import eu.bbmri_eric.quality.agent.settings.NoiseMechanism;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
 import jakarta.transaction.Transactional;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,11 +29,6 @@ class EntityCountStepTest {
   @BeforeEach
   void setUp() {
     when(dataStoreFactory.resolveDataStore()).thenReturn(dataStore);
-  }
-
-  @AfterEach
-  void tearDown() {
-    DifferentialPrivacyUtil.setLowCountThreshold(10.0);
   }
 
   @Test

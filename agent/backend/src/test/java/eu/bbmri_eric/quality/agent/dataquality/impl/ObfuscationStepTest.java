@@ -1,10 +1,10 @@
 package eu.bbmri_eric.quality.agent.dataquality.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import eu.bbmri_eric.quality.agent.dataquality.DifferentialPrivacyUtil;
 import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Result;
@@ -16,7 +16,6 @@ import eu.bbmri_eric.quality.agent.settings.impl.SettingsRepository;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,11 +32,6 @@ class ObfuscationStepTest {
   @BeforeEach
   void setUp() {
     settingsRepository.save(new Settings("noiseMechanism", "LAPLACE"));
-  }
-
-  @AfterEach
-  void tearDown() {
-    DifferentialPrivacyUtil.setLowCountThreshold(10.0);
   }
 
   @Autowired private ReportRepository reportRepository;
@@ -301,6 +295,24 @@ class ObfuscationStepTest {
 
     assertThat(r1.getEpsilon()).isEqualTo(1.0);
     assertThat(r2.getEpsilon()).isEqualTo(0.6);
+  }
+
+  @Test
+  void execute_withPreferencesStarvingOtherResults_shouldThrow() {
+    settingsService.updateSettings(SettingsDTO.builder().epsilon(1.0).build());
+
+    QualityCheck check1 = new QualityCheck("c1", "Check 1", "query1");
+    check1.setEpsilonBudget(0.8);
+    qualityCheckRepository.save(check1);
+
+    Report report = new Report();
+    Result r1 = new Result("c1", check1.getId(), 100, null, 80, 50, null, null, null);
+    Result r2 = new Result("c2", 999L, 200, null, 150, 100, null, null, null);
+    report.setResults(new ArrayList<>(List.of(r1, r2)));
+
+    assertThatThrownBy(() -> step.execute(report))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("leaving no epsilon");
   }
 
   @Test

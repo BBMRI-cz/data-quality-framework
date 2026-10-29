@@ -159,6 +159,9 @@ class QualityCheckServiceImpl implements QualityCheckService {
             .findById(id)
             .orElseThrow(() -> new QualityCheckNotFoundException(id));
     modelMapper.map(updateDTO, qualityCheck);
+    // ModelMapper skips null properties, which would silently preserve an existing epsilon
+    // budget preference. A full update must be able to clear it, so it is applied explicitly.
+    qualityCheck.setEpsilonBudget(updateDTO.getEpsilonBudget());
     setCategory(updateDTO.getCategoryId(), qualityCheck);
     qualityCheck = qualityCheckRepository.save(qualityCheck);
     logger.info("Updated quality check id: {}", id);

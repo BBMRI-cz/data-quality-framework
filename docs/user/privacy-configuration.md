@@ -6,9 +6,9 @@ The agent applies **differential privacy** to the quality metrics it reports, so
 
 | Setting          | Description                                                                                                                          | Default     | Validation                            |
 |:-----------------|:-------------------------------------------------------------------------------------------------------------------------------------|:------------|:--------------------------------------|
-| `epsilon`        | Privacy budget (ε). Smaller values mean stronger privacy but add more noise to results.                                              | `3.0`       | `> 0`                                 |
-| `delta`          | Delta parameter (δ) — probability of privacy failure. Typically a very small value such as `1e-8`.                                   | `1e-8`      | `> 0`                                 |
-| `minThreshold`   | Minimum count threshold for low count suppression. Reported values below this are hidden.                                            | `50`        | `>= 0`                                |
+| `epsilon`        | Privacy budget (ε). Smaller values mean stronger privacy but add more noise to results.                                              | `3.0`       | `0.1` – `10`                          |
+| `delta`          | Delta parameter (δ) — probability of privacy failure. Typically a very small value such as `1e-8`.                                   | `1e-8`      | `> 0` and `<= 1e-5`                   |
+| `minThreshold`   | Minimum count threshold for low count suppression. Reported values below this are hidden.                                            | `50`        | `>= 10`                               |
 | `noiseMechanism` | Noise distribution used. One of `LAPLACE` or `GAUSSIAN`.                                                                             | `LAPLACE`   | `LAPLACE` or `GAUSSIAN`               |
 
 ### Noise mechanisms
@@ -24,7 +24,7 @@ When `noiseMechanism` is `GAUSSIAN`, `epsilon` must be `<= 1.0`. If you need a l
 
 The configured `epsilon` is the total privacy budget of a **single report**. Each generated report spends it as follows:
 
-- **80%** is split among the quality check results (individually configured per-check budgets are honored within this share).
+- **80%** is split among the quality check results (individually configured per-check budgets are honored within this share; if the preferences already consume the entire share, report generation fails loudly instead of giving the remaining checks an epsilon of 0).
 - **20%** is reserved for the noisy entity totals (patient count and sample count), 10% each.
 
 The minThreshold is applied to all noisy counts, including the totals: a site whose noisy patient total falls below the threshold reports it as 0, and its check ratios are reported as 0 as well. See [Privacy & Security](./privacy.md#protection-of-entity-totals) for details.

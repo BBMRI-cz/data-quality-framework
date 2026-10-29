@@ -108,6 +108,74 @@ class QualityCheckIntegrationTests {
   }
 
   @Test
+  void create_qualityCheckWithNonPositiveEpsilonBudget_returnsBadRequest() throws Exception {
+    QualityCheckCreateDTO createDTO =
+        new QualityCheckCreateDTO("Test Check", "Description", "define Test: true", 10, 30, 0.0);
+
+    mockMvc
+        .perform(
+            post(API_QUALITY_CHECKS)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDTO)))
+        .andExpect(status().isBadRequest());
+
+    createDTO.setEpsilonBudget(-0.5);
+    mockMvc
+        .perform(
+            post(API_QUALITY_CHECKS)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDTO)))
+        .andExpect(status().isBadRequest());
+
+    assertThat(qualityCheckRepository.count()).isEqualTo(0);
+  }
+
+  @Test
+  void update_qualityCheckWithEpsilonBudget_canClearPreference() throws Exception {
+    QualityCheck check = new QualityCheck("Test Check", "Test Description", "define Test: true");
+    check.setEpsilonBudget(0.5);
+    check = qualityCheckRepository.save(check);
+
+    QualityCheckUpdateDTO updateDTO =
+        new QualityCheckUpdateDTO(
+            "Test Check",
+            "Test Description",
+            "define Test: true",
+            QualityCheckType.CQL,
+            10,
+            30,
+            null);
+
+    mockMvc
+        .perform(
+            put(API_QUALITY_CHECKS + "/{id}", check.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateDTO)))
+        .andExpect(status().isOk());
+
+    assertThat(qualityCheckRepository.findById(check.getId()).orElseThrow().getEpsilonBudget())
+        .isNull();
+  }
+
+  @Test
+  void update_qualityCheckWithoutEpsilonBudget_keepsPreferenceUnset() throws Exception {
+    QualityCheck check = qualityCheckRepository.save(new QualityCheck("Test Check", "d", "q"));
+
+    QualityCheckUpdateDTO updateDTO =
+        new QualityCheckUpdateDTO("Test Check", "d", "q", QualityCheckType.CQL, 10, 30, null);
+
+    mockMvc
+        .perform(
+            put(API_QUALITY_CHECKS + "/{id}", check.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateDTO)))
+        .andExpect(status().isOk());
+
+    assertThat(qualityCheckRepository.findById(check.getId()).orElseThrow().getEpsilonBudget())
+        .isNull();
+  }
+
+  @Test
   void findById_existingQualityCheck_returnsOk() throws Exception {
     QualityCheck savedCheck =
         qualityCheckRepository.save(

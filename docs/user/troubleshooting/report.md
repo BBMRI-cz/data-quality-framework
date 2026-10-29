@@ -15,4 +15,9 @@ Use the following steps:
 2. **Check the agent and database logs** for failures or downtime around the execution time.
 3. **Re-run the report** after fixing the check or restoring database availability.
 
+## The Whole Report Is Marked FAILED
+
+A report left in the `FAILED` state aborted during generation — for example because the database became unavailable mid-run, or because per-check epsilon budget preferences consumed the entire check budget, leaving no epsilon for the remaining checks (see [Privacy Configuration](../user/privacy-configuration.md#how-the-privacy-budget-is-spent)).
+
+A failed report is never sent to the central server and is not retried automatically. Check the agent logs for the underlying error, fix the cause, and generate a new report.
 

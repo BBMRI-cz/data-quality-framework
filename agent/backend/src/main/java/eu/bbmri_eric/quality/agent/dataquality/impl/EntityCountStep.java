@@ -52,7 +52,6 @@ class EntityCountStep implements ReportPipelineStep {
 
   private void obfuscateEntityTotals(Report report) {
     SettingsDTO settings = settingsService.getSettings();
-    DifferentialPrivacyUtil.setLowCountThreshold(settings.getMinThreshold());
     double epsilonPerTotal =
         settings.getEpsilon() * DifferentialPrivacyUtil.ENTITY_TOTALS_EPSILON_FRACTION / 2;
     report.setObfuscatedNumberOfEntities(
@@ -67,8 +66,10 @@ class EntityCountStep implements ReportPipelineStep {
     }
     double noisyCount =
         settings.getNoiseMechanism() == NoiseMechanism.GAUSSIAN
-            ? DifferentialPrivacyUtil.addGaussianNoise(count, epsilon, settings.getDelta(), 1)
-            : DifferentialPrivacyUtil.addLaplaceNoise(count, epsilon, 1);
+            ? DifferentialPrivacyUtil.addGaussianNoise(
+                count, epsilon, settings.getDelta(), 1, settings.getMinThreshold())
+            : DifferentialPrivacyUtil.addLaplaceNoise(
+                count, epsilon, 1, settings.getMinThreshold());
     return (int) Math.round(noisyCount);
   }
 

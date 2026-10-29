@@ -187,6 +187,62 @@ class SettingsControllerTest {
 
   @Test
   @WithMockUser(username = "admin")
+  void updateSettings_withEpsilonTooSmall_shouldReturn400() throws Exception {
+    SettingsDTO dto = validSettingsDTO();
+    dto.setEpsilon(0.05);
+
+    mockMvc
+        .perform(
+            put("/api/settings")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @WithMockUser(username = "admin")
+  void updateSettings_withEpsilonTooLarge_shouldReturn400() throws Exception {
+    SettingsDTO dto = validSettingsDTO();
+    dto.setEpsilon(10.5);
+
+    mockMvc
+        .perform(
+            put("/api/settings")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @WithMockUser(username = "admin")
+  void updateSettings_withDeltaTooLarge_shouldReturn400() throws Exception {
+    SettingsDTO dto = validSettingsDTO();
+    dto.setDelta(0.0001);
+
+    mockMvc
+        .perform(
+            put("/api/settings")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @WithMockUser(username = "admin")
+  void updateSettings_withMinThresholdTooSmall_shouldReturn400() throws Exception {
+    SettingsDTO dto = validSettingsDTO();
+    dto.setMinThreshold(9);
+
+    mockMvc
+        .perform(
+            put("/api/settings")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @WithMockUser(username = "admin")
   void updateSettings_withSqlSettings_shouldReturn200() throws Exception {
     mockMvc
         .perform(

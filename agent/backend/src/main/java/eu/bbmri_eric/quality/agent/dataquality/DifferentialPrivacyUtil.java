@@ -5,13 +5,13 @@ import java.security.SecureRandom;
 /**
  * Applies differential privacy using Laplace or Gaussian mechanisms with low count suppression.
  *
- * <p>Noise is added to counts, then noisy counts below the threshold are suppressed. This maintains
- * differential privacy while protecting low counts.
+ * <p>Noise is added to counts, then noisy counts below the given threshold are suppressed. This
+ * maintains differential privacy while protecting low counts. The suppression threshold is passed
+ * explicitly on every call so that concurrent reports never share mutable state.
  */
 public class DifferentialPrivacyUtil {
 
   private static final SecureRandom SECURE_RANDOM = new SecureRandom();
-  private static volatile double LOW_COUNT_THRESHOLD = 10.0;
 
   /**
    * Fraction of a report's epsilon budget reserved for noising the entity totals (patient count and
@@ -24,38 +24,31 @@ public class DifferentialPrivacyUtil {
   public static final double CHECK_RESULTS_EPSILON_FRACTION = 1.0 - ENTITY_TOTALS_EPSILON_FRACTION;
 
   /**
-   * Sets the low-count suppression threshold.
-   *
-   * @param threshold the new threshold (must be non-negative)
-   */
-  public static synchronized void setLowCountThreshold(double threshold) {
-    if (threshold < 0) {
-      throw new IllegalArgumentException("Threshold must be non-negative, got: " + threshold);
-    }
-    LOW_COUNT_THRESHOLD = threshold;
-  }
-
-  /**
-   * Adds Laplace noise to a count, then suppresses if below threshold.
+   * Adds Laplace noise to a count, then suppresses if below the given threshold.
    *
    * @param count the original count
    * @param epsilon the privacy budget (smaller means more noise, must be positive)
    * @param sensitivity the query sensitivity (must be positive)
+   * @param threshold the low count suppression threshold (must be non-negative)
    * @return noisy count clamped at 0, or 0 if below threshold
    */
-  public static double addLaplaceNoise(int count, double epsilon, double sensitivity) {
+  public static double addLaplaceNoise(
+      int count, double epsilon, double sensitivity, double threshold) {
     if (epsilon <= 0) {
       throw new IllegalArgumentException("Epsilon must be positive, got: " + epsilon);
     }
     if (sensitivity <= 0) {
       throw new IllegalArgumentException("Sensitivity must be positive, got: " + sensitivity);
     }
+    if (threshold < 0) {
+      throw new IllegalArgumentException("Threshold must be non-negative, got: " + threshold);
+    }
 
     double scale = sensitivity / epsilon;
     double noise = generateLaplaceNoise(scale);
     double noisyCount = Math.max(0.0, count + noise);
 
-    if (noisyCount < LOW_COUNT_THRESHOLD) {
+    if (noisyCount < threshold) {
       return 0.0;
     }
 
@@ -63,17 +56,18 @@ public class DifferentialPrivacyUtil {
   }
 
   /**
-   * Adds Gaussian noise to a count for (ε, δ)-differential privacy, then suppresses if below
-   * threshold.
+   * Adds Gaussian noise to a count for (ε, δ)-differential privacy, then suppresses if below the
+   * given threshold.
    *
    * @param count the original count
    * @param epsilon the privacy budget (must be positive)
    * @param delta the probability of privacy failure (must be positive and less than 1)
    * @param sensitivity the query sensitivity (must be positive)
+   * @param threshold the low count suppression threshold (must be non-negative)
    * @return noisy count clamped at 0, or 0 if below threshold
    */
   public static double addGaussianNoise(
-      int count, double epsilon, double delta, double sensitivity) {
+      int count, double epsilon, double delta, double sensitivity, double threshold) {
     if (epsilon <= 0 || epsilon > 1.0) {
       throw new IllegalArgumentException("Epsilon must be in (0, 1], got: " + epsilon);
     }
@@ -83,12 +77,15 @@ public class DifferentialPrivacyUtil {
     if (sensitivity <= 0) {
       throw new IllegalArgumentException("Sensitivity must be positive, got: " + sensitivity);
     }
+    if (threshold < 0) {
+      throw new IllegalArgumentException("Threshold must be non-negative, got: " + threshold);
+    }
 
     double standardDeviation = sensitivity * Math.sqrt(2.0 * Math.log(1.25 / delta)) / epsilon;
     double noise = SECURE_RANDOM.nextGaussian() * standardDeviation;
     double noisyCount = Math.max(0.0, count + noise);
 
-    if (noisyCount < LOW_COUNT_THRESHOLD) {
+    if (noisyCount < threshold) {
       return 0.0;
     }
 

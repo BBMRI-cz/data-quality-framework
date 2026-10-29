@@ -19,6 +19,7 @@ class DifferentialPrivacyUtilTest {
   private static final double EPSILON = 1.0;
   private static final double DELTA = 1e-6;
   private static final double SENSITIVITY = 1.0;
+  private static final double LOW_COUNT_THRESHOLD = 10.0;
   private static final int SAMPLE_SIZE = 1000;
 
   @Nested
@@ -28,7 +29,10 @@ class DifferentialPrivacyUtilTest {
     @Test
     @DisplayName("should throw IllegalArgumentException when epsilon is zero")
     void shouldRejectZeroEpsilon() {
-      assertThatThrownBy(() -> DifferentialPrivacyUtil.addLaplaceNoise(100, 0.0, SENSITIVITY))
+      assertThatThrownBy(
+              () ->
+                  DifferentialPrivacyUtil.addLaplaceNoise(
+                      100, 0.0, SENSITIVITY, LOW_COUNT_THRESHOLD))
           .isInstanceOf(IllegalArgumentException.class)
           .hasMessageContaining("Epsilon must be positive");
     }
@@ -36,7 +40,10 @@ class DifferentialPrivacyUtilTest {
     @Test
     @DisplayName("should throw IllegalArgumentException when epsilon is negative")
     void shouldRejectNegativeEpsilon() {
-      assertThatThrownBy(() -> DifferentialPrivacyUtil.addLaplaceNoise(100, -1.0, SENSITIVITY))
+      assertThatThrownBy(
+              () ->
+                  DifferentialPrivacyUtil.addLaplaceNoise(
+                      100, -1.0, SENSITIVITY, LOW_COUNT_THRESHOLD))
           .isInstanceOf(IllegalArgumentException.class)
           .hasMessageContaining("Epsilon must be positive");
     }
@@ -44,7 +51,8 @@ class DifferentialPrivacyUtilTest {
     @Test
     @DisplayName("should throw IllegalArgumentException when sensitivity is zero")
     void shouldRejectZeroSensitivity() {
-      assertThatThrownBy(() -> DifferentialPrivacyUtil.addLaplaceNoise(100, EPSILON, 0.0))
+      assertThatThrownBy(
+              () -> DifferentialPrivacyUtil.addLaplaceNoise(100, EPSILON, 0.0, LOW_COUNT_THRESHOLD))
           .isInstanceOf(IllegalArgumentException.class)
           .hasMessageContaining("Sensitivity must be positive");
     }
@@ -52,7 +60,9 @@ class DifferentialPrivacyUtilTest {
     @Test
     @DisplayName("should throw IllegalArgumentException when sensitivity is negative")
     void shouldRejectNegativeSensitivity() {
-      assertThatThrownBy(() -> DifferentialPrivacyUtil.addLaplaceNoise(100, EPSILON, -1.0))
+      assertThatThrownBy(
+              () ->
+                  DifferentialPrivacyUtil.addLaplaceNoise(100, EPSILON, -1.0, LOW_COUNT_THRESHOLD))
           .isInstanceOf(IllegalArgumentException.class)
           .hasMessageContaining("Sensitivity must be positive");
     }
@@ -60,7 +70,8 @@ class DifferentialPrivacyUtilTest {
     @Test
     @DisplayName("should accept positive epsilon and sensitivity")
     void shouldAcceptValidParameters() {
-      double result = DifferentialPrivacyUtil.addLaplaceNoise(100, EPSILON, SENSITIVITY);
+      double result =
+          DifferentialPrivacyUtil.addLaplaceNoise(100, EPSILON, SENSITIVITY, LOW_COUNT_THRESHOLD);
       assertThat(result).isGreaterThanOrEqualTo(0.0);
     }
   }
@@ -70,18 +81,17 @@ class DifferentialPrivacyUtilTest {
   class ThresholdConfiguration {
 
     @Test
-    @DisplayName("should allow setting a custom low count threshold")
-    void shouldAllowSettingCustomThreshold() {
-      DifferentialPrivacyUtil.setLowCountThreshold(25.0);
-      double result = DifferentialPrivacyUtil.addLaplaceNoise(20, EPSILON, SENSITIVITY);
+    @DisplayName("should suppress counts below the provided threshold")
+    void shouldSuppressBelowProvidedThreshold() {
+      double result = DifferentialPrivacyUtil.addLaplaceNoise(20, EPSILON, SENSITIVITY, 25.0);
       assertThat(result).isEqualTo(0.0);
-      DifferentialPrivacyUtil.setLowCountThreshold(10.0);
     }
 
     @Test
     @DisplayName("should throw IllegalArgumentException for negative threshold")
     void shouldRejectNegativeThreshold() {
-      assertThatThrownBy(() -> DifferentialPrivacyUtil.setLowCountThreshold(-1.0))
+      assertThatThrownBy(
+              () -> DifferentialPrivacyUtil.addLaplaceNoise(100, EPSILON, SENSITIVITY, -1.0))
           .isInstanceOf(IllegalArgumentException.class)
           .hasMessageContaining("Threshold must be non-negative");
     }
@@ -89,10 +99,8 @@ class DifferentialPrivacyUtilTest {
     @Test
     @DisplayName("should accept zero threshold")
     void shouldAcceptZeroThreshold() {
-      DifferentialPrivacyUtil.setLowCountThreshold(0.0);
-      double result = DifferentialPrivacyUtil.addLaplaceNoise(1, EPSILON, SENSITIVITY);
+      double result = DifferentialPrivacyUtil.addLaplaceNoise(1, EPSILON, SENSITIVITY, 0.0);
       assertThat(result).isGreaterThanOrEqualTo(0.0);
-      DifferentialPrivacyUtil.setLowCountThreshold(10.0);
     }
   }
 
@@ -103,14 +111,16 @@ class DifferentialPrivacyUtilTest {
     @Test
     @DisplayName("should suppress very low counts (count = 0)")
     void shouldSuppressZeroCount() {
-      double result = DifferentialPrivacyUtil.addLaplaceNoise(0, EPSILON, SENSITIVITY);
+      double result =
+          DifferentialPrivacyUtil.addLaplaceNoise(0, EPSILON, SENSITIVITY, LOW_COUNT_THRESHOLD);
       assertThat(result).isEqualTo(0.0);
     }
 
     @Test
     @DisplayName("should suppress low counts (count = 5)")
     void shouldSuppressLowCount() {
-      double result = DifferentialPrivacyUtil.addLaplaceNoise(5, EPSILON, SENSITIVITY);
+      double result =
+          DifferentialPrivacyUtil.addLaplaceNoise(5, EPSILON, SENSITIVITY, LOW_COUNT_THRESHOLD);
       assertThat(result).isEqualTo(0.0);
     }
 
@@ -118,14 +128,16 @@ class DifferentialPrivacyUtilTest {
     @DisplayName("should consistently suppress counts around threshold (count = 9)")
     void shouldHandleCountsNearThreshold() {
       // With count = 9 and epsilon = 1.0, the noisy count could be above or below 10
-      double result = DifferentialPrivacyUtil.addLaplaceNoise(9, EPSILON, SENSITIVITY);
+      double result =
+          DifferentialPrivacyUtil.addLaplaceNoise(9, EPSILON, SENSITIVITY, LOW_COUNT_THRESHOLD);
       assertThat(result).isGreaterThanOrEqualTo(0.0);
     }
 
     @Test
     @DisplayName("should not suppress high counts (count = 100)")
     void shouldNotSuppressHighCount() {
-      double result = DifferentialPrivacyUtil.addLaplaceNoise(100, EPSILON, SENSITIVITY);
+      double result =
+          DifferentialPrivacyUtil.addLaplaceNoise(100, EPSILON, SENSITIVITY, LOW_COUNT_THRESHOLD);
       assertThat(result).isGreaterThan(0.0);
     }
 
@@ -135,7 +147,8 @@ class DifferentialPrivacyUtilTest {
       // With epsilon=1.0, most noisy counts from 8 should be below 10
       int suppressedCount = 0;
       for (int i = 0; i < 100; i++) {
-        double result = DifferentialPrivacyUtil.addLaplaceNoise(8, EPSILON, SENSITIVITY);
+        double result =
+            DifferentialPrivacyUtil.addLaplaceNoise(8, EPSILON, SENSITIVITY, LOW_COUNT_THRESHOLD);
         if (result == 0.0) {
           suppressedCount++;
         }
@@ -154,7 +167,9 @@ class DifferentialPrivacyUtilTest {
     void shouldNeverReturnNegativeValues() {
       int[] testCounts = {0, 1, 5, 10, 50, 100, 1000};
       for (int count : testCounts) {
-        double result = DifferentialPrivacyUtil.addLaplaceNoise(count, EPSILON, SENSITIVITY);
+        double result =
+            DifferentialPrivacyUtil.addLaplaceNoise(
+                count, EPSILON, SENSITIVITY, LOW_COUNT_THRESHOLD);
         assertThat(result).isGreaterThanOrEqualTo(0.0);
       }
     }
@@ -163,7 +178,8 @@ class DifferentialPrivacyUtilTest {
     @DisplayName("should clamp negative noisy counts to zero")
     void shouldClampNegativeNoisyCounts() {
       // Small count with high noise should sometimes produce negative intermediate values
-      double result = DifferentialPrivacyUtil.addLaplaceNoise(1, 0.1, SENSITIVITY);
+      double result =
+          DifferentialPrivacyUtil.addLaplaceNoise(1, 0.1, SENSITIVITY, LOW_COUNT_THRESHOLD);
       assertThat(result).isGreaterThanOrEqualTo(0.0);
     }
   }
@@ -180,7 +196,9 @@ class DifferentialPrivacyUtilTest {
 
       // Run multiple times to ensure we get some variation
       for (int i = 0; i < 10; i++) {
-        double result = DifferentialPrivacyUtil.addLaplaceNoise(count, EPSILON, SENSITIVITY);
+        double result =
+            DifferentialPrivacyUtil.addLaplaceNoise(
+                count, EPSILON, SENSITIVITY, LOW_COUNT_THRESHOLD);
         if (result != count) {
           foundDifferent = true;
           break;
@@ -199,7 +217,9 @@ class DifferentialPrivacyUtilTest {
       List<Double> results = new ArrayList<>();
 
       for (int i = 0; i < 10; i++) {
-        results.add(DifferentialPrivacyUtil.addLaplaceNoise(count, EPSILON, SENSITIVITY));
+        results.add(
+            DifferentialPrivacyUtil.addLaplaceNoise(
+                count, EPSILON, SENSITIVITY, LOW_COUNT_THRESHOLD));
       }
 
       // Check that we have at least some variation
@@ -214,7 +234,9 @@ class DifferentialPrivacyUtilTest {
       double sum = 0;
 
       for (int i = 0; i < SAMPLE_SIZE; i++) {
-        sum += DifferentialPrivacyUtil.addLaplaceNoise(count, EPSILON, SENSITIVITY);
+        sum +=
+            DifferentialPrivacyUtil.addLaplaceNoise(
+                count, EPSILON, SENSITIVITY, LOW_COUNT_THRESHOLD);
       }
 
       double average = sum / SAMPLE_SIZE;
@@ -231,7 +253,9 @@ class DifferentialPrivacyUtilTest {
       List<Double> results = new ArrayList<>();
 
       for (int i = 0; i < 100; i++) {
-        results.add(DifferentialPrivacyUtil.addLaplaceNoise(count, epsilon, SENSITIVITY));
+        results.add(
+            DifferentialPrivacyUtil.addLaplaceNoise(
+                count, epsilon, SENSITIVITY, LOW_COUNT_THRESHOLD));
       }
 
       double variance = calculateVariance(results);
@@ -259,8 +283,10 @@ class DifferentialPrivacyUtilTest {
       List<Double> resultsLargeEpsilon = new ArrayList<>();
 
       for (int i = 0; i < 200; i++) {
-        resultsSmallEpsilon.add(DifferentialPrivacyUtil.addLaplaceNoise(count, 0.5, SENSITIVITY));
-        resultsLargeEpsilon.add(DifferentialPrivacyUtil.addLaplaceNoise(count, 2.0, SENSITIVITY));
+        resultsSmallEpsilon.add(
+            DifferentialPrivacyUtil.addLaplaceNoise(count, 0.5, SENSITIVITY, LOW_COUNT_THRESHOLD));
+        resultsLargeEpsilon.add(
+            DifferentialPrivacyUtil.addLaplaceNoise(count, 2.0, SENSITIVITY, LOW_COUNT_THRESHOLD));
       }
 
       double varianceSmallEpsilon = calculateVariance(resultsSmallEpsilon);
@@ -278,7 +304,9 @@ class DifferentialPrivacyUtilTest {
       List<Double> results = new ArrayList<>();
 
       for (int i = 0; i < 200; i++) {
-        results.add(DifferentialPrivacyUtil.addLaplaceNoise(count, epsilon, SENSITIVITY));
+        results.add(
+            DifferentialPrivacyUtil.addLaplaceNoise(
+                count, epsilon, SENSITIVITY, LOW_COUNT_THRESHOLD));
       }
 
       double meanAbsoluteDeviation = calculateMeanAbsoluteDeviation(results, count);
@@ -299,7 +327,8 @@ class DifferentialPrivacyUtilTest {
     @DisplayName("should handle very large counts")
     void shouldHandleVeryLargeCounts() {
       int count = 1_000_000;
-      double result = DifferentialPrivacyUtil.addLaplaceNoise(count, EPSILON, SENSITIVITY);
+      double result =
+          DifferentialPrivacyUtil.addLaplaceNoise(count, EPSILON, SENSITIVITY, LOW_COUNT_THRESHOLD);
 
       assertThat(result).isGreaterThan(0.0);
       // Should be reasonably close to the original count
@@ -310,7 +339,8 @@ class DifferentialPrivacyUtilTest {
     @DisplayName("should handle very small epsilon (high privacy)")
     void shouldHandleVerySmallEpsilon() {
       int count = 100;
-      double result = DifferentialPrivacyUtil.addLaplaceNoise(count, 0.01, SENSITIVITY);
+      double result =
+          DifferentialPrivacyUtil.addLaplaceNoise(count, 0.01, SENSITIVITY, LOW_COUNT_THRESHOLD);
 
       assertThat(result).isGreaterThanOrEqualTo(0.0);
     }
@@ -319,7 +349,8 @@ class DifferentialPrivacyUtilTest {
     @DisplayName("should handle very large epsilon (low privacy)")
     void shouldHandleVeryLargeEpsilon() {
       int count = 100;
-      double result = DifferentialPrivacyUtil.addLaplaceNoise(count, 100.0, SENSITIVITY);
+      double result =
+          DifferentialPrivacyUtil.addLaplaceNoise(count, 100.0, SENSITIVITY, LOW_COUNT_THRESHOLD);
 
       assertThat(result).isGreaterThan(0.0);
       // With very large epsilon, result should be very close to true count
@@ -330,7 +361,8 @@ class DifferentialPrivacyUtilTest {
     @DisplayName("should handle count exactly at threshold boundary")
     void shouldHandleCountAtThresholdBoundary() {
       int count = 10;
-      double result = DifferentialPrivacyUtil.addLaplaceNoise(count, EPSILON, SENSITIVITY);
+      double result =
+          DifferentialPrivacyUtil.addLaplaceNoise(count, EPSILON, SENSITIVITY, LOW_COUNT_THRESHOLD);
 
       // Result could be 0 or > 0 depending on noise
       assertThat(result).isGreaterThanOrEqualTo(0.0);
@@ -342,7 +374,9 @@ class DifferentialPrivacyUtilTest {
       int count = 100;
       double highSensitivity = 10.0;
 
-      double result = DifferentialPrivacyUtil.addLaplaceNoise(count, EPSILON, highSensitivity);
+      double result =
+          DifferentialPrivacyUtil.addLaplaceNoise(
+              count, EPSILON, highSensitivity, LOW_COUNT_THRESHOLD);
 
       assertThat(result).isGreaterThanOrEqualTo(0.0);
     }
@@ -360,7 +394,9 @@ class DifferentialPrivacyUtilTest {
       int belowCount = 0;
 
       for (int i = 0; i < SAMPLE_SIZE; i++) {
-        double result = DifferentialPrivacyUtil.addLaplaceNoise(count, EPSILON, SENSITIVITY);
+        double result =
+            DifferentialPrivacyUtil.addLaplaceNoise(
+                count, EPSILON, SENSITIVITY, LOW_COUNT_THRESHOLD);
         if (result > count) {
           aboveCount++;
         } else if (result < count) {
@@ -382,7 +418,8 @@ class DifferentialPrivacyUtilTest {
       int farCount = 0; // more than 10 units away
 
       for (int i = 0; i < SAMPLE_SIZE; i++) {
-        double result = DifferentialPrivacyUtil.addLaplaceNoise(count, 1.0, SENSITIVITY);
+        double result =
+            DifferentialPrivacyUtil.addLaplaceNoise(count, 1.0, SENSITIVITY, LOW_COUNT_THRESHOLD);
         double deviation = Math.abs(result - count);
 
         if (deviation <= 2) {
@@ -412,7 +449,9 @@ class DifferentialPrivacyUtilTest {
       @DisplayName("should throw IllegalArgumentException when epsilon is zero")
       void shouldRejectZeroEpsilon() {
         assertThatThrownBy(
-                () -> DifferentialPrivacyUtil.addGaussianNoise(100, 0.0, DELTA, SENSITIVITY))
+                () ->
+                    DifferentialPrivacyUtil.addGaussianNoise(
+                        100, 0.0, DELTA, SENSITIVITY, LOW_COUNT_THRESHOLD))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Epsilon must be in (0, 1]");
       }
@@ -421,7 +460,9 @@ class DifferentialPrivacyUtilTest {
       @DisplayName("should throw IllegalArgumentException when epsilon is negative")
       void shouldRejectNegativeEpsilon() {
         assertThatThrownBy(
-                () -> DifferentialPrivacyUtil.addGaussianNoise(100, -1.0, DELTA, SENSITIVITY))
+                () ->
+                    DifferentialPrivacyUtil.addGaussianNoise(
+                        100, -1.0, DELTA, SENSITIVITY, LOW_COUNT_THRESHOLD))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Epsilon must be in (0, 1]");
       }
@@ -430,7 +471,9 @@ class DifferentialPrivacyUtilTest {
       @DisplayName("should throw IllegalArgumentException when epsilon is greater than 1")
       void shouldRejectEpsilonGreaterThanOne() {
         assertThatThrownBy(
-                () -> DifferentialPrivacyUtil.addGaussianNoise(100, 1.1, DELTA, SENSITIVITY))
+                () ->
+                    DifferentialPrivacyUtil.addGaussianNoise(
+                        100, 1.1, DELTA, SENSITIVITY, LOW_COUNT_THRESHOLD))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Epsilon must be in (0, 1]");
       }
@@ -439,7 +482,9 @@ class DifferentialPrivacyUtilTest {
       @DisplayName("should throw IllegalArgumentException when delta is zero")
       void shouldRejectZeroDelta() {
         assertThatThrownBy(
-                () -> DifferentialPrivacyUtil.addGaussianNoise(100, EPSILON, 0.0, SENSITIVITY))
+                () ->
+                    DifferentialPrivacyUtil.addGaussianNoise(
+                        100, EPSILON, 0.0, SENSITIVITY, LOW_COUNT_THRESHOLD))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Delta must be in (0, 1)");
       }
@@ -448,7 +493,9 @@ class DifferentialPrivacyUtilTest {
       @DisplayName("should throw IllegalArgumentException when delta is negative")
       void shouldRejectNegativeDelta() {
         assertThatThrownBy(
-                () -> DifferentialPrivacyUtil.addGaussianNoise(100, EPSILON, -1e-6, SENSITIVITY))
+                () ->
+                    DifferentialPrivacyUtil.addGaussianNoise(
+                        100, EPSILON, -1e-6, SENSITIVITY, LOW_COUNT_THRESHOLD))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Delta must be in (0, 1)");
       }
@@ -457,7 +504,9 @@ class DifferentialPrivacyUtilTest {
       @DisplayName("should throw IllegalArgumentException when delta is one or greater")
       void shouldRejectDeltaOneOrGreater() {
         assertThatThrownBy(
-                () -> DifferentialPrivacyUtil.addGaussianNoise(100, EPSILON, 1.0, SENSITIVITY))
+                () ->
+                    DifferentialPrivacyUtil.addGaussianNoise(
+                        100, EPSILON, 1.0, SENSITIVITY, LOW_COUNT_THRESHOLD))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Delta must be in (0, 1)");
       }
@@ -465,7 +514,10 @@ class DifferentialPrivacyUtilTest {
       @Test
       @DisplayName("should throw IllegalArgumentException when sensitivity is zero")
       void shouldRejectZeroSensitivity() {
-        assertThatThrownBy(() -> DifferentialPrivacyUtil.addGaussianNoise(100, EPSILON, DELTA, 0.0))
+        assertThatThrownBy(
+                () ->
+                    DifferentialPrivacyUtil.addGaussianNoise(
+                        100, EPSILON, DELTA, 0.0, LOW_COUNT_THRESHOLD))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Sensitivity must be positive");
       }
@@ -474,7 +526,9 @@ class DifferentialPrivacyUtilTest {
       @DisplayName("should throw IllegalArgumentException when sensitivity is negative")
       void shouldRejectNegativeSensitivity() {
         assertThatThrownBy(
-                () -> DifferentialPrivacyUtil.addGaussianNoise(100, EPSILON, DELTA, -1.0))
+                () ->
+                    DifferentialPrivacyUtil.addGaussianNoise(
+                        100, EPSILON, DELTA, -1.0, LOW_COUNT_THRESHOLD))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Sensitivity must be positive");
       }
@@ -482,7 +536,9 @@ class DifferentialPrivacyUtilTest {
       @Test
       @DisplayName("should accept valid parameters")
       void shouldAcceptValidParameters() {
-        double result = DifferentialPrivacyUtil.addGaussianNoise(100, EPSILON, DELTA, SENSITIVITY);
+        double result =
+            DifferentialPrivacyUtil.addGaussianNoise(
+                100, EPSILON, DELTA, SENSITIVITY, LOW_COUNT_THRESHOLD);
         assertThat(result).isGreaterThanOrEqualTo(0.0);
       }
     }
@@ -494,7 +550,9 @@ class DifferentialPrivacyUtilTest {
       @Test
       @DisplayName("should suppress very low counts (count = 0)")
       void shouldSuppressZeroCount() {
-        double result = DifferentialPrivacyUtil.addGaussianNoise(0, EPSILON, DELTA, SENSITIVITY);
+        double result =
+            DifferentialPrivacyUtil.addGaussianNoise(
+                0, EPSILON, DELTA, SENSITIVITY, LOW_COUNT_THRESHOLD);
         assertThat(result).isEqualTo(0.0);
       }
 
@@ -503,7 +561,9 @@ class DifferentialPrivacyUtilTest {
       void shouldSuppressLowCount() {
         int suppressedCount = 0;
         for (int i = 0; i < 100; i++) {
-          double result = DifferentialPrivacyUtil.addGaussianNoise(5, EPSILON, DELTA, SENSITIVITY);
+          double result =
+              DifferentialPrivacyUtil.addGaussianNoise(
+                  5, EPSILON, DELTA, SENSITIVITY, LOW_COUNT_THRESHOLD);
           if (result == 0.0) {
             suppressedCount++;
           }
@@ -514,14 +574,18 @@ class DifferentialPrivacyUtilTest {
       @RepeatedTest(10)
       @DisplayName("should handle counts around threshold (count = 9)")
       void shouldHandleCountsNearThreshold() {
-        double result = DifferentialPrivacyUtil.addGaussianNoise(9, EPSILON, DELTA, SENSITIVITY);
+        double result =
+            DifferentialPrivacyUtil.addGaussianNoise(
+                9, EPSILON, DELTA, SENSITIVITY, LOW_COUNT_THRESHOLD);
         assertThat(result).isGreaterThanOrEqualTo(0.0);
       }
 
       @Test
       @DisplayName("should not suppress high counts (count = 100)")
       void shouldNotSuppressHighCount() {
-        double result = DifferentialPrivacyUtil.addGaussianNoise(100, EPSILON, DELTA, SENSITIVITY);
+        double result =
+            DifferentialPrivacyUtil.addGaussianNoise(
+                100, EPSILON, DELTA, SENSITIVITY, LOW_COUNT_THRESHOLD);
         assertThat(result).isGreaterThan(0.0);
       }
 
@@ -530,7 +594,9 @@ class DifferentialPrivacyUtilTest {
       void shouldSuppressMostSmallCounts() {
         int suppressedCount = 0;
         for (int i = 0; i < 100; i++) {
-          double result = DifferentialPrivacyUtil.addGaussianNoise(8, EPSILON, DELTA, SENSITIVITY);
+          double result =
+              DifferentialPrivacyUtil.addGaussianNoise(
+                  8, EPSILON, DELTA, SENSITIVITY, LOW_COUNT_THRESHOLD);
           if (result == 0.0) {
             suppressedCount++;
           }
@@ -550,7 +616,8 @@ class DifferentialPrivacyUtilTest {
         int[] testCounts = {0, 1, 5, 10, 50, 100, 1000};
         for (int count : testCounts) {
           double result =
-              DifferentialPrivacyUtil.addGaussianNoise(count, EPSILON, DELTA, SENSITIVITY);
+              DifferentialPrivacyUtil.addGaussianNoise(
+                  count, EPSILON, DELTA, SENSITIVITY, LOW_COUNT_THRESHOLD);
           assertThat(result).isGreaterThanOrEqualTo(0.0);
         }
       }
@@ -558,7 +625,9 @@ class DifferentialPrivacyUtilTest {
       @RepeatedTest(50)
       @DisplayName("should clamp negative noisy counts to zero")
       void shouldClampNegativeNoisyCounts() {
-        double result = DifferentialPrivacyUtil.addGaussianNoise(1, 0.1, DELTA, SENSITIVITY);
+        double result =
+            DifferentialPrivacyUtil.addGaussianNoise(
+                1, 0.1, DELTA, SENSITIVITY, LOW_COUNT_THRESHOLD);
         assertThat(result).isGreaterThanOrEqualTo(0.0);
       }
     }
@@ -575,7 +644,8 @@ class DifferentialPrivacyUtilTest {
 
         for (int i = 0; i < 10; i++) {
           double result =
-              DifferentialPrivacyUtil.addGaussianNoise(count, EPSILON, DELTA, SENSITIVITY);
+              DifferentialPrivacyUtil.addGaussianNoise(
+                  count, EPSILON, DELTA, SENSITIVITY, LOW_COUNT_THRESHOLD);
           if (result != count) {
             foundDifferent = true;
             break;
@@ -594,7 +664,9 @@ class DifferentialPrivacyUtilTest {
         List<Double> results = new ArrayList<>();
 
         for (int i = 0; i < 10; i++) {
-          results.add(DifferentialPrivacyUtil.addGaussianNoise(count, EPSILON, DELTA, SENSITIVITY));
+          results.add(
+              DifferentialPrivacyUtil.addGaussianNoise(
+                  count, EPSILON, DELTA, SENSITIVITY, LOW_COUNT_THRESHOLD));
         }
 
         long distinctCount = results.stream().distinct().count();
@@ -608,7 +680,9 @@ class DifferentialPrivacyUtilTest {
         double sum = 0;
 
         for (int i = 0; i < SAMPLE_SIZE; i++) {
-          sum += DifferentialPrivacyUtil.addGaussianNoise(count, EPSILON, DELTA, SENSITIVITY);
+          sum +=
+              DifferentialPrivacyUtil.addGaussianNoise(
+                  count, EPSILON, DELTA, SENSITIVITY, LOW_COUNT_THRESHOLD);
         }
 
         double average = sum / SAMPLE_SIZE;
@@ -623,7 +697,9 @@ class DifferentialPrivacyUtilTest {
         List<Double> results = new ArrayList<>();
 
         for (int i = 0; i < 100; i++) {
-          results.add(DifferentialPrivacyUtil.addGaussianNoise(count, epsilon, DELTA, SENSITIVITY));
+          results.add(
+              DifferentialPrivacyUtil.addGaussianNoise(
+                  count, epsilon, DELTA, SENSITIVITY, LOW_COUNT_THRESHOLD));
         }
 
         double variance = calculateVariance(results);
@@ -649,9 +725,11 @@ class DifferentialPrivacyUtilTest {
 
         for (int i = 0; i < 200; i++) {
           resultsSmallEpsilon.add(
-              DifferentialPrivacyUtil.addGaussianNoise(count, 0.5, DELTA, SENSITIVITY));
+              DifferentialPrivacyUtil.addGaussianNoise(
+                  count, 0.5, DELTA, SENSITIVITY, LOW_COUNT_THRESHOLD));
           resultsLargeEpsilon.add(
-              DifferentialPrivacyUtil.addGaussianNoise(count, 0.9, DELTA, SENSITIVITY));
+              DifferentialPrivacyUtil.addGaussianNoise(
+                  count, 0.9, DELTA, SENSITIVITY, LOW_COUNT_THRESHOLD));
         }
 
         double varianceSmallEpsilon = calculateVariance(resultsSmallEpsilon);
@@ -668,7 +746,9 @@ class DifferentialPrivacyUtilTest {
         List<Double> results = new ArrayList<>();
 
         for (int i = 0; i < 200; i++) {
-          results.add(DifferentialPrivacyUtil.addGaussianNoise(count, epsilon, DELTA, SENSITIVITY));
+          results.add(
+              DifferentialPrivacyUtil.addGaussianNoise(
+                  count, epsilon, DELTA, SENSITIVITY, LOW_COUNT_THRESHOLD));
         }
 
         double meanAbsoluteDeviation = calculateMeanAbsoluteDeviation(results, count);
@@ -695,9 +775,11 @@ class DifferentialPrivacyUtilTest {
 
         for (int i = 0; i < 200; i++) {
           resultsLargeDelta.add(
-              DifferentialPrivacyUtil.addGaussianNoise(count, EPSILON, 1e-3, SENSITIVITY));
+              DifferentialPrivacyUtil.addGaussianNoise(
+                  count, EPSILON, 1e-3, SENSITIVITY, LOW_COUNT_THRESHOLD));
           resultsSmallDelta.add(
-              DifferentialPrivacyUtil.addGaussianNoise(count, EPSILON, 1e-8, SENSITIVITY));
+              DifferentialPrivacyUtil.addGaussianNoise(
+                  count, EPSILON, 1e-8, SENSITIVITY, LOW_COUNT_THRESHOLD));
         }
 
         double varianceLargeDelta = calculateVariance(resultsLargeDelta);
@@ -716,7 +798,8 @@ class DifferentialPrivacyUtilTest {
       void shouldHandleVeryLargeCounts() {
         int count = 1_000_000;
         double result =
-            DifferentialPrivacyUtil.addGaussianNoise(count, EPSILON, DELTA, SENSITIVITY);
+            DifferentialPrivacyUtil.addGaussianNoise(
+                count, EPSILON, DELTA, SENSITIVITY, LOW_COUNT_THRESHOLD);
 
         assertThat(result).isGreaterThan(0.0);
         assertThat(result).isCloseTo(count, within(count * 0.01));
@@ -726,7 +809,9 @@ class DifferentialPrivacyUtilTest {
       @DisplayName("should handle very small epsilon (high privacy)")
       void shouldHandleVerySmallEpsilon() {
         int count = 100;
-        double result = DifferentialPrivacyUtil.addGaussianNoise(count, 0.01, DELTA, SENSITIVITY);
+        double result =
+            DifferentialPrivacyUtil.addGaussianNoise(
+                count, 0.01, DELTA, SENSITIVITY, LOW_COUNT_THRESHOLD);
 
         assertThat(result).isGreaterThanOrEqualTo(0.0);
       }
@@ -735,7 +820,9 @@ class DifferentialPrivacyUtilTest {
       @DisplayName("should handle very large epsilon (low privacy)")
       void shouldHandleVeryLargeEpsilon() {
         int count = 100;
-        double result = DifferentialPrivacyUtil.addGaussianNoise(count, 1.0, DELTA, SENSITIVITY);
+        double result =
+            DifferentialPrivacyUtil.addGaussianNoise(
+                count, 1.0, DELTA, SENSITIVITY, LOW_COUNT_THRESHOLD);
 
         assertThat(result).isGreaterThan(0.0);
         assertThat(result).isCloseTo(count, within(20.0));
@@ -746,7 +833,8 @@ class DifferentialPrivacyUtilTest {
       void shouldHandleCountAtThresholdBoundary() {
         int count = 10;
         double result =
-            DifferentialPrivacyUtil.addGaussianNoise(count, EPSILON, DELTA, SENSITIVITY);
+            DifferentialPrivacyUtil.addGaussianNoise(
+                count, EPSILON, DELTA, SENSITIVITY, LOW_COUNT_THRESHOLD);
 
         assertThat(result).isGreaterThanOrEqualTo(0.0);
       }
@@ -758,7 +846,8 @@ class DifferentialPrivacyUtilTest {
         double highSensitivity = 10.0;
 
         double result =
-            DifferentialPrivacyUtil.addGaussianNoise(count, EPSILON, DELTA, highSensitivity);
+            DifferentialPrivacyUtil.addGaussianNoise(
+                count, EPSILON, DELTA, highSensitivity, LOW_COUNT_THRESHOLD);
 
         assertThat(result).isGreaterThanOrEqualTo(0.0);
       }
@@ -777,7 +866,8 @@ class DifferentialPrivacyUtilTest {
 
         for (int i = 0; i < SAMPLE_SIZE; i++) {
           double result =
-              DifferentialPrivacyUtil.addGaussianNoise(count, EPSILON, DELTA, SENSITIVITY);
+              DifferentialPrivacyUtil.addGaussianNoise(
+                  count, EPSILON, DELTA, SENSITIVITY, LOW_COUNT_THRESHOLD);
           if (result > count) {
             aboveCount++;
           } else if (result < count) {
@@ -799,7 +889,9 @@ class DifferentialPrivacyUtilTest {
         int farCount = 0; // more than 15 units away
 
         for (int i = 0; i < SAMPLE_SIZE; i++) {
-          double result = DifferentialPrivacyUtil.addGaussianNoise(count, 1.0, DELTA, SENSITIVITY);
+          double result =
+              DifferentialPrivacyUtil.addGaussianNoise(
+                  count, 1.0, DELTA, SENSITIVITY, LOW_COUNT_THRESHOLD);
           double deviation = Math.abs(result - count);
 
           if (deviation <= 5) {

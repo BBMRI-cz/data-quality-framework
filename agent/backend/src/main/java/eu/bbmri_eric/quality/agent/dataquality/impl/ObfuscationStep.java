@@ -63,7 +63,18 @@ class ObfuscationStep implements ReportPipelineStep {
       long noPreferenceCount,
       boolean ignorePreferences) {
     if (ignorePreferences) return totalEpsilon / resultCount;
-    return noPreferenceCount > 0 ? (totalEpsilon - totalPreferredEpsilon) / noPreferenceCount : 0;
+    if (noPreferenceCount > 0) {
+      double remaining = totalEpsilon - totalPreferredEpsilon;
+      if (remaining <= 0) {
+        throw new IllegalArgumentException(
+            "Per-check epsilon budget preferences (%s) consume the entire epsilon budget available"
+                + " for check results (%s), leaving no epsilon for %d result(s) without a"
+                + " preference. Reduce the preferred budgets or increase the overall epsilon"
+                + " budget.".formatted(totalPreferredEpsilon, totalEpsilon, noPreferenceCount));
+      }
+      return remaining / noPreferenceCount;
+    }
+    return 0;
   }
 
   private double resolveEpsilon(
@@ -76,13 +87,15 @@ class ObfuscationStep implements ReportPipelineStep {
   }
 
   private void applyNoise(
-      Result result, double epsilon, NoiseMechanism noiseMechanism, double delta) {
+      Result result, double epsilon, NoiseMechanism noiseMechanism, double delta, int threshold) {
     double noisyValue;
     if (noiseMechanism == NoiseMechanism.GAUSSIAN) {
       noisyValue =
-          DifferentialPrivacyUtil.addGaussianNoise(result.getRawValue(), epsilon, delta, 1);
+          DifferentialPrivacyUtil.addGaussianNoise(
+              result.getRawValue(), epsilon, delta, 1, threshold);
     } else {
-      noisyValue = DifferentialPrivacyUtil.addLaplaceNoise(result.getRawValue(), epsilon, 1);
+      noisyValue =
+          DifferentialPrivacyUtil.addLaplaceNoise(result.getRawValue(), epsilon, 1, threshold);
     }
     result.setObfuscatedValue(noisyValue);
     result.setEpsilon(epsilon);
@@ -97,7 +110,6 @@ class ObfuscationStep implements ReportPipelineStep {
     double delta = settings.getDelta();
     NoiseMechanism noiseMechanism = settings.getNoiseMechanism();
     int threshold = settings.getMinThreshold();
-    DifferentialPrivacyUtil.setLowCountThreshold(threshold);
     Map<Long, Double> preferredBudgetByCheckId = getPreferredBudgetByCheckId();
     List<Result> resultsToObfuscate = resultsWithNonNullValues(results);
     if (resultsToObfuscate.isEmpty()) return;
@@ -123,7 +135,7 @@ class ObfuscationStep implements ReportPipelineStep {
       if (result.getRawValue() == null) continue;
       double epsilon =
           resolveEpsilon(result, preferredBudgetByCheckId, baseEpsilon, ignorePreferences);
-      applyNoise(result, epsilon, noiseMechanism, delta);
+      applyNoise(result, epsilon, noiseMechanism, delta, threshold);
     }
   }
 
