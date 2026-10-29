@@ -84,17 +84,18 @@ The implementation includes comprehensive test coverage to ensure correctness of
 
 #### Protection Against Repeated-Report Averaging
 
-Reports are generated repeatedly (by default daily). If every report sampled fresh noise for the same unchanged count, an observer could average the noisy values over many reports and cancel the noise out. To prevent this **averaging attack**, the agent reuses the previous noisy value whenever nothing has changed:
+Reports are generated repeatedly (by default daily). If every report sampled fresh noise for a count that barely moved, an observer could average the noisy values over many reports and cancel the noise out — and a perfectly unchanging reported value would even reveal *exactly when* a count moved, i.e. which checks a known patient affected. To prevent both, the agent reuses the previous noisy value until the count has drifted far enough from the value the noise was drawn for:
 
-- At generation time, each check result and each entity total is compared with the same value in the **previously generated report**. If the raw count is unchanged, the previous noisy value is reused verbatim instead of sampling fresh noise — an unchanged count therefore produces exactly the same reported value on every report.
-- Reuse applies identically to the entity totals and to individual check results (matched by check and stratum).
-- Only one report can be generated at a time, so "the previous report" is always well-defined.
+- Noise is only re-sampled once a raw count has moved **at least 5** away from the value its current noise was drawn for (the **anchor**). Smaller drifts reuse the previous noisy value verbatim.
+- The anchor is **derived from the report history**, not stored separately: because reused noise propagates bit-for-bit, the anchor is simply the raw count of the oldest report in the backwards run of reports sharing the current noisy value.
+- This applies identically to the entity totals and to individual check results (matched by check and stratum).
+- Only one report can be generated at a time, so the report history used for the derivation is always unambiguous.
 
 **What still leaks, and you should be aware of:**
 
-- **Whether a count changed, and when.** If a count changes between two reports, the reported value changes with it. A change is therefore observable even though the magnitude remains protected by noise.
-- **A count that changes and later returns to an earlier value gets fresh noise.** Checks whose counts change often are consequently only partly protected: the more frequently they change, the more independent noisy samples an observer sees.
-- Reuse is based only on the raw count. If privacy settings (ε, mechanism, threshold) change, an unchanged count keeps its old noisy value rather than being re-sampled under the new parameters — the old protection level simply carries over.
+- **A change event, but only for large drifts and only in terms of timing.** If a count drifts at least 5 away from its anchor between two reports, the reported value visibly changes once. Patient-level changes (adding one or a few records) stay below the threshold and are not observable at all.
+- **Larger drifts also bound the error, not add to it.** Because the anchor moves each time fresh noise is drawn, slow day-to-day drift cannot accumulate into an unbounded mismatch between the reported value and the true count; at the same time it cannot be used to average many fresh samples of the same value either.
+- Settings changes are not a trigger. If privacy settings (ε, mechanism, threshold) change, an unchanged count keeps its old noisy value rather than being re-sampled under the new parameters — the old protection level simply carries over until the count itself drifts past the threshold.
 
 #### Protection of Entity Totals
 

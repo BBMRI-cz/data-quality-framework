@@ -24,6 +24,14 @@ public class DifferentialPrivacyUtil {
   public static final double CHECK_RESULTS_EPSILON_FRACTION = 1.0 - ENTITY_TOTALS_EPSILON_FRACTION;
 
   /**
+   * Minimum absolute drift of a raw count away from the value its current noise was drawn for (its
+   * anchor) before fresh noise is sampled. Smaller drifts reuse the previous noisy value, so
+   * patient-level changes neither become observable as change events on the server nor can be
+   * averaged across repeated reports.
+   */
+  public static final int NOISE_REFRESH_THRESHOLD = 5;
+
+  /**
    * Adds Laplace noise to a count, then suppresses if below the given threshold.
    *
    * @param count the original count

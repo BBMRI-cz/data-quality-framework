@@ -15,6 +15,7 @@ import eu.bbmri_eric.quality.agent.settings.domain.Settings;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
 import eu.bbmri_eric.quality.agent.settings.impl.SettingsRepository;
 import jakarta.transaction.Transactional;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -319,10 +320,7 @@ class ObfuscationStepTest {
 
   @Test
   void execute_withUnchangedRawValue_reusesPreviousObfuscatedValue() {
-    Report previous = new Report();
-    previous.setStatus(ReportStatus.GENERATED);
-    previous.addResult(new Result("c1", 1L, 100, 95.5, 80, 50, 0.5, null, null));
-    reportRepository.save(previous);
+    generatedReportWithResult(1L, null, 100, 95.5, 0.5);
 
     Report report = new Report();
     Result current = new Result("c1", 1L, 100, null, 80, 50, null, null, null);
@@ -335,6 +333,39 @@ class ObfuscationStepTest {
   }
 
   @Test
+  void execute_withRawValueDriftBelowThreshold_reusesPreviousObfuscatedValue() {
+    generatedReportWithResult(1L, null, 100, 95.5, 0.5);
+
+    Report report = new Report();
+    Result current = new Result("c1", 1L, 103, null, 80, 50, null, null, null);
+    report.setResults(new ArrayList<>(List.of(current)));
+
+    step.execute(report);
+
+    assertThat(current.getObfuscatedValue()).isEqualTo(95.5);
+    assertThat(current.getEpsilon()).isEqualTo(0.5);
+  }
+
+  @Test
+  void execute_withRawValueDriftAtThreshold_appliesFreshNoise() {
+    settingsService.updateSettings(
+        SettingsDTO.builder()
+            .epsilon(1_000_000.0)
+            .minThreshold(10)
+            .noiseMechanism(NoiseMechanism.LAPLACE)
+            .build());
+    generatedReportWithResult(1L, null, 100, 95.5, 0.5);
+
+    Report report = new Report();
+    Result current = new Result("c1", 1L, 105, null, 80, 50, null, null, null);
+    report.setResults(new ArrayList<>(List.of(current)));
+
+    step.execute(report);
+
+    assertThat(current.getObfuscatedValue()).isNotNull().isNotEqualTo(95.5);
+  }
+
+  @Test
   void execute_withChangedRawValue_appliesFreshNoise() {
     settingsService.updateSettings(
         SettingsDTO.builder()
@@ -342,13 +373,10 @@ class ObfuscationStepTest {
             .minThreshold(10)
             .noiseMechanism(NoiseMechanism.LAPLACE)
             .build());
-    Report previous = new Report();
-    previous.setStatus(ReportStatus.GENERATED);
-    previous.addResult(new Result("c1", 1L, 100, 95.5, 80, 50, 0.5, null, null));
-    reportRepository.save(previous);
+    generatedReportWithResult(1L, null, 100, 95.5, 0.5);
 
     Report report = new Report();
-    Result current = new Result("c1", 1L, 101, null, 80, 50, null, null, null);
+    Result current = new Result("c1", 1L, 106, null, 80, 50, null, null, null);
     report.setResults(new ArrayList<>(List.of(current)));
 
     step.execute(report);
@@ -364,10 +392,7 @@ class ObfuscationStepTest {
             .minThreshold(10)
             .noiseMechanism(NoiseMechanism.LAPLACE)
             .build());
-    Report previous = new Report();
-    previous.setStatus(ReportStatus.GENERATED);
-    previous.addResult(new Result("c1", 1L, 100, 95.5, 80, 50, 0.5, null, "stratum_A"));
-    reportRepository.save(previous);
+    generatedReportWithResult(1L, "stratum_A", 100, 95.5, 0.5);
 
     Report report = new Report();
     Result differentStratum = new Result("c1", 1L, 100, null, 80, 50, null, null, "stratum_B");
@@ -405,6 +430,33 @@ class ObfuscationStepTest {
   }
 
   @Test
+  void execute_anchorIsDerivedFromHistoryAcrossReuseHop() {
+    settingsService.updateSettings(
+        SettingsDTO.builder()
+            .epsilon(1_000_000.0)
+            .minThreshold(10)
+            .noiseMechanism(NoiseMechanism.LAPLACE)
+            .build());
+    // Chain: noise was drawn for raw 100; the latest report (raw 103) reused it. The derived
+    // anchor must therefore be 100, so a drift of 6 triggers fresh noise even though the drift
+    // from the latest raw value is only 3.
+    Report older = generatedReportWithResult(1L, null, 100, 95.5, 0.5);
+    older.setGeneratedAt(LocalDateTime.now().minusDays(2));
+    reportRepository.save(older);
+    Report newer = generatedReportWithResult(1L, null, 103, 95.5, 0.5);
+    newer.setGeneratedAt(LocalDateTime.now().minusDays(1));
+    reportRepository.save(newer);
+
+    Report report = new Report();
+    Result current = new Result("c1", 1L, 106, null, 80, 50, null, null, null);
+    report.setResults(new ArrayList<>(List.of(current)));
+
+    step.execute(report);
+
+    assertThat(current.getObfuscatedValue()).isNotNull().isNotEqualTo(95.5);
+  }
+
+  @Test
   void execute_withReuseChain_keepsValueConstantOverMultipleRuns() {
     settingsService.updateSettings(
         SettingsDTO.builder()
@@ -412,10 +464,7 @@ class ObfuscationStepTest {
             .minThreshold(10)
             .noiseMechanism(NoiseMechanism.LAPLACE)
             .build());
-    Report previous = new Report();
-    previous.setStatus(ReportStatus.GENERATED);
-    previous.addResult(new Result("c1", 1L, 100, 97.0, 80, 50, 0.7, null, null));
-    reportRepository.save(previous);
+    generatedReportWithResult(1L, null, 100, 97.0, 0.7);
 
     Report secondRun = new Report();
     Result r2 = new Result("c1", 1L, 100, null, 80, 50, null, null, null);
@@ -423,6 +472,16 @@ class ObfuscationStepTest {
     step.execute(secondRun);
 
     assertThat(r2.getObfuscatedValue()).isEqualTo(97.0);
+  }
+
+  private Report generatedReportWithResult(
+      Long checkId, String stratum, int rawValue, double obfuscatedValue, double epsilon) {
+    Report previous = new Report();
+    previous.setStatus(ReportStatus.GENERATED);
+    Result result =
+        new Result("c1", checkId, rawValue, obfuscatedValue, 80, 50, epsilon, null, stratum);
+    previous.addResult(result);
+    return reportRepository.save(previous);
   }
 
   @Test

@@ -9,8 +9,8 @@ import eu.bbmri_eric.quality.agent.dataquality.domain.ReportStatus;
 import eu.bbmri_eric.quality.agent.settings.NoiseMechanism;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.List;
+import java.util.function.Function;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -62,34 +62,82 @@ class EntityCountStep implements ReportPipelineStep {
     SettingsDTO settings = settingsService.getSettings();
     double epsilonPerTotal =
         settings.getEpsilon() * DifferentialPrivacyUtil.ENTITY_TOTALS_EPSILON_FRACTION / 2;
-    Optional<Report> previous =
-        reportRepository.findTopByStatusIsOrderByGeneratedAtDesc(ReportStatus.GENERATED);
+    List<Report> history =
+        reportRepository.findAllByStatusIsOrderByGeneratedAtDesc(ReportStatus.GENERATED);
+    Integer patientsAnchor =
+        resolveAnchor(history, Report::getNumberOfEntities, Report::getObfuscatedNumberOfEntities);
     report.setObfuscatedNumberOfEntities(
-        resolveTotal(
+        obfuscateTotal(
             report.getNumberOfEntities(),
-            previous.map(Report::getNumberOfEntities).orElse(null),
-            previous.map(Report::getObfuscatedNumberOfEntities).orElse(null),
+            patientsAnchor,
+            previousNoisy(history, Report::getObfuscatedNumberOfEntities),
             settings,
             epsilonPerTotal));
+    Integer secondaryAnchor =
+        resolveAnchor(
+            history,
+            Report::getNumberOfSecondaryEntities,
+            Report::getObfuscatedNumberOfSecondaryEntities);
     report.setObfuscatedNumberOfSecondaryEntities(
-        resolveTotal(
+        obfuscateTotal(
             report.getNumberOfSecondaryEntities(),
-            previous.map(Report::getNumberOfSecondaryEntities).orElse(null),
-            previous.map(Report::getObfuscatedNumberOfSecondaryEntities).orElse(null),
+            secondaryAnchor,
+            previousNoisy(history, Report::getObfuscatedNumberOfSecondaryEntities),
             settings,
             epsilonPerTotal));
   }
 
-  private Integer resolveTotal(
+  private static Integer previousNoisy(
+      List<Report> historyNewestFirst, Function<Report, Integer> noisyGetter) {
+    return historyNewestFirst.isEmpty() ? null : noisyGetter.apply(historyNewestFirst.getFirst());
+  }
+
+  /**
+   * Derives the anchor — the raw total the latest noisy total was drawn for — from the report
+   * history: reused noise propagates bit-for-bit, so the anchor is the raw total of the oldest
+   * report in the contiguous backwards run of reports sharing the current noisy value. Returns
+   * {@code null} when there is no usable previous noisy value (and hence no reuse).
+   */
+  private static Integer resolveAnchor(
+      List<Report> historyNewestFirst,
+      Function<Report, Integer> rawGetter,
+      Function<Report, Integer> noisyGetter) {
+    if (historyNewestFirst.isEmpty()) {
+      return null;
+    }
+    Integer chainValue = noisyGetter.apply(historyNewestFirst.getFirst());
+    if (chainValue == null) {
+      return null;
+    }
+    Integer anchor = rawGetter.apply(historyNewestFirst.getFirst());
+    for (Report pastReport : historyNewestFirst) {
+      if (!chainValue.equals(noisyGetter.apply(pastReport))) {
+        break;
+      }
+      Integer raw = rawGetter.apply(pastReport);
+      if (raw != null) {
+        anchor = raw;
+      }
+    }
+    return anchor;
+  }
+
+  /**
+   * Resolves the noisy total, reusing the previous noisy value while the raw count stays within
+   * {@link DifferentialPrivacyUtil#NOISE_REFRESH_THRESHOLD} of the anchor the noise was drawn for.
+   */
+  private Integer obfuscateTotal(
       Integer count,
-      Integer previousCount,
+      Integer previousAnchor,
       Integer previousNoisyCount,
       SettingsDTO settings,
       double epsilon) {
     if (count == null) {
       return null;
     }
-    if (previousNoisyCount != null && Objects.equals(count, previousCount)) {
+    if (previousNoisyCount != null
+        && previousAnchor != null
+        && Math.abs(count - previousAnchor) < DifferentialPrivacyUtil.NOISE_REFRESH_THRESHOLD) {
       return previousNoisyCount;
     }
     return addNoise(count, settings, epsilon);
