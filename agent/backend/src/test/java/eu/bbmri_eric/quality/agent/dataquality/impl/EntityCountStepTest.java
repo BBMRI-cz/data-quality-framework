@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 import eu.bbmri_eric.quality.agent.dataquality.DataStore;
 import eu.bbmri_eric.quality.agent.dataquality.DataStoreFactory;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
+import eu.bbmri_eric.quality.agent.dataquality.domain.ReportStatus;
 import eu.bbmri_eric.quality.agent.settings.NoiseMechanism;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
@@ -22,6 +23,7 @@ class EntityCountStepTest {
 
   @Autowired private EntityCountStep step;
   @Autowired private SettingsService settingsService;
+  @Autowired private ReportRepository reportRepository;
 
   @MockitoBean private DataStoreFactory dataStoreFactory;
   @MockitoBean private DataStore dataStore;
@@ -29,6 +31,7 @@ class EntityCountStepTest {
   @BeforeEach
   void setUp() {
     when(dataStoreFactory.resolveDataStore()).thenReturn(dataStore);
+    reportRepository.deleteAll();
   }
 
   @Test
@@ -113,6 +116,74 @@ class EntityCountStepTest {
     assertThat(report.getNumberOfSecondaryEntities()).isNull();
     assertThat(report.getObfuscatedNumberOfEntities()).isNull();
     assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isNull();
+  }
+
+  @Test
+  void execute_withUnchangedTotals_reusesPreviousNoisyTotals() {
+    Report previous = new Report();
+    previous.setStatus(ReportStatus.GENERATED);
+    previous.setNumberOfEntities(4321);
+    previous.setNumberOfSecondaryEntities(9876);
+    previous.setObfuscatedNumberOfEntities(4330);
+    previous.setObfuscatedNumberOfSecondaryEntities(9880);
+    reportRepository.save(previous);
+    when(dataStore.countPatients()).thenReturn(4321);
+    when(dataStore.countSecondaryEntities()).thenReturn(9876);
+
+    Report report = step.execute(new Report());
+
+    assertThat(report.getObfuscatedNumberOfEntities()).isEqualTo(4330);
+    assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isEqualTo(9880);
+  }
+
+  @Test
+  void execute_withChangedTotals_appliesFreshNoise() {
+    settingsService.updateSettings(
+        SettingsDTO.builder()
+            .epsilon(1_000_000.0)
+            .minThreshold(10)
+            .noiseMechanism(NoiseMechanism.LAPLACE)
+            .build());
+    Report previous = new Report();
+    previous.setStatus(ReportStatus.GENERATED);
+    previous.setNumberOfEntities(4321);
+    previous.setNumberOfSecondaryEntities(9876);
+    previous.setObfuscatedNumberOfEntities(4330);
+    previous.setObfuscatedNumberOfSecondaryEntities(9880);
+    reportRepository.save(previous);
+    when(dataStore.countPatients()).thenReturn(4322);
+    when(dataStore.countSecondaryEntities()).thenReturn(9877);
+
+    Report report = step.execute(new Report());
+
+    assertThat(report.getObfuscatedNumberOfEntities()).isNotEqualTo(4330);
+    assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isNotEqualTo(9880);
+    assertThat(report.getObfuscatedNumberOfEntities()).isEqualTo(4322);
+    assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isEqualTo(9877);
+  }
+
+  @Test
+  void execute_withPartiallyChangedTotals_reusesOnlyUnchangedTotal() {
+    Report previous = new Report();
+    previous.setStatus(ReportStatus.GENERATED);
+    previous.setNumberOfEntities(4321);
+    previous.setNumberOfSecondaryEntities(9876);
+    previous.setObfuscatedNumberOfEntities(4330);
+    previous.setObfuscatedNumberOfSecondaryEntities(9880);
+    reportRepository.save(previous);
+    when(dataStore.countPatients()).thenReturn(4321);
+    when(dataStore.countSecondaryEntities()).thenReturn(9877);
+    settingsService.updateSettings(
+        SettingsDTO.builder()
+            .epsilon(1_000_000.0)
+            .minThreshold(10)
+            .noiseMechanism(NoiseMechanism.LAPLACE)
+            .build());
+
+    Report report = step.execute(new Report());
+
+    assertThat(report.getObfuscatedNumberOfEntities()).isEqualTo(4330);
+    assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isNotEqualTo(9880);
   }
 
   @Test

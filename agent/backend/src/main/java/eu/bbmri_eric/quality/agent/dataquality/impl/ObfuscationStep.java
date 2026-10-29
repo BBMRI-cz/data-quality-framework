@@ -4,26 +4,40 @@ import eu.bbmri_eric.quality.agent.dataquality.DifferentialPrivacyUtil;
 import eu.bbmri_eric.quality.agent.dataquality.QualityCheckService;
 import eu.bbmri_eric.quality.agent.dataquality.ReportPipelineStep;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
+import eu.bbmri_eric.quality.agent.dataquality.domain.ReportStatus;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Result;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.agent.settings.NoiseMechanism;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-/** This pipeline step takes care of adding noise to individual report results. */
+/**
+ * This pipeline step takes care of adding noise to individual report results.
+ *
+ * <p>To prevent averaging attacks across repeated reports, a result whose raw count is unchanged
+ * compared to the same check (and stratum) in the previous generated report reuses the previous
+ * noisy value instead of sampling fresh noise. A count that changes and later returns to an earlier
+ * value gets fresh noise, so counts that change often are only partly protected.
+ */
 @Slf4j
 @Component
 class ObfuscationStep implements ReportPipelineStep {
   private final SettingsService settingsService;
   private final QualityCheckService qualityCheckService;
+  private final ReportRepository reportRepository;
 
-  ObfuscationStep(SettingsService settingsService, QualityCheckService qualityCheckService) {
+  ObfuscationStep(
+      SettingsService settingsService,
+      QualityCheckService qualityCheckService,
+      ReportRepository reportRepository) {
     this.settingsService = settingsService;
     this.qualityCheckService = qualityCheckService;
+    this.reportRepository = reportRepository;
   }
 
   @Override
@@ -131,11 +145,41 @@ class ObfuscationStep implements ReportPipelineStep {
         resultsToObfuscate.size(),
         noPreferenceCount,
         ignorePreferences);
+    Map<CheckInstanceKey, Result> previousResults = previousResultsByCheckAndStratum();
     for (Result result : results) {
       if (result.getRawValue() == null) continue;
+      Result previous = previousResults.get(CheckInstanceKey.of(result));
+      if (previous != null && Objects.equals(previous.getRawValue(), result.getRawValue())) {
+        result.setObfuscatedValue(previous.getObfuscatedValue());
+        result.setEpsilon(previous.getEpsilon());
+        continue;
+      }
       double epsilon =
           resolveEpsilon(result, preferredBudgetByCheckId, baseEpsilon, ignorePreferences);
       applyNoise(result, epsilon, noiseMechanism, delta, threshold);
+    }
+  }
+
+  /**
+   * Looks up the results of the previously generated report, indexed by check and stratum, so that
+   * unchanged counts can reuse their previous noisy values. Only completed reports count: the
+   * single-generation guard keeps this lookup unambiguous. Results without a noisy value are
+   * ignored, and first occurrences win over duplicates.
+   */
+  private Map<CheckInstanceKey, Result> previousResultsByCheckAndStratum() {
+    return reportRepository
+        .findTopByStatusIsOrderByGeneratedAtDesc(ReportStatus.GENERATED)
+        .map(Report::getResults)
+        .orElse(List.of())
+        .stream()
+        .filter(result -> result.getObfuscatedValue() != null)
+        .collect(
+            Collectors.toMap(CheckInstanceKey::of, result -> result, (first, duplicate) -> first));
+  }
+
+  private record CheckInstanceKey(Long checkId, String stratum) {
+    private static CheckInstanceKey of(Result result) {
+      return new CheckInstanceKey(result.getCheckId(), result.getStratum());
     }
   }
 

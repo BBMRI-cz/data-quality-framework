@@ -18,6 +18,7 @@ import eu.bbmri_eric.quality.agent.dataquality.dto.ReportCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportDTO;
 import eu.bbmri_eric.quality.agent.dataquality.exception.ReportGenerationInProgressException;
 import java.util.List;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -25,8 +26,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
+@Transactional
 class ReportServiceImplTest {
 
   @Autowired private ReportRepository reportRepository;
@@ -79,6 +82,13 @@ class ReportServiceImplTest {
     addResultToReport(testReport, "Check 5", 2L, 8, 0.0, "stratum_B");
 
     testReport = reportRepository.save(testReport);
+  }
+
+  @AfterEach
+  void tearDown() {
+    // Do not leak reports in GENERATING state to other test classes sharing the test database:
+    // only one report may be generated at a time.
+    reportRepository.deleteAll();
   }
 
   private void addResultToReport(

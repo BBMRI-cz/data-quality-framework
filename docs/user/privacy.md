@@ -82,12 +82,26 @@ Our differential privacy implementation uses the **Laplace mechanism** (or optio
 
 The implementation includes comprehensive test coverage to ensure correctness of the differential privacy mechanisms.
 
+#### Protection Against Repeated-Report Averaging
+
+Reports are generated repeatedly (by default daily). If every report sampled fresh noise for the same unchanged count, an observer could average the noisy values over many reports and cancel the noise out. To prevent this **averaging attack**, the agent reuses the previous noisy value whenever nothing has changed:
+
+- At generation time, each check result and each entity total is compared with the same value in the **previously generated report**. If the raw count is unchanged, the previous noisy value is reused verbatim instead of sampling fresh noise — an unchanged count therefore produces exactly the same reported value on every report.
+- Reuse applies identically to the entity totals and to individual check results (matched by check and stratum).
+- Only one report can be generated at a time, so "the previous report" is always well-defined.
+
+**What still leaks, and you should be aware of:**
+
+- **Whether a count changed, and when.** If a count changes between two reports, the reported value changes with it. A change is therefore observable even though the magnitude remains protected by noise.
+- **A count that changes and later returns to an earlier value gets fresh noise.** Checks whose counts change often are consequently only partly protected: the more frequently they change, the more independent noisy samples an observer sees.
+- Reuse is based only on the raw count. If privacy settings (ε, mechanism, threshold) change, an unchanged count keeps its old noisy value rather than being re-sampled under the new parameters — the old protection level simply carries over.
+
 #### Protection of Entity Totals
 
 The total patient and sample counts that accompany each report are **also protected with noise** — they are never shared as exact or merely rounded values:
 
 - Each report reserves a share of its privacy budget for the two totals: **20% of ε in total (10% per total)**; the remaining **80% of ε** is split among the quality check results as described below. These shares are defined in `DifferentialPrivacyUtil` (`ENTITY_TOTALS_EPSILON_FRACTION` / `CHECK_RESULTS_EPSILON_FRACTION`), so releasing a full report never exceeds its epsilon budget.
-- Noise is applied to the raw totals **exactly once** during report generation (in the `EntityCountStep` of the report pipeline) and the noisy values are persisted. Re-sending or re-exporting the same report reuses the stored noisy totals, so an observer cannot remove the noise by averaging multiple releases of the same report.
+- Noise is applied to the raw totals once during report generation (in the `EntityCountStep` of the report pipeline) and the noisy values are persisted, following the reuse rule described above. Re-sending or re-exporting the same report reuses the stored noisy totals.
 - The same **low-count suppression** applies to totals as to check counts: noisy counts below the configured minimum threshold are reported as 0.
 - Check results are ratios computed as `noisy check count / noisy patient count`, so no exact count — numerator or denominator — is ever used in a shared metric.
 

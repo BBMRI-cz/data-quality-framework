@@ -48,11 +48,6 @@ class DataQualityAuditIntegrationTest {
     auditLogRepository.deleteAll();
   }
 
-  @AfterEach
-  void tearDown() {
-    auditLogRepository.deleteAll();
-  }
-
   @Test
   void categoryLifecycle_recordsCreatedUpdatedAndDeletedAuditEntries() {
     Long id = categoryService.create(new CategoryCreateDTO("Completeness", "#FF5733")).getId();

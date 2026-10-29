@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
+import eu.bbmri_eric.quality.agent.dataquality.domain.ReportStatus;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Result;
 import eu.bbmri_eric.quality.agent.settings.NoiseMechanism;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
@@ -32,6 +33,7 @@ class ObfuscationStepTest {
   @BeforeEach
   void setUp() {
     settingsRepository.save(new Settings("noiseMechanism", "LAPLACE"));
+    reportRepository.deleteAll();
   }
 
   @Autowired private ReportRepository reportRepository;
@@ -313,6 +315,114 @@ class ObfuscationStepTest {
     assertThatThrownBy(() -> step.execute(report))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("leaving no epsilon");
+  }
+
+  @Test
+  void execute_withUnchangedRawValue_reusesPreviousObfuscatedValue() {
+    Report previous = new Report();
+    previous.setStatus(ReportStatus.GENERATED);
+    previous.addResult(new Result("c1", 1L, 100, 95.5, 80, 50, 0.5, null, null));
+    reportRepository.save(previous);
+
+    Report report = new Report();
+    Result current = new Result("c1", 1L, 100, null, 80, 50, null, null, null);
+    report.setResults(new ArrayList<>(List.of(current)));
+
+    step.execute(report);
+
+    assertThat(current.getObfuscatedValue()).isEqualTo(95.5);
+    assertThat(current.getEpsilon()).isEqualTo(0.5);
+  }
+
+  @Test
+  void execute_withChangedRawValue_appliesFreshNoise() {
+    settingsService.updateSettings(
+        SettingsDTO.builder()
+            .epsilon(1_000_000.0)
+            .minThreshold(10)
+            .noiseMechanism(NoiseMechanism.LAPLACE)
+            .build());
+    Report previous = new Report();
+    previous.setStatus(ReportStatus.GENERATED);
+    previous.addResult(new Result("c1", 1L, 100, 95.5, 80, 50, 0.5, null, null));
+    reportRepository.save(previous);
+
+    Report report = new Report();
+    Result current = new Result("c1", 1L, 101, null, 80, 50, null, null, null);
+    report.setResults(new ArrayList<>(List.of(current)));
+
+    step.execute(report);
+
+    assertThat(current.getObfuscatedValue()).isNotNull().isNotEqualTo(95.5);
+  }
+
+  @Test
+  void execute_withSameRawValueButDifferentStratum_appliesFreshNoise() {
+    settingsService.updateSettings(
+        SettingsDTO.builder()
+            .epsilon(1_000_000.0)
+            .minThreshold(10)
+            .noiseMechanism(NoiseMechanism.LAPLACE)
+            .build());
+    Report previous = new Report();
+    previous.setStatus(ReportStatus.GENERATED);
+    previous.addResult(new Result("c1", 1L, 100, 95.5, 80, 50, 0.5, null, "stratum_A"));
+    reportRepository.save(previous);
+
+    Report report = new Report();
+    Result differentStratum = new Result("c1", 1L, 100, null, 80, 50, null, null, "stratum_B");
+    Result sameStratum = new Result("c1", 1L, 100, null, 80, 50, null, null, "stratum_A");
+    report.setResults(new ArrayList<>(List.of(differentStratum, sameStratum)));
+
+    step.execute(report);
+
+    assertThat(differentStratum.getObfuscatedValue()).isNotNull().isNotEqualTo(95.5);
+    assertThat(sameStratum.getObfuscatedValue()).isEqualTo(95.5);
+    assertThat(sameStratum.getEpsilon()).isEqualTo(0.5);
+  }
+
+  @Test
+  void execute_whenPreviousResultHasNoObfuscatedValue_appliesFreshNoise() {
+    settingsService.updateSettings(
+        SettingsDTO.builder()
+            .epsilon(1_000_000.0)
+            .minThreshold(10)
+            .noiseMechanism(NoiseMechanism.LAPLACE)
+            .build());
+    Report previous = new Report();
+    previous.setStatus(ReportStatus.GENERATED);
+    previous.addResult(new Result("c1", 1L, 100, null, 80, 50, null, null, null));
+    reportRepository.save(previous);
+
+    Report report = new Report();
+    Result current = new Result("c1", 1L, 100, null, 80, 50, null, null, null);
+    report.setResults(new ArrayList<>(List.of(current)));
+
+    step.execute(report);
+
+    assertThat(current.getObfuscatedValue()).isNotNull();
+    assertThat(current.getEpsilon()).isNotNull();
+  }
+
+  @Test
+  void execute_withReuseChain_keepsValueConstantOverMultipleRuns() {
+    settingsService.updateSettings(
+        SettingsDTO.builder()
+            .epsilon(1_000_000.0)
+            .minThreshold(10)
+            .noiseMechanism(NoiseMechanism.LAPLACE)
+            .build());
+    Report previous = new Report();
+    previous.setStatus(ReportStatus.GENERATED);
+    previous.addResult(new Result("c1", 1L, 100, 97.0, 80, 50, 0.7, null, null));
+    reportRepository.save(previous);
+
+    Report secondRun = new Report();
+    Result r2 = new Result("c1", 1L, 100, null, 80, 50, null, null, null);
+    secondRun.setResults(new ArrayList<>(List.of(r2)));
+    step.execute(secondRun);
+
+    assertThat(r2.getObfuscatedValue()).isEqualTo(97.0);
   }
 
   @Test
