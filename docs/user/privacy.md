@@ -106,6 +106,8 @@ The total patient and sample counts that accompany each report are **also protec
 - The same **low-count suppression** applies to totals as to check counts: noisy counts below the configured minimum threshold are reported as 0.
 - Check results are ratios computed as `noisy check count / noisy patient count`, so no exact count — numerator or denominator — is ever used in a shared metric.
 
+The sample total is protected assuming each patient contributes at most **20 samples** (its sensitivity). Patients with more samples are protected proportionally less for this number (e.g. 50 samples → about 2.5× the privacy loss). The added noise is about **±70 samples** with default settings (5 % of reports deviate by more than ±200), which is negligible for large biobanks but noticeable below ~1 000 samples. The patient total uses sensitivity 1. Entity totals always use **Laplace noise**, independent of the configured noise mechanism — in Gaussian mode the small per-total budget (ε ≤ 0.1) would make Gaussian noise far too large to be useful (≈ ±1 200 samples).
+
 Reports generated before this protection existed (or lacking a noisy total for any other reason) do not fall back to weaker rounding: their totals are simply withheld.
 
 #### Example: Obfuscated Percentage Calculation

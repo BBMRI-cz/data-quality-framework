@@ -6,7 +6,6 @@ import eu.bbmri_eric.quality.agent.dataquality.DifferentialPrivacyUtil;
 import eu.bbmri_eric.quality.agent.dataquality.ReportPipelineStep;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
 import eu.bbmri_eric.quality.agent.dataquality.domain.ReportStatus;
-import eu.bbmri_eric.quality.agent.settings.NoiseMechanism;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
 import java.util.List;
@@ -16,12 +15,27 @@ import org.springframework.stereotype.Component;
 
 /**
  * Counts the entities in the data store and computes their noisy counterparts. To prevent averaging
- * attacks across repeated reports, a total whose raw count is unchanged compared to the previous
- * generated report reuses the previous noisy value instead of sampling fresh noise.
+ * attacks across repeated reports, a total that stayed within {@link
+ * DifferentialPrivacyUtil#NOISE_REFRESH_THRESHOLD} of the value its current noise was drawn for
+ * reuses the previous noisy value instead of sampling fresh noise.
+ *
+ * <p>Totals always use Laplace noise (pure ε-DP), regardless of the configured noise mechanism, and
+ * use different sensitivities: {@link #PATIENT_SENSITIVITY} for the patient total and {@link
+ * #SECONDARY_ENTITY_SENSITIVITY} for the sample total, since one patient can contribute many
+ * samples.
  */
 @Slf4j
 @Component
 class EntityCountStep implements ReportPipelineStep {
+
+  private static final int PATIENT_SENSITIVITY = 1;
+
+  /**
+   * Assumed maximum number of samples (secondary entities) per patient. Used as the sensitivity of
+   * the noisy sample total; patients with more samples are protected proportionally less for this
+   * number. Documented in docs/user/privacy.md.
+   */
+  static final int SECONDARY_ENTITY_SENSITIVITY = 20;
 
   private final DataStoreFactory dataStoreFactory;
   private final SettingsService settingsService;
@@ -72,7 +86,8 @@ class EntityCountStep implements ReportPipelineStep {
             patientsAnchor,
             previousNoisy(history, Report::getObfuscatedNumberOfEntities),
             settings,
-            epsilonPerTotal));
+            epsilonPerTotal,
+            PATIENT_SENSITIVITY));
     Integer secondaryAnchor =
         resolveAnchor(
             history,
@@ -84,7 +99,8 @@ class EntityCountStep implements ReportPipelineStep {
             secondaryAnchor,
             previousNoisy(history, Report::getObfuscatedNumberOfSecondaryEntities),
             settings,
-            epsilonPerTotal));
+            epsilonPerTotal,
+            SECONDARY_ENTITY_SENSITIVITY));
   }
 
   private static Integer previousNoisy(
@@ -131,7 +147,8 @@ class EntityCountStep implements ReportPipelineStep {
       Integer previousAnchor,
       Integer previousNoisyCount,
       SettingsDTO settings,
-      double epsilon) {
+      double epsilon,
+      int sensitivity) {
     if (count == null) {
       return null;
     }
@@ -140,19 +157,18 @@ class EntityCountStep implements ReportPipelineStep {
         && Math.abs(count - previousAnchor) < DifferentialPrivacyUtil.NOISE_REFRESH_THRESHOLD) {
       return previousNoisyCount;
     }
-    return addNoise(count, settings, epsilon);
+    return addNoise(count, settings, epsilon, sensitivity);
   }
 
-  private Integer addNoise(Integer count, SettingsDTO settings, double epsilon) {
+  private Integer addNoise(Integer count, SettingsDTO settings, double epsilon, int sensitivity) {
     if (count == null) {
       return null;
     }
+    // Totals always use Laplace (pure ε-DP): in Gaussian mode the small per-total ε would make the
+    // standard deviation ≈6× larger (e.g. ≈1 200 samples at δ = 1e-8) and ruin utility.
     double noisyCount =
-        settings.getNoiseMechanism() == NoiseMechanism.GAUSSIAN
-            ? DifferentialPrivacyUtil.addGaussianNoise(
-                count, epsilon, settings.getDelta(), 1, settings.getMinThreshold())
-            : DifferentialPrivacyUtil.addLaplaceNoise(
-                count, epsilon, 1, settings.getMinThreshold());
+        DifferentialPrivacyUtil.addLaplaceNoise(
+            count, epsilon, sensitivity, settings.getMinThreshold());
     return (int) Math.round(noisyCount);
   }
 

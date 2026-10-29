@@ -12,6 +12,7 @@ import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
 import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
+import java.util.function.ToIntFunction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 @SpringBootTest
 @Transactional
 class EntityCountStepTest {
+
+  private static final int STATISTICAL_SAMPLES = 10_000;
+  private static final int RAW_COUNT = 10_000;
 
   @Autowired private EntityCountStep step;
   @Autowired private SettingsService settingsService;
@@ -94,14 +98,20 @@ class EntityCountStepTest {
   }
 
   @Test
-  void execute_withGaussianNoise_shouldStoreObfuscatedCounts() {
+  void execute_withGaussianMechanism_stillUsesLaplaceForTotals() {
     settingsService.updateSettings(
-        SettingsDTO.builder().epsilon(0.9).noiseMechanism(NoiseMechanism.GAUSSIAN).build());
+        SettingsDTO.builder()
+            .epsilon(0.9)
+            .delta(1e-8)
+            .noiseMechanism(NoiseMechanism.GAUSSIAN)
+            .build());
     when(dataStore.countPatients()).thenReturn(4321);
     when(dataStore.countSecondaryEntities()).thenReturn(9876);
 
     Report report = step.execute(new Report());
 
+    // Totals are always Laplace; the Gaussian path is only for check results. Laplace with
+    // ε = 0.9 per total is far tighter than the ≈1 200-sample Gaussian sigma would be.
     assertThat(report.getObfuscatedNumberOfEntities()).isNotNull().isNotNegative();
     assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isNotNull().isNotNegative();
   }
@@ -221,6 +231,74 @@ class EntityCountStepTest {
     assertThat(report.getObfuscatedNumberOfEntities()).isNotEqualTo(4330);
     assertThat(report.getObfuscatedNumberOfEntities()).isEqualTo(4327);
     assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isEqualTo(9880);
+  }
+
+  @Test
+  void execute_withLaplaceDefaults_patientTotalNoiseMatchesSensitivity1() {
+    settingsService.updateSettings(
+        SettingsDTO.builder()
+            .epsilon(3.0)
+            .delta(1e-8)
+            .minThreshold(50)
+            .noiseMechanism(NoiseMechanism.LAPLACE)
+            .build());
+    when(dataStore.countPatients()).thenReturn(RAW_COUNT);
+    when(dataStore.countSecondaryEntities()).thenReturn(RAW_COUNT);
+
+    double mae = meanAbsoluteError(Report::getObfuscatedNumberOfEntities);
+
+    // Laplace per-total ε = 3 × 0.2 / 2 = 0.3 → theory MAE = b = 1 / 0.3 ≈ 3.3
+    assertThat(mae).isBetween(2.7, 4.0);
+  }
+
+  @Test
+  void execute_withLaplaceDefaults_sampleTotalNoiseMatchesSensitivity20() {
+    settingsService.updateSettings(
+        SettingsDTO.builder()
+            .epsilon(3.0)
+            .delta(1e-8)
+            .minThreshold(50)
+            .noiseMechanism(NoiseMechanism.LAPLACE)
+            .build());
+    when(dataStore.countPatients()).thenReturn(RAW_COUNT);
+    when(dataStore.countSecondaryEntities()).thenReturn(RAW_COUNT);
+
+    double mae = meanAbsoluteError(Report::getObfuscatedNumberOfSecondaryEntities);
+
+    // Laplace per-total ε = 0.3 → theory MAE = b = 20 / 0.3 ≈ 66.7
+    assertThat(mae).isBetween(55.0, 80.0);
+  }
+
+  @Test
+  void execute_withGaussianMechanism_sampleTotalStillMatchesLaplaceSensitivity20() {
+    settingsService.updateSettings(
+        SettingsDTO.builder()
+            .epsilon(1.0)
+            .delta(1e-8)
+            .minThreshold(50)
+            .noiseMechanism(NoiseMechanism.GAUSSIAN)
+            .build());
+    when(dataStore.countPatients()).thenReturn(RAW_COUNT);
+    when(dataStore.countSecondaryEntities()).thenReturn(RAW_COUNT);
+
+    double mae = meanAbsoluteError(Report::getObfuscatedNumberOfSecondaryEntities);
+
+    // Totals always use Laplace: per-total ε = 0.1 → theory MAE = b = 20 / 0.1 = 200.
+    // The Gaussian path would produce a much larger error (≈ 977) and is ruled out by this bound.
+    assertThat(mae).isBetween(170.0, 230.0);
+  }
+
+  /**
+   * Measures the mean absolute error of fresh-noise totals over many executions. No previous report
+   * is saved, so every execution samples independent fresh noise — keeping the estimate stable
+   * enough to assert tight bounds.
+   */
+  private double meanAbsoluteError(ToIntFunction<Report> noisyTotal) {
+    double sum = 0;
+    for (int i = 0; i < STATISTICAL_SAMPLES; i++) {
+      sum += Math.abs(noisyTotal.applyAsInt(step.execute(new Report())) - RAW_COUNT);
+    }
+    return sum / STATISTICAL_SAMPLES;
   }
 
   @Test

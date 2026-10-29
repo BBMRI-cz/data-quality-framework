@@ -27,6 +27,8 @@ The configured `epsilon` is the total privacy budget of a **single report**. Eac
 - **80%** is split among the quality check results (individually configured per-check budgets are honored within this share; if the preferences already consume the entire share, report generation fails loudly instead of giving the remaining checks an epsilon of 0).
 - **20%** is reserved for the noisy entity totals (patient count and sample count), 10% each.
 
+The entity totals always use **Laplace** noise — sensitivity 1 for the patient count and **20 for the sample count** (a single patient can contribute many samples) — regardless of the configured noise mechanism. See [Privacy & Security](./privacy.md#protection-of-entity-totals) for the calibration details.
+
 To prevent observers from averaging the noise away over many reports — and to avoid revealing exactly when counts change — noise is only re-sampled once a count has drifted at least 5 away from the value its current noise was drawn for; smaller drifts reuse the previous noisy value. See [Privacy & Security](./privacy.md#protection-against-repeated-report-averaging) for details and for what still leaks.
 
 The minThreshold is applied to all noisy counts, including the totals: a site whose noisy patient total falls below the threshold reports it as 0, and its check ratios are reported as 0 as well. See [Privacy & Security](./privacy.md#protection-of-entity-totals) for details.
