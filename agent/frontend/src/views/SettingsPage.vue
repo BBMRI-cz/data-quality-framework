@@ -81,7 +81,7 @@
   const databaseTypeOptions = [
     { label: 'FHIR', value: 'FHIR' },
     { label: 'SQL', value: 'SQL' },
-    { label: 'OmicsBox', value: 'OMICSBOX' },
+    { label: 'OmicsBox (early development — not for production)', value: 'OMICSBOX' },
   ];
 
   const isFhir = computed(() => databaseType.value === 'FHIR');

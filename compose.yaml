@@ -44,6 +44,12 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+  # ---------------------------------------------------------------------------
+  # WARNING: The OmicsBox sandbox is in EARLY DEVELOPMENT and is NOT READY FOR
+  # PRODUCTION USE. Its APIs, check script result contract and security model
+  # may change without notice. Enable it (via the `omicsbox` profile) for
+  # evaluation/development purposes only.
+  # ---------------------------------------------------------------------------
   omicsbox:
     profiles:
       - omicsbox

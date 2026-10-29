@@ -4,7 +4,7 @@ The Data Quality Agent connects to a data source and runs data quality checks ag
 
 - **FHIR** — a FHIR R4 server queried with CQL.
 - **SQL** — a relational database or a directory of CSV files queried with SQL.
-- **OMICSBOX** — an OmicsBox sandbox executing Python checks against mounted omics data ([under development](#omicsbox-python-checks)).
+- **OMICSBOX** — an OmicsBox sandbox executing Python checks against mounted omics data ([early development — not ready for production](#omicsbox-python-checks)).
 
 ## FHIR servers
 
@@ -86,8 +86,8 @@ Note that with a custom model file, identifier quoting and case-sensitivity foll
 
 ## OmicsBox (Python checks)
 
-::: warning Under development
-The OmicsBox integration is still under development: the script result contract and the settings may change in upcoming releases, and drilling down from a check result into the affected files is not supported yet.
+::: warning Early development — not ready for production use
+The OmicsBox integration is in early development and is **not ready for production use**: the script result contract, the settings and the security model may change in upcoming releases without notice, and drilling down from a check result into the affected files is not supported yet. Use it for evaluation/development purposes only.
 :::
 
 When `databaseType` is `OMICSBOX`, the agent runs checks of type `PYTHON` in an OmicsBox sandbox — a hardened, offline HTTP service that executes Python check scripts against a mounted omics data directory (e.g. whole slide images). See the [`omicsbox/`](https://github.com/BBMRI-cz/data-quality-framework/tree/master/omicsbox) directory of the repository for the sandbox itself and example check scripts.

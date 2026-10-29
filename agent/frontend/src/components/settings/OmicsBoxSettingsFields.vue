@@ -1,4 +1,9 @@
 <template>
+  <FormAlert variant="warning" icon="bi-exclamation-triangle">
+    OmicsBox is in early development and is <strong>not ready for production use</strong>. The
+    check script result contract, settings and security model may change without notice.
+  </FormAlert>
+
   <FormField
     id="omicsboxUrl"
     v-model="settings.url"
@@ -24,7 +29,7 @@
 
 <script setup>
   import { toRef } from 'vue';
-  import { FormField } from '@/components/forms';
+  import { FormAlert, FormField } from '@/components/forms';
 
   const props = defineProps({
     settings: {
