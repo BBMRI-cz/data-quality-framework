@@ -17,6 +17,7 @@ import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckResultDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportDTO;
 import eu.bbmri_eric.quality.agent.dataquality.exception.ReportGenerationInProgressException;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -152,6 +153,42 @@ class ReportServiceImplTest {
 
       assertThat(reportRepository.findById(testReport.getId()).orElseThrow().getStatus())
           .isEqualTo(ReportStatus.GENERATED);
+    }
+
+    @Test
+    @DisplayName("should fail stale generating reports and allow a new report instead")
+    void create_whenGeneratingReportIsStale_failsItAndCreatesReport() {
+      Report stale = new Report();
+      stale.setStatus(ReportStatus.GENERATING);
+      stale = reportRepository.save(stale);
+      stale.setGeneratedAt(LocalDateTime.now().minusHours(7));
+      reportRepository.save(stale);
+
+      ReportDTO created = reportService.create(new ReportCreateDTO());
+
+      assertThat(created.getId()).isNotNull();
+      assertThat(reportRepository.findById(stale.getId()).orElseThrow().getStatus())
+          .isEqualTo(ReportStatus.FAILED);
+    }
+
+    @Test
+    @DisplayName("should only fail stale reports in the scheduled sweep")
+    void failStaleGeneratingReports_failsOnlyStaleReports() {
+      Report stale = new Report();
+      stale.setStatus(ReportStatus.GENERATING);
+      stale = reportRepository.save(stale);
+      stale.setGeneratedAt(LocalDateTime.now().minusHours(7));
+      reportRepository.save(stale);
+      Report fresh = new Report();
+      fresh.setStatus(ReportStatus.GENERATING);
+      fresh = reportRepository.save(fresh);
+
+      reportServiceImpl.failStaleGeneratingReports();
+
+      assertThat(reportRepository.findById(stale.getId()).orElseThrow().getStatus())
+          .isEqualTo(ReportStatus.FAILED);
+      assertThat(reportRepository.findById(fresh.getId()).orElseThrow().getStatus())
+          .isEqualTo(ReportStatus.GENERATING);
     }
   }
 

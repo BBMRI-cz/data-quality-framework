@@ -21,3 +21,15 @@ A report left in the `FAILED` state aborted during generation — for example be
 
 A failed report is never sent to the central server and is not retried automatically. Check the agent logs for the underlying error, fix the cause, and generate a new report.
 
+## A Report Appears Stuck in GENERATING
+
+Only one report can be generated at a time; requesting another one while a report is running returns a **409 Conflict** (shown as a notification in the UI). If the report page shows a report that stays in `GENERATING` for an unusually long time, its generation probably died mid-run.
+
+The agent recovers automatically — reports stuck in `GENERATING` for more than **6 hours** are marked `FAILED`:
+
+- on an hourly scheduled sweep,
+- eagerly whenever a new report is requested,
+- immediately at startup for reports left behind by an application restart (any in-process generation is provably dead after a restart).
+
+Once the stuck report is marked `FAILED`, report generation works again — no restart required.
+

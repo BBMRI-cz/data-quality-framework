@@ -27,6 +27,8 @@ import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -39,6 +41,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,6 +49,12 @@ import org.springframework.transaction.annotation.Transactional;
 class ReportServiceImpl implements ReportService {
 
   private static final Logger log = LoggerFactory.getLogger(ReportServiceImpl.class);
+
+  /**
+   * Maximum age of a report in {@link ReportStatus#GENERATING} before it is considered stuck and
+   * failed automatically, so a crashed generation cannot block report creation forever.
+   */
+  private static final Duration STALE_GENERATING_TIMEOUT = Duration.ofHours(6);
 
   private final ReportRepository reportRepository;
   private final QualityCheckService qualityCheckService;
@@ -74,18 +83,53 @@ class ReportServiceImpl implements ReportService {
       entityId = "#result.id",
       details = "Report created")
   public ReportDTO create(ReportCreateDTO createDTO) {
-    reportRepository.findAllByStatusIs(ReportStatus.GENERATING).stream()
-        .findFirst()
-        .ifPresent(
-            generating -> {
-              throw new ReportGenerationInProgressException(generating.getId());
-            });
+    List<Report> blockingReports = failStaleAndGetActiveGeneratingReports();
+    if (!blockingReports.isEmpty()) {
+      throw new ReportGenerationInProgressException(blockingReports.getFirst().getId());
+    }
     Report report = new Report();
     report.setEpsilonBudget(settingsService.getSettings().getEpsilon());
     report = reportRepository.save(report);
     log.info("Created report with id: {}", report.getId());
     publisher.publishEvent(new NewReportEvent(report.getId()));
     return modelMapper.map(report, ReportDTO.class);
+  }
+
+  /**
+   * Scheduled sweep that fails reports stuck in {@link ReportStatus#GENERATING} for longer than
+   * {@link #STALE_GENERATING_TIMEOUT}. Complements {@link #failStaleGeneratingReportsOnStartup()},
+   * which handles application restarts; this sweep covers generations that hang or die while the
+   * application keeps running. Stale reports are also handled eagerly in {@link #create} so a new
+   * report never has to wait for the next sweep.
+   */
+  @Scheduled(cron = "0 0 * * * *")
+  @Transactional
+  public void failStaleGeneratingReports() {
+    failStaleAndGetActiveGeneratingReports();
+  }
+
+  /**
+   * Fails reports stuck in {@link ReportStatus#GENERATING} for longer than the staleness timeout
+   * and returns the reports that are still actively generating. Reports without a timestamp are not
+   * auto-failed, since their age cannot be determined.
+   *
+   * @return reports in {@link ReportStatus#GENERATING} that are not stale
+   */
+  private List<Report> failStaleAndGetActiveGeneratingReports() {
+    LocalDateTime staleBefore = LocalDateTime.now().minus(STALE_GENERATING_TIMEOUT);
+    List<Report> generatingReports = reportRepository.findAllByStatusIs(ReportStatus.GENERATING);
+    List<Report> staleReports =
+        generatingReports.stream().filter(report -> isStale(report, staleBefore)).toList();
+    if (!staleReports.isEmpty()) {
+      log.warn("Marking {} stale report(s) stuck in GENERATING as FAILED", staleReports.size());
+      staleReports.forEach(report -> report.setStatus(ReportStatus.FAILED));
+      reportRepository.saveAll(staleReports);
+    }
+    return generatingReports.stream().filter(report -> !isStale(report, staleBefore)).toList();
+  }
+
+  private static boolean isStale(Report report, LocalDateTime staleBefore) {
+    return report.getGeneratedAt() != null && report.getGeneratedAt().isBefore(staleBefore);
   }
 
   /**
