@@ -1,3 +1,6 @@
+# WARNING: The OmicsBox sandbox is in EARLY DEVELOPMENT and is NOT READY FOR
+# PRODUCTION USE. Its APIs, check script result contract and security model
+# may change without notice. Use it for evaluation/development purposes only.
 services:
   omicsbox:
     build: .
