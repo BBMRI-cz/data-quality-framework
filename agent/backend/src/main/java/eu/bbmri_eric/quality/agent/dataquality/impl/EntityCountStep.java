@@ -8,6 +8,7 @@ import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
 import eu.bbmri_eric.quality.agent.dataquality.domain.ReportStatus;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import lombok.extern.slf4j.Slf4j;
@@ -76,86 +77,76 @@ class EntityCountStep implements ReportPipelineStep {
     SettingsDTO settings = settingsService.getSettings();
     double epsilonPerTotal =
         settings.getEpsilon() * DifferentialPrivacyUtil.ENTITY_TOTALS_EPSILON_FRACTION / 2;
-    List<Report> history =
-        reportRepository.findAllByStatusIsOrderByGeneratedAtDesc(ReportStatus.GENERATED);
-    Integer patientsAnchor =
-        resolveAnchor(history, Report::getNumberOfEntities, Report::getObfuscatedNumberOfEntities);
+    List<TotalsHistoryRow> history = reportRepository.findTotalsHistory(ReportStatus.GENERATED);
     report.setObfuscatedNumberOfEntities(
         obfuscateTotal(
             report.getNumberOfEntities(),
-            patientsAnchor,
-            previousNoisy(history, Report::getObfuscatedNumberOfEntities),
+            previousTotal(
+                history,
+                TotalsHistoryRow::numberOfEntities,
+                TotalsHistoryRow::obfuscatedNumberOfEntities,
+                PATIENT_SENSITIVITY),
             settings,
             epsilonPerTotal,
             PATIENT_SENSITIVITY));
-    Integer secondaryAnchor =
-        resolveAnchor(
-            history,
-            Report::getNumberOfSecondaryEntities,
-            Report::getObfuscatedNumberOfSecondaryEntities);
     report.setObfuscatedNumberOfSecondaryEntities(
         obfuscateTotal(
             report.getNumberOfSecondaryEntities(),
-            secondaryAnchor,
-            previousNoisy(history, Report::getObfuscatedNumberOfSecondaryEntities),
+            previousTotal(
+                history,
+                TotalsHistoryRow::numberOfSecondaryEntities,
+                TotalsHistoryRow::obfuscatedNumberOfSecondaryEntities,
+                SECONDARY_ENTITY_SENSITIVITY),
             settings,
             epsilonPerTotal,
             SECONDARY_ENTITY_SENSITIVITY));
   }
 
-  private static Integer previousNoisy(
-      List<Report> historyNewestFirst, Function<Report, Integer> noisyGetter) {
-    return historyNewestFirst.isEmpty() ? null : noisyGetter.apply(historyNewestFirst.getFirst());
+  /**
+   * Reconstructs the previous noisy total and its anchor for one total of the totals history. See
+   * {@link NoiseAnchors} for how the anchor is reconstructed exactly.
+   */
+  private static NoiseAnchors.PreviousNoise<Integer> previousTotal(
+      List<TotalsHistoryRow> totalsHistory,
+      Function<TotalsHistoryRow, Integer> rawGetter,
+      Function<TotalsHistoryRow, Integer> noisyGetter,
+      int sensitivity) {
+    List<NoiseAnchors.HistoryEntry<Integer>> series = new ArrayList<>();
+    for (TotalsHistoryRow row : totalsHistory) {
+      series.add(
+          new NoiseAnchors.HistoryEntry<>(rawGetter.apply(row), noisyGetter.apply(row), null));
+    }
+    return NoiseAnchors.reconstruct(series, refreshThreshold(sensitivity));
   }
 
   /**
-   * Derives the anchor — the raw total the latest noisy total was drawn for — from the report
-   * history: reused noise propagates bit-for-bit, so the anchor is the raw total of the oldest
-   * report in the contiguous backwards run of reports sharing the current noisy value. Returns
-   * {@code null} when there is no usable previous noisy value (and hence no reuse).
+   * Minimum drift from the anchor that triggers a fresh draw for a total of the given sensitivity.
+   * The same threshold drives both the replay in {@link NoiseAnchors} and the reuse decision here,
+   * so scaling a total's threshold (e.g. the sample total by {@link #SECONDARY_ENTITY_SENSITIVITY})
+   * is a one-word change in this method.
    */
-  private static Integer resolveAnchor(
-      List<Report> historyNewestFirst,
-      Function<Report, Integer> rawGetter,
-      Function<Report, Integer> noisyGetter) {
-    if (historyNewestFirst.isEmpty()) {
-      return null;
-    }
-    Integer chainValue = noisyGetter.apply(historyNewestFirst.getFirst());
-    if (chainValue == null) {
-      return null;
-    }
-    Integer anchor = rawGetter.apply(historyNewestFirst.getFirst());
-    for (Report pastReport : historyNewestFirst) {
-      if (!chainValue.equals(noisyGetter.apply(pastReport))) {
-        break;
-      }
-      Integer raw = rawGetter.apply(pastReport);
-      if (raw != null) {
-        anchor = raw;
-      }
-    }
-    return anchor;
+  private static int refreshThreshold(int sensitivity) {
+    return DifferentialPrivacyUtil.NOISE_REFRESH_THRESHOLD;
   }
 
   /**
    * Resolves the noisy total, reusing the previous noisy value while the raw count stays within
-   * {@link DifferentialPrivacyUtil#NOISE_REFRESH_THRESHOLD} of the anchor the noise was drawn for.
+   * {@link #refreshThreshold} of the anchor the noise was drawn for — and it does not republish a
+   * non-zero value below the current minimum suppression threshold.
    */
   private Integer obfuscateTotal(
       Integer count,
-      Integer previousAnchor,
-      Integer previousNoisyCount,
+      NoiseAnchors.PreviousNoise<Integer> previous,
       SettingsDTO settings,
       double epsilon,
       int sensitivity) {
     if (count == null) {
       return null;
     }
-    if (previousNoisyCount != null
-        && previousAnchor != null
-        && Math.abs(count - previousAnchor) < DifferentialPrivacyUtil.NOISE_REFRESH_THRESHOLD) {
-      return previousNoisyCount;
+    if (previous != null
+        && Math.abs(count - previous.anchor()) < refreshThreshold(sensitivity)
+        && (previous.published() == 0 || previous.published() >= settings.getMinThreshold())) {
+      return previous.published();
     }
     return addNoise(count, settings, epsilon, sensitivity);
   }

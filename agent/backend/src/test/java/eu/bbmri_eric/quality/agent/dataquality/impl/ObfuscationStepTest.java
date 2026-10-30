@@ -474,6 +474,66 @@ class ObfuscationStepTest {
     assertThat(r2.getObfuscatedValue()).isEqualTo(97.0);
   }
 
+  @Test
+  void execute_withSuppressedCollisionRun_replaysAnchorToLastFreshDraw() {
+    settingsService.updateSettings(
+        SettingsDTO.builder()
+            .epsilon(1_000_000.0)
+            .minThreshold(10)
+            .noiseMechanism(NoiseMechanism.LAPLACE)
+            .build());
+    // Every draw published the same value (as suppressed draws all publish 0.0 would); the anchor
+    // must replay forward to the last fresh draw (75), not stay at the run's oldest raw (70).
+    // Drift from the replayed anchor is 4 → reuse; drift from the oldest raw would be 9 → fresh.
+    backdate(generatedReportWithResult(1L, null, 70, 75.0, 0.5), 4);
+    backdate(generatedReportWithResult(1L, null, 72, 75.0, 0.5), 3);
+    backdate(generatedReportWithResult(1L, null, 75, 75.0, 0.5), 2);
+    backdate(generatedReportWithResult(1L, null, 77, 75.0, 0.5), 1);
+
+    Report report = new Report();
+    Result current = new Result("c1", 1L, 79, null, 80, 50, null, null, null);
+    report.setResults(new ArrayList<>(List.of(current)));
+
+    step.execute(report);
+
+    assertThat(current.getObfuscatedValue()).isEqualTo(75.0);
+    assertThat(current.getEpsilon()).isEqualTo(0.5);
+  }
+
+  @Test
+  void execute_withPreviousValueBelowCurrentThreshold_drawsFreshInsteadOfRepublishing() {
+    settingsService.updateSettings(
+        SettingsDTO.builder()
+            .epsilon(1_000_000.0)
+            .minThreshold(50)
+            .noiseMechanism(NoiseMechanism.LAPLACE)
+            .build());
+    generatedReportWithResult(1L, null, 30, 30.0, 0.5);
+
+    Report report = new Report();
+    Result current = new Result("c1", 1L, 30, null, 80, 50, null, null, null);
+    report.setResults(new ArrayList<>(List.of(current)));
+
+    step.execute(report);
+
+    assertThat(current.getObfuscatedValue()).isEqualTo(0.0);
+  }
+
+  @Test
+  void findResultHistory_withTiedTimestamps_ordersByIdDescending() {
+    LocalDateTime tied = LocalDateTime.now().minusDays(1);
+    Report older = generatedReportWithResult(1L, null, 111, 50.0, 0.5);
+    older.setGeneratedAt(tied);
+    reportRepository.save(older);
+    Report newer = generatedReportWithResult(1L, null, 112, 60.0, 0.5);
+    newer.setGeneratedAt(tied);
+    reportRepository.save(newer);
+
+    List<ResultHistoryRow> rows = reportRepository.findResultHistory(ReportStatus.GENERATED);
+
+    assertThat(rows.getFirst().rawValue()).isEqualTo(112);
+  }
+
   private Report generatedReportWithResult(
       Long checkId, String stratum, int rawValue, double obfuscatedValue, double epsilon) {
     Report previous = new Report();
@@ -482,6 +542,11 @@ class ObfuscationStepTest {
         new Result("c1", checkId, rawValue, obfuscatedValue, 80, 50, epsilon, null, stratum);
     previous.addResult(result);
     return reportRepository.save(previous);
+  }
+
+  private Report backdate(Report report, int daysAgo) {
+    report.setGeneratedAt(LocalDateTime.now().minusDays(daysAgo));
+    return reportRepository.save(report);
   }
 
   @Test

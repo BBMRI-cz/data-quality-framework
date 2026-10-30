@@ -9,8 +9,8 @@ import eu.bbmri_eric.quality.agent.dataquality.domain.Result;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.agent.settings.NoiseMechanism;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -147,13 +147,14 @@ class ObfuscationStep implements ReportPipelineStep {
         resultsToObfuscate.size(),
         noPreferenceCount,
         ignorePreferences);
-    Map<CheckInstanceKey, PreviousNoise> previousNoise = previousNoiseByCheckAndStratum(results);
+    Map<CheckInstanceKey, NoiseAnchors.PreviousNoise<Double>> previousNoise =
+        previousNoiseByCheckAndStratum(results);
     for (Result result : results) {
       if (result.getRawValue() == null) continue;
-      PreviousNoise previous = previousNoise.get(CheckInstanceKey.of(result));
-      if (canReuse(previous, result)) {
-        result.setObfuscatedValue(previous.result().getObfuscatedValue());
-        result.setEpsilon(previous.result().getEpsilon());
+      NoiseAnchors.PreviousNoise<Double> previous = previousNoise.get(CheckInstanceKey.of(result));
+      if (canReuse(previous, result, threshold)) {
+        result.setObfuscatedValue(previous.published());
+        result.setEpsilon(previous.epsilon());
         continue;
       }
       double epsilon =
@@ -165,72 +166,50 @@ class ObfuscationStep implements ReportPipelineStep {
   /**
    * Decides whether the previous noisy value can be reused: only when the raw count has drifted
    * less than {@link DifferentialPrivacyUtil#NOISE_REFRESH_THRESHOLD} away from the anchor (the raw
-   * value the noise was drawn for). Reusing on every tiny change would reveal exactly when counts
-   * move — and which checks a known patient affected.
+   * value the noise was drawn for), and the reused value is not republishing a non-zero count below
+   * the current minimum suppression threshold. Reusing on every tiny change would reveal exactly
+   * when counts move — and which checks a known patient affected.
    */
-  private boolean canReuse(PreviousNoise previous, Result current) {
+  private boolean canReuse(
+      NoiseAnchors.PreviousNoise<Double> previous, Result current, int minThreshold) {
     return previous != null
-        && previous.anchor() != null
         && Math.abs(current.getRawValue() - previous.anchor())
-            < DifferentialPrivacyUtil.NOISE_REFRESH_THRESHOLD;
+            < DifferentialPrivacyUtil.NOISE_REFRESH_THRESHOLD
+        && (previous.published() == 0.0 || previous.published() >= minThreshold);
   }
 
   /**
-   * Resolves, for every check instance in the given results, the noisy value used in the most
-   * recent generated report and the raw count that noise was originally drawn for (the anchor).
-   *
-   * <p>The anchor is derived from the report history rather than stored: because reused noise
-   * propagates bit-for-bit, the anchor of the latest noisy value is the raw count of the oldest
-   * report in the contiguous backwards run of reports sharing that same noisy value.
+   * Resolves, for every check instance in the given results, the noisy value published most
+   * recently and the raw count that noise was drawn for (the anchor), from one projection query
+   * over the report history. See {@link NoiseAnchors} for how the anchor is reconstructed exactly.
    */
-  private Map<CheckInstanceKey, PreviousNoise> previousNoiseByCheckAndStratum(
+  private Map<CheckInstanceKey, NoiseAnchors.PreviousNoise<Double>> previousNoiseByCheckAndStratum(
       List<Result> currentResults) {
     Set<CheckInstanceKey> wanted =
         currentResults.stream()
             .filter(result -> result.getRawValue() != null)
             .map(CheckInstanceKey::of)
             .collect(Collectors.toSet());
-    Map<CheckInstanceKey, Result> newestResult = new HashMap<>();
-    Map<CheckInstanceKey, Double> chainValue = new HashMap<>();
-    Map<CheckInstanceKey, Integer> anchorCandidate = new HashMap<>();
-    Set<CheckInstanceKey> unresolved = new HashSet<>(wanted);
-    for (Report pastReport :
-        reportRepository.findAllByStatusIsOrderByGeneratedAtDesc(ReportStatus.GENERATED)) {
-      if (unresolved.isEmpty()) break;
-      Map<CheckInstanceKey, Result> byKey = new HashMap<>();
-      for (Result result : pastReport.getResults()) {
-        byKey.putIfAbsent(CheckInstanceKey.of(result), result);
-      }
-      for (CheckInstanceKey key : List.copyOf(unresolved)) {
-        Result result = byKey.get(key);
-        if (!chainValue.containsKey(key)) {
-          if (result == null || result.getObfuscatedValue() == null) {
-            unresolved.remove(key);
-            continue;
+    if (wanted.isEmpty()) {
+      return Map.of();
+    }
+    Map<CheckInstanceKey, List<NoiseAnchors.HistoryEntry<Double>>> seriesByKey = new HashMap<>();
+    for (ResultHistoryRow row : reportRepository.findResultHistory(ReportStatus.GENERATED)) {
+      CheckInstanceKey key = new CheckInstanceKey(row.checkId(), row.stratum());
+      if (!wanted.contains(key)) continue;
+      seriesByKey.computeIfAbsent(key, k -> new ArrayList<>()).add(row.toHistoryEntry());
+    }
+    Map<CheckInstanceKey, NoiseAnchors.PreviousNoise<Double>> chains = new HashMap<>();
+    seriesByKey.forEach(
+        (key, series) -> {
+          NoiseAnchors.PreviousNoise<Double> previous =
+              NoiseAnchors.reconstruct(series, DifferentialPrivacyUtil.NOISE_REFRESH_THRESHOLD);
+          if (previous != null) {
+            chains.put(key, previous);
           }
-          newestResult.put(key, result);
-          chainValue.put(key, result.getObfuscatedValue());
-          anchorCandidate.put(key, result.getRawValue());
-          continue;
-        }
-        if (result != null && chainValue.get(key).equals(result.getObfuscatedValue())) {
-          anchorCandidate.put(key, result.getRawValue());
-        } else {
-          unresolved.remove(key);
-        }
-      }
-    }
-    Map<CheckInstanceKey, PreviousNoise> chains = new HashMap<>();
-    for (CheckInstanceKey key : wanted) {
-      if (newestResult.containsKey(key)) {
-        chains.put(key, new PreviousNoise(newestResult.get(key), anchorCandidate.get(key)));
-      }
-    }
+        });
     return chains;
   }
-
-  /** The noisy value used for a check instance last time, plus its derived anchor. */
-  private record PreviousNoise(Result result, Integer anchor) {}
 
   private record CheckInstanceKey(Long checkId, String stratum) {
     private static CheckInstanceKey of(Result result) {

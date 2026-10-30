@@ -12,6 +12,7 @@ import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
 import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.function.ToIntFunction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -299,6 +300,65 @@ class EntityCountStepTest {
       sum += Math.abs(noisyTotal.applyAsInt(step.execute(new Report())) - RAW_COUNT);
     }
     return sum / STATISTICAL_SAMPLES;
+  }
+
+  @Test
+  void execute_withRoundingCollisionRun_replaysAnchorToLastFreshDraw() {
+    settingsService.updateSettings(
+        SettingsDTO.builder()
+            .epsilon(1_000_000.0)
+            .minThreshold(10)
+            .noiseMechanism(NoiseMechanism.LAPLACE)
+            .build());
+    // Two consecutive fresh integer draws rounded to the same published value; the anchor must be
+    // the raw of the most recent fresh draw (306): drift from it is 4 → reuse; drift from the
+    // run's oldest raw (300) would be 10 → fresh.
+    Report older = givenPreviousReportWithTotals(300, 9876, 302, 9880);
+    older.setGeneratedAt(LocalDateTime.now().minusDays(2));
+    reportRepository.save(older);
+    Report newer = givenPreviousReportWithTotals(306, 9876, 302, 9880);
+    newer.setGeneratedAt(LocalDateTime.now().minusDays(1));
+    reportRepository.save(newer);
+    when(dataStore.countPatients()).thenReturn(310);
+    when(dataStore.countSecondaryEntities()).thenReturn(9876);
+
+    Report report = step.execute(new Report());
+
+    assertThat(report.getObfuscatedNumberOfEntities()).isEqualTo(302);
+    assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isEqualTo(9880);
+  }
+
+  @Test
+  void execute_withPreviousTotalBelowCurrentThreshold_drawsFreshInsteadOfRepublishing() {
+    settingsService.updateSettings(
+        SettingsDTO.builder()
+            .epsilon(1_000_000.0)
+            .minThreshold(50)
+            .noiseMechanism(NoiseMechanism.LAPLACE)
+            .build());
+    givenPreviousReportWithTotals(40, 60, 40, 60);
+    when(dataStore.countPatients()).thenReturn(40);
+    when(dataStore.countSecondaryEntities()).thenReturn(60);
+
+    Report report = step.execute(new Report());
+
+    assertThat(report.getObfuscatedNumberOfEntities()).isEqualTo(0);
+    assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isEqualTo(60);
+  }
+
+  @Test
+  void findTotalsHistory_withTiedTimestamps_ordersByIdDescending() {
+    LocalDateTime tied = LocalDateTime.now().minusDays(1);
+    Report older = givenPreviousReportWithTotals(111, 333, 111, 333);
+    older.setGeneratedAt(tied);
+    reportRepository.save(older);
+    Report newer = givenPreviousReportWithTotals(222, 444, 222, 444);
+    newer.setGeneratedAt(tied);
+    reportRepository.save(newer);
+
+    List<TotalsHistoryRow> rows = reportRepository.findTotalsHistory(ReportStatus.GENERATED);
+
+    assertThat(rows.getFirst().numberOfEntities()).isEqualTo(222);
   }
 
   @Test

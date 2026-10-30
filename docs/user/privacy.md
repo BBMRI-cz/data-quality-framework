@@ -87,7 +87,7 @@ The implementation includes comprehensive test coverage to ensure correctness of
 Reports are generated repeatedly (by default daily). If every report sampled fresh noise for a count that barely moved, an observer could average the noisy values over many reports and cancel the noise out — and a perfectly unchanging reported value would even reveal *exactly when* a count moved, i.e. which checks a known patient affected. To prevent both, the agent reuses the previous noisy value until the count has drifted far enough from the value the noise was drawn for:
 
 - Noise is only re-sampled once a raw count has moved **at least 5** away from the value its current noise was drawn for (the **anchor**). Smaller drifts reuse the previous noisy value verbatim.
-- The anchor is **derived from the report history**, not stored separately: because reused noise propagates bit-for-bit, the anchor is simply the raw count of the oldest report in the backwards run of reports sharing the current noisy value.
+- The anchor is **derived from the report history**, not stored separately: because reused noise propagates bit-for-bit, the anchor can be reconstructed exactly by walking the newest-first history to the end of the run of identical published values and then replaying the refresh rule (`|raw − anchor| < 5`) forward over that run. The replay also stays correct when several fresh draws in a row happen to publish the same value (e.g. suppressed counts all publishing 0, or integer totals rounding to the same number).
 - This applies identically to the entity totals and to individual check results (matched by check and stratum).
 - Only one report can be generated at a time, so the report history used for the derivation is always unambiguous.
 
