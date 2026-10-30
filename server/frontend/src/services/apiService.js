@@ -284,7 +284,7 @@ class ApiService {
   }
 
   async updateUserRoles(userId, roles) {
-    const response = await api.put(`${USERS_URL}/${userId}/roles`, { roles });
+    const response = await api.put(`${USERS_URL}/${userId}/roles`, roles);
     return response.data;
   }
 

@@ -661,7 +661,7 @@ public class UserControllerTest {
             put("/api/v1/users/" + aliceId + "/roles")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"roles\":[\"HUMAN_USER\",\"ADMIN\"]}"))
+                .content("[\"HUMAN_USER\",\"ADMIN\"]"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.roles", containsInAnyOrder("HUMAN_USER", "ADMIN")));
 
@@ -675,7 +675,7 @@ public class UserControllerTest {
             put("/api/v1/users/1/roles")
                 .with(user("viewer").roles("HUMAN_USER"))
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"roles\":[\"ADMIN\"]}"))
+                .content("[\"ADMIN\"]"))
         .andExpect(status().isForbidden());
   }
 
@@ -685,7 +685,7 @@ public class UserControllerTest {
         .perform(
             put("/api/v1/users/1/roles")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"roles\":[\"ADMIN\"]}"))
+                .content("[\"ADMIN\"]"))
         .andExpect(status().isUnauthorized());
   }
 
@@ -699,7 +699,7 @@ public class UserControllerTest {
             put("/api/v1/users/" + adminId + "/roles")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"roles\":[]}"))
+                .content("[]"))
         .andExpect(status().isBadRequest());
   }
 
@@ -715,7 +715,7 @@ public class UserControllerTest {
             put("/api/v1/users/" + aliceId + "/roles")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"roles\":[\"HUMAN_USER\",null]}"))
+                .content("[\"HUMAN_USER\",null]"))
         .andExpect(status().isBadRequest());
 
     assertEquals(
@@ -734,7 +734,7 @@ public class UserControllerTest {
             put("/api/v1/users/" + aliceId + "/roles")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"roles\":[\"ADMIN\"]}"))
+                .content("[\"ADMIN\"]"))
         .andExpect(status().isBadRequest());
 
     assertTrue(userRepository.findById(aliceId).orElseThrow().hasRole(UserRole.HUMAN_USER));
@@ -750,7 +750,7 @@ public class UserControllerTest {
             put("/api/v1/users/" + adminId + "/roles")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"roles\":[\"HUMAN_USER\"]}"))
+                .content("[\"HUMAN_USER\"]"))
         .andExpect(status().isBadRequest());
 
     assertTrue(userRepository.findById(adminId).orElseThrow().hasRole(UserRole.ADMIN));
@@ -766,7 +766,7 @@ public class UserControllerTest {
             put("/api/v1/users/" + agentUserId + "/roles")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"roles\":[\"ADMIN\"]}"))
+                .content("[\"ADMIN\"]"))
         .andExpect(status().isBadRequest());
   }
 
@@ -779,7 +779,7 @@ public class UserControllerTest {
             put("/api/v1/users/999999/roles")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"roles\":[\"ADMIN\"]}"))
+                .content("[\"ADMIN\"]"))
         .andExpect(status().isNotFound());
   }
 

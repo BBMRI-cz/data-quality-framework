@@ -168,39 +168,6 @@ class UserServiceImplTest {
   }
 
   @Test
-  @DisplayName("updateRoles_withoutHumanUserRole_throwsIllegalArgumentException")
-  void updateRoles_withoutHumanUserRole_throwsIllegalArgumentException() {
-    User human = new User("human", "subject-human");
-    human.addRole(UserRole.HUMAN_USER);
-    when(userRepository.findById(2L)).thenReturn(Optional.of(human));
-
-    assertThrows(
-        IllegalArgumentException.class, () -> userService.updateRoles(2L, Set.of(UserRole.ADMIN)));
-
-    assertEquals(Set.of(UserRole.HUMAN_USER), human.getRoles());
-    verify(userRepository, never()).save(any(User.class));
-  }
-
-  @Test
-  @DisplayName("updateRoles_forAgentAccount_throwsIllegalArgumentException")
-  void updateRoles_forAgentAccount_throwsIllegalArgumentException() {
-    when(userRepository.findById(3L)).thenReturn(Optional.of(testUser));
-
-    assertThrows(
-        IllegalArgumentException.class, () -> userService.updateRoles(3L, Set.of(UserRole.ADMIN)));
-
-    verify(userRepository, never()).save(any(User.class));
-  }
-
-  @Test
-  @DisplayName("updateRoles_withEmptyRoles_throwsIllegalArgumentException")
-  void updateRoles_withEmptyRoles_throwsIllegalArgumentException() {
-    assertThrows(IllegalArgumentException.class, () -> userService.updateRoles(1L, Set.of()));
-
-    verify(userRepository, never()).findById(any());
-  }
-
-  @Test
   @DisplayName("findAllRoles_returnsEveryRole")
   void findAllRoles_returnsEveryRole() {
     assertEquals(List.of(UserRole.values()), userService.findAllRoles());

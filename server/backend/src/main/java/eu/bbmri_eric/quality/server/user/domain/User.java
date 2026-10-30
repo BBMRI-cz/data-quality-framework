@@ -119,14 +119,12 @@ public class User {
     roles.remove(role);
   }
 
-  /**
-   * Replaces all roles of the user with the given set.
-   *
-   * @param newRoles the new roles, must not be null or empty
-   */
-  public void replaceRoles(Set<UserRole> newRoles) {
-    if (newRoles == null || newRoles.isEmpty()) {
-      throw new IllegalArgumentException("Roles cannot be null or empty");
+  public void setRoles(Set<UserRole> newRoles) {
+    if (agentId != null) {
+      throw new IllegalArgumentException("Roles of agent accounts cannot be changed");
+    }
+    if (newRoles == null || !newRoles.contains(UserRole.HUMAN_USER)) {
+      throw new IllegalArgumentException("Roles must include HUMAN_USER");
     }
     roles.clear();
     roles.addAll(newRoles);

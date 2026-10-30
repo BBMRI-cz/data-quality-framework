@@ -134,24 +134,15 @@ public class UserServiceImpl implements UserService {
   @Transactional
   public UserDTO updateRoles(Long userId, Set<UserRole> roles) {
     Objects.requireNonNull(userId, "User ID cannot be null");
-    if (roles == null || roles.isEmpty()) {
-      throw new IllegalArgumentException("Roles cannot be null or empty");
-    }
     User user =
         userRepository
             .findById(userId)
             .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
-    if (user.getAgentId() != null) {
-      throw new IllegalArgumentException("Roles of agent accounts cannot be changed");
-    }
-    if (!roles.contains(UserRole.HUMAN_USER)) {
-      throw new IllegalArgumentException("The HUMAN_USER role cannot be removed");
-    }
     UserDTO currentUser = authenticationContextService.getCurrentUser();
     if (userId.equals(currentUser.getId()) && !roles.contains(UserRole.ADMIN)) {
       throw new IllegalArgumentException("You cannot remove your own ADMIN role");
     }
-    user.replaceRoles(roles);
+    user.setRoles(roles);
     return modelMapper.map(userRepository.save(user), UserDTO.class);
   }
 

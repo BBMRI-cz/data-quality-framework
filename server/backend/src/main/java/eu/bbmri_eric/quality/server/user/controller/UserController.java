@@ -3,14 +3,16 @@ package eu.bbmri_eric.quality.server.user.controller;
 import eu.bbmri_eric.quality.server.user.UserRole;
 import eu.bbmri_eric.quality.server.user.UserService;
 import eu.bbmri_eric.quality.server.user.dto.PasswordChangeRequest;
-import eu.bbmri_eric.quality.server.user.dto.UpdateUserRolesDTO;
 import eu.bbmri_eric.quality.server.user.dto.UserDTO;
 import eu.bbmri_eric.quality.server.user.dto.UserFilterDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import java.util.List;
+import java.util.Set;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.PagedModel;
@@ -86,17 +88,17 @@ public class UserController {
   @Operation(
       summary = "Update user roles",
       description =
-          "Replaces the roles of a user. Restricted to administrators. HUMAN_USER must always be "
-              + "kept, agent accounts cannot be modified and administrators cannot remove their own "
-              + "ADMIN role.")
+          "Replaces the roles of a user. Restricted to administrators. Roles must include "
+              + "HUMAN_USER, agent accounts cannot be modified and administrators cannot remove "
+              + "their own ADMIN role.")
   @PutMapping("/api/v1/users/{userId}/roles")
   public ResponseEntity<EntityModel<UserDTO>> updateRoles(
       @Parameter(description = "ID of the user whose roles should be updated", example = "1")
           @PathVariable
           Long userId,
-      @Parameter(description = "New roles for the user", required = true) @Valid @RequestBody
-          UpdateUserRolesDTO request) {
-    UserDTO userDTO = userService.updateRoles(userId, request.getRoles());
+      @Parameter(description = "New roles for the user", required = true) @NotEmpty @RequestBody
+          Set<@NotNull UserRole> roles) {
+    UserDTO userDTO = userService.updateRoles(userId, roles);
     return ResponseEntity.ok(linkBuilder.toModel(userDTO));
   }
 
