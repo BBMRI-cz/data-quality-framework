@@ -91,7 +91,6 @@
 
   const SEARCH_DEBOUNCE_MS = 300;
   const DEFAULT_ROLE = 'HUMAN_USER';
-  const roleOptions = ['HUMAN_USER', 'ADMIN'];
 
   const router = useRouter();
   const users = ref([]);
@@ -100,6 +99,7 @@
   const pageSize = ref(10);
   const searchQuery = ref('');
   const selectedRole = ref(DEFAULT_ROLE);
+  const roleOptions = ref([]);
   const loading = ref(false);
   const error = ref(null);
   let searchDebounceTimer = null;
@@ -192,7 +192,18 @@
 
   watch(selectedRole, reloadFromFirstPage);
 
-  onMounted(loadUsers);
+  const loadRoles = async () => {
+    try {
+      roleOptions.value = await apiService.getRoles();
+    } catch (err) {
+      console.error('Error loading roles:', err);
+    }
+  };
+
+  onMounted(() => {
+    loadRoles();
+    loadUsers();
+  });
 
   onUnmounted(() => clearTimeout(searchDebounceTimer));
 </script>
