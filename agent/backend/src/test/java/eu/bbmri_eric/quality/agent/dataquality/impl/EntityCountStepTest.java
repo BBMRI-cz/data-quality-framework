@@ -65,11 +65,11 @@ class EntityCountStepTest {
   }
 
   @Test
-  void execute_withHighEpsilon_shouldKeepObfuscatedCountsCloseToRawCounts() {
+  void execute_withMaxValidEpsilon_shouldKeepObfuscatedCountsCloseToRawCounts() {
     settingsService.updateSettings(
         SettingsDTO.builder()
-            .epsilon(1_000_000.0)
-            .minThreshold(0)
+            .epsilon(10.0)
+            .minThreshold(50)
             .noiseMechanism(NoiseMechanism.LAPLACE)
             .build());
     when(dataStore.countPatients()).thenReturn(4321);
@@ -77,15 +77,16 @@ class EntityCountStepTest {
 
     Report report = step.execute(new Report());
 
-    assertThat(report.getObfuscatedNumberOfEntities()).isEqualTo(4321);
-    assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isEqualTo(9876);
+    // Per-total ε = 10 × 0.1 = 1 → patient noise b = 1, sample noise b = 20
+    assertThat(report.getObfuscatedNumberOfEntities()).isBetween(4321 - 10, 4321 + 10);
+    assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isBetween(9876 - 250, 9876 + 250);
   }
 
   @Test
   void execute_withHighMinThreshold_shouldSuppressLowCounts() {
     settingsService.updateSettings(
         SettingsDTO.builder()
-            .epsilon(1_000_000.0)
+            .epsilon(10.0)
             .minThreshold(10000)
             .noiseMechanism(NoiseMechanism.LAPLACE)
             .build());
@@ -158,44 +159,65 @@ class EntityCountStepTest {
   void execute_withChangedTotals_appliesFreshNoise() {
     settingsService.updateSettings(
         SettingsDTO.builder()
-            .epsilon(1_000_000.0)
-            .minThreshold(10)
+            .epsilon(10.0)
+            .minThreshold(50)
             .noiseMechanism(NoiseMechanism.LAPLACE)
             .build());
     givenPreviousReportWithTotals(4321, 9876, 4330, 9880);
-    when(dataStore.countPatients()).thenReturn(4332);
-    when(dataStore.countSecondaryEntities()).thenReturn(9885);
+    // Patient threshold is 5 (sensitivity 1), sample threshold is 100 (5 x sensitivity 20).
+    when(dataStore.countPatients()).thenReturn(4380);
+    when(dataStore.countSecondaryEntities()).thenReturn(10100);
 
     Report report = step.execute(new Report());
 
-    assertThat(report.getObfuscatedNumberOfEntities()).isEqualTo(4332);
-    assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isEqualTo(9885);
+    assertThat(report.getObfuscatedNumberOfEntities()).isBetween(4360, 4400);
+    assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isBetween(9900, 10300);
   }
 
   @Test
   void execute_withPartiallyChangedTotals_reusesOnlyUnchangedTotal() {
     settingsService.updateSettings(
         SettingsDTO.builder()
-            .epsilon(1_000_000.0)
-            .minThreshold(10)
+            .epsilon(10.0)
+            .minThreshold(50)
             .noiseMechanism(NoiseMechanism.LAPLACE)
             .build());
     givenPreviousReportWithTotals(4321, 9876, 4330, 9880);
-    when(dataStore.countPatients()).thenReturn(4323);
-    when(dataStore.countSecondaryEntities()).thenReturn(9881);
+    // Patients moved past their threshold (59 >= 5) -> fresh; samples moved 4 (< 100) -> reuse.
+    when(dataStore.countPatients()).thenReturn(4380);
+    when(dataStore.countSecondaryEntities()).thenReturn(9880);
+
+    Report report = step.execute(new Report());
+
+    assertThat(report.getObfuscatedNumberOfEntities()).isBetween(4360, 4400);
+    assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isEqualTo(9880);
+  }
+
+  @Test
+  void execute_withSampleDriftBelowHundred_reusesPreviousTotal() {
+    settingsService.updateSettings(
+        SettingsDTO.builder()
+            .epsilon(10.0)
+            .minThreshold(50)
+            .noiseMechanism(NoiseMechanism.LAPLACE)
+            .build());
+    givenPreviousReportWithTotals(4321, 9876, 4330, 9880);
+    // 60 additional samples stay below the scaled sample threshold (100) -> invisible.
+    when(dataStore.countPatients()).thenReturn(4321);
+    when(dataStore.countSecondaryEntities()).thenReturn(9936);
 
     Report report = step.execute(new Report());
 
     assertThat(report.getObfuscatedNumberOfEntities()).isEqualTo(4330);
-    assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isEqualTo(9881);
+    assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isEqualTo(9880);
   }
 
   @Test
   void execute_whenPreviousTotalsHaveNoNoisyValue_appliesFreshNoise() {
     settingsService.updateSettings(
         SettingsDTO.builder()
-            .epsilon(1_000_000.0)
-            .minThreshold(10)
+            .epsilon(10.0)
+            .minThreshold(50)
             .noiseMechanism(NoiseMechanism.LAPLACE)
             .build());
     givenPreviousReportWithTotals(4321, 9876, null, null);
@@ -204,33 +226,33 @@ class EntityCountStepTest {
 
     Report report = step.execute(new Report());
 
-    assertThat(report.getObfuscatedNumberOfEntities()).isEqualTo(4321);
-    assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isEqualTo(9876);
+    assertThat(report.getObfuscatedNumberOfEntities()).isBetween(4311, 4331);
+    assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isBetween(9626, 10126);
   }
 
   @Test
   void execute_anchorIsDerivedFromHistoryAcrossReuseHop() {
     settingsService.updateSettings(
         SettingsDTO.builder()
-            .epsilon(1_000_000.0)
-            .minThreshold(10)
+            .epsilon(10.0)
+            .minThreshold(50)
             .noiseMechanism(NoiseMechanism.LAPLACE)
             .build());
     // Chain: noise was drawn for 4321; the latest report (4323) reused it. The derived anchor is
-    // 4321, so a drift of 6 triggers fresh noise even though the drift from the latest count is 4.
+    // 4321, so a drift of 39 triggers fresh noise even though the drift from the latest count
+    // would still have been above the patient threshold of 5.
     Report older = givenPreviousReportWithTotals(4321, 9876, 4330, 9880);
     older.setGeneratedAt(LocalDateTime.now().minusDays(2));
     reportRepository.save(older);
     Report newer = givenPreviousReportWithTotals(4323, 9876, 4330, 9880);
     newer.setGeneratedAt(LocalDateTime.now().minusDays(1));
     reportRepository.save(newer);
-    when(dataStore.countPatients()).thenReturn(4327);
+    when(dataStore.countPatients()).thenReturn(4360);
     when(dataStore.countSecondaryEntities()).thenReturn(9876);
 
     Report report = step.execute(new Report());
 
-    assertThat(report.getObfuscatedNumberOfEntities()).isNotEqualTo(4330);
-    assertThat(report.getObfuscatedNumberOfEntities()).isEqualTo(4327);
+    assertThat(report.getObfuscatedNumberOfEntities()).isBetween(4340, 4380);
     assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isEqualTo(9880);
   }
 
@@ -306,7 +328,7 @@ class EntityCountStepTest {
   void execute_withRoundingCollisionRun_replaysAnchorToLastFreshDraw() {
     settingsService.updateSettings(
         SettingsDTO.builder()
-            .epsilon(1_000_000.0)
+            .epsilon(10.0)
             .minThreshold(10)
             .noiseMechanism(NoiseMechanism.LAPLACE)
             .build());
@@ -332,7 +354,7 @@ class EntityCountStepTest {
   void execute_withPreviousTotalBelowCurrentThreshold_drawsFreshInsteadOfRepublishing() {
     settingsService.updateSettings(
         SettingsDTO.builder()
-            .epsilon(1_000_000.0)
+            .epsilon(10.0)
             .minThreshold(50)
             .noiseMechanism(NoiseMechanism.LAPLACE)
             .build());

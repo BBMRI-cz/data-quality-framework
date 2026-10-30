@@ -3,6 +3,7 @@ package eu.bbmri_eric.quality.agent.settings.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
+import jakarta.validation.ConstraintViolationException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -96,7 +97,14 @@ class SettingsEnvironmentOverrider implements ApplicationRunner {
 
   private void saveSettings(Map<String, Object> settingsMap) {
     SettingsDTO updatedSettings = objectMapper.convertValue(settingsMap, SettingsDTO.class);
-    settingsService.updateSettings(updatedSettings);
+    try {
+      settingsService.updateSettings(updatedSettings);
+    } catch (ConstraintViolationException e) {
+      // Reject out-of-range environment overrides (e.g. APP_SETTING_EPSILON=1e9) without
+      // bricking the startup: the override is not applied, and the startup clamp keeps any
+      // already-stored value in its valid range.
+      log.error("Ignoring invalid setting override from environment: {}", e.getMessage());
+    }
   }
 
   protected Map<String, String> getSystemEnv() {

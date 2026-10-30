@@ -3,7 +3,6 @@ package eu.bbmri_eric.quality.agent.dataquality.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
@@ -152,19 +151,24 @@ class ObfuscationStepTest {
   }
 
   @Test
-  void execute_withZeroEpsilonBudget_shouldProduceZeroObfuscatedValues() {
-    settingsService.updateSettings(SettingsDTO.builder().epsilon(0.0).build());
+  void execute_withMinimumEpsilonBudget_producesValidNoise() {
+    settingsService.updateSettings(SettingsDTO.builder().epsilon(0.1).build());
 
     Report report = new Report();
     Result r1 = new Result("c1", 1L, 100, null, 80, 50, 1.0, null, null);
     report.setResults(new ArrayList<>(List.of(r1)));
 
-    assertThrows(IllegalArgumentException.class, () -> step.execute(report));
+    // The smallest allowed epsilon still produces a valid noisy value; ε = 0 can no longer be
+    // configured at all (rejected by settings validation).
+    step.execute(report);
+
+    assertThat(r1.getObfuscatedValue()).isNotNull().isNotNegative();
+    assertThat(r1.getEpsilon()).isCloseTo(0.08, within(1e-9));
   }
 
   @Test
   void execute_shouldObfuscateAllResultsIndependently() {
-    settingsService.updateSettings(SettingsDTO.builder().epsilon(100.0).build());
+    settingsService.updateSettings(SettingsDTO.builder().epsilon(10.0).build());
 
     Report report = new Report();
     Result r1 = new Result("c1", 1L, 100, null, 80, 50, 1.0, null, null);
@@ -178,7 +182,7 @@ class ObfuscationStepTest {
 
   @Test
   void execute_withLargeEpsilon_shouldBeCloseToRawValue() {
-    settingsService.updateSettings(SettingsDTO.builder().epsilon(1000000.0).build());
+    settingsService.updateSettings(SettingsDTO.builder().epsilon(10.0).build());
 
     Report report = new Report();
     Result r1 = new Result("c1", 1L, 100, null, 80, 50, 1.0, null, null);
@@ -350,7 +354,7 @@ class ObfuscationStepTest {
   void execute_withRawValueDriftAtThreshold_appliesFreshNoise() {
     settingsService.updateSettings(
         SettingsDTO.builder()
-            .epsilon(1_000_000.0)
+            .epsilon(10.0)
             .minThreshold(10)
             .noiseMechanism(NoiseMechanism.LAPLACE)
             .build());
@@ -369,7 +373,7 @@ class ObfuscationStepTest {
   void execute_withChangedRawValue_appliesFreshNoise() {
     settingsService.updateSettings(
         SettingsDTO.builder()
-            .epsilon(1_000_000.0)
+            .epsilon(10.0)
             .minThreshold(10)
             .noiseMechanism(NoiseMechanism.LAPLACE)
             .build());
@@ -388,7 +392,7 @@ class ObfuscationStepTest {
   void execute_withSameRawValueButDifferentStratum_appliesFreshNoise() {
     settingsService.updateSettings(
         SettingsDTO.builder()
-            .epsilon(1_000_000.0)
+            .epsilon(10.0)
             .minThreshold(10)
             .noiseMechanism(NoiseMechanism.LAPLACE)
             .build());
@@ -410,7 +414,7 @@ class ObfuscationStepTest {
   void execute_whenPreviousResultHasNoObfuscatedValue_appliesFreshNoise() {
     settingsService.updateSettings(
         SettingsDTO.builder()
-            .epsilon(1_000_000.0)
+            .epsilon(10.0)
             .minThreshold(10)
             .noiseMechanism(NoiseMechanism.LAPLACE)
             .build());
@@ -433,7 +437,7 @@ class ObfuscationStepTest {
   void execute_anchorIsDerivedFromHistoryAcrossReuseHop() {
     settingsService.updateSettings(
         SettingsDTO.builder()
-            .epsilon(1_000_000.0)
+            .epsilon(10.0)
             .minThreshold(10)
             .noiseMechanism(NoiseMechanism.LAPLACE)
             .build());
@@ -460,7 +464,7 @@ class ObfuscationStepTest {
   void execute_withReuseChain_keepsValueConstantOverMultipleRuns() {
     settingsService.updateSettings(
         SettingsDTO.builder()
-            .epsilon(1_000_000.0)
+            .epsilon(10.0)
             .minThreshold(10)
             .noiseMechanism(NoiseMechanism.LAPLACE)
             .build());
@@ -478,7 +482,7 @@ class ObfuscationStepTest {
   void execute_withSuppressedCollisionRun_replaysAnchorToLastFreshDraw() {
     settingsService.updateSettings(
         SettingsDTO.builder()
-            .epsilon(1_000_000.0)
+            .epsilon(10.0)
             .minThreshold(10)
             .noiseMechanism(NoiseMechanism.LAPLACE)
             .build());
@@ -504,7 +508,7 @@ class ObfuscationStepTest {
   void execute_withPreviousValueBelowCurrentThreshold_drawsFreshInsteadOfRepublishing() {
     settingsService.updateSettings(
         SettingsDTO.builder()
-            .epsilon(1_000_000.0)
+            .epsilon(10.0)
             .minThreshold(50)
             .noiseMechanism(NoiseMechanism.LAPLACE)
             .build());
@@ -551,8 +555,7 @@ class ObfuscationStepTest {
 
   @Test
   void execute_withHighMinThreshold_shouldSuppressLowCounts() {
-    settingsService.updateSettings(
-        SettingsDTO.builder().epsilon(1_000_000.0).minThreshold(200).build());
+    settingsService.updateSettings(SettingsDTO.builder().epsilon(10.0).minThreshold(200).build());
 
     Report report = new Report();
     Result r1 = new Result("c1", 1L, 100, null, 80, 50, null, null, null);
@@ -564,9 +567,8 @@ class ObfuscationStepTest {
   }
 
   @Test
-  void execute_withZeroMinThreshold_shouldPreserveCounts() {
-    settingsService.updateSettings(
-        SettingsDTO.builder().epsilon(1_000_000.0).minThreshold(0).build());
+  void execute_withMinThresholdNotReached_shouldPreserveCounts() {
+    settingsService.updateSettings(SettingsDTO.builder().epsilon(10.0).minThreshold(10).build());
 
     Report report = new Report();
     Result r1 = new Result("c1", 1L, 100, null, 80, 50, null, null, null);
@@ -574,13 +576,12 @@ class ObfuscationStepTest {
 
     step.execute(report);
 
-    assertThat(r1.getObfuscatedValue()).isCloseTo(100.0, within(0.1));
+    assertThat(r1.getObfuscatedValue()).isCloseTo(100.0, within(2.0));
   }
 
   @Test
   void execute_shouldApplyMinThresholdFromSettings() {
-    settingsService.updateSettings(
-        SettingsDTO.builder().epsilon(1_000_000.0).minThreshold(500).build());
+    settingsService.updateSettings(SettingsDTO.builder().epsilon(10.0).minThreshold(500).build());
 
     Report report = new Report();
     Result r1 = new Result("c1", 1L, 300, null, 80, 50, null, null, null);
@@ -611,7 +612,7 @@ class ObfuscationStepTest {
   @Test
   void execute_withLaplaceNoise_shouldSetObfuscatedValues() {
     settingsService.updateSettings(
-        SettingsDTO.builder().epsilon(100.0).noiseMechanism(NoiseMechanism.LAPLACE).build());
+        SettingsDTO.builder().epsilon(10.0).noiseMechanism(NoiseMechanism.LAPLACE).build());
 
     Report report = new Report();
     Result r1 = new Result("c1", 1L, 100, null, 80, 50, null, null, null);

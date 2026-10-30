@@ -121,12 +121,13 @@ class EntityCountStep implements ReportPipelineStep {
 
   /**
    * Minimum drift from the anchor that triggers a fresh draw for a total of the given sensitivity.
-   * The same threshold drives both the replay in {@link NoiseAnchors} and the reuse decision here,
-   * so scaling a total's threshold (e.g. the sample total by {@link #SECONDARY_ENTITY_SENSITIVITY})
-   * is a one-word change in this method.
+   * It scales with sensitivity so that one patient's contribution stays below it: for the sample
+   * total a single donation (up to {@link #SECONDARY_ENTITY_SENSITIVITY} samples by the documented
+   * assumption) never becomes visible as a change event. The same threshold drives both the replay
+   * in {@link NoiseAnchors} and the reuse decision here.
    */
   private static int refreshThreshold(int sensitivity) {
-    return DifferentialPrivacyUtil.NOISE_REFRESH_THRESHOLD;
+    return DifferentialPrivacyUtil.NOISE_REFRESH_THRESHOLD * sensitivity;
   }
 
   /**
