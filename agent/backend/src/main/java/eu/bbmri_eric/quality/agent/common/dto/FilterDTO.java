@@ -41,6 +41,15 @@ public class FilterDTO {
       defaultValue = "DESC")
   private SortOrder order = SortOrder.DESC;
 
+  /**
+   * Sets the sort property; the base filter accepts everything. Domain filters override to fail
+   * fast on properties they do not support, so an invalid value never lands in the DTO at all.
+   */
+  @Schema(hidden = true)
+  public void setSort(String sort) {
+    this.sort = sort;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;

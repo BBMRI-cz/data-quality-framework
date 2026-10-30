@@ -98,6 +98,13 @@ public class ReportIntegrationTests {
   }
 
   @Test
+  void testGetReportsWithInvalidSortProperty_returnsBadRequest() throws Exception {
+    mockMvc
+        .perform(get(API_REPORTS).param("sort", "noSuchProperty"))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
   @Transactional(Transactional.TxType.NOT_SUPPORTED)
   void testGetReportsWithoutParameters_returnsLatestReportFirst() throws Exception {
     reportRepository.deleteAll();

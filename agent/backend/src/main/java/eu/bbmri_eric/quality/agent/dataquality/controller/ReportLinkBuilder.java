@@ -7,6 +7,7 @@ import eu.bbmri_eric.quality.agent.common.LinkBuilder;
 import eu.bbmri_eric.quality.agent.common.dto.FilterDTO;
 import eu.bbmri_eric.quality.agent.common.dto.PageResponse;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.ReportFilterDTO;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.hateoas.EntityModel;
@@ -23,12 +24,12 @@ class ReportLinkBuilder {
         .add(
             linkTo(
                     methodOn(ReportController.class)
-                        .findAll(new FilterDTO(0, 20, null, FilterDTO.SortOrder.ASC)))
+                        .findAll(new ReportFilterDTO(0, 20, null, FilterDTO.SortOrder.ASC)))
                 .withRel("reports"));
   }
 
   public PagedModel<EntityModel<ReportDTO>> toPagedModel(
-      PageResponse<ReportDTO> pageResponse, FilterDTO filter) {
+      PageResponse<ReportDTO> pageResponse, ReportFilterDTO filter) {
     List<EntityModel<ReportDTO>> reportModels =
         pageResponse.getContent().stream().map(this::toModel).collect(Collectors.toList());
 

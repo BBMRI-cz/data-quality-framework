@@ -1,9 +1,9 @@
 package eu.bbmri_eric.quality.agent.dataquality.controller;
 
-import eu.bbmri_eric.quality.agent.common.dto.FilterDTO;
 import eu.bbmri_eric.quality.agent.dataquality.ReportService;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.ReportFilterDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -61,7 +61,7 @@ class ReportController {
       summary = "List all reports",
       description = "Retrieves all reports with pagination and filtering")
   public ResponseEntity<PagedModel<EntityModel<ReportDTO>>> findAll(
-      @ParameterObject FilterDTO filter) {
+      @ParameterObject ReportFilterDTO filter) {
     return ResponseEntity.ok(linkBuilder.toPagedModel(reportService.findAll(filter), filter));
   }
 }

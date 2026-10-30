@@ -12,6 +12,7 @@ import eu.bbmri_eric.quality.agent.dataquality.domain.ReportStatus;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ObfuscatedReportDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.ReportFilterDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportResultDetailDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportUpdateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.event.NewReportEvent;
@@ -107,31 +108,13 @@ class ReportServiceImpl implements ReportService {
         .collect(Collectors.toList());
   }
 
-  private static final java.util.Set<String> ALLOWED_SORT_PROPERTIES =
-      java.util.Set.of(
-          "id",
-          "generatedAt",
-          "status",
-          "epsilonBudget",
-          "numberOfEntities",
-          "numberOfSecondaryEntities");
-
   @Override
   @Transactional(readOnly = true)
-  public PageResponse<ReportDTO> findAll(FilterDTO filter) {
-    Sort.Direction direction =
-        filter.getOrder() == FilterDTO.SortOrder.ASC ? Sort.Direction.ASC : Sort.Direction.DESC;
-
-    String sortProperty = filter.getSort();
-    if (sortProperty == null) {
-      sortProperty = "generatedAt";
-      direction = Sort.Direction.DESC;
-    }
-    if (!ALLOWED_SORT_PROPERTIES.contains(sortProperty)) {
-      throw new IllegalArgumentException("Cannot sort reports by: " + sortProperty);
-    }
-
-    Sort sort = Sort.by(direction, sortProperty);
+  public PageResponse<ReportDTO> findAll(ReportFilterDTO filter) {
+    Sort sort =
+        Sort.by(
+            filter.getOrder() == FilterDTO.SortOrder.ASC ? Sort.Direction.ASC : Sort.Direction.DESC,
+            filter.getSort());
     PageRequest pageRequest = PageRequest.of(filter.getPage(), filter.getSize(), sort);
     Page<Report> page = reportRepository.findAll(pageRequest);
 

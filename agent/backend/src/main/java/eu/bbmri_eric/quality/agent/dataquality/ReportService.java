@@ -4,10 +4,11 @@ import eu.bbmri_eric.quality.agent.common.CRUDService;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ObfuscatedReportDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.ReportFilterDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportUpdateDTO;
 
 public interface ReportService
-    extends CRUDService<ReportDTO, ReportCreateDTO, ReportUpdateDTO, Long> {
+    extends CRUDService<ReportDTO, ReportCreateDTO, ReportUpdateDTO, Long, ReportFilterDTO> {
 
   /**
    * Get a report by ID that has obfuscated values and is ready for sharing.

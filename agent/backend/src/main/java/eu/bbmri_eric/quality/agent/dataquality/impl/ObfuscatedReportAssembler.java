@@ -86,8 +86,10 @@ class ObfuscatedReportAssembler {
 
   private static String checkIdWithStratum(
       Result result, Map<Long, String> queriesByCheckId, MessageDigest sha256) {
-    String query =
-        queriesByCheckId.getOrDefault(result.getCheckId(), result.getCheckId().toString());
+    String query = queriesByCheckId.get(result.getCheckId());
+    if (query == null) {
+      query = result.getCheckId().toString();
+    }
     String checkId = hexHash(sha256, query);
     return result.getStratum() != null
         ? "%s (%s)".formatted(checkId, result.getStratum())
