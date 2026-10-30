@@ -2,26 +2,32 @@ package eu.bbmri_eric.quality.agent.dataquality.impl;
 
 import eu.bbmri_eric.quality.agent.dataquality.DataStore;
 import eu.bbmri_eric.quality.agent.dataquality.DataStoreFactory;
-import eu.bbmri_eric.quality.agent.dataquality.DifferentialPrivacyUtil;
 import eu.bbmri_eric.quality.agent.dataquality.ReportPipelineStep;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
 import eu.bbmri_eric.quality.agent.dataquality.domain.ReportStatus;
+import eu.bbmri_eric.quality.agent.dataquality.privacy.CountReleaser;
+import eu.bbmri_eric.quality.agent.dataquality.privacy.Mechanism;
+import eu.bbmri_eric.quality.agent.dataquality.privacy.NoiseHistory;
+import eu.bbmri_eric.quality.agent.dataquality.privacy.PrivacyBudget;
+import eu.bbmri_eric.quality.agent.dataquality.privacy.PrivacyParameters;
+import eu.bbmri_eric.quality.agent.settings.NoiseMechanism;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
-import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+import java.util.random.RandomGenerator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
  * Counts the entities in the data store and computes their noisy counterparts. To prevent averaging
- * attacks across repeated reports, a total that stayed within {@link
- * DifferentialPrivacyUtil#NOISE_REFRESH_THRESHOLD} of the value its current noise was drawn for
- * reuses the previous noisy value instead of sampling fresh noise.
+ * attacks across repeated reports, a total that stayed within the refresh threshold of its anchor
+ * reuses the previous noisy value (same rule as for check results, shared via {@link
+ * CountReleaser}).
  *
- * <p>Totals always use Laplace noise (pure ε-DP), regardless of the configured noise mechanism, and
- * use different sensitivities: {@link #PATIENT_SENSITIVITY} for the patient total and {@link
+ * <p>Totals always use Laplace noise (pure ε-DP), regardless of the configured noise mechanism —
+ * the Gaussian σ at the small per-total budgets would be far too large to be useful. Sensitivities
+ * differ per individual: {@link #PATIENT_SENSITIVITY} for the patient total and {@link
  * #SECONDARY_ENTITY_SENSITIVITY} for the sample total, since one patient can contribute many
  * samples.
  */
@@ -41,30 +47,28 @@ class EntityCountStep implements ReportPipelineStep {
   private final DataStoreFactory dataStoreFactory;
   private final SettingsService settingsService;
   private final ReportRepository reportRepository;
+  private final RandomGenerator randomGenerator;
 
   EntityCountStep(
       DataStoreFactory dataStoreFactory,
       SettingsService settingsService,
-      ReportRepository reportRepository) {
+      ReportRepository reportRepository,
+      RandomGenerator randomGenerator) {
     this.dataStoreFactory = dataStoreFactory;
     this.settingsService = settingsService;
     this.reportRepository = reportRepository;
+    this.randomGenerator = randomGenerator;
   }
 
   @Override
   public Report execute(Report report) {
     log.info("Counting entities for report id: {}", report.getId());
-
     DataStore dataStore = dataStoreFactory.resolveDataStore();
-
     Integer patientCount = dataStore.countPatients();
     Integer sampleCount = dataStore.countSecondaryEntities();
-
     report.setNumberOfEntities(patientCount);
     report.setNumberOfSecondaryEntities(sampleCount);
-
     obfuscateEntityTotals(report);
-
     log.info(
         "Completed entity count for report id: {} - patients: {}, secondary entities: {}",
         report.getId(),
@@ -74,94 +78,63 @@ class EntityCountStep implements ReportPipelineStep {
   }
 
   private void obfuscateEntityTotals(Report report) {
-    SettingsDTO settings = settingsService.getSettings();
-    double epsilonPerTotal =
-        settings.getEpsilon() * DifferentialPrivacyUtil.ENTITY_TOTALS_EPSILON_FRACTION / 2;
+    PrivacyParameters parameters = PrivacyParameters.from(settingsService.getSettings());
+    // Totals always use Laplace (pure ε-DP): in Gaussian mode the small per-total ε would make
+    // the standard deviation ≈6× larger (e.g. ≈1 200 samples at δ = 1e-8) and ruin utility.
+    CountReleaser releaser =
+        new CountReleaser(parameters, Mechanism.of(NoiseMechanism.LAPLACE, randomGenerator));
+    double epsilonPerTotal = PrivacyBudget.epsilonPerEntityTotal(parameters.epsilon());
     List<TotalsHistoryRow> history = reportRepository.findTotalsHistory(ReportStatus.GENERATED);
     report.setObfuscatedNumberOfEntities(
-        obfuscateTotal(
+        releaseTotal(
             report.getNumberOfEntities(),
             previousTotal(
                 history,
                 TotalsHistoryRow::numberOfEntities,
                 TotalsHistoryRow::obfuscatedNumberOfEntities,
                 PATIENT_SENSITIVITY),
-            settings,
+            releaser,
             epsilonPerTotal,
             PATIENT_SENSITIVITY));
     report.setObfuscatedNumberOfSecondaryEntities(
-        obfuscateTotal(
+        releaseTotal(
             report.getNumberOfSecondaryEntities(),
             previousTotal(
                 history,
                 TotalsHistoryRow::numberOfSecondaryEntities,
                 TotalsHistoryRow::obfuscatedNumberOfSecondaryEntities,
                 SECONDARY_ENTITY_SENSITIVITY),
-            settings,
+            releaser,
             epsilonPerTotal,
             SECONDARY_ENTITY_SENSITIVITY));
   }
 
-  /**
-   * Reconstructs the previous noisy total and its anchor for one total of the totals history. See
-   * {@link NoiseAnchors} for how the anchor is reconstructed exactly.
-   */
-  private static NoiseAnchors.PreviousNoise<Integer> previousTotal(
-      List<TotalsHistoryRow> totalsHistory,
-      Function<TotalsHistoryRow, Integer> rawGetter,
-      Function<TotalsHistoryRow, Integer> noisyGetter,
-      int sensitivity) {
-    List<NoiseAnchors.HistoryEntry<Integer>> series = new ArrayList<>();
-    for (TotalsHistoryRow row : totalsHistory) {
-      series.add(
-          new NoiseAnchors.HistoryEntry<>(rawGetter.apply(row), noisyGetter.apply(row), null));
-    }
-    return NoiseAnchors.reconstruct(series, refreshThreshold(sensitivity));
-  }
-
-  /**
-   * Minimum drift from the anchor that triggers a fresh draw for a total of the given sensitivity.
-   * It scales with sensitivity so that one patient's contribution stays below it: for the sample
-   * total a single donation (up to {@link #SECONDARY_ENTITY_SENSITIVITY} samples by the documented
-   * assumption) never becomes visible as a change event. The same threshold drives both the replay
-   * in {@link NoiseAnchors} and the reuse decision here.
-   */
-  private static int refreshThreshold(int sensitivity) {
-    return DifferentialPrivacyUtil.NOISE_REFRESH_THRESHOLD * sensitivity;
-  }
-
-  /**
-   * Resolves the noisy total, reusing the previous noisy value while the raw count stays within
-   * {@link #refreshThreshold} of the anchor the noise was drawn for — and it does not republish a
-   * non-zero value below the current minimum suppression threshold.
-   */
-  private Integer obfuscateTotal(
+  private Integer releaseTotal(
       Integer count,
-      NoiseAnchors.PreviousNoise<Integer> previous,
-      SettingsDTO settings,
+      NoiseHistory.PreviousRelease previous,
+      CountReleaser releaser,
       double epsilon,
       int sensitivity) {
     if (count == null) {
       return null;
     }
-    if (previous != null
-        && Math.abs(count - previous.anchor()) < refreshThreshold(sensitivity)
-        && (previous.published() == 0 || previous.published() >= settings.getMinThreshold())) {
-      return previous.published();
-    }
-    return addNoise(count, settings, epsilon, sensitivity);
+    return (int) Math.round(releaser.release(count, previous, epsilon, sensitivity).value());
   }
 
-  private Integer addNoise(Integer count, SettingsDTO settings, double epsilon, int sensitivity) {
-    if (count == null) {
-      return null;
+  /** Reconstructs the previous release and anchor for one total column pair of the history. */
+  private static NoiseHistory.PreviousRelease previousTotal(
+      List<TotalsHistoryRow> totalsHistory,
+      Function<TotalsHistoryRow, Integer> rawGetter,
+      Function<TotalsHistoryRow, Integer> noisyGetter,
+      int sensitivity) {
+    List<NoiseHistory.HistoryEntry> series = new ArrayList<>();
+    for (TotalsHistoryRow row : totalsHistory) {
+      Integer published = noisyGetter.apply(row);
+      series.add(
+          new NoiseHistory.HistoryEntry(
+              rawGetter.apply(row), published == null ? Double.NaN : published, null));
     }
-    // Totals always use Laplace (pure ε-DP): in Gaussian mode the small per-total ε would make the
-    // standard deviation ≈6× larger (e.g. ≈1 200 samples at δ = 1e-8) and ruin utility.
-    double noisyCount =
-        DifferentialPrivacyUtil.addLaplaceNoise(
-            count, epsilon, sensitivity, settings.getMinThreshold());
-    return (int) Math.round(noisyCount);
+    return NoiseHistory.replay(series, PrivacyBudget.refreshThreshold(sensitivity));
   }
 
   @Override
