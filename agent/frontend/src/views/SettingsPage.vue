@@ -38,7 +38,12 @@
               <DatabaseTypeSelect v-model="databaseType" :options="databaseTypeOptions" required />
 
               <FhirSettingsFields v-if="isFhir" :settings="fhirSettings" :required="isFhir" />
-              <SqlSettingsFields v-else :settings="sqlSettings" :required="isSql" />
+              <SqlSettingsFields v-else-if="isSql" :settings="sqlSettings" :required="isSql" />
+              <OmicsBoxSettingsFields
+                v-else-if="isOmicsBox"
+                :settings="omicsboxSettings"
+                :required="isOmicsBox"
+              />
 
               <FormActions
                 :loading="isSaving"
@@ -65,6 +70,7 @@
   import DatabaseTypeSelect from '@/components/settings/DatabaseTypeSelect.vue';
   import FhirSettingsFields from '@/components/settings/FhirSettingsFields.vue';
   import SqlSettingsFields from '@/components/settings/SqlSettingsFields.vue';
+  import OmicsBoxSettingsFields from '@/components/settings/OmicsBoxSettingsFields.vue';
 
   const settingsStore = useSettingsStore();
   const healthStore = useHealthStore();
@@ -75,10 +81,12 @@
   const databaseTypeOptions = [
     { label: 'FHIR', value: 'FHIR' },
     { label: 'SQL', value: 'SQL' },
+    { label: 'OmicsBox (early development — not for production)', value: 'OMICSBOX' },
   ];
 
   const isFhir = computed(() => databaseType.value === 'FHIR');
   const isSql = computed(() => databaseType.value === 'SQL');
+  const isOmicsBox = computed(() => databaseType.value === 'OMICSBOX');
 
   const fhirSettings = reactive({
     url: '',
@@ -90,6 +98,11 @@
     url: '',
     username: '',
     password: '',
+  });
+
+  const omicsboxSettings = reactive({
+    url: '',
+    apiToken: '',
   });
 
   function decodeBase64(encoded) {
@@ -123,6 +136,8 @@
         sqlUrl: sqlSettings.url,
         sqlUsername: sqlSettings.username,
         sqlPassword: encodeBase64(sqlSettings.password),
+        omicsboxUrl: omicsboxSettings.url,
+        omicsboxApiToken: omicsboxSettings.apiToken,
       };
 
       await settingsStore.updateSettings(payload);
@@ -150,6 +165,8 @@
         sqlSettings.url = data.sqlUrl || '';
         sqlSettings.username = data.sqlUsername || '';
         sqlSettings.password = data.sqlPassword ? decodeBase64(data.sqlPassword) : '';
+        omicsboxSettings.url = data.omicsboxUrl || '';
+        omicsboxSettings.apiToken = data.omicsboxApiToken || '';
       }
     } catch (error) {
       console.error('Error loading settings:', error);

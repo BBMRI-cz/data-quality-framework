@@ -57,8 +57,13 @@
   const settingsStore = useSettingsStore();
 
   const isSql = computed(() => settingsStore.settings?.databaseType === 'SQL');
+  const isOmicsBox = computed(() => settingsStore.settings?.databaseType === 'OMICSBOX');
 
-  const dataSourceLabel = computed(() => (isSql.value ? 'SQL Database' : 'FHIR® Server'));
+  const dataSourceLabel = computed(() => {
+    if (isSql.value) return 'SQL Database';
+    if (isOmicsBox.value) return 'OmicsBox Sandbox';
+    return 'FHIR® Server';
+  });
 </script>
 
 <style scoped>

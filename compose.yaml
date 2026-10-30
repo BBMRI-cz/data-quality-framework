@@ -11,6 +11,9 @@ services:
       - "127.0.0.1:8081:8081"
     volumes:
       - agent-data:/app/data
+    networks:
+      - default
+      - isolated
     extra_hosts:
       - "host.docker.internal:host-gateway"
   quality-server:
@@ -41,8 +44,49 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+  # ---------------------------------------------------------------------------
+  # WARNING: The OmicsBox sandbox is in EARLY DEVELOPMENT and is NOT READY FOR
+  # PRODUCTION USE. Its APIs, check script result contract and security model
+  # may change without notice. Enable it (via the `omicsbox` profile) for
+  # evaluation/development purposes only.
+  # ---------------------------------------------------------------------------
+  omicsbox:
+    profiles:
+      - omicsbox
+    build: ./omicsbox
+    image: omicsbox:latest
+    container_name: omicsbox-sandbox
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - isolated
+    volumes:
+      - ${OMICSBOX_DATA_PATH:-./omicsbox/data/mican}:/sandbox/data:ro
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100m
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - OMICSBOX_API_TOKEN=${OMICSBOX_API_TOKEN:-}
+      # Entity totals are recorded only when the operator provides them; unset means unknown.
+      - OMICSBOX_PATIENT_COUNT=${OMICSBOX_PATIENT_COUNT:-}
+      - OMICSBOX_SECONDARY_ENTITY_COUNT=${OMICSBOX_SECONDARY_ENTITY_COUNT:-}
+    restart: unless-stopped
+    pids_limit: 256
+    cpus: '2'
+    mem_limit: 2G
 volumes:
   agent-data:
     driver: local
   server-db-data:
     driver: local
+networks:
+  isolated:
+    internal: true
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.42.0/24

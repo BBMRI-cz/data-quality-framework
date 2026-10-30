@@ -133,21 +133,13 @@ class ReportPdfServiceImpl implements ReportPdfService {
     for (QualityCheckResult r : results) {
       QualityCheck check = r.getQualityCheck();
       Double value = r.getResult();
-      String status;
+      String status = CheckStatus.of(check, value).name();
       String resultDisplay;
       if (value == null) {
-        status = "FAILED";
         resultDisplay = "N/A";
       } else {
         double percentage = value * 100.0;
         resultDisplay = formatPercent(percentage);
-        if (percentage > check.getErrorThreshold()) {
-          status = "FAILED";
-        } else if (percentage > check.getWarningThreshold()) {
-          status = "WARNING";
-        } else {
-          status = "PASSED";
-        }
       }
       items.add(
           new ResultItem(

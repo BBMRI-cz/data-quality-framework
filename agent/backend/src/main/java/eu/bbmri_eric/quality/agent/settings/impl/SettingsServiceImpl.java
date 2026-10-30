@@ -54,7 +54,7 @@ public class SettingsServiceImpl implements SettingsService {
       module = "settings",
       details = "Settings updated",
       diff = "#target.getSettings()",
-      sensitive = {"fhirPassword", "sqlPassword"})
+      sensitive = {"fhirPassword", "sqlPassword", "omicsboxApiToken"})
   public SettingsDTO updateSettings(SettingsDTO dto) {
     updateSettingsFromDto(dto);
     SettingsDTO updated = getSettings();

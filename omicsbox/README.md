@@ -1,5 +1,10 @@
 # OMICSbox
 
+> [!WARNING]
+> **Early development — not ready for production use.** APIs, the check
+> script result contract, configuration and the security model may change
+> without notice. Use it for evaluation/development purposes only.
+
 A safe, offline sandbox for evaluating the quality of mounted omics data.
 It executes user-provided Python scripts against a read-only dataset and —
 as a datastore for the Data Quality Agent — also exposes health, entity-count
@@ -31,6 +36,3 @@ python3 -m venv .venv
 
 Comprehensive documentation (API reference, script result contract,
 isolation model, configuration) lives in the project `docs/`.
-
-> [!WARNING]
-> Under active development.

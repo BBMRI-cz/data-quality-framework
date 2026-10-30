@@ -15,6 +15,43 @@ const PUBLIC_KEY_URL = '/v1/public-key';
 const INFO_URL = '/info';
 const COUNTS_URL = '/counts';
 
+const triggerDownload = (data, type, filename) => {
+  const blob = new window.Blob([data], { type });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+};
+
+// With responseType 'blob' the error body is a Blob too; decode it so the
+// server's ProblemDetail message reaches the user instead of a generic one.
+const readBlobErrorMessage = async (err) => {
+  const data = err?.response?.data;
+  if (data instanceof window.Blob) {
+    try {
+      const parsed = JSON.parse(await data.text());
+      return parsed.detail || parsed.title || err.message || 'Unknown error';
+    } catch {
+      return err.message || 'Unknown error';
+    }
+  }
+  return err?.message || 'Unknown error';
+};
+
+const requestDownload = async (url, config, type, filename) => {
+  let response;
+  try {
+    response = await api.get(url, config);
+  } catch (err) {
+    throw new Error(await readBlobErrorMessage(err));
+  }
+  triggerDownload(response.data, type, filename);
+};
+
 class ApiService {
   async login(username, password) {
     const response = await api.post(AUTH_LOGIN_URL, {
@@ -101,18 +138,21 @@ class ApiService {
   }
 
   async downloadReportSummary(reportId) {
-    const response = await api.get(`${REPORTS_URL}/${reportId}/summary?format=pdf`, {
-      responseType: 'blob',
-    });
-    const blob = new window.Blob([response.data], { type: 'application/pdf' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `report-${reportId}-summary.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+    await requestDownload(
+      `${REPORTS_URL}/${reportId}/summary?format=pdf`,
+      { responseType: 'blob' },
+      'application/pdf',
+      `report-${reportId}-summary.pdf`
+    );
+  }
+
+  async downloadReportDqvExport(reportId) {
+    await requestDownload(
+      `${REPORTS_URL}/${reportId}/export`,
+      { responseType: 'blob', headers: { Accept: 'text/turtle' } },
+      'text/turtle',
+      `report-${reportId}.ttl`
+    );
   }
 
   async createQualityCheck(data) {
