@@ -17,6 +17,7 @@ import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.ToIntFunction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -131,8 +132,8 @@ class ObfuscationStepTest {
   }
 
   @Test
-  void getOrder_shouldReturn20() {
-    assertThat(step.getOrder()).isEqualTo(20);
+  void getOrder_shouldRunAfterEntityCount() {
+    assertThat(step.getOrder()).isEqualTo(30);
   }
 
   @Test
@@ -638,5 +639,247 @@ class ObfuscationStepTest {
     step.execute(report);
 
     assertThat(r1.getObfuscatedValue()).isBetween(75.0, 125.0);
+  }
+
+  // ---- Entity total obfuscation (moved here from the entity count step) ----
+
+  private static final int STATISTICAL_SAMPLES = 10_000;
+  private static final int RAW_TOTAL = 10_000;
+
+  private Report newReportWithTotals(Integer patients, Integer secondary) {
+    Report report = new Report();
+    report.setNumberOfEntities(patients);
+    report.setNumberOfSecondaryEntities(secondary);
+    return report;
+  }
+
+  private Report givenPreviousReportWithTotals(
+      int patients, int secondary, Integer noisyPatients, Integer noisySecondary) {
+    Report previous = new Report();
+    previous.setStatus(ReportStatus.GENERATED);
+    previous.setNumberOfEntities(patients);
+    previous.setNumberOfSecondaryEntities(secondary);
+    previous.setObfuscatedNumberOfEntities(noisyPatients);
+    previous.setObfuscatedNumberOfSecondaryEntities(noisySecondary);
+    return reportRepository.save(previous);
+  }
+
+  @Test
+  void execute_storesObfuscatedTotals() {
+    whenSettings(10.0, 50, NoiseMechanism.LAPLACE);
+    Report report = step.execute(newReportWithTotals(4321, 9876));
+
+    assertThat(report.getObfuscatedNumberOfEntities()).isNotNull().isNotNegative();
+    assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isNotNull().isNotNegative();
+  }
+
+  @Test
+  void execute_withMaxValidEpsilon_keepsTotalsCloseToRawCounts() {
+    whenSettings(10.0, 50, NoiseMechanism.LAPLACE);
+    Report report = step.execute(newReportWithTotals(4321, 9876));
+
+    // Per-total ε = 10 × 0.1 = 1 → patient noise b = 1, sample noise b = 20
+    assertThat(report.getObfuscatedNumberOfEntities()).isBetween(4321 - 10, 4321 + 10);
+    assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isBetween(9876 - 250, 9876 + 250);
+  }
+
+  @Test
+  void execute_withHighMinThreshold_suppressesLowTotals() {
+    whenSettings(10.0, 10_000, NoiseMechanism.LAPLACE);
+    Report report = step.execute(newReportWithTotals(100, 200));
+
+    assertThat(report.getObfuscatedNumberOfEntities()).isEqualTo(0);
+    assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isEqualTo(0);
+  }
+
+  @Test
+  void execute_withGaussianMechanism_stillUsesLaplaceForTotals() {
+    settingsService.updateSettings(
+        SettingsDTO.builder()
+            .epsilon(0.9)
+            .delta(1e-8)
+            .noiseMechanism(NoiseMechanism.GAUSSIAN)
+            .build());
+
+    Report report = step.execute(newReportWithTotals(4321, 9876));
+
+    // Totals are always Laplace; at per-total ε = 0.09 the Gaussian σ would be ≈8 000 samples.
+    assertThat(report.getObfuscatedNumberOfEntities()).isNotNull().isNotNegative();
+    assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isNotNull().isNotNegative();
+  }
+
+  @Test
+  void execute_totalsStayNull_whenRawTotalsAreNull() {
+    Report report = step.execute(newReportWithTotals(null, null));
+
+    assertThat(report.getObfuscatedNumberOfEntities()).isNull();
+    assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isNull();
+  }
+
+  @Test
+  void execute_withUnchangedTotals_reusesPreviousNoisyTotals() {
+    givenPreviousReportWithTotals(4321, 9876, 4330, 9880);
+    Report report = step.execute(newReportWithTotals(4321, 9876));
+
+    assertThat(report.getObfuscatedNumberOfEntities()).isEqualTo(4330);
+    assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isEqualTo(9880);
+  }
+
+  @Test
+  void execute_withTotalDriftBelowThreshold_reusesNoisyTotals() {
+    givenPreviousReportWithTotals(4321, 9876, 4330, 9880);
+    Report report = step.execute(newReportWithTotals(4323, 9880));
+
+    assertThat(report.getObfuscatedNumberOfEntities()).isEqualTo(4330);
+    assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isEqualTo(9880);
+  }
+
+  @Test
+  void execute_withChangedTotals_appliesFreshNoise() {
+    givenPreviousReportWithTotals(4321, 9876, 4330, 9880);
+    whenSettings(10.0, 50, NoiseMechanism.LAPLACE);
+    // Patient threshold is 5 (sensitivity 1), sample threshold is 100 (5 x sensitivity 20).
+    Report report = step.execute(newReportWithTotals(4380, 10_100));
+
+    assertThat(report.getObfuscatedNumberOfEntities()).isBetween(4360, 4400);
+    assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isBetween(9900, 10_300);
+  }
+
+  @Test
+  void execute_withPartiallyChangedTotals_reusesOnlyUnchangedTotal() {
+    givenPreviousReportWithTotals(4321, 9876, 4330, 9880);
+    whenSettings(10.0, 50, NoiseMechanism.LAPLACE);
+    // Patients moved past their threshold (59 >= 5) -> fresh; samples moved 4 (< 100) -> reuse.
+    Report report = step.execute(newReportWithTotals(4380, 9880));
+
+    assertThat(report.getObfuscatedNumberOfEntities()).isBetween(4360, 4400);
+    assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isEqualTo(9880);
+  }
+
+  @Test
+  void execute_withSampleDriftBelowHundred_reusesPreviousTotal() {
+    givenPreviousReportWithTotals(4321, 9876, 4330, 9880);
+    whenSettings(10.0, 50, NoiseMechanism.LAPLACE);
+    // 60 additional samples stay below the scaled sample threshold (100) -> invisible.
+    Report report = step.execute(newReportWithTotals(4321, 9936));
+
+    assertThat(report.getObfuscatedNumberOfEntities()).isEqualTo(4330);
+    assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isEqualTo(9880);
+  }
+
+  @Test
+  void execute_whenPreviousTotalsHaveNoNoisyValue_appliesFreshNoise() {
+    givenPreviousReportWithTotals(4321, 9876, null, null);
+    whenSettings(10.0, 50, NoiseMechanism.LAPLACE);
+    Report report = step.execute(newReportWithTotals(4321, 9876));
+
+    assertThat(report.getObfuscatedNumberOfEntities()).isBetween(4311, 4331);
+    assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isBetween(9626, 10_126);
+  }
+
+  @Test
+  void execute_anchorIsDerivedFromTotalsHistoryAcrossReuseHop() {
+    // Chain: noise was drawn for 4321; the latest report (4323) reused it. The derived anchor is
+    // 4321, so a drift of 39 triggers fresh noise.
+    Report older = givenPreviousReportWithTotals(4321, 9876, 4330, 9880);
+    older.setGeneratedAt(LocalDateTime.now().minusDays(2));
+    reportRepository.save(older);
+    Report newer = givenPreviousReportWithTotals(4323, 9876, 4330, 9880);
+    newer.setGeneratedAt(LocalDateTime.now().minusDays(1));
+    reportRepository.save(newer);
+    whenSettings(10.0, 50, NoiseMechanism.LAPLACE);
+
+    Report report = step.execute(newReportWithTotals(4360, 9876));
+
+    assertThat(report.getObfuscatedNumberOfEntities()).isBetween(4340, 4380);
+    assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isEqualTo(9880);
+  }
+
+  @Test
+  void execute_withRoundingCollisionRun_replaysAnchorToLastFreshDraw() {
+    // Two consecutive fresh integer draws rounded to the same published value; the anchor must be
+    // the raw of the most recent fresh draw (306): drift from it is 4 → reuse.
+    Report older = givenPreviousReportWithTotals(300, 9876, 302, 9880);
+    older.setGeneratedAt(LocalDateTime.now().minusDays(2));
+    reportRepository.save(older);
+    Report newer = givenPreviousReportWithTotals(306, 9876, 302, 9880);
+    newer.setGeneratedAt(LocalDateTime.now().minusDays(1));
+    reportRepository.save(newer);
+    whenSettings(10.0, 50, NoiseMechanism.LAPLACE);
+
+    Report report = step.execute(newReportWithTotals(310, 9876));
+
+    assertThat(report.getObfuscatedNumberOfEntities()).isEqualTo(302);
+    assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isEqualTo(9880);
+  }
+
+  @Test
+  void execute_withPreviousTotalBelowCurrentThreshold_drawsFreshInsteadOfRepublishing() {
+    givenPreviousReportWithTotals(40, 60, 40, 60);
+    whenSettings(10.0, 50, NoiseMechanism.LAPLACE);
+
+    Report report = step.execute(newReportWithTotals(40, 60));
+
+    assertThat(report.getObfuscatedNumberOfEntities()).isEqualTo(0);
+    assertThat(report.getObfuscatedNumberOfSecondaryEntities()).isEqualTo(60);
+  }
+
+  @Test
+  void execute_withLaplaceDefaults_patientTotalNoiseMatchesSensitivity1() {
+    whenSettings(3.0, 50, NoiseMechanism.LAPLACE);
+
+    double mae = meanAbsoluteError(Report::getObfuscatedNumberOfEntities);
+
+    // Laplace per-total ε = 3 × 0.2 / 2 = 0.3 → theory MAE = b = 1 / 0.3 ≈ 3.3
+    assertThat(mae).isBetween(2.7, 4.0);
+  }
+
+  @Test
+  void execute_withLaplaceDefaults_sampleTotalNoiseMatchesSensitivity20() {
+    whenSettings(3.0, 50, NoiseMechanism.LAPLACE);
+
+    double mae = meanAbsoluteError(Report::getObfuscatedNumberOfSecondaryEntities);
+
+    // Laplace per-total ε = 0.3 → theory MAE = b = 20 / 0.3 ≈ 66.7
+    assertThat(mae).isBetween(55.0, 80.0);
+  }
+
+  @Test
+  void execute_withGaussianMechanism_sampleTotalStillMatchesLaplaceSensitivity20() {
+    settingsService.updateSettings(
+        SettingsDTO.builder()
+            .epsilon(1.0)
+            .delta(1e-8)
+            .minThreshold(50)
+            .noiseMechanism(NoiseMechanism.GAUSSIAN)
+            .build());
+
+    double mae = meanAbsoluteError(Report::getObfuscatedNumberOfSecondaryEntities);
+
+    // Totals always use Laplace: per-total ε = 0.1 → theory MAE = b = 20 / 0.1 = 200.
+    // The Gaussian path would produce a much larger error (≈ 977) and is ruled out by this bound.
+    assertThat(mae).isBetween(170.0, 230.0);
+  }
+
+  /** Executions never persist reports, so every call draws independent fresh noise. */
+  private double meanAbsoluteError(ToIntFunction<Report> noisyTotal) {
+    double sum = 0;
+    for (int i = 0; i < STATISTICAL_SAMPLES; i++) {
+      sum +=
+          Math.abs(
+              noisyTotal.applyAsInt(step.execute(newReportWithTotals(RAW_TOTAL, RAW_TOTAL)))
+                  - RAW_TOTAL);
+    }
+    return sum / STATISTICAL_SAMPLES;
+  }
+
+  private void whenSettings(double epsilon, int minThreshold, NoiseMechanism mechanism) {
+    settingsService.updateSettings(
+        SettingsDTO.builder()
+            .epsilon(epsilon)
+            .delta(1e-8)
+            .minThreshold(minThreshold)
+            .noiseMechanism(mechanism)
+            .build());
   }
 }

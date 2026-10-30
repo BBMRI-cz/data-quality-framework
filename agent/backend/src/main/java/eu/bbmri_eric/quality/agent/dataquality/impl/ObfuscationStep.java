@@ -8,9 +8,11 @@ import eu.bbmri_eric.quality.agent.dataquality.domain.Result;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.agent.dataquality.privacy.CountReleaser;
 import eu.bbmri_eric.quality.agent.dataquality.privacy.EpsilonAllocator;
+import eu.bbmri_eric.quality.agent.dataquality.privacy.Mechanism;
 import eu.bbmri_eric.quality.agent.dataquality.privacy.NoiseHistory;
 import eu.bbmri_eric.quality.agent.dataquality.privacy.PrivacyBudget;
 import eu.bbmri_eric.quality.agent.dataquality.privacy.PrivacyParameters;
+import eu.bbmri_eric.quality.agent.settings.NoiseMechanism;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
 import java.util.ArrayList;
@@ -18,24 +20,38 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.random.RandomGenerator;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * This pipeline step takes care of adding noise to individual report results.
+ * This pipeline step takes care of adding noise to a report's metrics: the individual check results
+ * and the entity totals.
  *
- * <p>To prevent averaging attacks across repeated reports, a result whose raw count stayed within
+ * <p>To prevent averaging attacks across repeated reports, a metric whose raw count stayed within
  * the refresh threshold of its anchor reuses the previously published noisy value instead of
  * drawing fresh noise. The reuse rule lives in {@link CountReleaser}; the anchor is reconstructed
  * from the publication history by {@link NoiseHistory}.
+ *
+ * <p>Check results use the configured noise mechanism with sensitivity {@link #RESULT_SENSITIVITY}.
+ * Entity totals always use Laplace noise (pure ε-DP) and their own per-individual sensitivities,
+ * since one patient can contribute many samples.
  */
 @Slf4j
 @Component
 class ObfuscationStep implements ReportPipelineStep {
 
   private static final int RESULT_SENSITIVITY = 1;
+  private static final int PATIENT_SENSITIVITY = 1;
+
+  /**
+   * Assumed maximum number of samples (secondary entities) per patient. Used as the sensitivity of
+   * the noisy sample total; patients with more samples are protected proportionally less for this
+   * number. Documented in docs/user/privacy.md.
+   */
+  private static final int SECONDARY_ENTITY_SENSITIVITY = 20;
 
   private final SettingsService settingsService;
   private final QualityCheckService qualityCheckService;
@@ -55,19 +71,20 @@ class ObfuscationStep implements ReportPipelineStep {
 
   @Override
   public Report execute(Report report) {
-    obfuscateResults(report);
+    SettingsDTO settings = settingsService.getSettings();
+    PrivacyParameters parameters = PrivacyParameters.from(settings);
+    obfuscateResults(report, parameters);
+    obfuscateEntityTotals(report, parameters);
     log.info("Completed obfuscation for report id: {}", report.getId());
     return report;
   }
 
-  private void obfuscateResults(Report report) {
+  private void obfuscateResults(Report report, PrivacyParameters parameters) {
     log.info("Adding obfuscated values for report id: {}", report.getId());
     List<Result> results = resultsWithNonNullRawValues(report.getResults());
     if (results.isEmpty()) {
       return;
     }
-    SettingsDTO settings = settingsService.getSettings();
-    PrivacyParameters parameters = PrivacyParameters.from(settings);
     CountReleaser releaser = CountReleaser.forParameters(parameters, randomGenerator);
     double[] epsilons = allocateBudget(results, parameters);
     Map<CheckInstanceKey, NoiseHistory.PreviousRelease> previousReleases =
@@ -80,6 +97,65 @@ class ObfuscationStep implements ReportPipelineStep {
       result.setObfuscatedValue(release.value());
       result.setEpsilon(release.reused() ? previous.epsilon() : epsilons[i]);
     }
+  }
+
+  private void obfuscateEntityTotals(Report report, PrivacyParameters parameters) {
+    // Totals always use Laplace (pure ε-DP): in Gaussian mode the small per-total ε would make
+    // the standard deviation ≈6× larger (e.g. ≈1 200 samples at δ = 1e-8) and ruin utility.
+    CountReleaser releaser =
+        new CountReleaser(parameters, Mechanism.of(NoiseMechanism.LAPLACE, randomGenerator));
+    double epsilonPerTotal = PrivacyBudget.epsilonPerEntityTotal(parameters.epsilon());
+    List<TotalsHistoryRow> history = reportRepository.findTotalsHistory(ReportStatus.GENERATED);
+    report.setObfuscatedNumberOfEntities(
+        releaseTotal(
+            report.getNumberOfEntities(),
+            previousTotal(
+                history,
+                TotalsHistoryRow::numberOfEntities,
+                TotalsHistoryRow::obfuscatedNumberOfEntities,
+                PATIENT_SENSITIVITY),
+            releaser,
+            epsilonPerTotal,
+            PATIENT_SENSITIVITY));
+    report.setObfuscatedNumberOfSecondaryEntities(
+        releaseTotal(
+            report.getNumberOfSecondaryEntities(),
+            previousTotal(
+                history,
+                TotalsHistoryRow::numberOfSecondaryEntities,
+                TotalsHistoryRow::obfuscatedNumberOfSecondaryEntities,
+                SECONDARY_ENTITY_SENSITIVITY),
+            releaser,
+            epsilonPerTotal,
+            SECONDARY_ENTITY_SENSITIVITY));
+  }
+
+  private Integer releaseTotal(
+      Integer count,
+      NoiseHistory.PreviousRelease previous,
+      CountReleaser releaser,
+      double epsilon,
+      int sensitivity) {
+    if (count == null) {
+      return null;
+    }
+    return (int) Math.round(releaser.release(count, previous, epsilon, sensitivity).value());
+  }
+
+  /** Reconstructs the previous release and anchor for one total column pair of the history. */
+  private static NoiseHistory.PreviousRelease previousTotal(
+      List<TotalsHistoryRow> totalsHistory,
+      Function<TotalsHistoryRow, Integer> rawGetter,
+      Function<TotalsHistoryRow, Integer> noisyGetter,
+      int sensitivity) {
+    List<NoiseHistory.HistoryEntry> series = new ArrayList<>();
+    for (TotalsHistoryRow row : totalsHistory) {
+      Integer published = noisyGetter.apply(row);
+      series.add(
+          new NoiseHistory.HistoryEntry(
+              rawGetter.apply(row), published == null ? Double.NaN : published, null));
+    }
+    return NoiseHistory.replay(series, PrivacyBudget.refreshThreshold(sensitivity));
   }
 
   private static List<Result> resultsWithNonNullRawValues(List<Result> results) {
@@ -133,6 +209,6 @@ class ObfuscationStep implements ReportPipelineStep {
 
   @Override
   public int getOrder() {
-    return 20;
+    return 30;
   }
 }
