@@ -35,7 +35,7 @@ class ReportServiceImplTest {
 
   @Autowired private ReportRepository reportRepository;
   @Autowired private ReportService reportService;
-  @Autowired private ReportServiceImpl reportServiceImpl;
+  @Autowired private StaleReportReaper staleReportReaper;
   @MockitoBean private QualityCheckService cqlQueryService;
   @MockitoBean private ReportPipeline reportPipeline;
 
@@ -140,7 +140,7 @@ class ReportServiceImplTest {
       stale.setStatus(ReportStatus.GENERATING);
       stale = reportRepository.save(stale);
 
-      reportServiceImpl.failStaleGeneratingReportsOnStartup();
+      staleReportReaper.failStaleGeneratingReportsOnStartup();
 
       assertThat(reportRepository.findById(stale.getId()).orElseThrow().getStatus())
           .isEqualTo(ReportStatus.FAILED);
@@ -149,7 +149,7 @@ class ReportServiceImplTest {
     @Test
     @DisplayName("should not touch completed reports on startup")
     void failStaleGeneratingReportsOnStartup_keepsGeneratedReports() {
-      reportServiceImpl.failStaleGeneratingReportsOnStartup();
+      staleReportReaper.failStaleGeneratingReportsOnStartup();
 
       assertThat(reportRepository.findById(testReport.getId()).orElseThrow().getStatus())
           .isEqualTo(ReportStatus.GENERATED);
@@ -183,7 +183,7 @@ class ReportServiceImplTest {
       fresh.setStatus(ReportStatus.GENERATING);
       fresh = reportRepository.save(fresh);
 
-      reportServiceImpl.failStaleGeneratingReports();
+      staleReportReaper.failStaleGeneratingReports();
 
       assertThat(reportRepository.findById(stale.getId()).orElseThrow().getStatus())
           .isEqualTo(ReportStatus.FAILED);

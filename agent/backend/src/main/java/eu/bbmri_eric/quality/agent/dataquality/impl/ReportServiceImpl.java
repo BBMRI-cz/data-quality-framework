@@ -6,14 +6,9 @@ import eu.bbmri_eric.quality.agent.common.EventPublisher;
 import eu.bbmri_eric.quality.agent.common.dto.FilterDTO;
 import eu.bbmri_eric.quality.agent.common.dto.PageResponse;
 import eu.bbmri_eric.quality.agent.common.exception.EntityNotFoundException;
-import eu.bbmri_eric.quality.agent.dataquality.QualityCheckService;
 import eu.bbmri_eric.quality.agent.dataquality.ReportService;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
-import eu.bbmri_eric.quality.agent.dataquality.domain.ReportStatus;
-import eu.bbmri_eric.quality.agent.dataquality.domain.Result;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ObfuscatedReportDTO;
-import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
-import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckResultDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportResultDetailDTO;
@@ -22,26 +17,14 @@ import eu.bbmri_eric.quality.agent.dataquality.event.NewReportEvent;
 import eu.bbmri_eric.quality.agent.dataquality.exception.ReportGenerationInProgressException;
 import eu.bbmri_eric.quality.agent.dataquality.exception.ReportNotFoundException;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
-import org.jspecify.annotations.NonNull;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,29 +33,26 @@ class ReportServiceImpl implements ReportService {
 
   private static final Logger log = LoggerFactory.getLogger(ReportServiceImpl.class);
 
-  /**
-   * Maximum age of a report in {@link ReportStatus#GENERATING} before it is considered stuck and
-   * failed automatically, so a crashed generation cannot block report creation forever.
-   */
-  private static final Duration STALE_GENERATING_TIMEOUT = Duration.ofHours(6);
-
   private final ReportRepository reportRepository;
-  private final QualityCheckService qualityCheckService;
   private final SettingsService settingsService;
   private final ModelMapper modelMapper;
   private final EventPublisher publisher;
+  private final StaleReportReaper staleReportReaper;
+  private final ObfuscatedReportAssembler obfuscatedReportAssembler;
 
   ReportServiceImpl(
       ReportRepository reportRepository,
-      QualityCheckService qualityCheckService,
       SettingsService settingsService,
       ModelMapper modelMapper,
-      EventPublisher publisher) {
+      EventPublisher publisher,
+      StaleReportReaper staleReportReaper,
+      ObfuscatedReportAssembler obfuscatedReportAssembler) {
     this.reportRepository = reportRepository;
-    this.qualityCheckService = qualityCheckService;
     this.settingsService = settingsService;
     this.modelMapper = modelMapper;
     this.publisher = publisher;
+    this.staleReportReaper = staleReportReaper;
+    this.obfuscatedReportAssembler = obfuscatedReportAssembler;
   }
 
   @Override
@@ -83,7 +63,7 @@ class ReportServiceImpl implements ReportService {
       entityId = "#result.id",
       details = "Report created")
   public ReportDTO create(ReportCreateDTO createDTO) {
-    List<Report> blockingReports = failStaleAndGetActiveGeneratingReports();
+    List<Report> blockingReports = staleReportReaper.failStaleAndGetActiveGeneratingReports();
     if (!blockingReports.isEmpty()) {
       throw new ReportGenerationInProgressException(blockingReports.getFirst().getId());
     }
@@ -93,62 +73,6 @@ class ReportServiceImpl implements ReportService {
     log.info("Created report with id: {}", report.getId());
     publisher.publishEvent(new NewReportEvent(report.getId()));
     return modelMapper.map(report, ReportDTO.class);
-  }
-
-  /**
-   * Scheduled sweep that fails reports stuck in {@link ReportStatus#GENERATING} for longer than
-   * {@link #STALE_GENERATING_TIMEOUT}. Complements {@link #failStaleGeneratingReportsOnStartup()},
-   * which handles application restarts; this sweep covers generations that hang or die while the
-   * application keeps running. Stale reports are also handled eagerly in {@link #create} so a new
-   * report never has to wait for the next sweep.
-   */
-  @Scheduled(cron = "0 0 * * * *")
-  @Transactional
-  public void failStaleGeneratingReports() {
-    failStaleAndGetActiveGeneratingReports();
-  }
-
-  /**
-   * Fails reports stuck in {@link ReportStatus#GENERATING} for longer than the staleness timeout
-   * and returns the reports that are still actively generating. Reports without a timestamp are not
-   * auto-failed, since their age cannot be determined.
-   *
-   * @return reports in {@link ReportStatus#GENERATING} that are not stale
-   */
-  private List<Report> failStaleAndGetActiveGeneratingReports() {
-    LocalDateTime staleBefore = LocalDateTime.now().minus(STALE_GENERATING_TIMEOUT);
-    List<Report> generatingReports = reportRepository.findAllByStatusIs(ReportStatus.GENERATING);
-    List<Report> staleReports =
-        generatingReports.stream().filter(report -> isStale(report, staleBefore)).toList();
-    if (!staleReports.isEmpty()) {
-      log.warn("Marking {} stale report(s) stuck in GENERATING as FAILED", staleReports.size());
-      staleReports.forEach(report -> report.setStatus(ReportStatus.FAILED));
-      reportRepository.saveAll(staleReports);
-    }
-    return generatingReports.stream().filter(report -> !isStale(report, staleBefore)).toList();
-  }
-
-  private static boolean isStale(Report report, LocalDateTime staleBefore) {
-    return report.getGeneratedAt() != null && report.getGeneratedAt().isBefore(staleBefore);
-  }
-
-  /**
-   * Marks reports stuck in {@link ReportStatus#GENERATING} as {@link ReportStatus#FAILED} on
-   * application startup. Report generation runs in-process, so after a restart no report can still
-   * be running; without this recovery a crashed generation would block all future reports, since
-   * only one report may be generated at a time.
-   */
-  @Transactional
-  @EventListener(ApplicationReadyEvent.class)
-  public void failStaleGeneratingReportsOnStartup() {
-    List<Report> staleReports = reportRepository.findAllByStatusIs(ReportStatus.GENERATING);
-    if (staleReports.isEmpty()) {
-      return;
-    }
-    log.warn(
-        "Marking {} report(s) stuck in GENERATING as FAILED after restart", staleReports.size());
-    staleReports.forEach(report -> report.setStatus(ReportStatus.FAILED));
-    reportRepository.saveAll(staleReports);
   }
 
   @Override
@@ -241,81 +165,11 @@ class ReportServiceImpl implements ReportService {
     return reportRepository.existsById(id);
   }
 
-  @Transactional(readOnly = true)
   @Override
+  @Transactional(readOnly = true)
   public ObfuscatedReportDTO getObfuscatedById(Long id) {
     Report report =
         reportRepository.findById(id).orElseThrow(() -> new ReportNotFoundException(id));
-    Integer obfuscatedPatientCount = report.getObfuscatedNumberOfEntities();
-    Integer obfuscatedSampleCount = report.getObfuscatedNumberOfSecondaryEntities();
-    List<QualityCheckDTO> qualityCheckDTOS = qualityCheckService.findAll();
-    var results = prepareObfuscatedResults(report, obfuscatedPatientCount, qualityCheckDTOS);
-    log.debug("Prepared obfuscated report {} with {} results", id, results.size());
-    return new ObfuscatedReportDTO(results, obfuscatedPatientCount, obfuscatedSampleCount);
-  }
-
-  private static @NonNull List<QualityCheckResultDTO> prepareObfuscatedResults(
-      Report report, Integer obfuscatedPatientCount, List<QualityCheckDTO> qualityCheckDTOS) {
-    return (report.getResults() == null ? List.<Result>of() : report.getResults())
-        .stream()
-            .map(
-                result -> {
-                  Double value = calculateObfuscatedValue(result, obfuscatedPatientCount);
-                  Double boundedValue = null;
-                  if (value != null) {
-                    double roundedValue =
-                        BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_UP).doubleValue();
-                    boundedValue = Math.clamp(roundedValue, 0.0, 1.0);
-                  }
-                  String checkIdLabel = formatCheckIdWithStratum(result, qualityCheckDTOS);
-                  return new QualityCheckResultDTO(
-                      checkIdLabel, result.getCheckName(), boundedValue);
-                })
-            .collect(Collectors.toList());
-  }
-
-  private static Double calculateObfuscatedValue(Result result, Integer numberOfEntities) {
-    if (Objects.isNull(numberOfEntities) || Objects.isNull(result.getObfuscatedValue())) {
-      return null;
-    }
-    if (numberOfEntities == 0) {
-      return 0.0;
-    }
-    return result.getObfuscatedValue() / numberOfEntities;
-  }
-
-  private static String getCheckId(Result result, List<QualityCheckDTO> cqlQueryDTOS) {
-    String query =
-        cqlQueryDTOS.stream()
-            .filter(cqlQueryDTO -> cqlQueryDTO.getId().equals(result.getCheckId()))
-            .findFirst()
-            .map(QualityCheckDTO::getQuery)
-            .orElse(result.getCheckId().toString());
-    return hashQuery(query);
-  }
-
-  private static String formatCheckIdWithStratum(
-      Result result, List<QualityCheckDTO> qualityCheckDTOS) {
-    String checkId = getCheckId(result, qualityCheckDTOS);
-    if (result.getStratum() != null) {
-      return "%s (%s)".formatted(checkId, result.getStratum());
-    }
-    return checkId;
-  }
-
-  private static String hashQuery(String query) {
-    try {
-      MessageDigest digest = MessageDigest.getInstance("SHA-256");
-      byte[] hash = digest.digest(query.getBytes(StandardCharsets.UTF_8));
-      StringBuilder hexString = new StringBuilder();
-      for (byte b : hash) {
-        String hex = Integer.toHexString(0xff & b);
-        if (hex.length() == 1) hexString.append('0');
-        hexString.append(hex);
-      }
-      return hexString.toString();
-    } catch (NoSuchAlgorithmException e) {
-      throw new RuntimeException("SHA-256 algorithm not found", e);
-    }
+    return obfuscatedReportAssembler.assemble(report);
   }
 }
