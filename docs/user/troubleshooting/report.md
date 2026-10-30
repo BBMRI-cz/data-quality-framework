@@ -17,19 +17,20 @@ Use the following steps:
 
 ## The Whole Report Is Marked FAILED
 
-A report left in the `FAILED` state aborted during generation — for example because the database became unavailable mid-run, or because per-check epsilon budget preferences consumed the entire check budget, leaving no epsilon for the remaining checks (see [Privacy Configuration](../user/privacy-configuration.md#how-the-privacy-budget-is-spent)).
+The report stopped during generation, for example because the database became unavailable or a privacy setting was
+invalid (see [Privacy Configuration](../privacy-configuration.md)). Check the agent logs for the error, fix the cause
+and generate a new report. Failed reports are not retried automatically.
 
-A failed report is never sent to the central server and is not retried automatically. Check the agent logs for the underlying error, fix the cause, and generate a new report.
+A failed report is normally not sent to the central server. If generation fails at the very last step, the server may
+already have received it.
 
 ## A Report Appears Stuck in GENERATING
 
-Only one report can be generated at a time; requesting another one while a report is running returns a **409 Conflict** (shown as a notification in the UI). If the report page shows a report that stays in `GENERATING` for an unusually long time, its generation probably died mid-run.
+Only one report can run at a time. Requesting another one shows a "report generation in progress" message.
 
-The agent recovers automatically — reports stuck in `GENERATING` for more than **6 hours** are marked `FAILED`:
+If a report stays in `GENERATING` for hours, its generation has most likely hung or crashed. The agent marks such
+reports `FAILED` after 6 hours (it checks every hour, when a new report is requested, and at startup). New reports can
+then run again.
 
-- on an hourly scheduled sweep,
-- eagerly whenever a new report is requested,
-- immediately at startup for reports left behind by an application restart (any in-process generation is provably dead after a restart).
-
-Once the stuck report is marked `FAILED`, report generation works again — no restart required.
-
+If the report is still `GENERATING` after that, or new reports fail with a database error, restart the agent. A common
+cause is a data store that stopped responding, so also check that the FHIR server or database is reachable.

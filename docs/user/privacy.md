@@ -49,89 +49,79 @@ cosign verify ghcr.io/bbmri-cz/data-quality-server:latest \
 
 ## Privacy-Preserving Data Processing
 
-### Core Privacy Principle
+> Raw data never leaves the site. The agent sends only aggregated, noisy quality metrics to the central server.
 
-> **Raw data never leaves the site — only aggregated quality metrics are shared.**
+### What the server receives
 
-The Data Quality Framework implements a federated architecture where sensitive data remains at the source while still enabling quality assessment across multiple sites.
+For every report, the agent sends:
 
-### Differential Privacy Implementation
+- for each quality check, the share of patients it affects (for example 0.07 for 7 %), rounded to two decimals;
+- the number of patients and the number of samples at the site.
 
-The framework employs **differential privacy** to provide mathematically rigorous privacy guarantees when sharing quality metrics.
+All of these are computed from counts to which the agent has added random noise. Patient identifiers, records and
+exact counts stay in the agent.
 
-#### What is Differential Privacy?
+### How differential privacy protects patients
 
-Differential privacy is a mathematical framework that provides provable privacy guarantees by adding carefully calibrated noise to query results. It ensures that the presence or absence of any individual record in a dataset cannot be determined from the output, even by an adversary with auxiliary information.
+Before anything is sent, the agent adds a random amount to each count, so the published number is slightly off in an
+unpredictable direction. The noise is sized so that whether one particular patient is in the data makes only a
+limited, measurable difference to what the server sees. This approach is called *differential privacy*. Its strength
+is set by the privacy budget ε (epsilon): a smaller ε means more noise and stronger protection, a larger ε means more
+accurate results and weaker protection.
 
-The key properties of differential privacy are:
+Two more safeguards work on top of the noise:
 
-- **Quantifiable Privacy**: Privacy protection is measured by a parameter ε (epsilon) - smaller values provide stronger privacy
-- **Composition**: Multiple queries can be combined while maintaining privacy guarantees
-- **Robustness**: Protection holds even against powerful adversaries with background knowledge
+- **Small counts are hidden.** A noisy count below the minimum threshold (default 50) is reported as 0.
+- **Unchanged numbers are not re-randomised.** Reports run every day. If each report drew new noise, someone could
+  average many reports and cancel the noise out. So the agent resends its previous noisy value until the real count
+  has moved by at least 5 patients (100 for the sample total), and only then draws new noise.
 
-For a comprehensive understanding of differential privacy, see the foundational paper: [*"The Algorithmic Foundations of Differential Privacy"*](https://www.cis.upenn.edu/~aaroth/Papers/privacybook.pdf) by Dwork and Roth.
+### Example
 
-#### Technical Implementation
+A site has 10 000 patients, and a check finds 67 with an invalid gender value.
 
-Our differential privacy implementation uses the **Laplace mechanism** (or optionally the **Gaussian mechanism** for (ε, δ)-differential privacy) with additional safeguards:
+1. The agent adds noise to 67. The difference is typically around 7, so it might use 61.4.
+2. It also adds noise to the patient total, for example 10 003.
+3. It sends 61.4 / 10 003 = 0.006, rounded to **0.01**, together with the noisy totals.
 
-**Implementation Location:**
-- **Class**: `eu.bbmri_eric.quality.agent.dataquality.DifferentialPrivacyUtil`
-- **Source**: `agent/backend/src/main/java/eu/bbmri_eric/quality/agent/dataquality/DifferentialPrivacyUtil.java`
-- **Tests**: `agent/backend/src/test/java/eu/bbmri_eric/quality/agent/dataquality/DifferentialPrivacyUtilTest.java`
+The dashboard shows "about 1 % of patients at this site have an invalid gender value". It does not show 67, and it
+does not show who. As long as the count stays within 5 of 67, the following reports send exactly the same value.
 
-The implementation includes comprehensive test coverage to ensure correctness of the differential privacy mechanisms.
+### Limits you should know about
 
-#### Protection Against Repeated-Report Averaging
+Differential privacy gives a mathematical guarantee for one report. A system that reports daily for years on real
+biobank data needs some practical compromises to stay useful. These are the ones we made:
 
-Reports are generated repeatedly (by default daily). If every report sampled fresh noise for a count that barely moved, an observer could average the noisy values over many reports and cancel the noise out — and a perfectly unchanging reported value would even reveal *exactly when* a count moved, i.e. which checks a known patient affected. To prevent both, the agent reuses the previous noisy value until the count has drifted far enough from the value the noise was drawn for:
+- **The guarantee is per report, not lifelong.** Each time a count moves enough to get new noise, a little more privacy
+  is spent, and there is no yearly limit. A site whose data changes every day accumulates more privacy loss than a
+  site whose data is stable.
+- **Changes are visible.** Because unchanged values repeat exactly, a change of 5 or more patients (100 or more
+  samples) shows up in the next report. Smaller changes usually stay hidden, but roughly one time in 25 a single
+  patient's change is the one that crosses the line. Someone who knows that a specific person was added on a given
+  day could then see which checks changed.
+- **Some counts can move by more than one per patient.** The protection assumes that one patient changes each count by
+  at most one. That is not true for the duplicate-identifier and invalid-ICD-10 checks, where one patient with many
+  records can move the count by 20 or more, or for the sample total, which assumes at most 20 samples per patient.
+  Patients outside these assumptions are less protected. If you write your own checks, make them count patients,
+  each at most once.
+- **The checks themselves must be trustworthy.** Noise protects the result of a check, not its intent. A check written
+  to single out one person (for example "count all patients if patient X has diagnosis Y") can defeat the protection.
+  Install checks only from sources you trust, and review your own.
+- **Small sites get less useful results.** The noise has the same size everywhere, so it matters more when counts are
+  small. If the noisy patient total itself is below the threshold, every check in that report is shown as 0. Read
+  that as "too small to report", not as "no problems found".
+- **Settings changes apply gradually.** A count that does not move keeps its old noisy value, and with it the old
+  settings, until it moves. Values that a raised threshold would hide are re-randomised straight away.
+- **Rounding hides more than the guarantee promises.** Shares are rounded to whole percent, which at large sites hides
+  most single-patient changes. That is a side effect, not something the guarantee relies on.
 
-- Noise is re-sampled only once a raw count has moved past a **drift threshold** from the value its current noise was drawn for (the **anchor**). The threshold scales with the count's sensitivity: **5** for check results and the patient total (one patient counts once), and **100** for the sample total — 5 × the assumed maximum of 20 samples per patient, so a single patient's donation never triggers a visible change on its own.
-- The anchor is **derived from the report history**, not stored separately: because reused noise propagates bit-for-bit, the anchor can be reconstructed exactly by walking the newest-first history to the end of the run of identical published values and then replaying the refresh rule forward over that run. The replay also stays correct when several fresh draws in a row happen to publish the same value (e.g. suppressed counts all publishing 0, or integer totals rounding to the same number).
-- This applies identically to the entity totals and to individual check results (matched by check and stratum).
-- Only one report can be generated at a time, so the report history used for the derivation is always unambiguous.
+For stronger protection, lower ε, raise the threshold, and keep only the checks you need. Each of these costs
+accuracy, and every site has to find its own balance. [Privacy Configuration](./privacy-configuration.md) shows what
+the settings mean in practice.
 
-**What still leaks, and you should be aware of:**
-
-- **A change event above the threshold, and its timing — nothing about anything below it.** A drift of at least 5 patients or at least 100 samples between two reports is visible as a one-time change of the reported value. Smaller changes — patient-level record edits, a single donation of samples — stay below the threshold and are **not observable at all**: the reported value keeps repeating the previous noisy value, so neither the change nor the affected checks can be identified beyond what a single report already reveals. Large bulk imports (≥ 5 patients, or ≥ 100 samples total) do produce one visible change event per crossing, but each reveals only *that* the count moved past the threshold, not by how much.
-- Settings changes are not a trigger. If privacy settings (ε, mechanism, threshold) change, an unchanged count keeps its old noisy value rather than being re-sampled under the new parameters — the old protection level simply carries over until the count itself drifts past the threshold.
-
-#### Protection of Entity Totals
-
-The total patient and sample counts that accompany each report are **also protected with noise** — they are never shared as exact or merely rounded values:
-
-- Each report reserves a share of its privacy budget for the two totals: **20% of ε in total (10% per total)**; the remaining **80% of ε** is split among the quality check results as described below. These shares are defined in `DifferentialPrivacyUtil` (`ENTITY_TOTALS_EPSILON_FRACTION` / `CHECK_RESULTS_EPSILON_FRACTION`), so releasing a full report never exceeds its epsilon budget.
-- Noise is applied to the raw totals once during report generation (in the `EntityCountStep` of the report pipeline) and the noisy values are persisted, following the reuse rule described above. Re-sending or re-exporting the same report reuses the stored noisy totals.
-- The same **low-count suppression** applies to totals as to check counts: noisy counts below the configured minimum threshold are reported as 0.
-- Check results are ratios computed as `noisy check count / noisy patient count`, so no exact count — numerator or denominator — is ever used in a shared metric.
-
-The sample total is protected assuming each patient contributes at most **20 samples** (its sensitivity). Patients with more samples are protected proportionally less for this number (e.g. 50 samples → about 2.5× the privacy loss). The added noise is about **±70 samples** with default settings (5 % of reports deviate by more than ±200), which is negligible for large biobanks but noticeable below ~1 000 samples. The patient total uses sensitivity 1. Entity totals always use **Laplace noise**, independent of the configured noise mechanism — in Gaussian mode the small per-total budget (ε ≤ 0.1) would make Gaussian noise far too large to be useful (≈ ±1 200 samples).
-
-Reports generated before this protection existed (or lacking a noisy total for any other reason) do not fall back to weaker rounding: their totals are simply withheld.
-
-#### Example: Obfuscated Percentage Calculation
-
-To illustrate how differential privacy is applied in practice, consider the following scenario:
-
-1. A local site runs a quality check and finds **67 patients with a faulty record** (e.g., invalid gender value).
-2. Let the total number of patients locally be **10,000**.
-3. Before transmitting anything, the agent applies the Laplace mechanism to the raw count:
-   - `trueCount = 67`
-   - `epsilon = 1.0` (example privacy budget; actual value may differ per check)
-   - `noise ~ Laplace(scale = 1 / epsilon)`
-   - Suppose the sampled `noise = -1.73`
-   - `noisyCount = max(0, trueCount + noise) = max(0, 67 - 1.73) ≈ 65.27`
-4. The agent converts this to an obfuscated percentage, using the **noisy total number of patients** (≈ 10,000 after noise addition) as the denominator:
-   - `percentage = (noisyCount / noisyTotalPatients) * 100 ≈ (65.27 / 10,000) * 100 ≈ 0.65%`
-5. Only this **privacy-preserved percentage (≈ 0.65%)**, together with the noisy totals, is sent to the Data Quality Server – never the raw counts.
-6. The central server stores and displays the obfuscated metric. Individual patient presence or absence cannot be inferred due to the added calibrated noise.
-
-Key points:
-- Small datasets receive proportionally more effective protection because the noise impact is relatively larger.
-- Counts (including the entity totals) are clipped to zero to avoid negative artifacts after noise addition.
-- Each quality check and each entity total consumes part of the report's privacy budget (ε); budgeting strategy can be tuned.
-
-> This approach ensures that even if an attacker knows most of the dataset, they cannot reliably determine whether any one patient contributed to the reported metric.
+The theory behind differential privacy is described in Dwork and Roth,
+[*The Algorithmic Foundations of Differential Privacy*](https://www.cis.upenn.edu/~aaroth/Papers/privacybook.pdf).
+The implementation is part of the agent's open source code and is covered by automated tests.
 
 ## Data Flow Architecture
 
