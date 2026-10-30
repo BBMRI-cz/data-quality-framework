@@ -2,6 +2,8 @@ package eu.bbmri_eric.quality.agent.dataquality.impl;
 
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
 import eu.bbmri_eric.quality.agent.dataquality.domain.ReportStatus;
+import eu.bbmri_eric.quality.agent.dataquality.privacy.ResultHistoryRow;
+import eu.bbmri_eric.quality.agent.dataquality.privacy.TotalsHistoryRow;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -16,7 +18,7 @@ interface ReportRepository extends JpaRepository<Report, Long> {
    */
   @Query(
       """
-      select new eu.bbmri_eric.quality.agent.dataquality.impl.ResultHistoryRow(
+      select new eu.bbmri_eric.quality.agent.dataquality.privacy.ResultHistoryRow(
         r.checkId, r.stratum, r.rawValue, r.obfuscatedValue, r.epsilon)
       from Report rep join rep.results r
       where rep.status = :status
@@ -27,7 +29,7 @@ interface ReportRepository extends JpaRepository<Report, Long> {
   /** Scalars-only history of the entity totals, newest first, deterministic as above. */
   @Query(
       """
-      select new eu.bbmri_eric.quality.agent.dataquality.impl.TotalsHistoryRow(
+      select new eu.bbmri_eric.quality.agent.dataquality.privacy.TotalsHistoryRow(
         rep.numberOfEntities, rep.numberOfSecondaryEntities,
         rep.obfuscatedNumberOfEntities, rep.obfuscatedNumberOfSecondaryEntities)
       from Report rep

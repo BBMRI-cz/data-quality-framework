@@ -62,6 +62,7 @@ class EntityCountStepTest {
 
   @Test
   void getOrder_shouldRunBeforeObfuscation() {
-    assertThat(step.getOrder()).isEqualTo(20);
+    assertThat(step.getOrder())
+        .isEqualTo(eu.bbmri_eric.quality.agent.dataquality.ReportPipelineStep.ENTITY_COUNT_ORDER);
   }
 }

@@ -36,6 +36,6 @@ class EntityCountStep implements ReportPipelineStep {
 
   @Override
   public int getOrder() {
-    return 20;
+    return ENTITY_COUNT_ORDER;
   }
 }

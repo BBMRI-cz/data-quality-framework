@@ -8,18 +8,21 @@ import eu.bbmri_eric.quality.agent.dataquality.domain.Result;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.agent.dataquality.privacy.CountReleaser;
 import eu.bbmri_eric.quality.agent.dataquality.privacy.EpsilonAllocator;
-import eu.bbmri_eric.quality.agent.dataquality.privacy.Mechanism;
+import eu.bbmri_eric.quality.agent.dataquality.privacy.HistoryEntry;
+import eu.bbmri_eric.quality.agent.dataquality.privacy.LaplaceSampler;
 import eu.bbmri_eric.quality.agent.dataquality.privacy.NoiseHistory;
+import eu.bbmri_eric.quality.agent.dataquality.privacy.NoiseSampler;
+import eu.bbmri_eric.quality.agent.dataquality.privacy.PreviousRelease;
 import eu.bbmri_eric.quality.agent.dataquality.privacy.PrivacyBudget;
 import eu.bbmri_eric.quality.agent.dataquality.privacy.PrivacyParameters;
-import eu.bbmri_eric.quality.agent.settings.NoiseMechanism;
+import eu.bbmri_eric.quality.agent.dataquality.privacy.ResultHistoryRow;
+import eu.bbmri_eric.quality.agent.dataquality.privacy.TotalsHistoryRow;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.random.RandomGenerator;
 import java.util.stream.Collectors;
@@ -79,81 +82,90 @@ class ObfuscationStep implements ReportPipelineStep {
     return report;
   }
 
+  @Override
+  public int getOrder() {
+    return OBFUSCATION_ORDER;
+  }
+
   private void obfuscateResults(Report report, PrivacyParameters parameters) {
-    log.info("Adding obfuscated values for report id: {}", report.getId());
     List<Result> results = resultsWithNonNullRawValues(report.getResults());
     if (results.isEmpty()) {
       return;
     }
-    CountReleaser releaser = CountReleaser.forParameters(parameters, randomGenerator);
-    double[] epsilons = allocateBudget(results, parameters);
-    Map<CheckInstanceKey, NoiseHistory.PreviousRelease> previousReleases =
+    log.debug("Adding obfuscated values for report id: {}", report.getId());
+    CountReleaser releaser =
+        new CountReleaser(
+            NoiseSampler.of(parameters.mechanism(), randomGenerator, parameters.delta()),
+            parameters.minThreshold());
+    List<Double> epsilons = allocateBudget(results, parameters);
+    Map<CheckInstanceKey, PreviousRelease> previousReleases =
         previousReleasesByCheckAndStratum(results);
     for (int i = 0; i < results.size(); i++) {
       Result result = results.get(i);
-      NoiseHistory.PreviousRelease previous = previousReleases.get(CheckInstanceKey.of(result));
+      PreviousRelease previous = previousReleases.get(CheckInstanceKey.of(result));
       CountReleaser.Release release =
-          releaser.release(result.getRawValue(), previous, epsilons[i], RESULT_SENSITIVITY);
+          releaser.release(result.getRawValue(), previous, epsilons.get(i), RESULT_SENSITIVITY);
       result.setObfuscatedValue(release.value());
-      result.setEpsilon(release.reused() ? previous.epsilon() : epsilons[i]);
+      result.setEpsilon(release.epsilon());
     }
   }
 
   private void obfuscateEntityTotals(Report report, PrivacyParameters parameters) {
-    // Totals always use Laplace (pure ε-DP): in Gaussian mode the small per-total ε would make
-    // the standard deviation ≈6× larger (e.g. ≈1 200 samples at δ = 1e-8) and ruin utility.
+    // Totals always use Laplace (pure ε-DP): at the small per-total ε the Gaussian standard
+    // deviation would be several times larger than the Laplace scale and ruin utility.
     CountReleaser releaser =
-        new CountReleaser(parameters, Mechanism.of(NoiseMechanism.LAPLACE, randomGenerator));
+        new CountReleaser(new LaplaceSampler(randomGenerator), parameters.minThreshold());
     double epsilonPerTotal = PrivacyBudget.epsilonPerEntityTotal(parameters.epsilon());
     List<TotalsHistoryRow> history = reportRepository.findTotalsHistory(ReportStatus.GENERATED);
     report.setObfuscatedNumberOfEntities(
         releaseTotal(
             report.getNumberOfEntities(),
-            previousTotal(
-                history,
-                TotalsHistoryRow::numberOfEntities,
-                TotalsHistoryRow::obfuscatedNumberOfEntities,
-                PATIENT_SENSITIVITY),
+            history,
+            TotalsHistoryRow::numberOfEntities,
+            TotalsHistoryRow::obfuscatedNumberOfEntities,
             releaser,
             epsilonPerTotal,
             PATIENT_SENSITIVITY));
     report.setObfuscatedNumberOfSecondaryEntities(
         releaseTotal(
             report.getNumberOfSecondaryEntities(),
-            previousTotal(
-                history,
-                TotalsHistoryRow::numberOfSecondaryEntities,
-                TotalsHistoryRow::obfuscatedNumberOfSecondaryEntities,
-                SECONDARY_ENTITY_SENSITIVITY),
+            history,
+            TotalsHistoryRow::numberOfSecondaryEntities,
+            TotalsHistoryRow::obfuscatedNumberOfSecondaryEntities,
             releaser,
             epsilonPerTotal,
             SECONDARY_ENTITY_SENSITIVITY));
   }
 
+  /** Releases one total: replays its history to the previous release, then releases or reuses. */
   private Integer releaseTotal(
       Integer count,
-      NoiseHistory.PreviousRelease previous,
+      List<TotalsHistoryRow> history,
+      Function<TotalsHistoryRow, Integer> rawGetter,
+      Function<TotalsHistoryRow, Integer> noisyGetter,
       CountReleaser releaser,
       double epsilon,
       int sensitivity) {
     if (count == null) {
       return null;
     }
+    PreviousRelease previous =
+        previousRelease(history, rawGetter, noisyGetter, sensitivity).orElse(null);
     return (int) Math.round(releaser.release(count, previous, epsilon, sensitivity).value());
   }
 
-  /** Reconstructs the previous release and anchor for one total column pair of the history. */
-  private static NoiseHistory.PreviousRelease previousTotal(
-      List<TotalsHistoryRow> totalsHistory,
+  /** Reconstructs the previous release for one total column pair of the totals history. */
+  private static java.util.Optional<PreviousRelease> previousRelease(
+      List<TotalsHistoryRow> history,
       Function<TotalsHistoryRow, Integer> rawGetter,
       Function<TotalsHistoryRow, Integer> noisyGetter,
       int sensitivity) {
-    List<NoiseHistory.HistoryEntry> series = new ArrayList<>();
-    for (TotalsHistoryRow row : totalsHistory) {
+    List<HistoryEntry> series = new ArrayList<>();
+    for (TotalsHistoryRow row : history) {
       Integer published = noisyGetter.apply(row);
       series.add(
-          new NoiseHistory.HistoryEntry(
-              rawGetter.apply(row), published == null ? Double.NaN : published, null));
+          new HistoryEntry(
+              rawGetter.apply(row), published != null ? published.doubleValue() : null, null));
     }
     return NoiseHistory.replay(series, PrivacyBudget.refreshThreshold(sensitivity));
   }
@@ -162,7 +174,7 @@ class ObfuscationStep implements ReportPipelineStep {
     return results.stream().filter(r -> r.getRawValue() != null).toList();
   }
 
-  private double[] allocateBudget(List<Result> results, PrivacyParameters parameters) {
+  private List<Double> allocateBudget(List<Result> results, PrivacyParameters parameters) {
     return EpsilonAllocator.allocate(
         PrivacyBudget.epsilonForCheckResults(parameters.epsilon()),
         results.stream().map(Result::getCheckId).toList(),
@@ -179,25 +191,23 @@ class ObfuscationStep implements ReportPipelineStep {
    * Reconstructs, for every check instance in the given results, the previously published noisy
    * value and its anchor from one projection query over the report history.
    */
-  private Map<CheckInstanceKey, NoiseHistory.PreviousRelease> previousReleasesByCheckAndStratum(
+  private Map<CheckInstanceKey, PreviousRelease> previousReleasesByCheckAndStratum(
       List<Result> currentResults) {
-    Set<CheckInstanceKey> wanted =
+    java.util.Set<CheckInstanceKey> wanted =
         currentResults.stream().map(CheckInstanceKey::of).collect(Collectors.toSet());
-    Map<CheckInstanceKey, List<NoiseHistory.HistoryEntry>> seriesByKey = new HashMap<>();
+    Map<CheckInstanceKey, List<HistoryEntry>> seriesByKey = new HashMap<>();
     for (ResultHistoryRow row : reportRepository.findResultHistory(ReportStatus.GENERATED)) {
       CheckInstanceKey key = new CheckInstanceKey(row.checkId(), row.stratum());
-      if (!wanted.contains(key)) continue;
+      if (!wanted.contains(key)) {
+        continue;
+      }
       seriesByKey.computeIfAbsent(key, k -> new ArrayList<>()).add(row.toHistoryEntry());
     }
-    Map<CheckInstanceKey, NoiseHistory.PreviousRelease> previousReleases = new HashMap<>();
+    Map<CheckInstanceKey, PreviousRelease> previousReleases = new HashMap<>();
     seriesByKey.forEach(
-        (key, series) -> {
-          NoiseHistory.PreviousRelease previous =
-              NoiseHistory.replay(series, PrivacyBudget.refreshThreshold(RESULT_SENSITIVITY));
-          if (previous != null) {
-            previousReleases.put(key, previous);
-          }
-        });
+        (key, series) ->
+            NoiseHistory.replay(series, PrivacyBudget.refreshThreshold(RESULT_SENSITIVITY))
+                .ifPresent(previous -> previousReleases.put(key, previous)));
     return previousReleases;
   }
 
@@ -205,10 +215,5 @@ class ObfuscationStep implements ReportPipelineStep {
     private static CheckInstanceKey of(Result result) {
       return new CheckInstanceKey(result.getCheckId(), result.getStratum());
     }
-  }
-
-  @Override
-  public int getOrder() {
-    return 30;
   }
 }

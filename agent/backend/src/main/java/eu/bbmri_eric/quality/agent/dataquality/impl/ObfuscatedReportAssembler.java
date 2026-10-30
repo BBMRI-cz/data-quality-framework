@@ -11,12 +11,11 @@ import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
-import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -36,25 +35,35 @@ class ObfuscatedReportAssembler {
   }
 
   ObfuscatedReportDTO assemble(Report report) {
-    Integer obfuscatedPatientCount = report.getObfuscatedNumberOfEntities();
-    Integer obfuscatedSampleCount = report.getObfuscatedNumberOfSecondaryEntities();
-    List<QualityCheckDTO> qualityCheckDTOS = qualityCheckService.findAll();
+    List<QualityCheckDTO> qualityChecks = qualityCheckService.findAll();
+    Map<Long, String> queriesByCheckId = new HashMap<>();
+    for (QualityCheckDTO qualityCheck : qualityChecks) {
+      queriesByCheckId.put(qualityCheck.getId(), qualityCheck.getQuery());
+    }
+    MessageDigest sha256 = newSha256Digest();
     List<QualityCheckResultDTO> results =
-        toObfuscatedResults(report, obfuscatedPatientCount, qualityCheckDTOS);
+        (report.getResults() == null ? List.<Result>of() : report.getResults())
+            .stream()
+                .map(
+                    result ->
+                        toObfuscatedResult(
+                            result,
+                            report.getObfuscatedNumberOfEntities(),
+                            queriesByCheckId,
+                            sha256))
+                .toList();
     log.debug("Prepared obfuscated report {} with {} results", report.getId(), results.size());
-    return new ObfuscatedReportDTO(results, obfuscatedPatientCount, obfuscatedSampleCount);
-  }
-
-  private static @NonNull List<QualityCheckResultDTO> toObfuscatedResults(
-      Report report, Integer obfuscatedPatientCount, List<QualityCheckDTO> qualityCheckDTOS) {
-    return (report.getResults() == null ? List.<Result>of() : report.getResults())
-        .stream()
-            .map(result -> toObfuscatedResult(result, obfuscatedPatientCount, qualityCheckDTOS))
-            .collect(Collectors.toList());
+    return new ObfuscatedReportDTO(
+        results,
+        report.getObfuscatedNumberOfEntities(),
+        report.getObfuscatedNumberOfSecondaryEntities());
   }
 
   private static QualityCheckResultDTO toObfuscatedResult(
-      Result result, Integer obfuscatedPatientCount, List<QualityCheckDTO> qualityCheckDTOS) {
+      Result result,
+      Integer obfuscatedPatientCount,
+      Map<Long, String> queriesByCheckId,
+      MessageDigest sha256) {
     Double ratio = ratio(result, obfuscatedPatientCount);
     Double boundedRatio = null;
     if (ratio != null) {
@@ -62,11 +71,11 @@ class ObfuscatedReportAssembler {
       boundedRatio = Math.clamp(rounded, 0.0, 1.0);
     }
     return new QualityCheckResultDTO(
-        checkIdWithStratum(result, qualityCheckDTOS), result.getCheckName(), boundedRatio);
+        checkIdWithStratum(result, queriesByCheckId, sha256), result.getCheckName(), boundedRatio);
   }
 
   private static Double ratio(Result result, Integer numberOfEntities) {
-    if (Objects.isNull(numberOfEntities) || Objects.isNull(result.getObfuscatedValue())) {
+    if (numberOfEntities == null || result.getObfuscatedValue() == null) {
       return null;
     }
     if (numberOfEntities == 0) {
@@ -75,30 +84,26 @@ class ObfuscatedReportAssembler {
     return result.getObfuscatedValue() / numberOfEntities;
   }
 
-  private static String checkIdWithStratum(Result result, List<QualityCheckDTO> qualityCheckDTOS) {
-    String checkId = checkId(result, qualityCheckDTOS);
-    if (result.getStratum() != null) {
-      return "%s (%s)".formatted(checkId, result.getStratum());
-    }
-    return checkId;
-  }
-
-  private static String checkId(Result result, List<QualityCheckDTO> qualityCheckDTOS) {
+  private static String checkIdWithStratum(
+      Result result, Map<Long, String> queriesByCheckId, MessageDigest sha256) {
     String query =
-        qualityCheckDTOS.stream()
-            .filter(qualityCheckDTO -> qualityCheckDTO.getId().equals(result.getCheckId()))
-            .findFirst()
-            .map(QualityCheckDTO::getQuery)
-            .orElse(result.getCheckId().toString());
-    return hashQuery(query);
+        queriesByCheckId.getOrDefault(result.getCheckId(), result.getCheckId().toString());
+    String checkId = hexHash(sha256, query);
+    return result.getStratum() != null
+        ? "%s (%s)".formatted(checkId, result.getStratum())
+        : checkId;
   }
 
-  private static String hashQuery(String query) {
+  private static MessageDigest newSha256Digest() {
     try {
-      MessageDigest digest = MessageDigest.getInstance("SHA-256");
-      return HexFormat.of().formatHex(digest.digest(query.getBytes(StandardCharsets.UTF_8)));
+      return MessageDigest.getInstance("SHA-256");
     } catch (NoSuchAlgorithmException e) {
-      throw new RuntimeException("SHA-256 algorithm not found", e);
+      // SHA-256 is guaranteed by the JCA on every JVM; a library bug would stop startup anyway.
+      throw new IllegalStateException("SHA-256 algorithm not available", e);
     }
+  }
+
+  private static String hexHash(MessageDigest digest, String text) {
+    return HexFormat.of().formatHex(digest.digest(text.getBytes(StandardCharsets.UTF_8)));
   }
 }

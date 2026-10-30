@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.agent.dataquality.impl;
 
+import eu.bbmri_eric.quality.agent.dataquality.ReportProperties;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
 import eu.bbmri_eric.quality.agent.dataquality.domain.ReportStatus;
 import java.time.Clock;
@@ -7,7 +8,6 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -29,54 +29,62 @@ class StaleReportReaper {
   private final Clock clock;
   private final Duration staleTimeout;
 
-  StaleReportReaper(
-      ReportRepository reportRepository,
-      Clock clock,
-      @Value("${app.report.stale-generating-timeout:PT6H}") Duration staleTimeout) {
+  StaleReportReaper(ReportRepository reportRepository, Clock clock, ReportProperties properties) {
     this.reportRepository = reportRepository;
     this.clock = clock;
-    this.staleTimeout = staleTimeout;
+    this.staleTimeout = properties.staleGeneratingTimeout();
   }
 
   /** Hourly sweep for generations that hang or die while the application keeps running. */
   @Scheduled(cron = "0 0 * * * *")
   @Transactional
   public void failStaleGeneratingReports() {
-    failStaleAndGetActiveGeneratingReports();
+    failStale();
   }
 
   /** After a restart no generation can still be running, so all of them are failed. */
   @EventListener(ApplicationReadyEvent.class)
   @Transactional
   public void failStaleGeneratingReportsOnStartup() {
-    List<Report> staleReports = reportRepository.findAllByStatusIs(ReportStatus.GENERATING);
-    if (staleReports.isEmpty()) {
+    List<Report> stuck = reportRepository.findAllByStatusIs(ReportStatus.GENERATING);
+    if (stuck.isEmpty()) {
       return;
     }
-    log.warn(
-        "Marking {} report(s) stuck in GENERATING as FAILED after restart", staleReports.size());
-    staleReports.forEach(report -> report.setStatus(ReportStatus.FAILED));
-    reportRepository.saveAll(staleReports);
+    log.warn("Marking {} report(s) stuck in GENERATING as FAILED after restart", stuck.size());
+    markAllFailed(stuck);
   }
 
   /**
-   * Fails reports stuck in {@link ReportStatus#GENERATING} for longer than the staleness timeout
-   * and returns the reports that are still actively generating. Reports without a timestamp are not
-   * auto-failed, since their age cannot be determined.
-   *
-   * @return reports in {@link ReportStatus#GENERATING} that are not stale
+   * Fails reports stuck in {@link ReportStatus#GENERATING} for longer than the staleness timeout. A
+   * report without a timestamp is not auto-failed, since its age cannot be determined.
    */
-  List<Report> failStaleAndGetActiveGeneratingReports() {
+  @Transactional
+  public void failStale() {
     LocalDateTime staleBefore = LocalDateTime.now(clock).minus(staleTimeout);
-    List<Report> generatingReports = reportRepository.findAllByStatusIs(ReportStatus.GENERATING);
-    List<Report> staleReports =
-        generatingReports.stream().filter(report -> isStale(report, staleBefore)).toList();
-    if (!staleReports.isEmpty()) {
-      log.warn("Marking {} stale report(s) stuck in GENERATING as FAILED", staleReports.size());
-      staleReports.forEach(report -> report.setStatus(ReportStatus.FAILED));
-      reportRepository.saveAll(staleReports);
+    List<Report> stale =
+        reportRepository.findAllByStatusIs(ReportStatus.GENERATING).stream()
+            .filter(report -> isStale(report, staleBefore))
+            .toList();
+    if (!stale.isEmpty()) {
+      log.warn("Marking {} stale report(s) stuck in GENERATING as FAILED", stale.size());
+      markAllFailed(stale);
     }
-    return generatingReports.stream().filter(report -> !isStale(report, staleBefore)).toList();
+  }
+
+  /**
+   * @return reports still actively generating (after any prior call that failed stale ones).
+   */
+  @Transactional(readOnly = true)
+  public List<Report> activeGeneratingReports() {
+    LocalDateTime staleBefore = LocalDateTime.now(clock).minus(staleTimeout);
+    return reportRepository.findAllByStatusIs(ReportStatus.GENERATING).stream()
+        .filter(report -> !isStale(report, staleBefore))
+        .toList();
+  }
+
+  private void markAllFailed(List<Report> reports) {
+    reports.forEach(Report::markFailed);
+    reportRepository.saveAll(reports);
   }
 
   private static boolean isStale(Report report, LocalDateTime staleBefore) {

@@ -60,6 +60,26 @@ public class Report {
     results.add(result);
   }
 
+  /** Marks the report as successfully generated. Illegal to revive a failed report. */
+  public void markGenerated() {
+    transitionTo(ReportStatus.GENERATED);
+  }
+
+  /** Marks the report as failed. Illegal to revive a failed report. */
+  public void markFailed() {
+    if (status == ReportStatus.FAILED) {
+      throw new IllegalStateException("Report " + id + " is already failed");
+    }
+    status = ReportStatus.FAILED;
+  }
+
+  private void transitionTo(ReportStatus target) {
+    if (status == ReportStatus.FAILED) {
+      throw new IllegalStateException("Report " + id + " cannot leave FAILED state");
+    }
+    status = target;
+  }
+
   @PrePersist
   protected void onCreate() {
     generatedAt = LocalDateTime.now();

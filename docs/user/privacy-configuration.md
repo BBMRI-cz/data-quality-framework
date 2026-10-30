@@ -45,11 +45,11 @@ share, the agent ignores them and splits the share equally.
 ## Noise mechanism
 
 Laplace noise suits single counts and gives the plain ε guarantee. Gaussian noise is common in other systems, but here
-it adds about five times more noise for the same ε, requires ε ≤ 1, and weakens the guarantee by δ. The patient and
+it adds about six times more noise for the same ε, requires ε ≤ 1, and weakens the guarantee by δ. The patient and
 sample totals always use Laplace noise.
 
 ## Repeated reports
 
 The agent resends its previous noisy value until the real count moves by at least 5 (100 for the sample total), so
 stable data costs no further privacy and cannot be averaged out. Data that changes often still gets new noise
-regularly. See [Limits you should know about](./privacy.md#limits-you-should-know-about).hreshold is applied to all noisy counts, including the totals: a site whose noisy patient total falls below the threshold reports it as 0, and its check ratios are reported as 0 as well. See [Privacy & Security](./privacy.md#protection-of-entity-totals) for details.
+regularly. See [Limits you should know about](./privacy.md#limits-you-should-know-about).

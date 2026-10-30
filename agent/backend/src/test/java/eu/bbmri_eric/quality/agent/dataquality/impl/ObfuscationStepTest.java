@@ -1,31 +1,45 @@
 package eu.bbmri_eric.quality.agent.dataquality.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 
 import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
 import eu.bbmri_eric.quality.agent.dataquality.domain.ReportStatus;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Result;
+import eu.bbmri_eric.quality.agent.dataquality.privacy.ResultHistoryRow;
 import eu.bbmri_eric.quality.agent.settings.NoiseMechanism;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import eu.bbmri_eric.quality.agent.settings.domain.Settings;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
 import eu.bbmri_eric.quality.agent.settings.impl.SettingsRepository;
 import jakarta.transaction.Transactional;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.SplittableRandom;
 import java.util.function.ToIntFunction;
+import java.util.random.RandomGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 
 @SpringBootTest
 @Transactional
 class ObfuscationStepTest {
+
+  /** Deterministic randomness for the statistical fresh-noise tests in this class. */
+  @TestConfiguration
+  static class SeededRandomnessConfiguration {
+    @Bean
+    @Primary
+    RandomGenerator seededRandomGenerator() {
+      return new SplittableRandom(20261030L);
+    }
+  }
 
   @Autowired private SettingsService settingsService;
   @Autowired private SettingsRepository settingsRepository;
@@ -133,7 +147,8 @@ class ObfuscationStepTest {
 
   @Test
   void getOrder_shouldRunAfterEntityCount() {
-    assertThat(step.getOrder()).isEqualTo(30);
+    assertThat(step.getOrder())
+        .isEqualTo(eu.bbmri_eric.quality.agent.dataquality.ReportPipelineStep.OBFUSCATION_ORDER);
   }
 
   @Test
@@ -199,7 +214,7 @@ class ObfuscationStepTest {
     settingsService.updateSettings(SettingsDTO.builder().epsilon(1.0).build());
 
     QualityCheck check1 = new QualityCheck("c1", "Check 1", "query1");
-    check1.setEpsilonBudget(0.3);
+    check1.setEpsilonBudget(0.25);
     qualityCheckRepository.save(check1);
 
     QualityCheck check2 = new QualityCheck("c2", "Check 2", "query2");
@@ -213,7 +228,9 @@ class ObfuscationStepTest {
 
     step.execute(report);
 
-    assertThat(r1.getEpsilon()).isEqualTo(0.3);
+    // Sum of preferences (0.75) stays strictly below the check budget (0.8 of the report ε), so
+    // the per-check preferences are honored.
+    assertThat(r1.getEpsilon()).isEqualTo(0.25);
     assertThat(r2.getEpsilon()).isEqualTo(0.5);
   }
 
@@ -283,7 +300,7 @@ class ObfuscationStepTest {
   }
 
   @Test
-  void execute_withPreferencesConsumingFullCheckBudget_shouldUsePreferredValues() {
+  void execute_withPreferencesConsumingWholeCheckBudget_fallsBackToEqualSplit() {
     settingsService.updateSettings(SettingsDTO.builder().epsilon(2.0).build());
 
     QualityCheck check1 = new QualityCheck("c1", "Check 1", "query1");
@@ -301,12 +318,14 @@ class ObfuscationStepTest {
 
     step.execute(report);
 
-    assertThat(r1.getEpsilon()).isEqualTo(1.0);
-    assertThat(r2.getEpsilon()).isEqualTo(0.6);
+    // Preferences take up the whole check budget (1.6 of the report ε): they are ignored and the
+    // budget is shared equally so no check is starved to an epsilon of 0.
+    assertThat(r1.getEpsilon()).isEqualTo(0.8);
+    assertThat(r2.getEpsilon()).isEqualTo(0.8);
   }
 
   @Test
-  void execute_withPreferencesStarvingOtherResults_shouldThrow() {
+  void execute_withPreferencesConsumingWholeBudget_fallsBackToEqualSplit() {
     settingsService.updateSettings(SettingsDTO.builder().epsilon(1.0).build());
 
     QualityCheck check1 = new QualityCheck("c1", "Check 1", "query1");
@@ -318,9 +337,14 @@ class ObfuscationStepTest {
     Result r2 = new Result("c2", 999L, 200, null, 150, 100, null, null, null);
     report.setResults(new ArrayList<>(List.of(r1, r2)));
 
-    assertThatThrownBy(() -> step.execute(report))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("leaving no epsilon");
+    // Preferences exactly equal to the whole check budget (0.8 of the report ε) are ignored:
+    // the remaining check must not be starved with an epsilon of 0.
+    step.execute(report);
+
+    assertThat(r1.getEpsilon()).isEqualTo(0.4);
+    assertThat(r2.getEpsilon()).isEqualTo(0.4);
+    assertThat(r1.getObfuscatedValue()).isNotNull();
+    assertThat(r2.getObfuscatedValue()).isNotNull();
   }
 
   @Test
@@ -446,10 +470,10 @@ class ObfuscationStepTest {
     // anchor must therefore be 100, so a drift of 6 triggers fresh noise even though the drift
     // from the latest raw value is only 3.
     Report older = generatedReportWithResult(1L, null, 100, 95.5, 0.5);
-    older.setGeneratedAt(LocalDateTime.now().minusDays(2));
+    older.setGeneratedAt(java.time.LocalDateTime.now().minusDays(2));
     reportRepository.save(older);
     Report newer = generatedReportWithResult(1L, null, 103, 95.5, 0.5);
-    newer.setGeneratedAt(LocalDateTime.now().minusDays(1));
+    newer.setGeneratedAt(java.time.LocalDateTime.now().minusDays(1));
     reportRepository.save(newer);
 
     Report report = new Report();
@@ -526,7 +550,7 @@ class ObfuscationStepTest {
 
   @Test
   void findResultHistory_withTiedTimestamps_ordersByIdDescending() {
-    LocalDateTime tied = LocalDateTime.now().minusDays(1);
+    java.time.LocalDateTime tied = java.time.LocalDateTime.now().minusDays(1);
     Report older = generatedReportWithResult(1L, null, 111, 50.0, 0.5);
     older.setGeneratedAt(tied);
     reportRepository.save(older);
@@ -550,7 +574,7 @@ class ObfuscationStepTest {
   }
 
   private Report backdate(Report report, int daysAgo) {
-    report.setGeneratedAt(LocalDateTime.now().minusDays(daysAgo));
+    report.setGeneratedAt(java.time.LocalDateTime.now().minusDays(daysAgo));
     return reportRepository.save(report);
   }
 
@@ -782,10 +806,10 @@ class ObfuscationStepTest {
     // Chain: noise was drawn for 4321; the latest report (4323) reused it. The derived anchor is
     // 4321, so a drift of 39 triggers fresh noise.
     Report older = givenPreviousReportWithTotals(4321, 9876, 4330, 9880);
-    older.setGeneratedAt(LocalDateTime.now().minusDays(2));
+    older.setGeneratedAt(java.time.LocalDateTime.now().minusDays(2));
     reportRepository.save(older);
     Report newer = givenPreviousReportWithTotals(4323, 9876, 4330, 9880);
-    newer.setGeneratedAt(LocalDateTime.now().minusDays(1));
+    newer.setGeneratedAt(java.time.LocalDateTime.now().minusDays(1));
     reportRepository.save(newer);
     whenSettings(10.0, 50, NoiseMechanism.LAPLACE);
 
@@ -800,10 +824,10 @@ class ObfuscationStepTest {
     // Two consecutive fresh integer draws rounded to the same published value; the anchor must be
     // the raw of the most recent fresh draw (306): drift from it is 4 → reuse.
     Report older = givenPreviousReportWithTotals(300, 9876, 302, 9880);
-    older.setGeneratedAt(LocalDateTime.now().minusDays(2));
+    older.setGeneratedAt(java.time.LocalDateTime.now().minusDays(2));
     reportRepository.save(older);
     Report newer = givenPreviousReportWithTotals(306, 9876, 302, 9880);
-    newer.setGeneratedAt(LocalDateTime.now().minusDays(1));
+    newer.setGeneratedAt(java.time.LocalDateTime.now().minusDays(1));
     reportRepository.save(newer);
     whenSettings(10.0, 50, NoiseMechanism.LAPLACE);
 

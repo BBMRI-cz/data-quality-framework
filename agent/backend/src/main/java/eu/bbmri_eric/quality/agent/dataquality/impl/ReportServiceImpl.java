@@ -8,6 +8,7 @@ import eu.bbmri_eric.quality.agent.common.dto.PageResponse;
 import eu.bbmri_eric.quality.agent.common.exception.EntityNotFoundException;
 import eu.bbmri_eric.quality.agent.dataquality.ReportService;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
+import eu.bbmri_eric.quality.agent.dataquality.domain.ReportStatus;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ObfuscatedReportDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportDTO;
@@ -15,23 +16,20 @@ import eu.bbmri_eric.quality.agent.dataquality.dto.ReportResultDetailDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportUpdateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.event.NewReportEvent;
 import eu.bbmri_eric.quality.agent.dataquality.exception.ReportGenerationInProgressException;
-import eu.bbmri_eric.quality.agent.dataquality.exception.ReportNotFoundException;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 class ReportServiceImpl implements ReportService {
-
-  private static final Logger log = LoggerFactory.getLogger(ReportServiceImpl.class);
 
   private final ReportRepository reportRepository;
   private final SettingsService settingsService;
@@ -63,7 +61,8 @@ class ReportServiceImpl implements ReportService {
       entityId = "#result.id",
       details = "Report created")
   public ReportDTO create(ReportCreateDTO createDTO) {
-    List<Report> blockingReports = staleReportReaper.failStaleAndGetActiveGeneratingReports();
+    staleReportReaper.failStale();
+    List<Report> blockingReports = staleReportReaper.activeGeneratingReports();
     if (!blockingReports.isEmpty()) {
       throw new ReportGenerationInProgressException(blockingReports.getFirst().getId());
     }
@@ -108,18 +107,28 @@ class ReportServiceImpl implements ReportService {
         .collect(Collectors.toList());
   }
 
+  private static final java.util.Set<String> ALLOWED_SORT_PROPERTIES =
+      java.util.Set.of(
+          "id",
+          "generatedAt",
+          "status",
+          "epsilonBudget",
+          "numberOfEntities",
+          "numberOfSecondaryEntities");
+
   @Override
   @Transactional(readOnly = true)
   public PageResponse<ReportDTO> findAll(FilterDTO filter) {
     Sort.Direction direction =
-        filter.getOrder() == null || filter.getOrder().name().equalsIgnoreCase("ASC")
-            ? Sort.Direction.ASC
-            : Sort.Direction.DESC;
+        filter.getOrder() == FilterDTO.SortOrder.ASC ? Sort.Direction.ASC : Sort.Direction.DESC;
 
     String sortProperty = filter.getSort();
     if (sortProperty == null) {
       sortProperty = "generatedAt";
       direction = Sort.Direction.DESC;
+    }
+    if (!ALLOWED_SORT_PROPERTIES.contains(sortProperty)) {
+      throw new IllegalArgumentException("Cannot sort reports by: " + sortProperty);
     }
 
     Sort sort = Sort.by(direction, sortProperty);
@@ -141,7 +150,18 @@ class ReportServiceImpl implements ReportService {
             .orElseThrow(() -> new EntityNotFoundException("Report not found with id: " + id));
 
     if (updateDTO.getStatus() != null) {
-      report.setStatus(updateDTO.getStatus());
+      if (updateDTO.getStatus() == ReportStatus.GENERATING) {
+        throw new IllegalStateException("Report status GENERATING is pipeline-managed");
+      }
+      if (report.getStatus() == ReportStatus.FAILED
+          && updateDTO.getStatus() != ReportStatus.FAILED) {
+        throw new IllegalStateException("A failed report cannot be revived");
+      }
+      if (updateDTO.getStatus() == ReportStatus.GENERATED) {
+        report.markGenerated();
+      } else if (updateDTO.getStatus() == ReportStatus.FAILED) {
+        report.markFailed();
+      }
     }
 
     report = reportRepository.save(report);
@@ -152,10 +172,11 @@ class ReportServiceImpl implements ReportService {
   @Override
   @Transactional
   public void delete(Long id) {
-    if (!reportRepository.existsById(id)) {
-      throw new EntityNotFoundException("Report not found with id: " + id);
-    }
-    reportRepository.deleteById(id);
+    Report report =
+        reportRepository
+            .findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Report not found with id: " + id));
+    reportRepository.delete(report);
     log.info("Deleted report with id: {}", id);
   }
 
@@ -169,7 +190,9 @@ class ReportServiceImpl implements ReportService {
   @Transactional(readOnly = true)
   public ObfuscatedReportDTO getObfuscatedById(Long id) {
     Report report =
-        reportRepository.findById(id).orElseThrow(() -> new ReportNotFoundException(id));
+        reportRepository
+            .findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Report not found with id: " + id));
     return obfuscatedReportAssembler.assemble(report);
   }
 }

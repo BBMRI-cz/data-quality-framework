@@ -7,12 +7,12 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import eu.bbmri_eric.quality.agent.dataquality.ReportProperties;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
 import eu.bbmri_eric.quality.agent.dataquality.domain.ReportStatus;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -20,15 +20,17 @@ import org.junit.jupiter.api.Test;
 class StaleReportReaperTest {
 
   private static final Instant NOW = Instant.parse("2026-10-30T12:00:00Z");
+  private static final java.time.LocalDateTime NOW_LDT =
+      java.time.LocalDateTime.ofInstant(NOW, ZoneOffset.UTC);
 
   private final ReportRepository reportRepository = mock(ReportRepository.class);
   private final Clock fixedClock = Clock.fixed(NOW, ZoneOffset.UTC);
 
   private StaleReportReaper reaper(Duration staleTimeout) {
-    return new StaleReportReaper(reportRepository, fixedClock, staleTimeout);
+    return new StaleReportReaper(reportRepository, fixedClock, new ReportProperties(staleTimeout));
   }
 
-  private Report generatingAt(LocalDateTime generatedAt) {
+  private Report generatingAt(java.time.LocalDateTime generatedAt) {
     Report report = new Report();
     report.setStatus(ReportStatus.GENERATING);
     report.setGeneratedAt(generatedAt);
@@ -36,40 +38,40 @@ class StaleReportReaperTest {
   }
 
   @Test
-  void failStaleAndGetActiveGeneratingReports_failsOnlyReportsOlderThanTheTimeout() {
-    Report stale = generatingAt(LocalDateTime.ofInstant(NOW, ZoneOffset.UTC).minusHours(7));
-    Report fresh = generatingAt(LocalDateTime.ofInstant(NOW, ZoneOffset.UTC).minusHours(1));
+  void failStale_failsOnlyReportsOlderThanTheTimeout() {
+    Report stale = generatingAt(NOW_LDT.minusHours(7));
+    Report fresh = generatingAt(NOW_LDT.minusHours(1));
     Report undated = generatingAt(null);
     when(reportRepository.findAllByStatusIs(ReportStatus.GENERATING))
         .thenReturn(List.of(stale, fresh, undated));
 
-    List<Report> active = reaper(Duration.ofHours(6)).failStaleAndGetActiveGeneratingReports();
+    reaper(Duration.ofHours(6)).failStale();
 
     assertThat(stale.getStatus()).isEqualTo(ReportStatus.FAILED);
-    assertThat(active).containsExactlyInAnyOrder(fresh, undated);
     verify(reportRepository).saveAll(List.of(stale));
+    assertThat(reaper(Duration.ofHours(6)).activeGeneratingReports())
+        .containsExactlyInAnyOrder(fresh, undated);
   }
 
   @Test
-  void failStaleAndGetActiveGeneratingReports_withLongerTimeout_keepsFreshByConfiguration() {
-    Report sevenHoursOld = generatingAt(LocalDateTime.ofInstant(NOW, ZoneOffset.UTC).minusHours(7));
+  void failStale_withLongerTimeout_keepsFreshByConfiguration() {
+    Report sevenHoursOld = generatingAt(NOW_LDT.minusHours(7));
     when(reportRepository.findAllByStatusIs(ReportStatus.GENERATING))
         .thenReturn(List.of(sevenHoursOld));
 
-    List<Report> active = reaper(Duration.ofDays(1)).failStaleAndGetActiveGeneratingReports();
+    reaper(Duration.ofDays(1)).failStale();
 
     assertThat(sevenHoursOld.getStatus()).isEqualTo(ReportStatus.GENERATING);
-    assertThat(active).containsExactly(sevenHoursOld);
     verify(reportRepository, never()).saveAll(anyList());
   }
 
   @Test
-  void failStaleAndGetActiveGeneratingReports_withNoGeneratingReports_doesNothing() {
+  void failStale_withNoGeneratingReports_doesNothing() {
     when(reportRepository.findAllByStatusIs(ReportStatus.GENERATING)).thenReturn(List.of());
 
-    List<Report> active = reaper(Duration.ofHours(6)).failStaleAndGetActiveGeneratingReports();
+    reaper(Duration.ofHours(6)).failStale();
 
-    assertThat(active).isEmpty();
+    assertThat(reaper(Duration.ofHours(6)).activeGeneratingReports()).isEmpty();
     verify(reportRepository, never()).saveAll(anyList());
   }
 }

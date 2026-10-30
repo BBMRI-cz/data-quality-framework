@@ -51,7 +51,7 @@ class ReportPipelineExecutor {
         .findById(reportId)
         .ifPresentOrElse(
             report -> {
-              report.setStatus(ReportStatus.FAILED);
+              report.markFailed();
               reportRepository.save(report);
               log.info("Marked report id: {} as FAILED", reportId);
             },

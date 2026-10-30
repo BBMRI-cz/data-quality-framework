@@ -17,7 +17,6 @@ import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckResultDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportDTO;
 import eu.bbmri_eric.quality.agent.dataquality.exception.ReportGenerationInProgressException;
-import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -161,7 +160,7 @@ class ReportServiceImplTest {
       Report stale = new Report();
       stale.setStatus(ReportStatus.GENERATING);
       stale = reportRepository.save(stale);
-      stale.setGeneratedAt(LocalDateTime.now().minusHours(7));
+      stale.setGeneratedAt(java.time.LocalDateTime.now().minusHours(7));
       reportRepository.save(stale);
 
       ReportDTO created = reportService.create(new ReportCreateDTO());
@@ -177,7 +176,7 @@ class ReportServiceImplTest {
       Report stale = new Report();
       stale.setStatus(ReportStatus.GENERATING);
       stale = reportRepository.save(stale);
-      stale.setGeneratedAt(LocalDateTime.now().minusHours(7));
+      stale.setGeneratedAt(java.time.LocalDateTime.now().minusHours(7));
       reportRepository.save(stale);
       Report fresh = new Report();
       fresh.setStatus(ReportStatus.GENERATING);
