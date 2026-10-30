@@ -6,60 +6,52 @@ import eu.bbmri_eric.quality.agent.common.EventPublisher;
 import eu.bbmri_eric.quality.agent.common.dto.FilterDTO;
 import eu.bbmri_eric.quality.agent.common.dto.PageResponse;
 import eu.bbmri_eric.quality.agent.common.exception.EntityNotFoundException;
-import eu.bbmri_eric.quality.agent.dataquality.QualityCheckService;
 import eu.bbmri_eric.quality.agent.dataquality.ReportService;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
-import eu.bbmri_eric.quality.agent.dataquality.domain.Result;
+import eu.bbmri_eric.quality.agent.dataquality.domain.ReportStatus;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ObfuscatedReportDTO;
-import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
-import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckResultDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.ReportFilterDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportResultDetailDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportUpdateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.event.NewReportEvent;
-import eu.bbmri_eric.quality.agent.dataquality.exception.ReportNotFoundException;
+import eu.bbmri_eric.quality.agent.dataquality.exception.ReportGenerationInProgressException;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
-import org.jspecify.annotations.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 class ReportServiceImpl implements ReportService {
 
-  private static final Logger log = LoggerFactory.getLogger(ReportServiceImpl.class);
-
   private final ReportRepository reportRepository;
-  private final QualityCheckService qualityCheckService;
   private final SettingsService settingsService;
   private final ModelMapper modelMapper;
   private final EventPublisher publisher;
+  private final StaleReportReaper staleReportReaper;
+  private final ObfuscatedReportAssembler obfuscatedReportAssembler;
 
   ReportServiceImpl(
       ReportRepository reportRepository,
-      QualityCheckService qualityCheckService,
       SettingsService settingsService,
       ModelMapper modelMapper,
-      EventPublisher publisher) {
+      EventPublisher publisher,
+      StaleReportReaper staleReportReaper,
+      ObfuscatedReportAssembler obfuscatedReportAssembler) {
     this.reportRepository = reportRepository;
-    this.qualityCheckService = qualityCheckService;
     this.settingsService = settingsService;
     this.modelMapper = modelMapper;
     this.publisher = publisher;
+    this.staleReportReaper = staleReportReaper;
+    this.obfuscatedReportAssembler = obfuscatedReportAssembler;
   }
 
   @Override
@@ -70,6 +62,11 @@ class ReportServiceImpl implements ReportService {
       entityId = "#result.id",
       details = "Report created")
   public ReportDTO create(ReportCreateDTO createDTO) {
+    staleReportReaper.failStale();
+    List<Report> blockingReports = staleReportReaper.activeGeneratingReports();
+    if (!blockingReports.isEmpty()) {
+      throw new ReportGenerationInProgressException(blockingReports.getFirst().getId());
+    }
     Report report = new Report();
     report.setEpsilonBudget(settingsService.getSettings().getEpsilon());
     report = reportRepository.save(report);
@@ -113,19 +110,11 @@ class ReportServiceImpl implements ReportService {
 
   @Override
   @Transactional(readOnly = true)
-  public PageResponse<ReportDTO> findAll(FilterDTO filter) {
-    Sort.Direction direction =
-        filter.getOrder() == null || filter.getOrder().name().equalsIgnoreCase("ASC")
-            ? Sort.Direction.ASC
-            : Sort.Direction.DESC;
-
-    String sortProperty = filter.getSort();
-    if (sortProperty == null) {
-      sortProperty = "generatedAt";
-      direction = Sort.Direction.DESC;
-    }
-
-    Sort sort = Sort.by(direction, sortProperty);
+  public PageResponse<ReportDTO> findAll(ReportFilterDTO filter) {
+    Sort sort =
+        Sort.by(
+            filter.getOrder() == FilterDTO.SortOrder.ASC ? Sort.Direction.ASC : Sort.Direction.DESC,
+            filter.getSort());
     PageRequest pageRequest = PageRequest.of(filter.getPage(), filter.getSize(), sort);
     Page<Report> page = reportRepository.findAll(pageRequest);
 
@@ -144,7 +133,19 @@ class ReportServiceImpl implements ReportService {
             .orElseThrow(() -> new EntityNotFoundException("Report not found with id: " + id));
 
     if (updateDTO.getStatus() != null) {
-      report.setStatus(updateDTO.getStatus());
+      // TODO: Refactor
+      if (updateDTO.getStatus() == ReportStatus.GENERATING) {
+        throw new IllegalStateException("Report status GENERATING is pipeline-managed");
+      }
+      if (report.getStatus() == ReportStatus.FAILED
+          && updateDTO.getStatus() != ReportStatus.FAILED) {
+        throw new IllegalStateException("A failed report cannot be revived");
+      }
+      if (updateDTO.getStatus() == ReportStatus.GENERATED) {
+        report.markGenerated();
+      } else if (updateDTO.getStatus() == ReportStatus.FAILED) {
+        report.markFailed();
+      }
     }
 
     report = reportRepository.save(report);
@@ -155,10 +156,11 @@ class ReportServiceImpl implements ReportService {
   @Override
   @Transactional
   public void delete(Long id) {
-    if (!reportRepository.existsById(id)) {
-      throw new EntityNotFoundException("Report not found with id: " + id);
-    }
-    reportRepository.deleteById(id);
+    Report report =
+        reportRepository
+            .findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Report not found with id: " + id));
+    reportRepository.delete(report);
     log.info("Deleted report with id: {}", id);
   }
 
@@ -168,88 +170,13 @@ class ReportServiceImpl implements ReportService {
     return reportRepository.existsById(id);
   }
 
-  @Transactional(readOnly = true)
   @Override
+  @Transactional(readOnly = true)
   public ObfuscatedReportDTO getObfuscatedById(Long id) {
     Report report =
-        reportRepository.findById(id).orElseThrow(() -> new ReportNotFoundException(id));
-    Integer roundedPatientCount = roundEntityCount(report.getNumberOfEntities());
-    Integer rounderSampleCount = roundEntityCount(report.getNumberOfSecondaryEntities());
-    List<QualityCheckDTO> qualityCheckDTOS = qualityCheckService.findAll();
-    var results = prepareObfuscatedResults(report, roundedPatientCount, qualityCheckDTOS);
-    log.debug("Prepared obfuscated report {} with {} results", id, results.size());
-    return new ObfuscatedReportDTO(results, roundedPatientCount, rounderSampleCount);
-  }
-
-  private static @NonNull List<QualityCheckResultDTO> prepareObfuscatedResults(
-      Report report, Integer roundedPatientCount, List<QualityCheckDTO> qualityCheckDTOS) {
-    return (report.getResults() == null ? List.<Result>of() : report.getResults())
-        .stream()
-            .map(
-                result -> {
-                  Double value = calculateObfuscatedValue(result, roundedPatientCount);
-                  Double boundedValue = null;
-                  if (value != null) {
-                    double roundedValue =
-                        BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_UP).doubleValue();
-                    boundedValue = Math.clamp(roundedValue, 0.0, 1.0);
-                  }
-                  String checkIdLabel = formatCheckIdWithStratum(result, qualityCheckDTOS);
-                  return new QualityCheckResultDTO(
-                      checkIdLabel, result.getCheckName(), boundedValue);
-                })
-            .collect(Collectors.toList());
-  }
-
-  private static Integer roundEntityCount(Integer count) {
-    if (Objects.isNull(count)) {
-      return null;
-    }
-    return ((count + 9) / 10) * 10;
-  }
-
-  private static Double calculateObfuscatedValue(Result result, Integer numberOfEntities) {
-    if (Objects.isNull(numberOfEntities) || Objects.isNull(result.getObfuscatedValue())) {
-      return null;
-    }
-    if (numberOfEntities == 0) {
-      return 0.0;
-    }
-    return result.getObfuscatedValue() / numberOfEntities;
-  }
-
-  private static String getCheckId(Result result, List<QualityCheckDTO> cqlQueryDTOS) {
-    String query =
-        cqlQueryDTOS.stream()
-            .filter(cqlQueryDTO -> cqlQueryDTO.getId().equals(result.getCheckId()))
-            .findFirst()
-            .map(QualityCheckDTO::getQuery)
-            .orElse(result.getCheckId().toString());
-    return hashQuery(query);
-  }
-
-  private static String formatCheckIdWithStratum(
-      Result result, List<QualityCheckDTO> qualityCheckDTOS) {
-    String checkId = getCheckId(result, qualityCheckDTOS);
-    if (result.getStratum() != null) {
-      return "%s (%s)".formatted(checkId, result.getStratum());
-    }
-    return checkId;
-  }
-
-  private static String hashQuery(String query) {
-    try {
-      MessageDigest digest = MessageDigest.getInstance("SHA-256");
-      byte[] hash = digest.digest(query.getBytes(StandardCharsets.UTF_8));
-      StringBuilder hexString = new StringBuilder();
-      for (byte b : hash) {
-        String hex = Integer.toHexString(0xff & b);
-        if (hex.length() == 1) hexString.append('0');
-        hexString.append(hex);
-      }
-      return hexString.toString();
-    } catch (NoSuchAlgorithmException e) {
-      throw new RuntimeException("SHA-256 algorithm not found", e);
-    }
+        reportRepository
+            .findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Report not found with id: " + id));
+    return obfuscatedReportAssembler.assemble(report);
   }
 }

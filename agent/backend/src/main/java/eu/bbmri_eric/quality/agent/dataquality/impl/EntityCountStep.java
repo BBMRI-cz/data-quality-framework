@@ -7,6 +7,7 @@ import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+/** Counts the entities in the data store. The noisy totals are computed later in the pipeline. */
 @Slf4j
 @Component
 class EntityCountStep implements ReportPipelineStep {
@@ -20,15 +21,11 @@ class EntityCountStep implements ReportPipelineStep {
   @Override
   public Report execute(Report report) {
     log.info("Counting entities for report id: {}", report.getId());
-
     DataStore dataStore = dataStoreFactory.resolveDataStore();
-
     Integer patientCount = dataStore.countPatients();
     Integer sampleCount = dataStore.countSecondaryEntities();
-
     report.setNumberOfEntities(patientCount);
     report.setNumberOfSecondaryEntities(sampleCount);
-
     log.info(
         "Completed entity count for report id: {} - patients: {}, secondary entities: {}",
         report.getId(),
@@ -39,6 +36,6 @@ class EntityCountStep implements ReportPipelineStep {
 
   @Override
   public int getOrder() {
-    return 30;
+    return ENTITY_COUNT_ORDER;
   }
 }

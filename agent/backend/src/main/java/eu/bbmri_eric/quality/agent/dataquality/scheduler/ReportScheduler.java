@@ -2,6 +2,7 @@ package eu.bbmri_eric.quality.agent.dataquality.scheduler;
 
 import eu.bbmri_eric.quality.agent.dataquality.ReportService;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportCreateDTO;
+import eu.bbmri_eric.quality.agent.dataquality.exception.ReportGenerationInProgressException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -22,6 +23,10 @@ class ReportScheduler {
   @Scheduled(cron = "0 0 0 * * *")
   void generateReport() {
     log.info("Scheduled report generation triggered");
-    reportService.create(new ReportCreateDTO());
+    try {
+      reportService.create(new ReportCreateDTO());
+    } catch (ReportGenerationInProgressException e) {
+      log.warn("Skipping scheduled report generation: {}", e.getMessage());
+    }
   }
 }

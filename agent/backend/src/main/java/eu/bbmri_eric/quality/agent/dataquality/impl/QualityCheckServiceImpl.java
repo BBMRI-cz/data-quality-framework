@@ -159,6 +159,7 @@ class QualityCheckServiceImpl implements QualityCheckService {
             .findById(id)
             .orElseThrow(() -> new QualityCheckNotFoundException(id));
     modelMapper.map(updateDTO, qualityCheck);
+    qualityCheck.setEpsilonBudget(updateDTO.getEpsilonBudget());
     setCategory(updateDTO.getCategoryId(), qualityCheck);
     qualityCheck = qualityCheckRepository.save(qualityCheck);
     logger.info("Updated quality check id: {}", id);

@@ -23,7 +23,8 @@ import lombok.Setter;
  * <p>This entity encapsulates the results of a data quality assessment, including the timestamp of
  * generation, current status, and a collection of individual quality check results. Each report
  * tracks the epsilon budget used for differential privacy operations and the number of entities
- * assessed.
+ * assessed. The raw entity counts are stored alongside their noisy counterparts; only the noisy
+ * counts, computed once during report generation, may be shared outside the agent.
  */
 @Entity
 @Getter
@@ -45,6 +46,10 @@ public class Report {
 
   private Integer numberOfSecondaryEntities;
 
+  private Integer obfuscatedNumberOfEntities;
+
+  private Integer obfuscatedNumberOfSecondaryEntities;
+
   @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
   @JoinColumn(name = "report_id")
   private List<Result> results = new ArrayList<>();
@@ -53,6 +58,26 @@ public class Report {
 
   public void addResult(Result result) {
     results.add(result);
+  }
+
+  /** Marks the report as successfully generated. Illegal to revive a failed report. */
+  public void markGenerated() {
+    transitionTo(ReportStatus.GENERATED);
+  }
+
+  /** Marks the report as failed. Illegal to revive a failed report. */
+  public void markFailed() {
+    if (status == ReportStatus.FAILED) {
+      throw new IllegalStateException("Report " + id + " is already failed");
+    }
+    status = ReportStatus.FAILED;
+  }
+
+  private void transitionTo(ReportStatus target) {
+    if (status == ReportStatus.FAILED) {
+      throw new IllegalStateException("Report " + id + " cannot leave FAILED state");
+    }
+    status = target;
   }
 
   @PrePersist

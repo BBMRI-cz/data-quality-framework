@@ -77,9 +77,9 @@ Additionally, as described above, you can override any internal application sett
 | `fhirUrl`        | The URL of the FHIR server to connect to.                                                         | `http://localhost:8080/fhir` |
 | `fhirUsername`   | Username for FHIR server authentication.                                                          | `fhiruser`                  |
 | `fhirPassword`   | Password for FHIR server authentication (Base64 encoded).                                         | (Base64 of `fhirpass`)      |
-| `epsilon`        | Privacy budget (ε). Must be positive. When using `GAUSSIAN` noise it must be `<= 1.0`.           | `3.0`                       |
-| `delta`          | Delta parameter (δ) - probability of privacy failure. Must be positive.                           | `1e-8`                      |
-| `minThreshold`   | Minimum threshold for low count suppression.                                                      | `50`                        |
+| `epsilon`        | Privacy budget (ε). Must be between `0.1` and `10`. When using `GAUSSIAN` noise it must be `<= 1.0`. | `3.0`                       |
+| `delta`          | Delta parameter (δ) - probability of privacy failure. Must be positive and at most `1e-5`.          | `1e-8`                      |
+| `minThreshold`   | Minimum threshold for low count suppression. Must be at least `10`.                                 | `50`                        |
 | `noiseMechanism` | Noise mechanism used for differential privacy. One of `LAPLACE` or `GAUSSIAN`.                    | `LAPLACE`                   |
 | `databaseType`   | Type of source database the agent connects to. One of `FHIR` or `SQL`.                            | `FHIR`                      |
 | `sqlUrl`         | SQL database JDBC URL (used when `databaseType` is `SQL`).                                        | (Empty)                     |
