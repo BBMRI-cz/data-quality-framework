@@ -30,8 +30,6 @@ public final class CountReleaser {
   public Release release(int count, PreviousRelease previous, double epsilon, int sensitivity) {
     if (previous != null
         && previous.reusableFor(count, PrivacyBudget.refreshThreshold(sensitivity), minThreshold)) {
-      // Check results track per-release epsilon and reuse carries it; totals carry none, so the
-      // reuse still "spends" the budget reserved for this release.
       double spentEpsilon = previous.epsilon() != null ? previous.epsilon() : epsilon;
       return new Release(previous.published(), spentEpsilon, true);
     }

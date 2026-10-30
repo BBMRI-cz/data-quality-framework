@@ -133,6 +133,7 @@ class ReportServiceImpl implements ReportService {
             .orElseThrow(() -> new EntityNotFoundException("Report not found with id: " + id));
 
     if (updateDTO.getStatus() != null) {
+      //TODO: Refactor
       if (updateDTO.getStatus() == ReportStatus.GENERATING) {
         throw new IllegalStateException("Report status GENERATING is pipeline-managed");
       }
