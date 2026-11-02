@@ -52,7 +52,8 @@ class JwtAuthenticationConverter implements Converter<Jwt, AbstractAuthenticatio
   /**
    * Internal record to hold identity information extracted from JWT.
    *
-   * @param identityId the unique identifier (sub for users, client_id for clients)
+   * @param identityId the unique identifier (sub for users, client_id for clients), used as the
+   *     authentication name
    * @param username the display name or identifier to use
    */
   private record TokenIdentity(String identityId, String username) {}
@@ -76,7 +77,7 @@ class JwtAuthenticationConverter implements Converter<Jwt, AbstractAuthenticatio
     UserDTO user = findOrCreateUser(identity);
     Set<GrantedAuthority> authorities = extractAuthorities(user);
 
-    return new JwtAuthenticationToken(jwt, authorities, identity.username());
+    return new JwtAuthenticationToken(jwt, authorities, identity.identityId());
   }
 
   /**
