@@ -12,6 +12,8 @@ import eu.bbmri_eric.quality.server.user.UserRole;
 import eu.bbmri_eric.quality.server.user.domain.User;
 import eu.bbmri_eric.quality.server.user.dto.UserDTO;
 import eu.bbmri_eric.quality.server.user.exception.UserNotFoundException;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -23,6 +25,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.access.AccessDeniedException;
 
 /** Unit tests for UserServiceImpl focusing on the updateUsername method. */
 @ExtendWith(MockitoExtension.class)
@@ -31,6 +34,7 @@ class UserServiceImplTest {
   @Mock private UserRepository userRepository;
   @Mock private ModelMapper modelMapper;
   @Mock private AuthenticationContextService authenticationContextService;
+  @Mock private EntityManager entityManager;
 
   @InjectMocks private UserServiceImpl userService;
 
@@ -138,10 +142,12 @@ class UserServiceImplTest {
   @Test
   @DisplayName("updateRoles_forOtherHumanUser_replacesRoles")
   void updateRoles_forOtherHumanUser_replacesRoles() {
+    User admin = adminUser();
     User human = new User("human", "subject-human");
     human.addRole(UserRole.HUMAN_USER);
-    when(userRepository.findById(2L)).thenReturn(Optional.of(human));
     when(authenticationContextService.getCurrentUser()).thenReturn(new UserDTO("admin", 1L));
+    when(userRepository.findById(1L)).thenReturn(Optional.of(admin));
+    when(userRepository.findById(2L)).thenReturn(Optional.of(human));
     when(userRepository.save(human)).thenReturn(human);
     when(modelMapper.map(human, UserDTO.class)).thenReturn(new UserDTO("human", 2L));
 
@@ -152,12 +158,45 @@ class UserServiceImplTest {
   }
 
   @Test
+  @DisplayName("updateRoles_locksActorAndTargetInIdOrder")
+  void updateRoles_locksActorAndTargetInIdOrder() {
+    User admin = adminUser();
+    User human = new User("human", "subject-human");
+    human.addRole(UserRole.HUMAN_USER);
+    when(authenticationContextService.getCurrentUser()).thenReturn(new UserDTO("admin", 5L));
+    when(userRepository.findById(5L)).thenReturn(Optional.of(admin));
+    when(userRepository.findById(2L)).thenReturn(Optional.of(human));
+    when(userRepository.save(human)).thenReturn(human);
+
+    userService.updateRoles(2L, Set.of(UserRole.HUMAN_USER));
+
+    var inOrder = inOrder(entityManager);
+    inOrder.verify(entityManager).refresh(human, LockModeType.PESSIMISTIC_WRITE);
+    inOrder.verify(entityManager).refresh(admin, LockModeType.PESSIMISTIC_WRITE);
+  }
+
+  @Test
+  @DisplayName("updateRoles_whenActorNoLongerAdmin_throwsAccessDeniedException")
+  void updateRoles_whenActorNoLongerAdmin_throwsAccessDeniedException() {
+    User demoted = new User("admin", "subject-admin");
+    demoted.addRole(UserRole.HUMAN_USER);
+    when(authenticationContextService.getCurrentUser()).thenReturn(new UserDTO("admin", 1L));
+    when(userRepository.findById(1L)).thenReturn(Optional.of(demoted));
+
+    assertThrows(
+        AccessDeniedException.class,
+        () -> userService.updateRoles(1L, Set.of(UserRole.HUMAN_USER, UserRole.ADMIN)));
+
+    assertEquals(Set.of(UserRole.HUMAN_USER), demoted.getRoles());
+    verify(userRepository, never()).save(any(User.class));
+  }
+
+  @Test
   @DisplayName("updateRoles_removingOwnAdminRole_throwsIllegalArgumentException")
   void updateRoles_removingOwnAdminRole_throwsIllegalArgumentException() {
-    User admin = new User("admin", "subject-admin");
-    admin.addRole(UserRole.ADMIN);
-    when(userRepository.findById(1L)).thenReturn(Optional.of(admin));
+    User admin = adminUser();
     when(authenticationContextService.getCurrentUser()).thenReturn(new UserDTO("admin", 1L));
+    when(userRepository.findById(1L)).thenReturn(Optional.of(admin));
 
     assertThrows(
         IllegalArgumentException.class,
@@ -176,9 +215,18 @@ class UserServiceImplTest {
   @Test
   @DisplayName("updateRoles_withNonExistentUser_throwsUserNotFoundException")
   void updateRoles_withNonExistentUser_throwsUserNotFoundException() {
+    when(authenticationContextService.getCurrentUser()).thenReturn(new UserDTO("admin", 1L));
+    when(userRepository.findById(1L)).thenReturn(Optional.of(adminUser()));
     when(userRepository.findById(42L)).thenReturn(Optional.empty());
 
     assertThrows(
         UserNotFoundException.class, () -> userService.updateRoles(42L, Set.of(UserRole.ADMIN)));
+  }
+
+  private User adminUser() {
+    User admin = new User("admin", "subject-admin");
+    admin.addRole(UserRole.HUMAN_USER);
+    admin.addRole(UserRole.ADMIN);
+    return admin;
   }
 }
