@@ -5,7 +5,6 @@ import eu.bbmri_eric.quality.agent.audit.Audited;
 import eu.bbmri_eric.quality.agent.common.EventPublisher;
 import eu.bbmri_eric.quality.agent.dataquality.ReportPipelineStep;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
-import eu.bbmri_eric.quality.agent.dataquality.domain.ReportStatus;
 import eu.bbmri_eric.quality.agent.dataquality.event.ReportGeneratedEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -28,7 +27,7 @@ class FinishingStep implements ReportPipelineStep {
       details = "Report generated")
   public Report execute(Report report) {
     log.info("Finishing report generation for report id: {}", report.getId());
-    report.setStatus(ReportStatus.GENERATED);
+    report.markGenerated();
     eventPublisher.publishEvent(new ReportGeneratedEvent(report.getId()));
     log.info("Report id: {} marked as GENERATED", report.getId());
     return report;
@@ -36,6 +35,6 @@ class FinishingStep implements ReportPipelineStep {
 
   @Override
   public int getOrder() {
-    return 40;
+    return FINISHING_ORDER;
   }
 }

@@ -10,8 +10,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.agent.settings.NoiseMechanism;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
+import jakarta.validation.ConstraintViolationException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -83,6 +85,18 @@ class SettingsEnvironmentOverriderTest {
     testEnv.put("FHIR_URL", "http://ignored-url.com");
     overrider.run(args);
     verify(settingsService, never()).updateSettings(any());
+  }
+
+  @Test
+  void run_shouldNotApplyInvalidOverride_butKeepStartupAlive() {
+    SettingsDTO initial = defaultSettingsDTO();
+    when(settingsService.getSettings()).thenReturn(initial);
+    when(settingsService.updateSettings(any()))
+        .thenThrow(new ConstraintViolationException("rejected", Set.of()));
+    testEnv.put("APP_SETTING_EPSILON", "1e9");
+
+    // The invalid override must be logged and skipped, not crash the startup.
+    overrider.run(args);
   }
 
   @Test

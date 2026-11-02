@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { reportService } from '@/services/reportService.js';
+import { notificationService } from '@/services/notificationService.js';
 
 export const useReportStore = defineStore('report', {
   state: () => ({
@@ -63,13 +64,31 @@ export const useReportStore = defineStore('report', {
         const report = await reportService.generate();
         const reportUrl = report._links.self.href;
 
-        await reportService.pollUntilComplete(reportUrl);
+        const completed = await reportService.pollUntilComplete(reportUrl);
+        if (completed.status === 'FAILED') {
+          notificationService.error(
+            'Report Generation Failed',
+            'The report could not be generated. Please check the agent logs for details.'
+          );
+        }
         await Promise.all([
           this.fetchLatestReport(),
           this.fetchReports({ page: this.pagination.page, size: this.pagination.size }),
         ]);
       } catch (err) {
-        console.error(err);
+        if (err?.response?.status === 409) {
+          notificationService.warning(
+            'Report Generation In Progress',
+            err.response?.data?.detail ||
+              'A report is already being generated. Please wait for it to finish and try again.'
+          );
+        } else {
+          console.error(err);
+          notificationService.error(
+            'Report Generation Failed',
+            'Unable to generate the report. Please try again.'
+          );
+        }
       } finally {
         this.isGenerating = false;
       }

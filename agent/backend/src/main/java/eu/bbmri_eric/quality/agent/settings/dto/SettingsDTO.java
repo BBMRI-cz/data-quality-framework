@@ -3,6 +3,8 @@ package eu.bbmri_eric.quality.agent.settings.dto;
 import eu.bbmri_eric.quality.agent.settings.DatabaseType;
 import eu.bbmri_eric.quality.agent.settings.NoiseMechanism;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
@@ -50,15 +52,17 @@ public class SettingsDTO {
       requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   private String fhirPassword;
 
-  @Positive(message = "Epsilon must be positive")
+  @DecimalMin(value = "0.1", message = "Epsilon must be at least 0.1")
+  @DecimalMax(value = "10", message = "Epsilon must not exceed 10")
   @Schema(description = "Privacy budget (ε)", example = "3.0")
   private Double epsilon;
 
   @Positive(message = "Delta must be positive")
+  @DecimalMax(value = "0.00001", message = "Delta must not exceed 1e-5")
   @Schema(description = "Delta parameter (δ) - probability of privacy failure", example = "1e-8")
   private Double delta;
 
-  @Min(value = 0, message = "Minimum threshold must be non-negative")
+  @Min(value = 10, message = "Minimum threshold must be at least 10")
   @Schema(
       description = "Minimum threshold for low count suppression",
       example = "50",

@@ -1,10 +1,12 @@
 package eu.bbmri_eric.quality.agent.settings;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 
 import eu.bbmri_eric.quality.agent.settings.domain.Settings;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
 import eu.bbmri_eric.quality.agent.settings.impl.SettingsRepository;
+import jakarta.validation.ConstraintViolationException;
 import java.util.Base64;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -90,6 +92,52 @@ class SettingsServiceTest {
   }
 
   @Test
+  void updateSettings_withEpsilonBelowMinimum_isRejected() {
+    SettingsDTO dto =
+        createSettingsDTO(
+            "http://localhost:8080/fhir", "user", "pw", 0.05, 1.0E-8, 10, NoiseMechanism.LAPLACE);
+
+    assertThatThrownBy(() -> settingsService.updateSettings(dto))
+        .isInstanceOf(ConstraintViolationException.class);
+  }
+
+  @Test
+  void updateSettings_withEpsilonAboveMaximum_isRejected() {
+    SettingsDTO dto =
+        createSettingsDTO(
+            "http://localhost:8080/fhir",
+            "user",
+            "pw",
+            1_000_000_000.0,
+            1.0E-8,
+            10,
+            NoiseMechanism.LAPLACE);
+
+    assertThatThrownBy(() -> settingsService.updateSettings(dto))
+        .isInstanceOf(ConstraintViolationException.class);
+  }
+
+  @Test
+  void updateSettings_withDeltaAboveMaximum_isRejected() {
+    SettingsDTO dto =
+        createSettingsDTO(
+            "http://localhost:8080/fhir", "user", "pw", 1.0, 0.001, 10, NoiseMechanism.LAPLACE);
+
+    assertThatThrownBy(() -> settingsService.updateSettings(dto))
+        .isInstanceOf(ConstraintViolationException.class);
+  }
+
+  @Test
+  void updateSettings_withMinThresholdBelowMinimum_isRejected() {
+    SettingsDTO dto =
+        createSettingsDTO(
+            "http://localhost:8080/fhir", "user", "pw", 1.0, 1.0E-8, 0, NoiseMechanism.LAPLACE);
+
+    assertThatThrownBy(() -> settingsService.updateSettings(dto))
+        .isInstanceOf(ConstraintViolationException.class);
+  }
+
+  @Test
   void updateSettings_shouldPublishEvents_withoutThrowing() {
     SettingsDTO dto =
         createSettingsDTO(
@@ -159,7 +207,7 @@ class SettingsServiceTest {
   }
 
   @Test
-  void updateSettings_withZeroMinThreshold_shouldSucceed() {
+  void updateSettings_withZeroMinThreshold_isRejected() {
     SettingsDTO dto =
         createSettingsDTO(
             "http://localhost:8080/fhir",
@@ -170,9 +218,9 @@ class SettingsServiceTest {
             0,
             NoiseMechanism.LAPLACE);
 
-    SettingsDTO result = settingsService.updateSettings(dto);
-
-    assertEquals(0, result.getMinThreshold());
+    // minThreshold of 0 would silently switch low-count suppression off, so it is rejected.
+    assertThatThrownBy(() -> settingsService.updateSettings(dto))
+        .isInstanceOf(ConstraintViolationException.class);
   }
 
   @Test

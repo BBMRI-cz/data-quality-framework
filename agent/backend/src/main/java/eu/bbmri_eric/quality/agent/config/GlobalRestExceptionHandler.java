@@ -1,6 +1,7 @@
 package eu.bbmri_eric.quality.agent.config;
 
 import eu.bbmri_eric.quality.agent.common.exception.EntityAlreadyExistsException;
+import eu.bbmri_eric.quality.agent.dataquality.exception.ReportGenerationInProgressException;
 import eu.bbmri_eric.quality.agent.server.ServerCommunicationException;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -78,6 +79,22 @@ class GlobalRestExceptionHandler {
     ProblemDetail problemDetail =
         ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, "Entity not found");
     problemDetail.setTitle("Entity Not Found");
+    return problemDetail;
+  }
+
+  @ExceptionHandler(ReportGenerationInProgressException.class)
+  @ApiResponse(
+      responseCode = "409",
+      description = "Report Generation In Progress",
+      content =
+          @Content(
+              mediaType = "application/problem+json",
+              schema = @Schema(implementation = ProblemDetail.class)))
+  public ProblemDetail handleReportGenerationInProgress(ReportGenerationInProgressException ex) {
+    logger.debug("Report generation conflict: {}", ex.getMessage());
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+    problemDetail.setTitle("Report Generation In Progress");
     return problemDetail;
   }
 

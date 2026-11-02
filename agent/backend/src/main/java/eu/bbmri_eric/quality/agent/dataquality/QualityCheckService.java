@@ -1,6 +1,7 @@
 package eu.bbmri_eric.quality.agent.dataquality;
 
 import eu.bbmri_eric.quality.agent.common.CRUDService;
+import eu.bbmri_eric.quality.agent.common.dto.FilterDTO;
 import eu.bbmri_eric.quality.agent.common.dto.PageResponse;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckBulkUpdateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckCreateDTO;
@@ -11,7 +12,8 @@ import java.util.List;
 
 /** Service interface for managing quality checks. */
 public interface QualityCheckService
-    extends CRUDService<QualityCheckDTO, QualityCheckCreateDTO, QualityCheckUpdateDTO, Long> {
+    extends CRUDService<
+        QualityCheckDTO, QualityCheckCreateDTO, QualityCheckUpdateDTO, Long, FilterDTO> {
 
   /**
    * Retrieves quality checks with pagination, sorting and category filtering.

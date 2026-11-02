@@ -95,6 +95,6 @@ class QualityChecksStep implements ReportPipelineStep {
 
   @Override
   public int getOrder() {
-    return 10;
+    return QUALITY_CHECKS_ORDER;
   }
 }

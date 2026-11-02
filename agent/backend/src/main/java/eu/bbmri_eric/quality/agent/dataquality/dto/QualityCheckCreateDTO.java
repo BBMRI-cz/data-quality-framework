@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
@@ -46,6 +47,7 @@ public class QualityCheckCreateDTO {
   @Schema(description = "Error threshold percentage", example = "30")
   private Integer errorThreshold;
 
+  @Positive(message = "Epsilon budget must be positive")
   @Schema(description = "Epsilon budget for differential privacy", example = "1.0")
   private Double epsilonBudget;
 

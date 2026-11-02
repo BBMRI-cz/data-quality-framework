@@ -1,10 +1,11 @@
 
-INSERT INTO report (id, generated_at, epsilon_budget, number_of_entities, number_of_secondary_entities, status)
+INSERT INTO report (id, generated_at, epsilon_budget, number_of_entities, number_of_secondary_entities,
+                    obfuscated_number_of_entities, obfuscated_number_of_secondary_entities, status)
 VALUES
-    (1001, '2023-10-25 10:00:00', 2.0, 1500, 3000, 'GENERATED'),
-    (1002, '2023-10-26 14:30:00', 2.0, 1550, 3100, 'GENERATED'),
-    (1003, '2023-10-27 09:15:00', 2.0, 1500, null, 'GENERATED'),
-    (1004, '2023-10-28 12:00:00', 2.0, null, null, 'GENERATED');
+    (1001, '2023-10-25 10:00:00', 2.0, 1500, 3000, 1503, 2991, 'GENERATED'),
+    (1002, '2023-10-26 14:30:00', 2.0, 1550, 3100, 1546, 3098, 'GENERATED'),
+    (1003, '2023-10-27 09:15:00', 2.0, 1500, null, 1502, null, 'GENERATED'),
+    (1004, '2023-10-28 12:00:00', 2.0, null, null, null, null, 'GENERATED');
 
 INSERT INTO result (check_name, check_id, raw_value, obfuscated_value, report_id, warning_threshold, error_threshold, epsilon, stratum)
 SELECT name, id, 5, 5.2, 1001, warning_threshold, error_threshold, epsilon_budget, NULL FROM quality_check WHERE name = 'Missing Gender attribute';

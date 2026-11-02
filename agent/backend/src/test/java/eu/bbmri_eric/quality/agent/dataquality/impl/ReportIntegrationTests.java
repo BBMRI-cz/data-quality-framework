@@ -13,6 +13,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
+import eu.bbmri_eric.quality.agent.dataquality.domain.ReportStatus;
+import jakarta.transaction.Transactional;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
@@ -26,6 +28,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @SpringBootTest
 @AutoConfigureMockMvc
 @WithUserDetails("admin")
+@Transactional
 public class ReportIntegrationTests {
   public static final String API_REPORTS = "/api/reports";
   @Autowired private MockMvc mockMvc;
@@ -35,6 +38,7 @@ public class ReportIntegrationTests {
   @Autowired private ReportRepository reportRepository;
 
   @Test
+  @Transactional(Transactional.TxType.NOT_SUPPORTED)
   void testCreateReportWithStatusGeneratingSetsGeneratedAt() throws Exception {
     Report report = new Report();
     String json = objectMapper.writeValueAsString(report);
@@ -62,7 +66,9 @@ public class ReportIntegrationTests {
   @Test
   void testGetReportsWithPagination() throws Exception {
     for (int i = 0; i < 15; i++) {
-      reportRepository.save(new Report());
+      Report report = new Report();
+      report.setStatus(ReportStatus.GENERATED);
+      reportRepository.save(report);
     }
     mockMvc
         .perform(get(API_REPORTS).param("page", "0").param("size", "10"))
@@ -92,15 +98,25 @@ public class ReportIntegrationTests {
   }
 
   @Test
+  void testGetReportsWithInvalidSortProperty_returnsBadRequest() throws Exception {
+    mockMvc
+        .perform(get(API_REPORTS).param("sort", "noSuchProperty"))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @Transactional(Transactional.TxType.NOT_SUPPORTED)
   void testGetReportsWithoutParameters_returnsLatestReportFirst() throws Exception {
     reportRepository.deleteAll();
 
     Report olderReport = new Report();
+    olderReport.setStatus(ReportStatus.GENERATED);
     reportRepository.save(olderReport);
 
     Thread.sleep(100);
 
     Report newerReport = new Report();
+    newerReport.setStatus(ReportStatus.GENERATED);
     reportRepository.save(newerReport);
 
     String responseBody =

@@ -18,7 +18,6 @@ import eu.bbmri_eric.quality.agent.dataquality.dto.ReportCreateDTO;
 import jakarta.transaction.Transactional;
 import java.time.Duration;
 import java.util.List;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,11 +44,6 @@ class DataQualityAuditIntegrationTest {
 
   @BeforeEach
   void setUp() {
-    auditLogRepository.deleteAll();
-  }
-
-  @AfterEach
-  void tearDown() {
     auditLogRepository.deleteAll();
   }
 

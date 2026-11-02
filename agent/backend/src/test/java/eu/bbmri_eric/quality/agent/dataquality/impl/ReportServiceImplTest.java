@@ -1,10 +1,12 @@
 package eu.bbmri_eric.quality.agent.dataquality.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 import eu.bbmri_eric.quality.agent.dataquality.QualityCheckService;
 import eu.bbmri_eric.quality.agent.dataquality.QualityCheckType;
+import eu.bbmri_eric.quality.agent.dataquality.ReportPipeline;
 import eu.bbmri_eric.quality.agent.dataquality.ReportService;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
 import eu.bbmri_eric.quality.agent.dataquality.domain.ReportStatus;
@@ -12,8 +14,11 @@ import eu.bbmri_eric.quality.agent.dataquality.domain.Result;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ObfuscatedReportDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckResultDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.ReportCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ReportDTO;
+import eu.bbmri_eric.quality.agent.dataquality.exception.ReportGenerationInProgressException;
 import java.util.List;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -21,13 +26,17 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
+@Transactional
 class ReportServiceImplTest {
 
   @Autowired private ReportRepository reportRepository;
   @Autowired private ReportService reportService;
+  @Autowired private StaleReportReaper staleReportReaper;
   @MockitoBean private QualityCheckService cqlQueryService;
+  @MockitoBean private ReportPipeline reportPipeline;
 
   private Report testReport;
 
@@ -63,6 +72,7 @@ class ReportServiceImplTest {
 
     testReport = new Report();
     testReport.setNumberOfEntities(1000);
+    testReport.setObfuscatedNumberOfEntities(1000);
     testReport.setStatus(ReportStatus.GENERATED);
 
     addResultToReport(testReport, "Check 1", 1L, 150, 155.5, null);
@@ -72,6 +82,13 @@ class ReportServiceImplTest {
     addResultToReport(testReport, "Check 5", 2L, 8, 0.0, "stratum_B");
 
     testReport = reportRepository.save(testReport);
+  }
+
+  @AfterEach
+  void tearDown() {
+    // Do not leak reports in GENERATING state to other test classes sharing the test database:
+    // only one report may be generated at a time.
+    reportRepository.deleteAll();
   }
 
   private void addResultToReport(
@@ -84,6 +101,94 @@ class ReportServiceImplTest {
     Result result =
         new Result(checkName, checkId, rawValue, obfuscatedValue, 10, 30, 1.0, null, stratum);
     report.addResult(result);
+  }
+
+  @Nested
+  @DisplayName("Create")
+  class Create {
+
+    @Test
+    @DisplayName("should create a report in GENERATING state when none is being generated")
+    void create_whenNoReportIsGenerating_createsReport() {
+      ReportDTO created = reportService.create(new ReportCreateDTO());
+
+      assertThat(created.getId()).isNotNull();
+      Report persisted = reportRepository.findById(created.getId()).orElseThrow();
+      assertThat(persisted.getStatus()).isEqualTo(ReportStatus.GENERATING);
+    }
+
+    @Test
+    @DisplayName("should reject report creation while another report is being generated")
+    void create_whenReportIsGenerating_throws() {
+      Report generating = new Report();
+      generating.setStatus(ReportStatus.GENERATING);
+      reportRepository.save(generating);
+      long countBefore = reportRepository.count();
+
+      assertThatThrownBy(() -> reportService.create(new ReportCreateDTO()))
+          .isInstanceOf(ReportGenerationInProgressException.class)
+          .hasMessageContaining(generating.getId().toString());
+
+      assertThat(reportRepository.count()).isEqualTo(countBefore);
+    }
+
+    @Test
+    @DisplayName("should mark reports stuck in GENERATING as FAILED on startup")
+    void failStaleGeneratingReportsOnStartup_marksThemFailed() {
+      Report stale = new Report();
+      stale.setStatus(ReportStatus.GENERATING);
+      stale = reportRepository.save(stale);
+
+      staleReportReaper.failStaleGeneratingReportsOnStartup();
+
+      assertThat(reportRepository.findById(stale.getId()).orElseThrow().getStatus())
+          .isEqualTo(ReportStatus.FAILED);
+    }
+
+    @Test
+    @DisplayName("should not touch completed reports on startup")
+    void failStaleGeneratingReportsOnStartup_keepsGeneratedReports() {
+      staleReportReaper.failStaleGeneratingReportsOnStartup();
+
+      assertThat(reportRepository.findById(testReport.getId()).orElseThrow().getStatus())
+          .isEqualTo(ReportStatus.GENERATED);
+    }
+
+    @Test
+    @DisplayName("should fail stale generating reports and allow a new report instead")
+    void create_whenGeneratingReportIsStale_failsItAndCreatesReport() {
+      Report stale = new Report();
+      stale.setStatus(ReportStatus.GENERATING);
+      stale = reportRepository.save(stale);
+      stale.setGeneratedAt(java.time.LocalDateTime.now().minusHours(7));
+      reportRepository.save(stale);
+
+      ReportDTO created = reportService.create(new ReportCreateDTO());
+
+      assertThat(created.getId()).isNotNull();
+      assertThat(reportRepository.findById(stale.getId()).orElseThrow().getStatus())
+          .isEqualTo(ReportStatus.FAILED);
+    }
+
+    @Test
+    @DisplayName("should only fail stale reports in the scheduled sweep")
+    void failStaleGeneratingReports_failsOnlyStaleReports() {
+      Report stale = new Report();
+      stale.setStatus(ReportStatus.GENERATING);
+      stale = reportRepository.save(stale);
+      stale.setGeneratedAt(java.time.LocalDateTime.now().minusHours(7));
+      reportRepository.save(stale);
+      Report fresh = new Report();
+      fresh.setStatus(ReportStatus.GENERATING);
+      fresh = reportRepository.save(fresh);
+
+      staleReportReaper.failStaleGeneratingReports();
+
+      assertThat(reportRepository.findById(stale.getId()).orElseThrow().getStatus())
+          .isEqualTo(ReportStatus.FAILED);
+      assertThat(reportRepository.findById(fresh.getId()).orElseThrow().getStatus())
+          .isEqualTo(ReportStatus.GENERATING);
+    }
   }
 
   @Nested
@@ -135,10 +240,11 @@ class ReportServiceImplTest {
     }
 
     @Test
-    @DisplayName("should use obfuscated values, not raw values")
+    @DisplayName("should use obfuscated totals as denominator, not raw counts")
     void shouldUseObfuscatedValues() {
       Report report = new Report();
       report.setNumberOfEntities(100);
+      report.setObfuscatedNumberOfEntities(120);
       report.setStatus(ReportStatus.GENERATED);
 
       addResultToReport(report, "Test Check", 1L, 50, 60.0, null);
@@ -146,7 +252,7 @@ class ReportServiceImplTest {
 
       ObfuscatedReportDTO reportDTO = reportService.getObfuscatedById(savedReport.getId());
 
-      assertThat(reportDTO.getResults().getFirst().getResult()).isEqualTo(0.6);
+      assertThat(reportDTO.getResults().getFirst().getResult()).isEqualTo(0.5);
     }
 
     @Test
@@ -166,6 +272,7 @@ class ReportServiceImplTest {
     void shouldHandleZeroEntities() {
       Report report = new Report();
       report.setNumberOfEntities(0);
+      report.setObfuscatedNumberOfEntities(0);
       report.setStatus(ReportStatus.GENERATED);
       addResultToReport(report, "Test Check", 1L, 0, 0.0, null);
       Report savedReport = reportRepository.save(report);
@@ -192,8 +299,27 @@ class ReportServiceImplTest {
     }
 
     @Test
-    @DisplayName("should round entity counts")
-    void shouldRoundEntityCounts() {
+    @DisplayName("should share obfuscated entity counts instead of raw counts")
+    void shouldShareObfuscatedEntityCounts() {
+      Report report = new Report();
+      report.setNumberOfEntities(678);
+      report.setNumberOfSecondaryEntities(1273);
+      report.setObfuscatedNumberOfEntities(700);
+      report.setObfuscatedNumberOfSecondaryEntities(1290);
+      report.setStatus(ReportStatus.GENERATED);
+      addResultToReport(report, "Test Check", 1L, null, null, null);
+      Report savedReport = reportRepository.save(report);
+      ObfuscatedReportDTO reportDTO = reportService.getObfuscatedById(savedReport.getId());
+      assertThat(reportDTO.getTotalPatients()).isEqualTo(700);
+      assertThat(reportDTO.getTotalSamples()).isEqualTo(1290);
+      assertThat(reportDTO.getTotalPatients()).isNotEqualTo(savedReport.getNumberOfEntities());
+      assertThat(reportDTO.getTotalSamples())
+          .isNotEqualTo(savedReport.getNumberOfSecondaryEntities());
+    }
+
+    @Test
+    @DisplayName("should never expose raw totals for reports without obfuscated counts")
+    void shouldSuppressTotalsWhenObfuscatedCountsMissing() {
       Report report = new Report();
       report.setNumberOfEntities(678);
       report.setNumberOfSecondaryEntities(1273);
@@ -201,9 +327,8 @@ class ReportServiceImplTest {
       addResultToReport(report, "Test Check", 1L, null, null, null);
       Report savedReport = reportRepository.save(report);
       ObfuscatedReportDTO reportDTO = reportService.getObfuscatedById(savedReport.getId());
-      assertThat(savedReport.getNumberOfEntities()).isNotEqualTo(reportDTO.getTotalPatients());
-      assertThat(savedReport.getNumberOfSecondaryEntities())
-          .isNotEqualTo(reportDTO.getTotalSamples());
+      assertThat(reportDTO.getTotalPatients()).isNull();
+      assertThat(reportDTO.getTotalSamples()).isNull();
     }
 
     @Test

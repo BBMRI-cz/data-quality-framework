@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 
 /**
  * Service implementation for managing application settings. Persists settings to the database and
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
  * changes without tight coupling.
  */
 @Service
+@Validated
 @Transactional
 public class SettingsServiceImpl implements SettingsService {
 

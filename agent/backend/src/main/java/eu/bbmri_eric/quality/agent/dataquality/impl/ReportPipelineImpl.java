@@ -1,38 +1,33 @@
 package eu.bbmri_eric.quality.agent.dataquality.impl;
 
 import eu.bbmri_eric.quality.agent.dataquality.ReportPipeline;
-import eu.bbmri_eric.quality.agent.dataquality.ReportPipelineStep;
-import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
-import java.util.Comparator;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Orchestrates report generation. The pipeline itself is intentionally not transactional; the
+ * transactional boundaries live in {@link ReportPipelineExecutor} so that a failed report can
+ * always be marked as FAILED, even when a step poisoned the inner transaction.
+ */
 @Slf4j
 @Component
 class ReportPipelineImpl implements ReportPipeline {
 
-  private final ReportRepository reportRepository;
-  private final List<ReportPipelineStep> steps;
+  private final ReportPipelineExecutor executor;
 
-  ReportPipelineImpl(ReportRepository reportRepository, List<ReportPipelineStep> steps) {
-    this.reportRepository = reportRepository;
-    this.steps =
-        steps.stream().sorted(Comparator.comparingInt(ReportPipelineStep::getOrder)).toList();
+  ReportPipelineImpl(ReportPipelineExecutor executor) {
+    this.executor = executor;
   }
 
   @Override
-  @Transactional
   public void run(Long reportId) {
     log.info("Starting report pipeline for report id: {}", reportId);
-    Report report =
-        reportRepository
-            .findById(reportId)
-            .orElseThrow(() -> new IllegalArgumentException("Report not found: " + reportId));
-    for (ReportPipelineStep step : steps) {
-      log.debug("Executing pipeline step: {}", step.getClass().getSimpleName());
-      report = step.execute(report);
+    try {
+      executor.runSteps(reportId);
+    } catch (Exception e) {
+      log.error("Report pipeline failed for report id: {}", reportId, e);
+      executor.markFailed(reportId);
+      return;
     }
     log.info("Completed report pipeline for report id: {}", reportId);
   }

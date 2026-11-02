@@ -72,9 +72,11 @@ class ReportDqvServiceImpl implements ReportDqvService {
       "https://github.com/bbmri-cz/data-quality-framework/ns/fdqf#";
 
   private static final String REPORT_DESCRIPTION =
-      "Counts are rounded up to the nearest 10; check results are noisy ratios computed by the"
-          + " agent.";
-  private static final String ROUNDING_COMMENT = "Rounded up to the nearest 10.";
+      "Entity totals and check results are noisy values computed by the agent using differential"
+          + " privacy.";
+  private static final String NOISY_COUNT_COMMENT =
+      "Differentially private count: noisy counts below the agent's suppression threshold are"
+          + " reported as 0.";
   private static final String SUPPRESSION_COMMENT =
       "Differentially private ratio: noisy counts below the agent's suppression threshold are"
           + " reported as 0.";
@@ -472,7 +474,7 @@ class ReportDqvServiceImpl implements ReportDqvService {
     measurement.addProperty(
         model.createProperty(NS_DQV, "value"),
         model.createTypedLiteral(Integer.toString(value), XSDDatatype.XSDinteger));
-    measurement.addProperty(RDFS.comment, model.createLiteral(ROUNDING_COMMENT, "en"));
+    measurement.addProperty(RDFS.comment, model.createLiteral(NOISY_COUNT_COMMENT, "en"));
   }
 
   /**
