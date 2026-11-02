@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.server.user.controller;
 
+import eu.bbmri_eric.quality.server.user.AuthenticationContextService;
 import eu.bbmri_eric.quality.server.user.UserRole;
 import eu.bbmri_eric.quality.server.user.UserService;
 import eu.bbmri_eric.quality.server.user.dto.PasswordChangeRequest;
@@ -17,8 +18,6 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -31,10 +30,15 @@ public class UserController {
 
   private final UserService userService;
   private final UserLinkBuilder linkBuilder;
+  private final AuthenticationContextService authenticationContextService;
 
-  public UserController(UserService userService, UserLinkBuilder linkBuilder) {
+  public UserController(
+      UserService userService,
+      UserLinkBuilder linkBuilder,
+      AuthenticationContextService authenticationContextService) {
     this.userService = userService;
     this.linkBuilder = linkBuilder;
+    this.authenticationContextService = authenticationContextService;
   }
 
   @Operation(
@@ -104,14 +108,11 @@ public class UserController {
 
   @Operation(
       summary = "Get current user",
-      description = "Retrieves information about the currently authenticated user.")
+      description =
+          "Retrieves the current profile, including roles, of the authenticated user. Works for "
+              + "both OIDC and internal tokens.")
   @GetMapping("/api/userinfo")
-  public ResponseEntity<EntityModel<UserDTO>> getCurrentUser(@AuthenticationPrincipal Jwt jwt) {
-    if (jwt == null) {
-      return ResponseEntity.status(401).build();
-    }
-    String subjectId = jwt.getSubject();
-    UserDTO userDTO = userService.findBySubjectId(subjectId);
-    return ResponseEntity.ok(linkBuilder.toModel(userDTO));
+  public ResponseEntity<EntityModel<UserDTO>> getCurrentUser() {
+    return ResponseEntity.ok(linkBuilder.toModel(authenticationContextService.getCurrentUser()));
   }
 }

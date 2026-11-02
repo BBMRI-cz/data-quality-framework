@@ -91,6 +91,7 @@
 
   const SEARCH_DEBOUNCE_MS = 300;
   const DEFAULT_ROLE = 'HUMAN_USER';
+  const FALLBACK_ROLE_OPTIONS = ['HUMAN_USER', 'ADMIN'];
 
   const router = useRouter();
   const users = ref([]);
@@ -99,7 +100,7 @@
   const pageSize = ref(10);
   const searchQuery = ref('');
   const selectedRole = ref(DEFAULT_ROLE);
-  const roleOptions = ref([]);
+  const roleOptions = ref(FALLBACK_ROLE_OPTIONS);
   const loading = ref(false);
   const error = ref(null);
   let searchDebounceTimer = null;

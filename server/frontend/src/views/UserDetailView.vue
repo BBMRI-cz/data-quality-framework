@@ -92,6 +92,31 @@
                 <small class="text-muted">Unique identifier from identity provider</small>
               </div>
 
+              <div v-if="rolesError && !isNew && !user?.agentId" class="col-12">
+                <div
+                  class="alert alert-warning d-flex align-items-center justify-content-between gap-3 mb-0"
+                  role="alert"
+                >
+                  <span>
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Could not load available roles, so roles cannot be edited right now.
+                  </span>
+                  <button
+                    class="btn btn-outline-secondary btn-sm"
+                    :disabled="rolesLoading"
+                    @click="loadRoles"
+                  >
+                    <span
+                      v-if="rolesLoading"
+                      class="spinner-border spinner-border-sm me-2"
+                      role="status"
+                    ></span>
+                    <i v-else class="bi bi-arrow-clockwise me-2"></i>
+                    Retry
+                  </button>
+                </div>
+              </div>
+
               <div v-if="canEditRoles" class="col-12">
                 <label class="form-label fw-semibold">Roles</label>
                 <div>
@@ -195,6 +220,8 @@
   const showDeleteModal = ref(false);
 
   const availableRoles = ref([]);
+  const rolesLoading = ref(false);
+  const rolesError = ref(null);
 
   const form = reactive({
     username: '',
@@ -238,6 +265,19 @@
     return form.username.trim() !== '' && !saving.value;
   });
 
+  const loadRoles = async () => {
+    rolesLoading.value = true;
+    rolesError.value = null;
+    try {
+      availableRoles.value = await apiService.getRoles();
+    } catch (err) {
+      console.error('Error loading roles:', err);
+      rolesError.value = err.message || 'Failed to load roles';
+    } finally {
+      rolesLoading.value = false;
+    }
+  };
+
   const loadUser = async () => {
     if (isNew.value) {
       loading.value = false;
@@ -248,14 +288,10 @@
     error.value = null;
 
     try {
-      const rolesRequest = authStore.isAdmin
-        ? apiService.getRoles().catch((err) => {
-            console.error('Error loading roles:', err);
-            return [];
-          })
-        : Promise.resolve([]);
-      const [data, roles] = await Promise.all([apiService.getUser(userId.value), rolesRequest]);
-      availableRoles.value = roles;
+      const [data] = await Promise.all([
+        apiService.getUser(userId.value),
+        authStore.isAdmin ? loadRoles() : Promise.resolve(),
+      ]);
       user.value = data;
       form.username = data.username || '';
       form.agentId = data.agentId || '';
@@ -311,6 +347,9 @@
         const updated = await apiService.updateUserRoles(userId.value, form.roles);
         user.value = updated;
         form.roles = [...(updated.roles || [])];
+        if (isSelf.value) {
+          await authStore.refreshProfile();
+        }
 
         notificationService.success(
           'User Updated',

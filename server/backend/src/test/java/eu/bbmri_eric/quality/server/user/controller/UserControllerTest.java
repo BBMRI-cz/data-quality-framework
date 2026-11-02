@@ -3,6 +3,7 @@ package eu.bbmri_eric.quality.server.user.controller;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.*;
@@ -781,6 +782,17 @@ public class UserControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("[\"ADMIN\"]"))
         .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void getCurrentUser_withInternalToken_returnsProfileWithRoles() throws Exception {
+    String token = authenticateAndGetToken();
+
+    mockMvc
+        .perform(get("/api/userinfo").header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.username").value(ADMIN_USER))
+        .andExpect(jsonPath("$.roles", hasItem("ADMIN")));
   }
 
   private User createAgentAccount() {
