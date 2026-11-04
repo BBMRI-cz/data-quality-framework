@@ -1,8 +1,11 @@
 package eu.bbmri_eric.quality.server.user.impl;
 
 import eu.bbmri_eric.quality.server.user.AuthenticationContextService;
+import eu.bbmri_eric.quality.server.user.domain.User;
+import eu.bbmri_eric.quality.server.user.dto.CustomUserDetails;
 import eu.bbmri_eric.quality.server.user.dto.UserDTO;
 import java.util.Objects;
+import java.util.Optional;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +13,7 @@ import org.springframework.security.authentication.AuthenticationCredentialsNotF
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
 
 /**
@@ -37,17 +41,31 @@ public class AuthenticationContextServiceImpl implements AuthenticationContextSe
       logger.warn("Attempt to access authentication context without valid credentials");
       throw new AuthenticationCredentialsNotFoundException("No valid authentication found");
     }
-    String username = authentication.getName();
+    String name = authentication.getName();
     var user =
-        userRepository
-            .findByUsername(username)
+        findUser(authentication)
             .orElseThrow(
                 () -> {
-                  logger.warn("User not found: {}", username);
-                  return new UsernameNotFoundException("User not found: " + username);
+                  logger.warn("User not found: {}", name);
+                  return new UsernameNotFoundException("User not found: " + name);
                 });
 
-    logger.debug("Successfully found user: {}", username);
+    logger.debug("Successfully found user: {}", name);
     return modelMapper.map(user, UserDTO.class);
+  }
+
+  /**
+   * Resolves the user by the stable identity established during authentication: the user ID for
+   * internal tokens and the subject ID for OIDC tokens. Display usernames are not unique and are
+   * only used as a fallback for other authentication types.
+   */
+  private Optional<User> findUser(Authentication authentication) {
+    if (authentication.getPrincipal() instanceof CustomUserDetails details) {
+      return userRepository.findById(details.getUser().getId());
+    }
+    if (authentication instanceof JwtAuthenticationToken) {
+      return userRepository.findBySubjectId(authentication.getName());
+    }
+    return userRepository.findByUsername(authentication.getName());
   }
 }

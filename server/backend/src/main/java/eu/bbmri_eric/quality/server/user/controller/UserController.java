@@ -1,5 +1,7 @@
 package eu.bbmri_eric.quality.server.user.controller;
 
+import eu.bbmri_eric.quality.server.user.AuthenticationContextService;
+import eu.bbmri_eric.quality.server.user.UserRole;
 import eu.bbmri_eric.quality.server.user.UserService;
 import eu.bbmri_eric.quality.server.user.dto.PasswordChangeRequest;
 import eu.bbmri_eric.quality.server.user.dto.UserDTO;
@@ -8,12 +10,14 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import java.util.List;
+import java.util.Set;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -26,10 +30,15 @@ public class UserController {
 
   private final UserService userService;
   private final UserLinkBuilder linkBuilder;
+  private final AuthenticationContextService authenticationContextService;
 
-  public UserController(UserService userService, UserLinkBuilder linkBuilder) {
+  public UserController(
+      UserService userService,
+      UserLinkBuilder linkBuilder,
+      AuthenticationContextService authenticationContextService) {
     this.userService = userService;
     this.linkBuilder = linkBuilder;
+    this.authenticationContextService = authenticationContextService;
   }
 
   @Operation(
@@ -72,15 +81,38 @@ public class UserController {
   }
 
   @Operation(
-      summary = "Get current user",
-      description = "Retrieves information about the currently authenticated user.")
-  @GetMapping("/api/userinfo")
-  public ResponseEntity<EntityModel<UserDTO>> getCurrentUser(@AuthenticationPrincipal Jwt jwt) {
-    if (jwt == null) {
-      return ResponseEntity.status(401).build();
-    }
-    String subjectId = jwt.getSubject();
-    UserDTO userDTO = userService.findBySubjectId(subjectId);
+      summary = "Get available roles",
+      description =
+          "Lists every role that can be assigned to a user. Restricted to administrators.")
+  @GetMapping("/api/v1/roles")
+  public ResponseEntity<List<UserRole>> findAllRoles() {
+    return ResponseEntity.ok(userService.findAllRoles());
+  }
+
+  @Operation(
+      summary = "Update user roles",
+      description =
+          "Replaces the roles of a user. Restricted to administrators. Roles must include "
+              + "HUMAN_USER, agent accounts cannot be modified and administrators cannot remove "
+              + "their own ADMIN role.")
+  @PutMapping("/api/v1/users/{userId}/roles")
+  public ResponseEntity<EntityModel<UserDTO>> updateRoles(
+      @Parameter(description = "ID of the user whose roles should be updated", example = "1")
+          @PathVariable
+          Long userId,
+      @Parameter(description = "New roles for the user", required = true) @NotEmpty @RequestBody
+          Set<@NotNull UserRole> roles) {
+    UserDTO userDTO = userService.updateRoles(userId, roles);
     return ResponseEntity.ok(linkBuilder.toModel(userDTO));
+  }
+
+  @Operation(
+      summary = "Get current user",
+      description =
+          "Retrieves the current profile, including roles, of the authenticated user. Works for "
+              + "both OIDC and internal tokens.")
+  @GetMapping("/api/userinfo")
+  public ResponseEntity<EntityModel<UserDTO>> getCurrentUser() {
+    return ResponseEntity.ok(linkBuilder.toModel(authenticationContextService.getCurrentUser()));
   }
 }

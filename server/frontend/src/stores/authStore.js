@@ -2,6 +2,8 @@ import { reactive } from 'vue';
 import { apiService } from '@/services/apiService';
 import { resetOidc } from '@/utils/oidc';
 
+const PROFILE_MAX_AGE_MS = 60 * 1000;
+
 export const authStore = reactive({
   user: null,
   isAuthenticated: false,
@@ -9,6 +11,7 @@ export const authStore = reactive({
   error: null,
   redirectPath: null,
   mode: null,
+  profileRefreshedAt: 0,
 
   get isAdmin() {
     return this.user?.roles?.includes('ADMIN') ?? false;
@@ -50,6 +53,7 @@ export const authStore = reactive({
     this.error = null;
     this.redirectPath = null;
     this.mode = null;
+    this.profileRefreshedAt = 0;
 
     localStorage.removeItem('user');
     localStorage.removeItem('authToken');
@@ -94,12 +98,44 @@ export const authStore = reactive({
         roles: userData.roles,
         username: userData.username,
       };
+      this.profileRefreshedAt = Date.now();
     } catch (error) {
       console.error('Failed to fetch user profile:', error);
       this.setError('Failed to load user profile data');
     } finally {
       localStorage.setItem('user', JSON.stringify(this.user));
       this.setLoading(false);
+    }
+  },
+
+  /**
+   * Re-reads the current user's profile so role changes made by an administrator take effect
+   * during an active session (both OIDC and internal-token sessions). Failures keep the cached
+   * profile.
+   */
+  async refreshProfile() {
+    if (!this.isAuthenticated || !this.user) return;
+
+    try {
+      const userData = await apiService.getUserProfile();
+      if (!this.isAuthenticated) return;
+      this.user = {
+        ...this.user,
+        id: userData.id,
+        agentId: userData.agentId,
+        roles: userData.roles,
+        username: userData.username,
+      };
+      this.profileRefreshedAt = Date.now();
+      localStorage.setItem('user', JSON.stringify(this.user));
+    } catch (error) {
+      console.error('Failed to refresh user profile:', error);
+    }
+  },
+
+  async refreshProfileIfStale(maxAgeMs = PROFILE_MAX_AGE_MS) {
+    if (Date.now() - this.profileRefreshedAt >= maxAgeMs) {
+      await this.refreshProfile();
     }
   },
 });

@@ -206,7 +206,7 @@ const router = createRouter({
   routes,
 });
 
-router.beforeEach((to, _from) => {
+router.beforeEach(async (to, _from) => {
   if (to.name === 'Login' && authStore.isAuthenticated) {
     return '/dashboard';
   }
@@ -214,8 +214,14 @@ router.beforeEach((to, _from) => {
     authStore.setRedirectPath(to.fullPath);
     return '/login';
   }
+  if (to.meta.requiresAuth) {
+    await authStore.refreshProfileIfStale();
+  }
   if (to.meta.requiresAdmin && !authStore.isAdmin) {
-    return { name: 'NotFound' };
+    await authStore.refreshProfile();
+    if (!authStore.isAdmin) {
+      return { name: 'NotFound' };
+    }
   }
 });
 
