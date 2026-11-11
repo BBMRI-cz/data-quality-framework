@@ -1,0 +1,62 @@
+/* ===========================
+   CODE SYNTAX HIGHLIGHTING
+   Token classes emitted by @lezer/highlight's classHighlighter.
+   Shared by FormCodeEditor (editing) and CodeViewer (read-only display).
+   =========================== */
+
+.code-highlight {
+  --code-keyword: #7c3aed;
+  --code-string: #047857;
+  --code-number: #b45309;
+  --code-comment: #6b7280;
+  --code-function: #1d4ed8;
+  --code-type: #0e7490;
+  --code-operator: #be185d;
+  --code-variable: #1f2937;
+}
+
+.code-highlight .tok-keyword,
+.code-highlight .tok-bool,
+.code-highlight .tok-null {
+  color: var(--code-keyword);
+  font-weight: 500;
+}
+
+.code-highlight .tok-string,
+.code-highlight .tok-string2 {
+  color: var(--code-string);
+}
+
+.code-highlight .tok-number,
+.code-highlight .tok-literal {
+  color: var(--code-number);
+}
+
+.code-highlight .tok-comment {
+  color: var(--code-comment);
+  font-style: italic;
+}
+
+.code-highlight .tok-variableName.tok-definition,
+.code-highlight .tok-propertyName.tok-definition {
+  color: var(--code-function);
+}
+
+.code-highlight .tok-typeName,
+.code-highlight .tok-className,
+.code-highlight .tok-namespace {
+  color: var(--code-type);
+}
+
+.code-highlight .tok-operator {
+  color: var(--code-operator);
+}
+
+.code-highlight .tok-variableName,
+.code-highlight .tok-propertyName {
+  color: var(--code-variable);
+}
+
+.code-highlight .tok-invalid {
+  color: var(--color-danger);
+}

@@ -82,7 +82,7 @@
         </div>
         <div class="meta-item">
           <span class="meta-label">Query</span>
-          <pre class="query-viewer">{{ selectedCheck.query || 'N/A' }}</pre>
+          <CodeViewer :code="selectedCheck.query" :language="selectedCheck.type" />
         </div>
       </template>
     </BaseModal>
@@ -94,6 +94,7 @@
   import BaseModal from '@/components/BaseModal.vue';
   import BaseTable from '@/components/BaseTable.vue';
   import CategoryBadge from '@/components/CategoryBadge.vue';
+  import CodeViewer from '@/components/CodeViewer.vue';
   import { truncateText } from '@/utils/stringUtils.js';
 
   defineProps({
@@ -159,21 +160,6 @@
     color: var(--color-gray-500);
     text-transform: uppercase;
     letter-spacing: 0.5px;
-  }
-
-  .query-viewer {
-    width: 100%;
-    background: var(--color-gray-50);
-    border: 1px solid var(--color-gray-200);
-    border-radius: var(--radius-md);
-    padding: var(--spacing-md);
-    overflow-x: auto;
-    font-family: var(--font-mono), monospace;
-    font-size: 0.875rem;
-    line-height: 1.5;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    margin: var(--spacing-xs) 0 0;
   }
 
   .alert {
