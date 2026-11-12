@@ -28,8 +28,8 @@ export function useQualityCheckForm() {
       validationErrors.name = 'Name is required';
     }
 
-    if (formData.value.type === 'CQL' && !formData.value.query?.trim()) {
-      validationErrors.query = 'CQL query is required';
+    if (formData.value.type !== 'JAVA' && !formData.value.query?.trim()) {
+      validationErrors.query = `${formData.value.type} query is required`;
     }
 
     errors.value = validationErrors;

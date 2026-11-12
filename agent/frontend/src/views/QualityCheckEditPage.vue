@@ -78,19 +78,19 @@
             </div>
           </div>
 
-          <FormTextarea
+          <FormCodeEditor
             v-if="!isJavaType"
             id="checkQuery"
             v-model="formData.query"
+            :language="formData.type"
             label="Query"
             icon="bi-terminal"
             :rows="8"
-            placeholder="Enter your query here..."
-            help-text="Write a query to validate data quality"
+            :placeholder="queryHints.placeholder"
+            :help-text="queryHints.helpText"
             help-icon="bi-lightbulb"
             :error="errors.query"
             required
-            monospace
           />
 
           <FormSelect
@@ -154,6 +154,9 @@
   import { useRoute, useRouter } from 'vue-router';
   import PageHeader from '@/components/PageHeader.vue';
   import { FormField, FormTextarea, FormSelect, FormRow, FormActions } from '@/components/forms';
+  // Imported directly (not via the forms barrel) so CodeMirror stays in this page's lazy chunk
+  import FormCodeEditor from '@/components/forms/FormCodeEditor.vue';
+  import { getQueryHints } from '@/utils/codeLanguages.js';
   import { useQualityCheckForm } from '@/composables/useQualityCheckForm.js';
   import { categoryService } from '@/services/categoryService.js';
   import { notificationService } from '@/services/notificationService.js';
@@ -165,6 +168,8 @@
 
   const { formData, errors, saving, isEditing, isJavaType, loadCheck, saveCheck, deleteCheck } =
     useQualityCheckForm();
+
+  const queryHints = computed(() => getQueryHints(formData.value.type));
 
   const categoryOptions = computed(() => [
     { value: null, label: 'No Category' },
