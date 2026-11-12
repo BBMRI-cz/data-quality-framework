@@ -92,8 +92,57 @@
                 <small class="text-muted">Unique identifier from identity provider</small>
               </div>
 
+              <div v-if="rolesError && !isNew && !user?.agentId" class="col-12">
+                <div
+                  class="alert alert-warning d-flex align-items-center justify-content-between gap-3 mb-0"
+                  role="alert"
+                >
+                  <span>
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Could not load available roles, so roles cannot be edited right now.
+                  </span>
+                  <button
+                    class="btn btn-outline-secondary btn-sm"
+                    :disabled="rolesLoading"
+                    @click="loadRoles"
+                  >
+                    <span
+                      v-if="rolesLoading"
+                      class="spinner-border spinner-border-sm me-2"
+                      role="status"
+                    ></span>
+                    <i v-else class="bi bi-arrow-clockwise me-2"></i>
+                    Retry
+                  </button>
+                </div>
+              </div>
+
+              <div v-if="canEditRoles" class="col-12">
+                <label class="form-label fw-semibold">Roles</label>
+                <div>
+                  <div v-for="role in availableRoles" :key="role" class="form-check">
+                    <input
+                      :id="`role-${role}`"
+                      v-model="form.roles"
+                      class="form-check-input"
+                      type="checkbox"
+                      :value="role"
+                      :disabled="saving || isLockedRole(role)"
+                    />
+                    <label class="form-check-label" :for="`role-${role}`">{{ role }}</label>
+                  </div>
+                </div>
+                <small class="text-muted">
+                  HUMAN_USER is required for every user.
+                  <template v-if="isSelf">You cannot remove your own ADMIN role.</template>
+                </small>
+                <div v-if="validationErrors.roles" class="text-danger small">
+                  {{ validationErrors.roles }}
+                </div>
+              </div>
+
               <!-- Roles Display -->
-              <div v-if="user?.roles && user.roles.length > 0" class="col-12">
+              <div v-else-if="user?.roles && user.roles.length > 0" class="col-12">
                 <label class="form-label fw-semibold">Roles</label>
                 <div>
                   <Badge v-for="role in user.roles" :key="role" :text="role" variant="primary" />
@@ -146,6 +195,7 @@
   import { useHead } from '@unhead/vue';
   import { apiService } from '@/services/apiService.js';
   import { notificationService } from '@/services/notificationService.js';
+  import { authStore } from '@/stores/authStore.js';
   import PageHeader from '@/components/ui/PageHeader.vue';
   import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue';
   import Badge from '@/components/ui/Badge.vue';
@@ -169,13 +219,35 @@
   });
   const showDeleteModal = ref(false);
 
+  const availableRoles = ref([]);
+  const rolesLoading = ref(false);
+  const rolesError = ref(null);
+
   const form = reactive({
     username: '',
     agentId: '',
+    roles: [],
   });
 
   const validationErrors = reactive({
     username: '',
+    roles: '',
+  });
+
+  const canEditRoles = computed(
+    () =>
+      !isNew.value && authStore.isAdmin && !user.value?.agentId && availableRoles.value.length > 0
+  );
+  const isSelf = computed(() => user.value?.id != null && user.value.id === authStore.user?.id);
+
+  const isLockedRole = (role) => role === 'HUMAN_USER' || (role === 'ADMIN' && isSelf.value);
+
+  const rolesChanged = computed(() => {
+    if (!user.value) return false;
+    const current = user.value.roles || [];
+    return (
+      form.roles.length !== current.length || form.roles.some((role) => !current.includes(role))
+    );
   });
 
   const hasChanges = computed(() => {
@@ -185,12 +257,26 @@
     const usernameChanged = form.username !== user.value.username;
     const agentIdChanged = (form.agentId || '') !== (user.value.agentId || '');
 
-    return usernameChanged || agentIdChanged;
+    return usernameChanged || agentIdChanged || rolesChanged.value;
   });
 
   const isFormValid = computed(() => {
+    if (canEditRoles.value && form.roles.length === 0) return false;
     return form.username.trim() !== '' && !saving.value;
   });
+
+  const loadRoles = async () => {
+    rolesLoading.value = true;
+    rolesError.value = null;
+    try {
+      availableRoles.value = await apiService.getRoles();
+    } catch (err) {
+      console.error('Error loading roles:', err);
+      rolesError.value = err.message || 'Failed to load roles';
+    } finally {
+      rolesLoading.value = false;
+    }
+  };
 
   const loadUser = async () => {
     if (isNew.value) {
@@ -202,10 +288,14 @@
     error.value = null;
 
     try {
-      const data = await apiService.getUser(userId.value);
+      const [data] = await Promise.all([
+        apiService.getUser(userId.value),
+        authStore.isAdmin ? loadRoles() : Promise.resolve(),
+      ]);
       user.value = data;
       form.username = data.username || '';
       form.agentId = data.agentId || '';
+      form.roles = [...(data.roles || [])];
     } catch (err) {
       error.value = err.message || 'Failed to load user';
       console.error('Error loading user:', err);
@@ -216,9 +306,15 @@
 
   const validateForm = () => {
     validationErrors.username = '';
+    validationErrors.roles = '';
 
     if (!form.username.trim()) {
       validationErrors.username = 'Username is required';
+      return false;
+    }
+
+    if (canEditRoles.value && form.roles.length === 0) {
+      validationErrors.roles = 'At least one role is required';
       return false;
     }
 
@@ -248,8 +344,12 @@
 
         router.push(`/users/${created.id}`);
       } else {
-        const updated = await apiService.updateUser(userId.value, userData);
+        const updated = await apiService.updateUserRoles(userId.value, form.roles);
         user.value = updated;
+        form.roles = [...(updated.roles || [])];
+        if (isSelf.value) {
+          await authStore.refreshProfile();
+        }
 
         notificationService.success(
           'User Updated',
@@ -274,8 +374,10 @@
     } else if (user.value) {
       form.username = user.value.username || '';
       form.agentId = user.value.agentId || '';
+      form.roles = [...(user.value.roles || [])];
     }
     validationErrors.username = '';
+    validationErrors.roles = '';
   };
 
   const deleteUser = async () => {

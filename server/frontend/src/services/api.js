@@ -20,6 +20,10 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    if (error.response?.status === 403) {
+      authStore.refreshProfile();
+    }
+
     if (error.response && error.response.status === 401) {
       if (isHandling401) {
         return Promise.reject(error);

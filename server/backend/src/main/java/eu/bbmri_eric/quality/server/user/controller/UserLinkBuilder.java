@@ -20,7 +20,7 @@ public class UserLinkBuilder {
     var model = EntityModel.of(user);
 
     // Self link pointing to userinfo as that's the main way to get "me"
-    model.add(linkTo(methodOn(UserController.class).getCurrentUser(null)).withSelfRel());
+    model.add(linkTo(methodOn(UserController.class).getCurrentUser()).withSelfRel());
 
     // Link to change password
     model.add(
