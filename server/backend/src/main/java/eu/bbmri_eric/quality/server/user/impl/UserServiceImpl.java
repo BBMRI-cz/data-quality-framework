@@ -86,7 +86,6 @@ public class UserServiceImpl implements UserService {
   @Transactional
   public UserDTO createBySubjectId(String subjectId, String username) {
     User user = new User(username, subjectId);
-    user.addRole(UserRole.ADMIN);
     user.addRole(UserRole.HUMAN_USER);
     User savedUser = userRepository.save(user);
     return modelMapper.map(savedUser, UserDTO.class);

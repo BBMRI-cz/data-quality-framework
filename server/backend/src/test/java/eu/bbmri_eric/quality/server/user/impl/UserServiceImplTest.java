@@ -21,13 +21,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.access.AccessDeniedException;
 
-/** Unit tests for UserServiceImpl focusing on the updateUsername method. */
+/** Unit tests for UserServiceImpl. */
 @ExtendWith(MockitoExtension.class)
 class UserServiceImplTest {
 
@@ -48,6 +49,23 @@ class UserServiceImplTest {
   void setUp() {
     testUser = new User(TEST_USERNAME, TEST_SUBJECT_ID);
     testUser.setAgentId(AGENT_ID);
+  }
+
+  @Test
+  @DisplayName("createBySubjectId_assignsOnlyHumanUserRole")
+  void createBySubjectId_assignsOnlyHumanUserRole() {
+    when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+    when(modelMapper.map(any(User.class), eq(UserDTO.class)))
+        .thenReturn(new UserDTO(TEST_USERNAME, 1L));
+
+    userService.createBySubjectId(TEST_SUBJECT_ID, TEST_USERNAME);
+
+    ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+    verify(userRepository).save(captor.capture());
+    User savedUser = captor.getValue();
+    assertEquals(TEST_SUBJECT_ID, savedUser.getSubjectId());
+    assertEquals(TEST_USERNAME, savedUser.getUsername());
+    assertEquals(Set.of(UserRole.HUMAN_USER), savedUser.getRoles());
   }
 
   @Test
