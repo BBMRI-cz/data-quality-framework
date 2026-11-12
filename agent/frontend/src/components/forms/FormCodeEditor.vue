@@ -27,7 +27,7 @@
 
 <script setup>
   import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue';
-  import { Compartment, EditorState } from '@codemirror/state';
+  import { Compartment, EditorState, Transaction } from '@codemirror/state';
   import {
     EditorView,
     drawSelection,
@@ -103,11 +103,13 @@
 
   const editorRef = ref(null);
   const view = shallowRef(null);
+  let isExternalSync = false;
 
   const languageCompartment = new Compartment();
   const placeholderCompartment = new Compartment();
   const readonlyCompartment = new Compartment();
   const ariaCompartment = new Compartment();
+  const lineSeparatorCompartment = new Compartment();
 
   const inputId = computed(
     () => props.id || `form-code-editor-${Math.random().toString(36).slice(2, 11)}`
@@ -118,6 +120,8 @@
   // 1.6 line-height in rem plus vertical padding, mirroring textarea `rows`
   const minHeight = computed(() => `calc(${Number(props.rows) * 1.6}em + 1.5rem)`);
 
+  const lineSeparatorExt = (value) =>
+    EditorState.lineSeparator.of(value.includes('\r\n') ? '\r\n' : '\n');
   const languageExtension = () => getLanguageSupport(props.language) ?? [];
   const placeholderExt = () => (props.placeholder ? placeholderExtension(props.placeholder) : []);
   const readonlyExt = () => [EditorState.readOnly.of(props.readonly)];
@@ -147,13 +151,14 @@
           syntaxHighlighting(classHighlighter),
           EditorView.lineWrapping,
           keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
+          lineSeparatorCompartment.of(lineSeparatorExt(props.modelValue ?? '')),
           languageCompartment.of(languageExtension()),
           placeholderCompartment.of(placeholderExt()),
           readonlyCompartment.of(readonlyExt()),
           ariaCompartment.of(ariaExt()),
           EditorView.updateListener.of((update) => {
-            if (update.docChanged) {
-              emit('update:modelValue', update.state.doc.toString());
+            if (update.docChanged && !isExternalSync) {
+              emit('update:modelValue', update.state.sliceDoc());
             }
           }),
         ],
@@ -172,8 +177,16 @@
     (value) => {
       const editor = view.value;
       const next = value ?? '';
-      if (editor && editor.state.doc.toString() !== next) {
-        editor.dispatch({ changes: { from: 0, to: editor.state.doc.length, insert: next } });
+      if (editor && editor.state.sliceDoc() !== next) {
+        isExternalSync = true;
+        editor.dispatch({
+          effects: lineSeparatorCompartment.reconfigure(lineSeparatorExt(next)),
+        });
+        editor.dispatch({
+          changes: { from: 0, to: editor.state.doc.length, insert: next },
+          annotations: Transaction.addToHistory.of(false),
+        });
+        isExternalSync = false;
       }
     }
   );

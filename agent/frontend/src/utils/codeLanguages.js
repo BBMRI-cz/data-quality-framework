@@ -18,7 +18,7 @@ const QUERY_HINTS = {
   PYTHON: {
     placeholder: 'Enter your Python script here...',
     helpText:
-      'Print the result as a JSON object on the last stdout line: {"count", "entityType", "ids", "error"}',
+      'Print the result as a JSON object on the last stdout line: {"count": 1, "entityType": "sample", "ids": ["sample-1"], "error": null}',
   },
   CQL: {
     placeholder: 'Enter your CQL query here...',
