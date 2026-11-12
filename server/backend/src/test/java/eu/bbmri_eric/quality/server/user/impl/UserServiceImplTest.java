@@ -37,8 +37,6 @@ class UserServiceImplTest {
   @Mock private AuthenticationContextService authenticationContextService;
   @Mock private EntityManager entityManager;
 
-  @Mock private ModelMapper modelMapper;
-
   @InjectMocks private UserServiceImpl userService;
 
   private User testUser;
