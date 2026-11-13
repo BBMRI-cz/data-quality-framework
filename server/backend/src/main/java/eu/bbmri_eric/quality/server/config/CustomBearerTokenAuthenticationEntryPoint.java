@@ -1,6 +1,5 @@
 package eu.bbmri_eric.quality.server.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -12,6 +11,7 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Custom implementation of {@link org.springframework.security.web.AuthenticationEntryPoint} that
@@ -25,9 +25,9 @@ public class CustomBearerTokenAuthenticationEntryPoint implements Authentication
       URI.create("https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401");
   private static final HttpStatus HTTP_STATUS = HttpStatus.UNAUTHORIZED;
 
-  private final ObjectMapper objectMapper;
+  private final JsonMapper objectMapper;
 
-  public CustomBearerTokenAuthenticationEntryPoint(ObjectMapper objectMapper) {
+  public CustomBearerTokenAuthenticationEntryPoint(JsonMapper objectMapper) {
     this.objectMapper = objectMapper;
   }
 

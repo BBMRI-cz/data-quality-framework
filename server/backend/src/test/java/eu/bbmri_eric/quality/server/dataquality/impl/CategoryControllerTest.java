@@ -3,20 +3,20 @@ package eu.bbmri_eric.quality.server.dataquality.impl;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.server.dataquality.domain.Category;
 import eu.bbmri_eric.quality.server.dataquality.dto.CategoryCreateDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.CategoryUpdateDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.json.JsonMapper;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -28,7 +28,7 @@ class CategoryControllerTest {
   private static final String API_V1_CATEGORIES_ID = "/api/v1/categories/{id}";
 
   @Autowired private MockMvc mockMvc;
-  @Autowired private ObjectMapper objectMapper;
+  @Autowired private JsonMapper objectMapper;
   @Autowired private CategoryRepository categoryRepository;
 
   private Category testCategory;

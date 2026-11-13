@@ -5,7 +5,6 @@ import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.server.crypto.KeyProvider;
 import eu.bbmri_eric.quality.server.crypto.SignatureService;
 import eu.bbmri_eric.quality.server.dataquality.domain.Manifest;
@@ -26,6 +25,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.json.JsonMapper;
 
 @IntegrationTest
 @Transactional
@@ -38,7 +38,7 @@ class ManifestControllerTest {
       "/api/v1/manifests/{id}/versions/{versionId}/quality-checks";
 
   @Autowired private MockMvc mockMvc;
-  @Autowired private ObjectMapper objectMapper;
+  @Autowired private JsonMapper objectMapper;
   @Autowired private ManifestRepository manifestRepository;
   @Autowired private QualityCheckRepository qualityCheckRepository;
   @Autowired private EntityManager entityManager;

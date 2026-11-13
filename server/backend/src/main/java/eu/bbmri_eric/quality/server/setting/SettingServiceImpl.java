@@ -1,7 +1,5 @@
 package eu.bbmri_eric.quality.server.setting;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -10,6 +8,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 @Service
 @Transactional
@@ -17,14 +17,14 @@ public class SettingServiceImpl implements SettingService {
 
   private final ModelMapper modelMapper;
   private final SettingRepository settingRepository;
-  private final ObjectMapper objectMapper;
+  private final JsonMapper objectMapper;
   private final OidcIssuerProvider oidcIssuerProvider;
   private final ApplicationEventPublisher eventPublisher;
 
   public SettingServiceImpl(
       SettingRepository settingRepository,
       ModelMapper modelMapper,
-      ObjectMapper objectMapper,
+      JsonMapper objectMapper,
       @Lazy OidcIssuerProvider oidcIssuerProvider,
       ApplicationEventPublisher eventPublisher) {
     this.settingRepository = settingRepository;

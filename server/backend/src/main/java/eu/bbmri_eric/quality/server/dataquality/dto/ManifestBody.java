@@ -1,9 +1,9 @@
 package eu.bbmri_eric.quality.server.dataquality.dto;
 
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import java.time.Instant;
 import java.util.List;
+import tools.jackson.databind.PropertyNamingStrategies;
+import tools.jackson.databind.annotation.JsonNaming;
 
 /**
  * The JSON body of a manifest. This structure is what gets serialized and cryptographically signed

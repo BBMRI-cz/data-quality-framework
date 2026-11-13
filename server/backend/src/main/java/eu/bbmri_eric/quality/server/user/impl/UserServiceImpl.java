@@ -155,7 +155,7 @@ public class UserServiceImpl implements UserService {
       throw new IllegalArgumentException("You cannot remove your own ADMIN role");
     }
     user.setRoles(roles);
-    return modelMapper.map(userRepository.save(user), UserDTO.class);
+    return modelMapper.map(user, UserDTO.class);
   }
 
   /**

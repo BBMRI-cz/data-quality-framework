@@ -1,7 +1,5 @@
 package eu.bbmri_eric.quality.server.auth.impl;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -16,6 +14,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Service for JWT token generation and validation using JJWT library. Provides simple JWT
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Service;
 public class JwtUtilImpl implements eu.bbmri_eric.quality.server.auth.JwtUtil {
 
   private static final Logger logger = LoggerFactory.getLogger(JwtUtilImpl.class);
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  private static final JsonMapper OBJECT_MAPPER = new JsonMapper();
 
   private final SecretKey key;
   private final long jwtExpiration;

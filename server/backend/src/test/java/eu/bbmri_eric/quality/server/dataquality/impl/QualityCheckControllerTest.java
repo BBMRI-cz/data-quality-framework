@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.server.dataquality.domain.Category;
 import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheckVersion;
@@ -26,6 +25,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.json.JsonMapper;
 
 @IntegrationTest
 @Transactional
@@ -37,7 +37,7 @@ class QualityCheckControllerTest {
       "/api/v1/quality-checks/{id}/versions";
 
   @Autowired private MockMvc mockMvc;
-  @Autowired private ObjectMapper objectMapper;
+  @Autowired private JsonMapper objectMapper;
   @Autowired private QualityCheckRepository qualityCheckRepository;
   @Autowired private CategoryRepository categoryRepository;
   @Autowired private EntityManager entityManager;
@@ -532,6 +532,7 @@ class QualityCheckControllerTest {
   void findAll_shouldReturnKeywordsForAllQualityChecks() throws Exception {
     QualityCheck secondQualityCheck =
         new QualityCheck("Second Quality Check", "Another test quality check", 0.9, 0.6);
+    secondQualityCheck = qualityCheckRepository.save(secondQualityCheck);
     secondQualityCheck.setKeywords(Set.of("diagnosis", "C50"));
     qualityCheckRepository.save(testQualityCheck);
     qualityCheckRepository.save(secondQualityCheck);
