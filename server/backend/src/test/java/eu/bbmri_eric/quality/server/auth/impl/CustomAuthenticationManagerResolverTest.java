@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.time.Instant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 /** Unit tests for CustomAuthenticationManagerResolver. */
 @ExtendWith(MockitoExtension.class)
@@ -29,6 +31,7 @@ class CustomAuthenticationManagerResolverTest {
 
   private CustomAuthenticationManagerResolver resolver;
   private static final String INTERNAL_ISSUER = "quality-server";
+  private static final String OIDC_ISSUER = "https://oidc.example.com";
   private static final String BEARER_TOKEN = "Bearer valid.jwt.token";
   private static final String JWT_TOKEN = "valid.jwt.token";
 
@@ -113,5 +116,46 @@ class CustomAuthenticationManagerResolverTest {
 
     assertNotNull(result);
     verify(jwtUtil).extractIssuer(JWT_TOKEN);
+  }
+
+  @Test
+  void createOidcJwtValidator_withSupportedTypes_succeeds() {
+    var validator = CustomAuthenticationManagerResolver.createOidcJwtValidator(OIDC_ISSUER);
+
+    assertFalse(validator.validate(oidcJwt("at+jwt", OIDC_ISSUER, future())).hasErrors());
+    assertFalse(validator.validate(oidcJwt("JWT", OIDC_ISSUER, future())).hasErrors());
+  }
+
+  @Test
+  void createOidcJwtValidator_withUnsupportedType_fails() {
+    var validator = CustomAuthenticationManagerResolver.createOidcJwtValidator(OIDC_ISSUER);
+
+    assertTrue(validator.validate(oidcJwt("application/jwt", OIDC_ISSUER, future())).hasErrors());
+  }
+
+  @Test
+  void createOidcJwtValidator_withInvalidIssuerOrExpiration_fails() {
+    var validator = CustomAuthenticationManagerResolver.createOidcJwtValidator(OIDC_ISSUER);
+
+    assertTrue(
+        validator.validate(oidcJwt("JWT", "https://other.example.com", future())).hasErrors());
+    assertTrue(
+        validator
+            .validate(oidcJwt("JWT", OIDC_ISSUER, Instant.now().minusSeconds(300)))
+            .hasErrors());
+  }
+
+  private static Jwt oidcJwt(String type, String issuer, Instant expiresAt) {
+    return Jwt.withTokenValue("token")
+        .header("typ", type)
+        .issuer(issuer)
+        .issuedAt(expiresAt.minusSeconds(600))
+        .expiresAt(expiresAt)
+        .subject("subject")
+        .build();
+  }
+
+  private static Instant future() {
+    return Instant.now().plusSeconds(300);
   }
 }

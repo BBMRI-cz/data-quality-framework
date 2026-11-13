@@ -7,14 +7,10 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtClaimValidator;
 import org.springframework.security.oauth2.jwt.JwtTimestampValidator;
 import org.springframework.stereotype.Component;
 
-/**
- * Validates JWT tokens by checking timestamps and required claims. Supports both authorization code
- * flow (with 'sub') and client-credentials flow (with 'client_id').
- */
+/** Validates JWT timestamps for authorization-code and client-credentials flows. */
 @Component
 class JwtValidator {
 
@@ -46,22 +42,11 @@ class JwtValidator {
   }
 
   /**
-   * Creates an OAuth2TokenValidator that checks JWT timestamps and required claims.
+   * Creates an OAuth2TokenValidator that checks JWT timestamps.
    *
    * @return configured OAuth2TokenValidator
    */
   private OAuth2TokenValidator<Jwt> createValidator() {
-    OAuth2TokenValidator<Jwt> timestampValidator = new JwtTimestampValidator(CLOCK_SKEW);
-
-    OAuth2TokenValidator<Jwt> identityValidator =
-        new JwtClaimValidator<>("identity", (ignored) -> true);
-
-    return token -> {
-      OAuth2TokenValidatorResult result = timestampValidator.validate(token);
-      if (result.hasErrors()) {
-        return result;
-      }
-      return identityValidator.validate(token);
-    };
+    return new JwtTimestampValidator(CLOCK_SKEW);
   }
 }

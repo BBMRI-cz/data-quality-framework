@@ -1,7 +1,5 @@
 package eu.bbmri_eric.quality.server.auth.impl;
 
-import com.nimbusds.jose.JOSEObjectType;
-import com.nimbusds.jose.proc.DefaultJOSEObjectTypeVerifier;
 import eu.bbmri_eric.quality.server.setting.OidcIssuerProvider;
 import eu.bbmri_eric.quality.server.setting.OidcSettingsUpdatedEvent;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,7 +13,12 @@ import org.springframework.security.authentication.AuthenticationManagerResolver
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtException;
+import org.springframework.security.oauth2.jwt.JwtIssuerValidator;
+import org.springframework.security.oauth2.jwt.JwtTypeValidator;
+import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
@@ -64,6 +67,12 @@ class CustomAuthenticationManagerResolver
         "Internal authentication manager initialized. OIDC will be initialized on first use.");
   }
 
+  static OAuth2TokenValidator<Jwt> createOidcJwtValidator(String issuer) {
+    JwtTypeValidator typeValidator = new JwtTypeValidator("at+jwt", "JWT");
+    typeValidator.setAllowEmpty(true);
+    return JwtValidators.createDefaultWithValidators(typeValidator, new JwtIssuerValidator(issuer));
+  }
+
   private void initializeOidcAuthentication() {
     if (oidcInitializationAttempted) {
       return;
@@ -78,14 +87,8 @@ class CustomAuthenticationManagerResolver
         String oidcIssuerUri = oidcIssuerProvider.getIssuerUri();
 
         if (oidcIssuerUri != null && !oidcIssuerUri.isBlank()) {
-          NimbusJwtDecoder jwtDecoder =
-              NimbusJwtDecoder.withIssuerLocation(oidcIssuerUri)
-                  .jwtProcessorCustomizer(
-                      processor ->
-                          processor.setJWSTypeVerifier(
-                              new DefaultJOSEObjectTypeVerifier<>(
-                                  new JOSEObjectType("at+jwt"), new JOSEObjectType("JWT"), null)))
-                  .build();
+          NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withIssuerLocation(oidcIssuerUri).build();
+          jwtDecoder.setJwtValidator(createOidcJwtValidator(oidcIssuerUri));
           JwtAuthenticationProvider oidcProvider = new JwtAuthenticationProvider(jwtDecoder);
           oidcProvider.setJwtAuthenticationConverter(jwtAuthenticationConverter);
           AuthenticationManager oidcAuthManager = new ProviderManager(oidcProvider);
