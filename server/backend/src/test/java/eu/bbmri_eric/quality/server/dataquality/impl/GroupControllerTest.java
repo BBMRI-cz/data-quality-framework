@@ -3,7 +3,6 @@ package eu.bbmri_eric.quality.server.dataquality.impl;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.server.dataquality.domain.Agent;
 import eu.bbmri_eric.quality.server.dataquality.domain.Group;
 import eu.bbmri_eric.quality.server.dataquality.dto.AssignAgentsDTO;
@@ -19,6 +18,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.json.JsonMapper;
 
 @IntegrationTest
 @Transactional
@@ -29,7 +29,7 @@ class GroupControllerTest {
   private static final String API_V1_GROUPS_ID_AGENTS = "/api/v1/groups/{id}/agents";
 
   @Autowired private MockMvc mockMvc;
-  @Autowired private ObjectMapper objectMapper;
+  @Autowired private JsonMapper objectMapper;
   @Autowired private GroupRepository groupRepository;
   @Autowired private AgentRepository agentRepository;
 

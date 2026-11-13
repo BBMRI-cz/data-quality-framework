@@ -10,7 +10,7 @@ import org.springframework.boot.testcontainers.service.connection.ServiceConnect
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
 @Configuration(proxyBeanMethods = false)
@@ -20,9 +20,9 @@ class DevDatabaseConfig {
 
   @Bean
   @ServiceConnection
-  PostgreSQLContainer<?> postgresContainer() {
+  PostgreSQLContainer postgresContainer() {
     var container =
-        new PostgreSQLContainer<>(DockerImageName.parse("postgres:17"))
+        new PostgreSQLContainer(DockerImageName.parse("postgres:17"))
             .withDatabaseName("quality_server")
             .withUsername("quality")
             .withPassword("quality")

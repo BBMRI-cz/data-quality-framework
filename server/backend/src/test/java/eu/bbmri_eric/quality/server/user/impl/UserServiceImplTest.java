@@ -166,13 +166,12 @@ class UserServiceImplTest {
     when(authenticationContextService.getCurrentUser()).thenReturn(new UserDTO("admin", 1L));
     when(userRepository.findById(1L)).thenReturn(Optional.of(admin));
     when(userRepository.findById(2L)).thenReturn(Optional.of(human));
-    when(userRepository.save(human)).thenReturn(human);
     when(modelMapper.map(human, UserDTO.class)).thenReturn(new UserDTO("human", 2L));
 
     userService.updateRoles(2L, Set.of(UserRole.HUMAN_USER, UserRole.ADMIN));
 
     assertEquals(Set.of(UserRole.HUMAN_USER, UserRole.ADMIN), human.getRoles());
-    verify(userRepository).save(human);
+    verify(userRepository, never()).save(any(User.class));
   }
 
   @Test
@@ -184,7 +183,6 @@ class UserServiceImplTest {
     when(authenticationContextService.getCurrentUser()).thenReturn(new UserDTO("admin", 5L));
     when(userRepository.findById(5L)).thenReturn(Optional.of(admin));
     when(userRepository.findById(2L)).thenReturn(Optional.of(human));
-    when(userRepository.save(human)).thenReturn(human);
 
     userService.updateRoles(2L, Set.of(UserRole.HUMAN_USER));
 

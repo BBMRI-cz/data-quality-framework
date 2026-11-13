@@ -1,7 +1,5 @@
 package eu.bbmri_eric.quality.server.dataquality.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.server.common.EntityAlreadyExistsException;
 import eu.bbmri_eric.quality.server.common.EntityNotFoundException;
 import eu.bbmri_eric.quality.server.crypto.KeyProvider;
@@ -28,6 +26,8 @@ import java.util.Objects;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 /** Service implementation for managing quality check manifests. */
 @Service
@@ -37,7 +37,7 @@ class ManifestServiceImpl implements ManifestService {
   private final ManifestRepository manifestRepository;
   private final QualityCheckVersionRepository qualityCheckVersionRepository;
   private final ModelMapper modelMapper;
-  private final ObjectMapper objectMapper;
+  private final JsonMapper objectMapper;
   private final SignatureService signatureService;
   private final KeyProvider keyProvider;
 
@@ -45,7 +45,7 @@ class ManifestServiceImpl implements ManifestService {
       ManifestRepository manifestRepository,
       QualityCheckVersionRepository qualityCheckVersionRepository,
       ModelMapper modelMapper,
-      ObjectMapper objectMapper,
+      JsonMapper objectMapper,
       SignatureService signatureService,
       KeyProvider keyProvider) {
     this.manifestRepository = manifestRepository;
@@ -191,7 +191,7 @@ class ManifestServiceImpl implements ManifestService {
             manifestVersion.getManifest().getId(), manifestVersion.getGeneratedAt(), checks);
     try {
       return objectMapper.writeValueAsString(body);
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       throw new IllegalArgumentException("Failed to serialize manifest body", e);
     }
   }

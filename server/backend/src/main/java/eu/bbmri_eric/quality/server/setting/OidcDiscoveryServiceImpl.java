@@ -1,6 +1,5 @@
 package eu.bbmri_eric.quality.server.setting;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -9,6 +8,7 @@ import java.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import tools.jackson.databind.json.JsonMapper;
 
 @Service
 class OidcDiscoveryServiceImpl implements OidcDiscoveryService {
@@ -17,10 +17,10 @@ class OidcDiscoveryServiceImpl implements OidcDiscoveryService {
   private static final String WELL_KNOWN_PATH = "/.well-known/openid-configuration";
   private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
 
-  private final ObjectMapper objectMapper;
+  private final JsonMapper objectMapper;
   private final HttpClient httpClient;
 
-  OidcDiscoveryServiceImpl(ObjectMapper objectMapper) {
+  OidcDiscoveryServiceImpl(JsonMapper objectMapper) {
     this.objectMapper = objectMapper;
     this.httpClient = HttpClient.newBuilder().connectTimeout(REQUEST_TIMEOUT).build();
   }
