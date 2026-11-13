@@ -27,7 +27,7 @@ differentially private quality metrics are shared with the central server.
 ### Backend Technologies
 
 - Java 25
-- Spring Boot 3.5
+- Spring Boot 4.1
 - SQLite
 - Maven
 

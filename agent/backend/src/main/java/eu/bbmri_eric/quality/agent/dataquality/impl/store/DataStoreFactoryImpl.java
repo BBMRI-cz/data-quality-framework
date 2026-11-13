@@ -9,7 +9,7 @@ import eu.bbmri_eric.quality.agent.settings.event.SettingsUpdatedEvent;
 import java.util.Base64;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.context.event.EventListener;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;

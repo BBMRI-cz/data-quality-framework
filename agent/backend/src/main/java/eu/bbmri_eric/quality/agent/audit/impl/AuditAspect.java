@@ -1,7 +1,5 @@
 package eu.bbmri_eric.quality.agent.audit.impl;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.agent.audit.Audited;
 import eu.bbmri_eric.quality.agent.common.CurrentUser;
 import java.lang.reflect.Parameter;
@@ -18,6 +16,8 @@ import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.stereotype.Component;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Records an audit log entry for every method annotated with {@link Audited}, once it returns
@@ -32,10 +32,10 @@ class AuditAspect {
 
   private final AuditRecorder auditRecorder;
   private final CurrentUser currentUser;
-  private final ObjectMapper objectMapper;
+  private final JsonMapper objectMapper;
   private final ExpressionParser expressionParser = new SpelExpressionParser();
 
-  AuditAspect(AuditRecorder auditRecorder, CurrentUser currentUser, ObjectMapper objectMapper) {
+  AuditAspect(AuditRecorder auditRecorder, CurrentUser currentUser, JsonMapper objectMapper) {
     this.auditRecorder = auditRecorder;
     this.currentUser = currentUser;
     this.objectMapper = objectMapper;

@@ -1,6 +1,5 @@
 package eu.bbmri_eric.quality.agent.settings.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
 import jakarta.validation.ConstraintViolationException;
@@ -13,6 +12,7 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Overrides application settings on startup based on environment variables.
@@ -31,9 +31,9 @@ class SettingsEnvironmentOverrider implements ApplicationRunner {
   private static final String ENV_PREFIX = "APP_SETTING_";
 
   private final SettingsService settingsService;
-  private final ObjectMapper objectMapper;
+  private final JsonMapper objectMapper;
 
-  public SettingsEnvironmentOverrider(SettingsService settingsService, ObjectMapper objectMapper) {
+  public SettingsEnvironmentOverrider(SettingsService settingsService, JsonMapper objectMapper) {
     this.settingsService = settingsService;
     this.objectMapper = objectMapper;
   }

@@ -1,6 +1,5 @@
 package eu.bbmri_eric.quality.agent.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.agent.user.LoginAttemptService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -14,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Prevents brute-force login attempts on the login endpoint. Blocks requests from IPs that have
@@ -29,9 +29,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 class LoginRateLimitFilter extends OncePerRequestFilter {
 
   private final LoginAttemptService loginAttemptService;
-  private final ObjectMapper objectMapper;
+  private final JsonMapper objectMapper;
 
-  LoginRateLimitFilter(LoginAttemptService loginAttemptService, ObjectMapper objectMapper) {
+  LoginRateLimitFilter(LoginAttemptService loginAttemptService, JsonMapper objectMapper) {
     this.loginAttemptService = loginAttemptService;
     this.objectMapper = objectMapper;
   }
