@@ -1,7 +1,5 @@
 package eu.bbmri_eric.quality.agent.server.impl;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.agent.server.dto.ManifestVersionDto;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
@@ -11,11 +9,13 @@ import java.security.Signature;
 import java.security.spec.ECGenParameterSpec;
 import java.time.Instant;
 import java.util.Base64;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 /** Test helper producing a real EC key pair, PEM encodings and signatures for manifest fixtures. */
 final class TestManifestSigner {
 
-  private static final ObjectMapper MAPPER = new ObjectMapper();
+  private static final JsonMapper MAPPER = new JsonMapper();
   private static final KeyPair KEY_PAIR = generateKeyPair();
 
   private TestManifestSigner() {}

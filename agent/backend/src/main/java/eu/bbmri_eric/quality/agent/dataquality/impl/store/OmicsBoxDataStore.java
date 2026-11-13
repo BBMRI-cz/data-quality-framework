@@ -11,9 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.springframework.boot.http.client.ClientHttpRequestFactoryBuilder;
-import org.springframework.boot.http.client.ClientHttpRequestFactorySettings;
-import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -63,13 +61,8 @@ public class OmicsBoxDataStore implements DataStore {
   private final String baseUrl;
 
   OmicsBoxDataStore(RestTemplateBuilder restTemplateBuilder, String baseUrl, String apiToken) {
-    ClientHttpRequestFactorySettings requestFactorySettings =
-        ClientHttpRequestFactorySettings.defaults()
-            .withConnectTimeout(CONNECT_TIMEOUT)
-            .withReadTimeout(READ_TIMEOUT);
     RestTemplateBuilder builder =
-        restTemplateBuilder.requestFactory(
-            () -> ClientHttpRequestFactoryBuilder.detect().build(requestFactorySettings));
+        restTemplateBuilder.connectTimeout(CONNECT_TIMEOUT).readTimeout(READ_TIMEOUT);
     if (apiToken != null && !apiToken.isBlank()) {
       builder = builder.defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiToken);
     }

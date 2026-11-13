@@ -22,11 +22,11 @@ Read and follow:
 This is a federated data quality framework with a decentralized architecture:
 
 - **`agent/`** - Deployed at data provider sites for privacy-preserving quality assessment
-  - `backend/` - Spring Boot 3.5.7 application (.jar) with modular architecture (Spring Modulith)
+  - `backend/` - Spring Boot 4.1.2 application (.jar) with modular architecture (Spring Modulith)
   - `frontend/` - Vue 3 + Vite web UI for configuration and monitoring
   
 - **`server/`** - Central coordination server aggregating quality metrics
-  - `backend/` - Spring Boot 3.5.7 application (PostgreSQL database)
+  - `backend/` - Spring Boot 4.1.2 application (PostgreSQL database)
   - `frontend/` - Vue 3 + Vite web UI for viewing aggregated metrics
 
 - **`omicsbox/`** - Python sandbox for executing PYTHON-type quality checks against mounted omics data (**early development — not ready for production use**; keep this status label visible in docs, compose files and UI until the integration matures)
@@ -38,7 +38,7 @@ This is a federated data quality framework with a decentralized architecture:
 ## Technology Stack
 
 - **Java**: 25 (target and source)
-- **Backend**: Spring Boot 3.5.7, Spring Modulith for modular architecture
+- **Backend**: Spring Boot 4.1.2, Spring Modulith for modular architecture
 - **Frontend**: Vue 3 with Composition API, Pinia for state management, Bootstrap 5 for styling
 - **Build**: Maven for Java, npm/Vite for frontends
 - **Testing**: JUnit, Mockito for backend; Vue Test Utils for frontend components

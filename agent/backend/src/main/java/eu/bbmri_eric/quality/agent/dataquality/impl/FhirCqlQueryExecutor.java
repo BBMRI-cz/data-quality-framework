@@ -1,7 +1,5 @@
 package eu.bbmri_eric.quality.agent.dataquality.impl;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.agent.dataquality.FHIRServer;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
 import java.util.Base64;
@@ -10,10 +8,12 @@ import java.util.Set;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 public final class FhirCqlQueryExecutor {
   private static final Logger log = LoggerFactory.getLogger(FhirCqlQueryExecutor.class);
-  private static final ObjectMapper mapper = new ObjectMapper();
+  private static final JsonMapper mapper = new JsonMapper();
 
   private FhirCqlQueryExecutor() {}
 

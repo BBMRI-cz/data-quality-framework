@@ -24,7 +24,7 @@ class DataStoreTest {
     EntityController controller = new EntityController(mockFactory);
     ResponseEntity<String> response = controller.getEntity("Patient", "123");
 
-    assertEquals(200, response.getStatusCodeValue());
+    assertEquals(200, response.getStatusCode().value());
     assertTrue(response.getBody().contains("\"id\":\"123\""));
     assertTrue(response.getBody().contains("\"type\":\"Patient\""));
   }
@@ -41,7 +41,7 @@ class DataStoreTest {
     EntityController controller = new EntityController(mockFactory);
     ResponseEntity<String> response = controller.getEntity("Patient", "fail");
 
-    assertEquals(500, response.getStatusCodeValue());
+    assertEquals(500, response.getStatusCode().value());
     assertTrue(response.getBody().contains("Failed to retrieve entity"));
   }
 }

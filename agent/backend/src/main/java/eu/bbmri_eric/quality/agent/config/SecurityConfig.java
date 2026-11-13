@@ -2,7 +2,6 @@ package eu.bbmri_eric.quality.agent.config;
 
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.ApplicationEventPublisher;
@@ -23,6 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import tools.jackson.databind.json.JsonMapper;
 
 /** Application wide security configuration */
 @Configuration
@@ -110,6 +110,6 @@ class SecurityConfig {
 
   @Bean
   public AuthenticationEntryPoint authenticationEntryPoint() {
-    return new CustomBearerTokenAuthenticationEntryPoint(new ObjectMapper());
+    return new CustomBearerTokenAuthenticationEntryPoint(new JsonMapper());
   }
 }

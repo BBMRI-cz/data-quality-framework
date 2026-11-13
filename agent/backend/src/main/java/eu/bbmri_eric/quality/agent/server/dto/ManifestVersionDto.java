@@ -2,9 +2,9 @@ package eu.bbmri_eric.quality.agent.server.dto;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
+import tools.jackson.databind.JsonNode;
 
 /** A single signed version of a quality check manifest published by a central server. */
 @Schema(name = "Manifest Version", description = "A signed version of a quality check manifest")

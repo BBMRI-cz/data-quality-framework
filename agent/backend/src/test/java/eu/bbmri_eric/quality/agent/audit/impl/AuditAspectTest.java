@@ -9,7 +9,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.agent.audit.AuditAction;
 import eu.bbmri_eric.quality.agent.audit.Audited;
 import eu.bbmri_eric.quality.agent.common.CurrentUser;
@@ -23,6 +22,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.databind.json.JsonMapper;
 
 @ExtendWith(MockitoExtension.class)
 class AuditAspectTest {
@@ -34,7 +34,7 @@ class AuditAspectTest {
 
   @BeforeEach
   void setUp() {
-    aspect = new AuditAspect(auditRecorder, currentUser, new ObjectMapper());
+    aspect = new AuditAspect(auditRecorder, currentUser, new JsonMapper());
   }
 
   @Test

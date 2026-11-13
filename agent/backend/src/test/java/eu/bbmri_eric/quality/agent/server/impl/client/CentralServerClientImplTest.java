@@ -79,7 +79,7 @@ class CentralServerClientImplTest {
             eq(HttpMethod.GET),
             any(HttpEntity.class),
             eq(ManifestListResponse.class)))
-        .thenReturn(new ResponseEntity<>(null, HttpStatus.OK));
+        .thenReturn(ResponseEntity.ok().build());
 
     assertThat(client.getManifests()).isEmpty();
   }
@@ -124,7 +124,7 @@ class CentralServerClientImplTest {
             eq(HttpMethod.GET),
             any(HttpEntity.class),
             eq(ManifestDto.class)))
-        .thenReturn(new ResponseEntity<>(null, HttpStatus.OK));
+        .thenReturn(ResponseEntity.ok().build());
 
     assertThatThrownBy(() -> client.getManifest(7L))
         .isInstanceOf(ServerCommunicationException.class);
@@ -244,7 +244,7 @@ class CentralServerClientImplTest {
             eq(HttpMethod.GET),
             any(HttpEntity.class),
             eq(QualityCheckListResponse.class)))
-        .thenReturn(new ResponseEntity<>(null, HttpStatus.OK));
+        .thenReturn(ResponseEntity.ok().build());
 
     assertThat(client.getManifestVersionQualityChecks(7L, 42L)).isEmpty();
   }
