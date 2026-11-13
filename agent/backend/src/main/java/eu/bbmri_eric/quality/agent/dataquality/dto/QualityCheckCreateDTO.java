@@ -51,8 +51,11 @@ public class QualityCheckCreateDTO {
   @Schema(description = "Epsilon budget for differential privacy", example = "1.0")
   private Double epsilonBudget;
 
-  @Schema(description = "Category ID for grouping quality checks", example = "1")
-  private Long categoryId;
+  @Size(max = 255, message = "Category name must not exceed 255 characters")
+  @Schema(
+      description = "Name of an existing category for grouping quality checks",
+      example = "Data Completeness")
+  private String categoryName;
 
   public QualityCheckCreateDTO() {}
 
@@ -96,7 +99,7 @@ public class QualityCheckCreateDTO {
       Integer warningThreshold,
       Integer errorThreshold,
       Double epsilonBudget,
-      Long categoryId) {
+      String categoryName) {
     this.name = name;
     this.description = description;
     this.query = query;
@@ -104,6 +107,6 @@ public class QualityCheckCreateDTO {
     this.warningThreshold = warningThreshold;
     this.errorThreshold = errorThreshold;
     this.epsilonBudget = epsilonBudget;
-    this.categoryId = categoryId;
+    this.categoryName = categoryName;
   }
 }

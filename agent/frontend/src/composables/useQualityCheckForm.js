@@ -1,7 +1,12 @@
 import { ref, computed } from 'vue';
 import { qualityCheckService } from '@/services/qualityCheckService.js';
 
-export function useQualityCheckForm() {
+/**
+ * @param {object} [options]
+ * @param {import('vue').Ref<Array<{id: number, name: string}>>} [options.categories] - Loaded
+ *   categories; used to send the selected category by name when creating a check
+ */
+export function useQualityCheckForm({ categories = ref([]) } = {}) {
   const formData = ref({
     id: null,
     name: '',
@@ -70,13 +75,16 @@ export function useQualityCheckForm() {
         warningThreshold: formData.value.warningThreshold,
         errorThreshold: formData.value.errorThreshold,
         epsilonBudget: formData.value.epsilonBudget,
-        categoryId: formData.value.categoryId,
       };
 
       if (isEditing.value) {
-        await qualityCheckService.update(formData.value.id, payload);
+        await qualityCheckService.update(formData.value.id, {
+          ...payload,
+          categoryId: formData.value.categoryId,
+        });
       } else {
-        await qualityCheckService.create(payload);
+        const category = categories.value.find(({ id }) => id === formData.value.categoryId);
+        await qualityCheckService.create({ ...payload, categoryName: category?.name ?? null });
       }
       return true;
     } catch (error) {

@@ -167,7 +167,7 @@
   const categories = ref([]);
 
   const { formData, errors, saving, isEditing, isJavaType, loadCheck, saveCheck, deleteCheck } =
-    useQualityCheckForm();
+    useQualityCheckForm({ categories });
 
   const queryHints = computed(() => getQueryHints(formData.value.type));
 

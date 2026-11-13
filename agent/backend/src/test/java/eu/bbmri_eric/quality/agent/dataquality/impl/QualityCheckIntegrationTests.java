@@ -17,6 +17,7 @@ import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckBulkUpdateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckUpdateDTO;
+import jakarta.transaction.Transactional;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -537,6 +538,7 @@ class QualityCheckIntegrationTests {
   }
 
   @Test
+  @Transactional
   void create_qualityCheckWithCategory_returnsCreatedWithCategory() throws Exception {
     Category category = categoryRepository.save(new Category("Data Completeness", "#FF5733"));
 
@@ -549,7 +551,7 @@ class QualityCheckIntegrationTests {
             10,
             30,
             1.0,
-            category.getId());
+            "Data Completeness");
 
     mockMvc
         .perform(
@@ -628,6 +630,7 @@ class QualityCheckIntegrationTests {
   }
 
   @Test
+  @Transactional
   void create_qualityCheckWithNonExistingCategory_returnsNotFound() throws Exception {
     QualityCheckCreateDTO createDTO =
         new QualityCheckCreateDTO(
@@ -638,7 +641,7 @@ class QualityCheckIntegrationTests {
             10,
             30,
             1.0,
-            99999L);
+            "Nonexistent Category");
 
     mockMvc
         .perform(

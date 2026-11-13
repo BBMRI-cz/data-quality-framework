@@ -24,6 +24,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 /** Service implementation for managing quality checks. */
 @Service
@@ -64,8 +65,7 @@ class QualityCheckServiceImpl implements QualityCheckService {
   public QualityCheckDTO create(QualityCheckCreateDTO createDTO) {
     QualityCheck qualityCheck = modelMapper.map(createDTO, QualityCheck.class);
     qualityCheck.setId(null);
-    qualityCheck.setCategory(null);
-    setCategory(createDTO.getCategoryId(), qualityCheck);
+    qualityCheck.setCategory(findCategoryByName(createDTO.getCategoryName()));
     qualityCheck = qualityCheckRepository.save(qualityCheck);
     logger.info("Created quality check id: {}", qualityCheck.getId());
     return modelMapper.map(qualityCheck, QualityCheckDTO.class);
@@ -197,6 +197,17 @@ class QualityCheckServiceImpl implements QualityCheckService {
     }
     qualityCheck = qualityCheckRepository.save(qualityCheck);
     return modelMapper.map(qualityCheck, QualityCheckDTO.class);
+  }
+
+  /** Returns the category with the given name, or {@code null} if no name is given. */
+  private Category findCategoryByName(String categoryName) {
+    if (!StringUtils.hasText(categoryName)) {
+      return null;
+    }
+    return categoryRepository
+        .findByName(categoryName)
+        .orElseThrow(
+            () -> new EntityNotFoundException("Category not found with name: " + categoryName));
   }
 
   private void setCategory(Long categoryId, QualityCheck qualityCheck) {
