@@ -5,7 +5,10 @@ import eu.bbmri_eric.quality.server.dataquality.dto.AgentDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentRegistration;
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentRegistrationRequest;
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentUpdateRequest;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -13,6 +16,7 @@ import java.util.List;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,6 +35,29 @@ class AgentController {
   @PostMapping
   @Schema(name = "Register an agent")
   @SecurityRequirements
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "201",
+        description = "Agent registered",
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = AgentRegistration.class))),
+    @ApiResponse(
+        responseCode = "409",
+        description = "Agent with the same ID already exists",
+        content =
+            @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class))),
+    @ApiResponse(
+        responseCode = "429",
+        description = "Another live agent is already registered from this IP address",
+        content =
+            @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class)))
+  })
   public ResponseEntity<EntityModel<AgentRegistration>> create(
       @Valid @RequestBody AgentRegistrationRequest createAgentDto, HttpServletRequest request) {
     String ipAddress = getClientIpAddress(request);

@@ -18,6 +18,7 @@ import eu.bbmri_eric.quality.server.user.dto.UserCreateDTO;
 import eu.bbmri_eric.quality.server.user.dto.UserDTO;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import org.modelmapper.ModelMapper;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.AccessDeniedException;
@@ -50,11 +51,16 @@ class AgentServiceImpl implements AgentService {
       throw new EntityAlreadyExistsException(
           "Agent %s already exists".formatted(createAgentDto.getId()));
     }
-    if (ipAddress != null && agentRepository.existsByIpAddress(ipAddress)) {
-      throw new TooManyRequestsException(
-          "An agent is already registered from IP address %s".formatted(ipAddress));
+    String canonicalIp = IpAddressNormalizer.normalize(ipAddress);
+    if (canonicalIp != null) {
+      findAgentAtIp(canonicalIp, ipAddress.trim())
+          .ifPresent(
+              conflict -> {
+                throw alreadyRegisteredFromIp(conflict, canonicalIp);
+              });
     }
-    Agent agent = new Agent(createAgentDto.getId(), ipAddress);
+    // Keep the raw value when it cannot be parsed, so the address is never silently lost.
+    Agent agent = new Agent(createAgentDto.getId(), canonicalIp != null ? canonicalIp : ipAddress);
     agent.setVersion(createAgentDto.getVersion());
     Agent savedAgent;
     try {
@@ -141,6 +147,31 @@ class AgentServiceImpl implements AgentService {
                 () -> new EntityNotFoundException("Agent with ID %s not found".formatted(id)));
     userService.deleteUser(id);
     agentRepository.delete(agent);
+  }
+
+  /**
+   * Rows stored before IP normalization may hold a different spelling of the same address, so
+   * candidates are fetched by both the raw and the canonical form and re-normalized in Java.
+   */
+  private Optional<Agent> findAgentAtIp(String canonicalIp, String rawIp) {
+    List<String> lookupKeys =
+        rawIp.equals(canonicalIp) ? List.of(canonicalIp) : List.of(rawIp, canonicalIp);
+    return agentRepository.findByIpAddressIn(lookupKeys).stream()
+        .filter(
+            candidate ->
+                canonicalIp.equals(IpAddressNormalizer.normalize(candidate.getIpAddress())))
+        .findFirst();
+  }
+
+  private TooManyRequestsException alreadyRegisteredFromIp(Agent conflict, String ipAddress) {
+    String label =
+        conflict.getName() == null
+            ? conflict.getId()
+            : "%s (%s)".formatted(conflict.getId(), conflict.getName());
+    return new TooManyRequestsException(
+        "Agent %s is already registered from IP address %s; delete that agent in the server UI"
+            + " (DELETE /api/v1/agents/%s) to free the address, then register again."
+                .formatted(label, ipAddress, conflict.getId()));
   }
 
   private boolean isAuthorizedToUpdate(UserDTO user, String agentId) {
