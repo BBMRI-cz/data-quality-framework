@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.server.dataquality.impl;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -228,6 +229,109 @@ class AgentControllerIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createDto)))
         .andExpect(status().isTooManyRequests());
+  }
+
+  @Test
+  void create_shouldReturnTooManyRequestsForMappedIpv6FormOfExistingIpv4Address() throws Exception {
+    String existingAgentId = UUID.randomUUID().toString();
+    agentRepository.save(new Agent(existingAgentId, "192.168.1.1"));
+    AgentRegistrationRequest createDto = new AgentRegistrationRequest(UUID.randomUUID().toString());
+    mockMvc
+        .perform(
+            post(API_V_1_AGENTS)
+                .with(
+                    request -> {
+                      request.setRemoteAddr("::ffff:192.168.1.1");
+                      return request;
+                    })
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDto)))
+        .andExpect(status().isTooManyRequests());
+  }
+
+  @Test
+  void create_shouldReturnTooManyRequestsWhenExistingActiveAgentHasSameIpAddress()
+      throws Exception {
+    String existingAgentId = UUID.randomUUID().toString();
+    Agent existingAgent = new Agent(existingAgentId, "192.168.1.2");
+    existingAgent.setStatus(AgentStatus.ACTIVE);
+    agentRepository.save(existingAgent);
+    AgentRegistrationRequest createDto = new AgentRegistrationRequest(UUID.randomUUID().toString());
+    mockMvc
+        .perform(
+            post(API_V_1_AGENTS)
+                .with(
+                    request -> {
+                      request.setRemoteAddr("192.168.1.2");
+                      return request;
+                    })
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDto)))
+        .andExpect(status().isTooManyRequests());
+  }
+
+  @Test
+  void create_shouldNameConflictingAgentAndRemovalStepInProblemDetail() throws Exception {
+    String existingAgentId = UUID.randomUUID().toString();
+    Agent existingAgent = new Agent(existingAgentId, "192.168.1.3");
+    existingAgent.setName("Hospital Alpha");
+    agentRepository.save(existingAgent);
+    AgentRegistrationRequest createDto = new AgentRegistrationRequest(UUID.randomUUID().toString());
+    mockMvc
+        .perform(
+            post(API_V_1_AGENTS)
+                .with(
+                    request -> {
+                      request.setRemoteAddr("192.168.1.3");
+                      return request;
+                    })
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDto)))
+        .andExpect(status().isTooManyRequests())
+        .andExpect(jsonPath("$.detail").value(containsString(existingAgentId)))
+        .andExpect(jsonPath("$.detail").value(containsString("Hospital Alpha")))
+        .andExpect(
+            jsonPath("$.detail").value(containsString("DELETE /api/v1/agents/" + existingAgentId)));
+  }
+
+  @Test
+  void create_shouldNotBlockRegistrationAfterConflictingAgentIsDeleted() throws Exception {
+    String conflictingAgentId = UUID.randomUUID().toString();
+    Agent conflictingAgent = new Agent(conflictingAgentId, "192.168.1.4");
+    agentRepository.saveAndFlush(conflictingAgent);
+    agentRepository.delete(conflictingAgent);
+    String newAgentId = UUID.randomUUID().toString();
+    AgentRegistrationRequest createDto = new AgentRegistrationRequest(newAgentId);
+    mockMvc
+        .perform(
+            post(API_V_1_AGENTS)
+                .with(
+                    request -> {
+                      request.setRemoteAddr("192.168.1.4");
+                      return request;
+                    })
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDto)))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.agent.id").value(newAgentId));
+  }
+
+  @Test
+  void create_shouldStoreNormalizedIpAddressForMappedIpv6RemoteAddr() throws Exception {
+    String agentId = UUID.randomUUID().toString();
+    AgentRegistrationRequest createDto = new AgentRegistrationRequest(agentId);
+    mockMvc
+        .perform(
+            post(API_V_1_AGENTS)
+                .with(
+                    request -> {
+                      request.setRemoteAddr("::ffff:10.0.0.9");
+                      return request;
+                    })
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDto)))
+        .andExpect(status().isCreated());
+    assertEquals("10.0.0.9", agentRepository.findById(agentId).orElseThrow().getIpAddress());
   }
 
   @Test
