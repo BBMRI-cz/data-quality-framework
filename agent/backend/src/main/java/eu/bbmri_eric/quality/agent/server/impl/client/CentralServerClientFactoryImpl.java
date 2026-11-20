@@ -2,6 +2,7 @@ package eu.bbmri_eric.quality.agent.server.impl.client;
 
 import eu.bbmri_eric.quality.agent.server.CentralServerClient;
 import eu.bbmri_eric.quality.agent.server.CentralServerClientFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -19,7 +20,8 @@ class CentralServerClientFactoryImpl implements CentralServerClientFactory {
   private final BuildProperties buildProperties;
 
   public CentralServerClientFactoryImpl(
-      RestTemplate restTemplate, BuildProperties buildProperties) {
+      @Qualifier("centralServerRestTemplate") RestTemplate restTemplate,
+      BuildProperties buildProperties) {
     this.restTemplate = restTemplate;
     this.buildProperties = buildProperties;
   }
