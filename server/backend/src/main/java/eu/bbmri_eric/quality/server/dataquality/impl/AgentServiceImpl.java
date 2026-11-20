@@ -169,9 +169,8 @@ class AgentServiceImpl implements AgentService {
             ? conflict.getId()
             : "%s (%s)".formatted(conflict.getId(), conflict.getName());
     return new TooManyRequestsException(
-        "Agent %s is already registered from IP address %s; delete that agent in the server UI"
-            + " (DELETE /api/v1/agents/%s) to free the address, then register again."
-                .formatted(label, ipAddress, conflict.getId()));
+        "Agent %s is already registered from IP address %s; delete that agent in the server UI (DELETE /api/v1/agents/%s) to free the address, then register again."
+            .formatted(label, ipAddress, conflict.getId()));
   }
 
   private boolean isAuthorizedToUpdate(UserDTO user, String agentId) {
