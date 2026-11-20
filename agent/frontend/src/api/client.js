@@ -35,7 +35,7 @@ api.interceptors.response.use(
       if (window.location.pathname !== '/login') {
         window.location.assign(`/login?redirect=${redirect}&sessionExpired=true`);
       }
-    } else if (error.response?.status === 400) {
+    } else if (error.response?.status === 400 && !error.config?.__skipErrorNotification) {
       const message =
         error.response?.data?.detail || error.response?.data?.message || 'Bad request';
       notificationService.error('Error', message, { autoClose: false });

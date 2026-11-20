@@ -34,7 +34,10 @@ export const useServerStore = defineStore('server', {
         this.servers.push(newServer);
         return newServer;
       } catch (error) {
-        this.error = error.response?.data?.message || 'Failed to create server';
+        this.error =
+          error.response?.data?.detail ||
+          error.response?.data?.message ||
+          'Failed to create server';
         console.error('Error creating server:', error);
         throw error;
       } finally {

@@ -32,16 +32,22 @@ export async function get(id) {
 }
 
 /**
- * Creates a new server
+ * Creates a new server.
+ * Sets __skipErrorNotification so the API interceptor does not toast failures for
+ * this request; the calling page owns the registration failure notification.
  * @param {{url: string, name: string, publicKey?: string}} serverData
  * @returns {Promise<object>}
  */
 export async function create(serverData) {
-  const response = await api.post(BASE_URL, {
-    url: serverData.url,
-    name: serverData.name,
-    ...(serverData.publicKey ? { publicKey: serverData.publicKey } : {}),
-  });
+  const response = await api.post(
+    BASE_URL,
+    {
+      url: serverData.url,
+      name: serverData.name,
+      ...(serverData.publicKey ? { publicKey: serverData.publicKey } : {}),
+    },
+    { __skipErrorNotification: true }
+  );
   return response.data.content || response.data;
 }
 
