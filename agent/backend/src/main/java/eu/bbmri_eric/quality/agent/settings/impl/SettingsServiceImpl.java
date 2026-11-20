@@ -1,7 +1,5 @@
 package eu.bbmri_eric.quality.agent.settings.impl;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.agent.audit.AuditAction;
 import eu.bbmri_eric.quality.agent.audit.Audited;
 import eu.bbmri_eric.quality.agent.common.EventPublisher;
@@ -18,6 +16,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Service implementation for managing application settings. Persists settings to the database and
@@ -31,14 +31,14 @@ public class SettingsServiceImpl implements SettingsService {
 
   private static final Logger log = LoggerFactory.getLogger(SettingsServiceImpl.class);
 
-  private final ObjectMapper objectMapper;
+  private final JsonMapper objectMapper;
   private final SettingsRepository settingsRepository;
   private final EventPublisher eventPublisher;
 
   public SettingsServiceImpl(
       SettingsRepository settingsRepository,
       EventPublisher eventPublisher,
-      ObjectMapper objectMapper) {
+      JsonMapper objectMapper) {
     this.settingsRepository = settingsRepository;
     this.eventPublisher = eventPublisher;
     this.objectMapper = objectMapper;

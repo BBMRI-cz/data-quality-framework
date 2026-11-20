@@ -1,6 +1,5 @@
 package eu.bbmri_eric.quality.agent.server.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.agent.dataquality.ReportService;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ObfuscatedReportDTO;
 import eu.bbmri_eric.quality.agent.dataquality.event.ReportGeneratedEvent;
@@ -14,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.json.JsonMapper;
 
 @Component
 class ReportSender {
@@ -23,14 +23,14 @@ class ReportSender {
   private final CentralServerClientFactory clientFactory;
   private final ServerRepository serverRepository;
   private final SettingsService settingsService;
-  private final ObjectMapper objectMapper;
+  private final JsonMapper objectMapper;
 
   ReportSender(
       ReportService reportService,
       CentralServerClientFactory clientFactory,
       ServerRepository serverRepository,
       SettingsService settingsService,
-      ObjectMapper objectMapper) {
+      JsonMapper objectMapper) {
     this.reportService = reportService;
     this.clientFactory = clientFactory;
     this.serverRepository = serverRepository;

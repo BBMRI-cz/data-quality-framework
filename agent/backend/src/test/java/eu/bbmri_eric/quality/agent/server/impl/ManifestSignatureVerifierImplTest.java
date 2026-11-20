@@ -3,7 +3,6 @@ package eu.bbmri_eric.quality.agent.server.impl;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import eu.bbmri_eric.quality.agent.server.ServerCommunicationException;
 import eu.bbmri_eric.quality.agent.server.dto.ManifestVersionDto;
 import java.nio.charset.StandardCharsets;
@@ -13,6 +12,7 @@ import java.security.Signature;
 import java.time.Instant;
 import java.util.Base64;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.JsonNode;
 
 class ManifestSignatureVerifierImplTest {
 
