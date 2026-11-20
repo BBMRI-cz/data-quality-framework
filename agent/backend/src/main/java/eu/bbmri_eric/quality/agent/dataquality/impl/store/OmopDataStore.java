@@ -4,6 +4,7 @@ import eu.bbmri_eric.quality.agent.dataquality.DataStore;
 import eu.bbmri_eric.quality.agent.dataquality.dto.DBStatus;
 import eu.bbmri_eric.quality.agent.dataquality.dto.DatabaseHealthDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
+import java.sql.ResultSetMetaData;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -12,6 +13,8 @@ import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowCallbackHandler;
+import org.springframework.jdbc.support.JdbcUtils;
 
 @Slf4j
 public class OmopDataStore implements DataStore {
@@ -69,28 +72,35 @@ public class OmopDataStore implements DataStore {
       return new ResultDTO("SQL data store not initialized");
     }
     try {
-      List<Map<String, Object>> rows = jdbcTemplate.queryForList(query);
-      if (rows.isEmpty()) {
+      int[] rowCount = new int[1];
+      Number[] countValue = new Number[1];
+      Set<String> idSet = new HashSet<>();
+      jdbcTemplate.query(
+          query,
+          (RowCallbackHandler)
+              rs -> {
+                rowCount[0]++;
+                Object firstValue = JdbcUtils.getResultSetValue(rs, 1);
+                ResultSetMetaData metaData = rs.getMetaData();
+                if (rowCount[0] == 1
+                    && metaData.getColumnCount() == 1
+                    && firstValue instanceof Number number
+                    && metaData.getColumnLabel(1).toLowerCase().startsWith("count")) {
+                  countValue[0] = number;
+                } else {
+                  countValue[0] = null;
+                }
+                if (firstValue != null) {
+                  idSet.add(firstValue.toString());
+                }
+              });
+      if (rowCount[0] == 0) {
         return new ResultDTO(0, "Person", Collections.emptySet());
       }
-      if (rows.size() == 1) {
-        Map<String, Object> row = rows.get(0);
-        if (row.size() == 1) {
-          Map.Entry<String, Object> entry = row.entrySet().iterator().next();
-          Object value = entry.getValue();
-          if (value instanceof Number number && entry.getKey().toLowerCase().startsWith("count")) {
-            return new ResultDTO(number.intValue(), "Person", Collections.emptySet());
-          }
-        }
+      if (countValue[0] != null) {
+        return new ResultDTO(countValue[0].intValue(), "Person", Collections.emptySet());
       }
-      Set<String> idSet = new HashSet<>();
-      for (Map<String, Object> row : rows) {
-        Object firstValue = row.values().iterator().next();
-        if (firstValue != null) {
-          idSet.add(firstValue.toString());
-        }
-      }
-      return new ResultDTO(rows.size(), "Person", idSet);
+      return new ResultDTO(rowCount[0], "Person", idSet);
     } catch (Exception e) {
       log.error("SQL query execution failed: {}", e.getMessage(), e);
       return new ResultDTO(e.getMessage());

@@ -6,6 +6,7 @@ import ca.uhn.fhir.rest.api.SummaryEnum;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.api.ServerValidationModeEnum;
 import ca.uhn.fhir.rest.client.interceptor.BasicAuthInterceptor;
+import ca.uhn.fhir.rest.gclient.IQuery;
 import eu.bbmri_eric.quality.agent.dataquality.FHIRServer;
 import eu.bbmri_eric.quality.agent.dataquality.dto.DatabaseHealthDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
@@ -371,13 +372,15 @@ class BlazeFHIRStore implements FHIRServer {
     List<Resource> resources = new ArrayList<>();
     try {
 
-      Bundle bundle =
+      IQuery<Bundle> query =
           client
-              .search()
+              .<Bundle>search()
               .forResource(resourceType)
-              .withAdditionalHeader("Prefer", "handling=lenient") // Request lenient validation
-              .returnBundle(Bundle.class)
-              .execute();
+              .withAdditionalHeader("Prefer", "handling=lenient"); // Request lenient validation
+      if (elements != null && !elements.isEmpty()) {
+        query = query.elementsSubset(elements.toArray(String[]::new));
+      }
+      Bundle bundle = query.returnBundle(Bundle.class).execute();
 
       while (bundle != null) {
         for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
