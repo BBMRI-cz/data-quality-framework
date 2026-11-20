@@ -98,10 +98,9 @@
         <template #right>
           <button
             v-if="failure"
-            type="button"
+            type="submit"
             class="btn btn-outline-secondary"
             :disabled="loading"
-            @click="handleSubmit"
           >
             <i class="bi bi-arrow-clockwise me-2"></i>
             Try again

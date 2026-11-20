@@ -44,9 +44,9 @@
   const registrationFailure = ref(null);
 
   const FAILURE_HINTS = {
-    0: 'Unable to reach the central server. Check the URL and your network connection.',
+    0: 'Could not reach the agent API. Check that the agent backend is running and reachable.',
     400: 'The server rejected the submitted data. Please check the form values.',
-    409: 'This agent appears to be already registered on the central server.',
+    409: 'A server with this URL is already configured on this agent. Edit or remove the existing server instead.',
     429: 'Too many registration attempts. Please wait a moment before retrying.',
   };
 

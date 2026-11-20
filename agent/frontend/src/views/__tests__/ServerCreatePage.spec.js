@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
 import { createPinia } from 'pinia';
 
@@ -35,6 +35,9 @@ const REJECTION = {
 
 function mountPage() {
   return mount(ServerCreatePage, {
+    // jsdom only runs submit-button activation (incl. constraint validation) for
+    // nodes attached to the document.
+    attachTo: document.body,
     global: {
       plugins: [createPinia()],
       stubs: { PageHeader: true, ActionButton: true },
@@ -57,6 +60,10 @@ function findTryAgainButton(wrapper) {
 describe('ServerCreatePage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = '';
   });
 
   it('keeps the filled form values when registration is rejected', async () => {
@@ -84,12 +91,27 @@ describe('ServerCreatePage', () => {
     const alert = wrapper.find('.alert-danger');
     expect(alert.exists()).toBe(true);
     expect(alert.text()).toContain('Agent already registered');
+    expect(alert.text()).toContain('already configured on this agent');
 
     expect(notificationService.error).toHaveBeenCalledWith(
       'Registration Failed',
       expect.stringContaining('Agent already registered')
     );
     expect(notificationService.success).not.toHaveBeenCalled();
+  });
+
+  it('hints at agent API connectivity when no HTTP response is received', async () => {
+    serverService.create.mockRejectedValue(new Error('Network Error'));
+    const wrapper = mountPage();
+
+    await fillForm(wrapper);
+    await wrapper.find('form').trigger('submit');
+    await flushPromises();
+
+    const alert = wrapper.find('.alert-danger');
+    expect(alert.exists()).toBe(true);
+    expect(alert.text()).toContain('agent API');
+    expect(alert.text().toLowerCase()).not.toContain('central server');
   });
 
   it('retries the registration with the retained values via Try again', async () => {
@@ -102,6 +124,7 @@ describe('ServerCreatePage', () => {
 
     const tryAgain = findTryAgainButton(wrapper);
     expect(tryAgain).toBeTruthy();
+    expect(tryAgain.attributes('type')).toBe('submit');
     await tryAgain.trigger('click');
     await flushPromises();
 
@@ -109,6 +132,23 @@ describe('ServerCreatePage', () => {
     expect(serverService.create).toHaveBeenLastCalledWith(SERVER_DATA);
     expect(wrapper.find('.alert-danger').exists()).toBe(false);
     expect(findTryAgainButton(wrapper)).toBeUndefined();
+  });
+
+  it('does not retry via Try again when the form fails constraint validation', async () => {
+    serverService.create.mockRejectedValue(REJECTION);
+    const wrapper = mountPage();
+
+    await fillForm(wrapper);
+    await wrapper.find('form').trigger('submit');
+    await flushPromises();
+
+    await wrapper.find('input[type="url"]').setValue('not-a-url');
+    const tryAgain = findTryAgainButton(wrapper);
+    expect(tryAgain.attributes('type')).toBe('submit');
+    await tryAgain.trigger('click');
+    await flushPromises();
+
+    expect(serverService.create).toHaveBeenCalledTimes(1);
   });
 
   it('does not offer a retry before the first failed attempt', async () => {
