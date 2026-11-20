@@ -82,6 +82,12 @@
         monospace
       />
 
+      <div v-if="failure" class="alert alert-danger mt-3" role="alert">
+        <i class="bi bi-x-circle-fill me-2"></i>
+        <strong>{{ failure.message }}</strong>
+        <div v-if="failure.hint" class="small">{{ failure.hint }}</div>
+      </div>
+
       <FormActions
         :loading="loading"
         :show-cancel-button="false"
@@ -90,6 +96,15 @@
         submit-type="submit"
       >
         <template #right>
+          <button
+            v-if="failure"
+            type="submit"
+            class="btn btn-outline-secondary"
+            :disabled="loading"
+          >
+            <i class="bi bi-arrow-clockwise me-2"></i>
+            Try again
+          </button>
           <button
             type="button"
             :disabled="isTestingConnection || !formData.url"
@@ -126,6 +141,10 @@
     loading: {
       type: Boolean,
       default: false,
+    },
+    failure: {
+      type: Object,
+      default: null,
     },
   });
 
