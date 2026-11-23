@@ -17,7 +17,12 @@
         />
       </div>
 
-      <ServerRegistrationForm ref="registrationForm" :loading="isRegistering" @submit="register" />
+      <ServerRegistrationForm
+        ref="registrationForm"
+        :loading="isRegistering"
+        :failure="registrationFailure"
+        @submit="register"
+      />
     </div>
   </div>
 </template>
@@ -36,6 +41,14 @@
 
   const isRegistering = ref(false);
   const registrationForm = ref(null);
+  const registrationFailure = ref(null);
+
+  const FAILURE_HINTS = {
+    0: 'Could not reach the agent API. Check that the agent backend is running and reachable.',
+    400: 'The server rejected the submitted data. Please check the form values.',
+    409: 'A server with this URL is already configured on this agent. Edit or remove the existing server instead.',
+    429: 'Too many registration attempts. Please wait a moment before retrying.',
+  };
 
   async function register(data) {
     if (!data.name || !data.url) {
@@ -44,6 +57,7 @@
     }
 
     isRegistering.value = true;
+    registrationFailure.value = null;
     try {
       await serverStore.createServer(data);
       notificationService.success(
@@ -51,12 +65,12 @@
         `${data.name} has been registered successfully`
       );
       router.push('/servers');
-    } catch {
-      notificationService.error(
-        'Registration Failed',
-        serverStore.error || 'Unable to register server. Please try again.'
-      );
-      registrationForm.value?.clearForm();
+    } catch (error) {
+      const status = error.response?.status ?? 0;
+      const detail = serverStore.error || 'Unable to register server. Please try again.';
+      const hint = FAILURE_HINTS[status];
+      registrationFailure.value = { status, message: detail, hint: hint || null };
+      notificationService.error('Registration Failed', hint ? `${detail} — ${hint}` : detail);
     } finally {
       isRegistering.value = false;
     }
