@@ -8,6 +8,10 @@ If you've been asked to deploy a Data Quality Framework component, you most like
 
 Follow these instructions to deploy the Data Quality Agent at your site, and optionally the Data Quality Server if you're setting up central coordination.
 
+::: info Run the Data Quality Agent in a Bridgehead
+If you want to run the Data Quality Agent in a **BBMRI-ERIC Bridgehead**, all you need to do is set `ENABLE_DATA_QUALITY_AGENT=true` in your `/etc/bridgehead/bbmri.conf`. For more information, see the [Bridgehead Documentation](https://github.com/samply/bridgehead/tree/develop#data-quality-agent).
+:::
+
 ## Prerequisites
 
 Before deploying, ensure your system meets the following requirements:
