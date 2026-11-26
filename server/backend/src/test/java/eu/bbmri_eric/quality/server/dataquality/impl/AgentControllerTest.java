@@ -2,6 +2,7 @@ package eu.bbmri_eric.quality.server.dataquality.impl;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -319,6 +320,38 @@ class AgentControllerIntegrationTest {
   }
 
   @Test
+  void create_shouldRejectReRegistrationOfApprovedAgent() throws Exception {
+    String agentId = UUID.randomUUID().toString();
+    Agent agent = new Agent(agentId, "192.168.1.40");
+    agent.setStatus(AgentStatus.ACTIVE);
+    agentRepository.save(agent);
+    userService.createUser(new UserCreateDTO("Agent " + agentId, agentId));
+    String storedPassword = userRepository.findByAgentId(agentId).orElseThrow().getPassword();
+
+    AgentRegistrationRequest createDto = new AgentRegistrationRequest(agentId);
+    mockMvc
+        .perform(
+            post(API_V_1_AGENTS)
+                .with(
+                    request -> {
+                      request.setRemoteAddr("192.168.1.40");
+                      return request;
+                    })
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDto)))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.detail", containsString("approved")));
+
+    assertEquals(storedPassword, userRepository.findByAgentId(agentId).orElseThrow().getPassword());
+    long registrationCount =
+        agentRepository.findById(agentId).orElseThrow().getInteractions().stream()
+            .map(AgentInteraction::getType)
+            .filter(t -> t == AgentInteractionType.REGISTRATION)
+            .count();
+    assertEquals(1, registrationCount);
+  }
+
+  @Test
   void create_shouldReturnConflictForSameAgentIdFromDifferentIp() throws Exception {
     String agentId = UUID.randomUUID().toString();
     agentRepository.save(new Agent(agentId, "10.0.0.1"));
@@ -390,9 +423,9 @@ class AgentControllerIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createDto)))
         .andExpect(status().isTooManyRequests())
-        .andExpect(jsonPath("$.detail", containsString(conflictingAgentId)))
         .andExpect(jsonPath("$.detail", containsString("Site A")))
-        .andExpect(jsonPath("$.detail", containsString("Delete")));
+        .andExpect(jsonPath("$.detail", containsString("Delete")))
+        .andExpect(jsonPath("$.detail", not(containsString(conflictingAgentId))));
   }
 
   @Test

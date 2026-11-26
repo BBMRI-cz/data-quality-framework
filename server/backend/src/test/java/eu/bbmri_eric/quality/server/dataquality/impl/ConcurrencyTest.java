@@ -1,6 +1,7 @@
 package eu.bbmri_eric.quality.server.dataquality.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -8,7 +9,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentRegistrationRequest;
+import eu.bbmri_eric.quality.server.user.impl.UserRepository;
 import eu.bbmri_eric.quality.server.util.IntegrationTest;
+import jakarta.persistence.LockModeType;
+import java.lang.reflect.Method;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,8 +26,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.http.MediaType;
 import org.springframework.security.concurrent.DelegatingSecurityContextExecutorService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.json.JsonMapper;
@@ -40,6 +46,88 @@ class ConcurrencyTest {
   @Autowired private JsonMapper objectMapper;
   @Autowired private AgentRepository agentRepository;
   @Autowired private QualityCheckRepository qualityCheckRepository;
+  @Autowired private UserRepository userRepository;
+  @Autowired private PasswordEncoder passwordEncoder;
+
+  @Test
+  void concurrentReRegistrations_shouldSerializePasswordRotation() throws Exception {
+    String agentId = UUID.randomUUID().toString();
+    String agentIp = "192.168.50.1";
+    AgentRegistrationRequest request = new AgentRegistrationRequest(agentId);
+    mockMvc
+        .perform(
+            post("/api/v1/agents")
+                .with(
+                    mockHttpServletRequest -> {
+                      mockHttpServletRequest.setRemoteAddr(agentIp);
+                      return mockHttpServletRequest;
+                    })
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isCreated());
+
+    CountDownLatch startLatch = new CountDownLatch(1);
+    CountDownLatch endLatch = new CountDownLatch(THREAD_COUNT);
+    Set<String> returnedPasswords = ConcurrentHashMap.newKeySet();
+    AtomicInteger reRegisteredCount = new AtomicInteger(0);
+    ExecutorService executorService =
+        new DelegatingSecurityContextExecutorService(Executors.newFixedThreadPool(THREAD_COUNT));
+
+    try {
+      for (int i = 0; i < THREAD_COUNT; i++) {
+        executorService.submit(
+            () -> {
+              try {
+                startLatch.await();
+                String body =
+                    mockMvc
+                        .perform(
+                            post("/api/v1/agents")
+                                .with(
+                                    mockHttpServletRequest -> {
+                                      mockHttpServletRequest.setRemoteAddr(agentIp);
+                                      return mockHttpServletRequest;
+                                    })
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                        .andExpect(status().isOk())
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString();
+                returnedPasswords.add(
+                    objectMapper.readTree(body).at("/user/temporaryPassword").asText());
+                reRegisteredCount.incrementAndGet();
+              } catch (Exception e) {
+                log.error("Agent re-registration failed", e);
+              } finally {
+                endLatch.countDown();
+              }
+            });
+      }
+
+      startLatch.countDown();
+      assertTrue(endLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+
+      assertEquals(THREAD_COUNT, reRegisteredCount.get());
+      assertEquals(THREAD_COUNT, returnedPasswords.size());
+      String storedPassword = userRepository.findByAgentId(agentId).orElseThrow().getPassword();
+      long matchingPasswords =
+          returnedPasswords.stream()
+              .filter(password -> passwordEncoder.matches(password, storedPassword))
+              .count();
+      assertEquals(1, matchingPasswords);
+    } finally {
+      executorService.shutdown();
+    }
+  }
+
+  @Test
+  void findByIdForUpdate_shouldUsePessimisticWriteLock() throws NoSuchMethodException {
+    Method method = AgentRepository.class.getDeclaredMethod("findByIdForUpdate", String.class);
+    Lock lock = method.getAnnotation(Lock.class);
+    assertNotNull(lock);
+    assertEquals(LockModeType.PESSIMISTIC_WRITE, lock.value());
+  }
 
   @Test
   @WithMockUser(roles = "ADMIN")

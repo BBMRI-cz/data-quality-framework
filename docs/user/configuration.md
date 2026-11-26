@@ -75,9 +75,11 @@ You can also define additional labels with `MANAGEMENT_METRICS_TAGS_<LABEL_NAME>
 The central server treats agent registration as idempotent for a returning agent:
 
 *   Unknown agent ID: the server registers the agent and answers `201 Created` with the agent's client credentials (username and temporary password).
-*   Same agent ID, same IP address as registered: the server answers `200 OK` with fresh credentials. This re-registration **rotates the agent's password and permanently invalidates the old credentials**, so a lost or compromised registration is self-healing on the agent's next registration attempt.
+*   Same agent ID, same IP address as registered, agent still **pending approval**: the server answers `200 OK` with fresh credentials. This re-registration **rotates the agent's password and permanently invalidates the old credentials**, so a lost or compromised registration is self-healing on the agent's next registration attempt. Once an administrator has approved the agent, a re-registration is rejected with `409` and the agent must be deleted in the server UI before it can register again.
 *   Same agent ID, different IP address: the server answers `409 Conflict` naming both addresses. If the agent genuinely moved to a new address, delete the agent in the server UI and register again.
 *   Different agent ID from an IP address already used by another agent: the server answers `429 Too Many Requests`. Delete the conflicting agent in the server UI to free the address.
+
+The same-IP rule assumes that agents at different sites do not share a public IP address. The `429` response names the conflicting agent but not its ID.
 
 #### Registration Retry
 

@@ -6,6 +6,7 @@ import eu.bbmri_eric.quality.server.common.TooManyRequestsException;
 import eu.bbmri_eric.quality.server.dataquality.AgentService;
 import eu.bbmri_eric.quality.server.dataquality.domain.Agent;
 import eu.bbmri_eric.quality.server.dataquality.domain.AgentInteractionType;
+import eu.bbmri_eric.quality.server.dataquality.domain.AgentStatus;
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentInteractionDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentRegistration;
@@ -55,7 +56,7 @@ class AgentServiceImpl implements AgentService {
   @Override
   public AgentRegistrationResult create(AgentRegistrationRequest createAgentDto, String ipAddress) {
     String clientIpAddress = toBareIpAddress(ipAddress);
-    Optional<Agent> existingAgent = agentRepository.findById(createAgentDto.getId());
+    Optional<Agent> existingAgent = agentRepository.findByIdForUpdate(createAgentDto.getId());
     if (existingAgent.isPresent()) {
       return reRegister(existingAgent.get(), createAgentDto, clientIpAddress);
     }
@@ -63,14 +64,15 @@ class AgentServiceImpl implements AgentService {
       Optional<Agent> conflictingAgent = agentRepository.findFirstByIpAddress(clientIpAddress);
       if (conflictingAgent.isPresent()) {
         Agent conflicting = conflictingAgent.get();
-        String conflictingDescription =
+        String detail =
             conflicting.getName() == null
-                ? conflicting.getId()
-                : "%s (%s)".formatted(conflicting.getId(), conflicting.getName());
-        throw new TooManyRequestsException(
-            ("Agent %s is already registered from IP address %s. Delete that agent in the server UI"
-                    + " to register a new agent from this address.")
-                .formatted(conflictingDescription, clientIpAddress));
+                ? ("Another agent is already registered from IP address %s. Delete that agent in"
+                        + " the server UI to register a new agent from this address.")
+                    .formatted(clientIpAddress)
+                : ("Another agent (%s) is already registered from IP address %s. Delete that agent"
+                        + " in the server UI to register a new agent from this address.")
+                    .formatted(conflicting.getName(), clientIpAddress);
+        throw new TooManyRequestsException(detail);
       }
     }
     Agent agent = new Agent(createAgentDto.getId(), clientIpAddress);
@@ -97,6 +99,12 @@ class AgentServiceImpl implements AgentService {
                   + " from the same address (this request came from %s). Delete this agent in the"
                   + " server UI to register again from this address.")
               .formatted(agent.getId(), agent.getIpAddress(), clientIpAddress));
+    }
+    if (agent.getStatus() != AgentStatus.PENDING) {
+      throw new EntityAlreadyExistsException(
+          ("Agent %s has already been approved (status %s) and cannot re-register. An"
+                  + " administrator must delete it in the server UI before it can register again.")
+              .formatted(agent.getId(), agent.getStatus()));
     }
     agent.addInteraction(AgentInteractionType.REGISTRATION);
     if (!Objects.equals(createAgentDto.getVersion(), agent.getVersion())) {
