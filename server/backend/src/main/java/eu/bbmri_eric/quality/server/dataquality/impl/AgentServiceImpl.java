@@ -18,6 +18,7 @@ import eu.bbmri_eric.quality.server.user.dto.UserCreateDTO;
 import eu.bbmri_eric.quality.server.user.dto.UserDTO;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import org.modelmapper.ModelMapper;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.AccessDeniedException;
@@ -27,6 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional
 class AgentServiceImpl implements AgentService {
+
+  private static final String IPV4_MAPPED_IPV6_PREFIX = "::ffff:";
 
   private final AgentRepository agentRepository;
   private final ModelMapper modelMapper;
@@ -50,11 +53,22 @@ class AgentServiceImpl implements AgentService {
       throw new EntityAlreadyExistsException(
           "Agent %s already exists".formatted(createAgentDto.getId()));
     }
-    if (ipAddress != null && agentRepository.existsByIpAddress(ipAddress)) {
-      throw new TooManyRequestsException(
-          "An agent is already registered from IP address %s".formatted(ipAddress));
+    String clientIpAddress = toBareIpAddress(ipAddress);
+    if (clientIpAddress != null) {
+      Optional<Agent> conflictingAgent = agentRepository.findFirstByIpAddress(clientIpAddress);
+      if (conflictingAgent.isPresent()) {
+        Agent conflicting = conflictingAgent.get();
+        String conflictingDescription =
+            conflicting.getName() == null
+                ? conflicting.getId()
+                : "%s (%s)".formatted(conflicting.getId(), conflicting.getName());
+        throw new TooManyRequestsException(
+            ("Agent %s is already registered from IP address %s. Delete that agent in the server UI"
+                    + " to register a new agent from this address.")
+                .formatted(conflictingDescription, clientIpAddress));
+      }
     }
-    Agent agent = new Agent(createAgentDto.getId(), ipAddress);
+    Agent agent = new Agent(createAgentDto.getId(), clientIpAddress);
     agent.setVersion(createAgentDto.getVersion());
     Agent savedAgent;
     try {
@@ -147,5 +161,19 @@ class AgentServiceImpl implements AgentService {
     boolean isAdmin = user.getRoles() != null && user.getRoles().contains(UserRole.ADMIN);
     boolean isLinkedToAgent = agentId.equals(user.getAgentId());
     return isAdmin || isLinkedToAgent;
+  }
+
+  /**
+   * Dual-stack containers report an IPv4 client as an IPv4-mapped IPv6 address (for example {@code
+   * ::ffff:10.0.0.5}); such addresses are compared and stored as their plain IPv4 form.
+   */
+  private static String toBareIpAddress(String ipAddress) {
+    if (ipAddress == null
+        || !ipAddress.regionMatches(
+            true, 0, IPV4_MAPPED_IPV6_PREFIX, 0, IPV4_MAPPED_IPV6_PREFIX.length())) {
+      return ipAddress;
+    }
+    String mappedAddress = ipAddress.substring(IPV4_MAPPED_IPV6_PREFIX.length());
+    return mappedAddress.contains(".") ? mappedAddress : ipAddress;
   }
 }
