@@ -9,8 +9,8 @@ import static org.mockito.Mockito.when;
 import eu.bbmri_eric.quality.agent.server.CentralServerClient;
 import eu.bbmri_eric.quality.agent.server.CentralServerClientFactory;
 import eu.bbmri_eric.quality.agent.server.RegistrationCredentials;
+import eu.bbmri_eric.quality.agent.server.RegistrationFailedException;
 import eu.bbmri_eric.quality.agent.server.RegistrationFailureReason;
-import eu.bbmri_eric.quality.agent.server.ServerCommunicationException;
 import eu.bbmri_eric.quality.agent.server.domain.InteractionType;
 import eu.bbmri_eric.quality.agent.server.domain.Server;
 import eu.bbmri_eric.quality.agent.server.domain.ServerConnectionStatus;
@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
 
 class ServerRegistrationEventListenerTest {
 
@@ -50,7 +51,7 @@ class ServerRegistrationEventListenerTest {
   }
 
   @Test
-  void handleServerRegistration_success_recordsAwaitingApprovalAndCredentials() throws Exception {
+  void handleServerRegistration_success_recordsAwaitingApprovalAndCredentials() {
     when(client.register()).thenReturn(new RegistrationCredentials("client-1", "secret-1"));
 
     listener.handleServerRegistration(new ServerRegistrationEvent("agent-1", SERVER_URL));
@@ -64,18 +65,13 @@ class ServerRegistrationEventListenerTest {
   }
 
   @Test
-  void handleServerRegistration_conflictFailure_recordsReadableFourLineDescription()
-      throws Exception {
+  void handleServerRegistration_conflictFailure_recordsReadableFourLineDescription() {
     // message equals the ProblemDetail detail, exactly as CentralServerClientImpl produces it;
     // the status must appear only once, in the bracketed technical detail
     when(client.register())
         .thenThrow(
-            new ServerCommunicationException(
-                "Agent agent-1 already exists",
-                RegistrationFailureReason.CONFLICT,
-                409,
-                "Agent agent-1 already exists",
-                null));
+            RegistrationFailedException.forHttpStatus(
+                HttpStatus.CONFLICT, "Agent agent-1 already exists", null));
 
     listener.handleServerRegistration(new ServerRegistrationEvent("agent-1", SERVER_URL));
 
@@ -94,11 +90,11 @@ class ServerRegistrationEventListenerTest {
   }
 
   @Test
-  void handleServerRegistration_unreachableFailure_omitsHttpStatusPart() throws Exception {
+  void handleServerRegistration_unreachableFailure_omitsHttpStatusPart() {
     when(client.register())
         .thenThrow(
-            new ServerCommunicationException(
-                "Connection refused", RegistrationFailureReason.UNREACHABLE, null, null, null));
+            RegistrationFailedException.forReason(
+                RegistrationFailureReason.UNREACHABLE, "Connection refused", null));
 
     listener.handleServerRegistration(new ServerRegistrationEvent("agent-1", SERVER_URL));
 
@@ -118,7 +114,7 @@ class ServerRegistrationEventListenerTest {
   }
 
   @Test
-  void handleServerRegistration_unclassifiedFailure_recordsUnknownReason() throws Exception {
+  void handleServerRegistration_unclassifiedFailure_recordsUnknownReason() {
     when(client.register()).thenThrow(new RuntimeException("boom"));
 
     listener.handleServerRegistration(new ServerRegistrationEvent("agent-1", SERVER_URL));

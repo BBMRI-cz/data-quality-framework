@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import eu.bbmri_eric.quality.agent.dataquality.QualityCheckType;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.agent.server.RegistrationCredentials;
+import eu.bbmri_eric.quality.agent.server.RegistrationFailedException;
 import eu.bbmri_eric.quality.agent.server.RegistrationFailureReason;
 import eu.bbmri_eric.quality.agent.server.ServerCommunicationException;
 import eu.bbmri_eric.quality.agent.server.dto.ManifestDto;
@@ -332,11 +333,10 @@ class CentralServerClientImplTest {
 
     assertThatThrownBy(() -> client.register())
         .isInstanceOfSatisfying(
-            ServerCommunicationException.class,
+            RegistrationFailedException.class,
             ex -> {
               assertThat(ex.getReason()).isEqualTo(RegistrationFailureReason.CONFLICT);
-              assertThat(ex.getHttpStatus()).isEqualTo(409);
-              assertThat(ex.getDetail()).isEqualTo("Agent agent-1 already exists");
+              assertThat(ex.getHttpStatus()).hasValue(409);
               assertThat(ex).hasMessage("Agent agent-1 already exists");
             });
   }
@@ -350,11 +350,11 @@ class CentralServerClientImplTest {
 
     assertThatThrownBy(() -> client.register())
         .isInstanceOfSatisfying(
-            ServerCommunicationException.class,
+            RegistrationFailedException.class,
             ex -> {
               assertThat(ex.getReason()).isEqualTo(RegistrationFailureReason.RATE_LIMITED);
-              assertThat(ex.getHttpStatus()).isEqualTo(429);
-              assertThat(ex.getDetail()).isEqualTo("Too many registration requests");
+              assertThat(ex.getHttpStatus()).hasValue(429);
+              assertThat(ex).hasMessage("Too many registration requests");
             });
   }
 
@@ -365,11 +365,11 @@ class CentralServerClientImplTest {
 
     assertThatThrownBy(() -> client.register())
         .isInstanceOfSatisfying(
-            ServerCommunicationException.class,
+            RegistrationFailedException.class,
             ex -> {
               assertThat(ex.getReason()).isEqualTo(RegistrationFailureReason.SERVER_ERROR);
-              assertThat(ex.getHttpStatus()).isEqualTo(500);
-              assertThat(ex.getDetail()).isNull();
+              assertThat(ex.getHttpStatus()).hasValue(500);
+              assertThat(ex).hasMessage("INTERNAL_SERVER_ERROR");
             });
   }
 
@@ -380,11 +380,11 @@ class CentralServerClientImplTest {
 
     assertThatThrownBy(() -> client.register())
         .isInstanceOfSatisfying(
-            ServerCommunicationException.class,
+            RegistrationFailedException.class,
             ex -> {
               assertThat(ex.getReason()).isEqualTo(RegistrationFailureReason.UNAUTHORIZED);
-              assertThat(ex.getHttpStatus()).isEqualTo(401);
-              assertThat(ex.getDetail()).isEqualTo("Bad credentials");
+              assertThat(ex.getHttpStatus()).hasValue(401);
+              assertThat(ex).hasMessage("Bad credentials");
             });
   }
 
@@ -394,11 +394,11 @@ class CentralServerClientImplTest {
 
     assertThatThrownBy(() -> client.register())
         .isInstanceOfSatisfying(
-            ServerCommunicationException.class,
+            RegistrationFailedException.class,
             ex -> {
               assertThat(ex.getReason()).isEqualTo(RegistrationFailureReason.CLIENT_ERROR);
-              assertThat(ex.getHttpStatus()).isEqualTo(400);
-              assertThat(ex.getDetail()).isNull();
+              assertThat(ex.getHttpStatus()).hasValue(400);
+              assertThat(ex).hasMessage("BAD_REQUEST");
             });
   }
 
@@ -410,10 +410,10 @@ class CentralServerClientImplTest {
 
     assertThatThrownBy(() -> client.register())
         .isInstanceOfSatisfying(
-            ServerCommunicationException.class,
+            RegistrationFailedException.class,
             ex -> {
               assertThat(ex.getReason()).isEqualTo(RegistrationFailureReason.TIMEOUT);
-              assertThat(ex.getHttpStatus()).isNull();
+              assertThat(ex.getHttpStatus()).isEmpty();
               assertThat(ex).hasMessageContaining("Read timed out");
             });
   }
@@ -426,7 +426,7 @@ class CentralServerClientImplTest {
 
     assertThatThrownBy(() -> client.register())
         .isInstanceOfSatisfying(
-            ServerCommunicationException.class,
+            RegistrationFailedException.class,
             ex -> assertThat(ex.getReason()).isEqualTo(RegistrationFailureReason.TIMEOUT));
   }
 
@@ -438,7 +438,7 @@ class CentralServerClientImplTest {
 
     assertThatThrownBy(() -> client.register())
         .isInstanceOfSatisfying(
-            ServerCommunicationException.class,
+            RegistrationFailedException.class,
             ex -> {
               assertThat(ex.getReason()).isEqualTo(RegistrationFailureReason.UNREACHABLE);
               assertThat(ex).hasMessageContaining("Connection refused");
@@ -453,7 +453,7 @@ class CentralServerClientImplTest {
 
     assertThatThrownBy(() -> client.register())
         .isInstanceOfSatisfying(
-            ServerCommunicationException.class,
+            RegistrationFailedException.class,
             ex -> assertThat(ex.getReason()).isEqualTo(RegistrationFailureReason.UNREACHABLE));
   }
 
@@ -465,7 +465,7 @@ class CentralServerClientImplTest {
 
     assertThatThrownBy(() -> client.register())
         .isInstanceOfSatisfying(
-            ServerCommunicationException.class,
+            RegistrationFailedException.class,
             ex -> assertThat(ex.getReason()).isEqualTo(RegistrationFailureReason.TLS));
   }
 
@@ -477,7 +477,7 @@ class CentralServerClientImplTest {
 
     assertThatThrownBy(() -> client.register())
         .isInstanceOfSatisfying(
-            ServerCommunicationException.class,
+            RegistrationFailedException.class,
             ex -> {
               assertThat(ex.getReason()).isEqualTo(RegistrationFailureReason.INCOMPLETE_RESPONSE);
               assertThat(ex)
@@ -486,17 +486,46 @@ class CentralServerClientImplTest {
   }
 
   @Test
-  void register_nonJsonErrorBody_detailIsNull() {
+  void register_nonJsonErrorBody_usesStatusTextAsMessage() {
     stubRegistrationThrowing(
         serverError(HttpStatus.BAD_GATEWAY, "<html><body>Bad Gateway</body></html>"));
 
     assertThatThrownBy(() -> client.register())
         .isInstanceOfSatisfying(
-            ServerCommunicationException.class,
+            RegistrationFailedException.class,
             ex -> {
               assertThat(ex.getReason()).isEqualTo(RegistrationFailureReason.SERVER_ERROR);
-              assertThat(ex.getHttpStatus()).isEqualTo(502);
-              assertThat(ex.getDetail()).isNull();
+              assertThat(ex.getHttpStatus()).hasValue(502);
+              assertThat(ex).hasMessage("BAD_GATEWAY");
+            });
+  }
+
+  @Test
+  void register_blankStatusTextWithoutDetail_usesHttpStatusCodeAsMessage() {
+    stubRegistrationThrowing(
+        new HttpClientErrorException(
+            HttpStatus.BAD_GATEWAY, "", null, new byte[0], StandardCharsets.UTF_8));
+
+    assertThatThrownBy(() -> client.register())
+        .isInstanceOfSatisfying(
+            RegistrationFailedException.class,
+            ex -> {
+              assertThat(ex.getReason()).isEqualTo(RegistrationFailureReason.SERVER_ERROR);
+              assertThat(ex.getHttpStatus()).hasValue(502);
+              assertThat(ex).hasMessage("HTTP 502");
+            });
+  }
+
+  @Test
+  void register_otherRestClientFailure_throwsUnknown() {
+    stubRegistrationThrowing(new RestClientException("Unexpected client failure"));
+
+    assertThatThrownBy(() -> client.register())
+        .isInstanceOfSatisfying(
+            RegistrationFailedException.class,
+            ex -> {
+              assertThat(ex.getReason()).isEqualTo(RegistrationFailureReason.UNKNOWN);
+              assertThat(ex).hasMessage("Unexpected client failure");
             });
   }
 }

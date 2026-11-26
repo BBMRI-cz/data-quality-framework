@@ -7,7 +7,14 @@ import eu.bbmri_eric.quality.agent.server.dto.ManifestDto;
 import java.util.List;
 
 public interface CentralServerClient {
-  RegistrationCredentials register() throws Exception;
+  /**
+   * Registers the agent with the central server.
+   *
+   * @return the registration credentials assigned by the central server
+   * @throws RegistrationFailedException if the registration request fails or the server returns an
+   *     incomplete registration response
+   */
+  RegistrationCredentials register();
 
   ServerConnectionStatus checkRegistrationStatus() throws Exception;
 

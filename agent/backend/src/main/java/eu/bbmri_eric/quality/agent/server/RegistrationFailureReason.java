@@ -1,5 +1,8 @@
 package eu.bbmri_eric.quality.agent.server;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+
 /**
  * Classified reason for a failed agent registration with a central server.
  *
@@ -84,5 +87,31 @@ public enum RegistrationFailureReason {
    */
   public String hint() {
     return hint;
+  }
+
+  /**
+   * Maps the HTTP status of a failed registration response to the corresponding failure reason.
+   *
+   * @param status the HTTP status returned by the central server
+   * @return the failure reason this status implies, {@link #UNKNOWN} for statuses without a
+   *     specific meaning for registration
+   */
+  public static RegistrationFailureReason fromHttpStatus(HttpStatusCode status) {
+    if (status.isSameCodeAs(HttpStatus.UNAUTHORIZED) || status.isSameCodeAs(HttpStatus.FORBIDDEN)) {
+      return UNAUTHORIZED;
+    }
+    if (status.isSameCodeAs(HttpStatus.CONFLICT)) {
+      return CONFLICT;
+    }
+    if (status.isSameCodeAs(HttpStatus.TOO_MANY_REQUESTS)) {
+      return RATE_LIMITED;
+    }
+    if (status.is5xxServerError()) {
+      return SERVER_ERROR;
+    }
+    if (status.is4xxClientError()) {
+      return CLIENT_ERROR;
+    }
+    return UNKNOWN;
   }
 }

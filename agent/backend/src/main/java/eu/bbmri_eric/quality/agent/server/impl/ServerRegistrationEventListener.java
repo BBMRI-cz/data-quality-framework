@@ -3,8 +3,8 @@ package eu.bbmri_eric.quality.agent.server.impl;
 import eu.bbmri_eric.quality.agent.server.CentralServerClient;
 import eu.bbmri_eric.quality.agent.server.CentralServerClientFactory;
 import eu.bbmri_eric.quality.agent.server.RegistrationCredentials;
+import eu.bbmri_eric.quality.agent.server.RegistrationFailedException;
 import eu.bbmri_eric.quality.agent.server.RegistrationFailureReason;
-import eu.bbmri_eric.quality.agent.server.ServerCommunicationException;
 import eu.bbmri_eric.quality.agent.server.domain.InteractionType;
 import eu.bbmri_eric.quality.agent.server.domain.ServerConnectionStatus;
 import eu.bbmri_eric.quality.agent.server.domain.ServerInteraction;
@@ -38,16 +38,23 @@ class ServerRegistrationEventListener {
   @Async
   @Transactional
   void handleServerRegistration(ServerRegistrationEvent event) {
+    String serverUrl = event.getServerUrl();
     try {
       CentralServerClient client =
-          clientFactory.createClient(event.getAgentId(), event.getServerUrl(), "", "");
+          clientFactory.createClient(event.getAgentId(), serverUrl, "", "");
       RegistrationCredentials credentials = client.register();
-      log.info("Registration with server {} succeeded; awaiting approval", event.getServerUrl());
-      updateServerWithCredentials(event.getServerUrl(), credentials);
-    } catch (Exception e) {
-      String failure = describeFailure(event.getServerUrl(), e);
-      log.info("Registration attempt with server {} failed: {}", event.getServerUrl(), failure);
-      recordRegistrationFailure(event.getServerUrl(), failure);
+      log.info("Registration with server {} succeeded; awaiting approval", serverUrl);
+      updateServerWithCredentials(serverUrl, credentials);
+    } catch (RegistrationFailedException e) {
+      String failure = describeFailure(serverUrl, e);
+      log.warn("Registration with server {} failed: {}", serverUrl, failure);
+      recordRegistrationFailure(serverUrl, failure);
+    } catch (RuntimeException e) {
+      log.error("Unexpected error while registering with server {}", serverUrl, e);
+      RegistrationFailedException unexpected =
+          RegistrationFailedException.forReason(
+              RegistrationFailureReason.UNKNOWN, messageOrClassName(e), e);
+      recordRegistrationFailure(serverUrl, describeFailure(serverUrl, unexpected));
     }
   }
 
@@ -82,28 +89,29 @@ class ServerRegistrationEventListener {
   /**
    * Builds the multi-line interaction description for a failed registration attempt: a readable
    * summary and a "what to check" hint for the failure reason, the technical detail with the
-   * exception message, reason and HTTP status (when known), and the server URL. Unclassified
-   * failures are reported as {@link RegistrationFailureReason#UNKNOWN}.
+   * failure message, reason and HTTP status (when known), and the server URL.
    *
    * @param serverUrl the URL of the central server
-   * @param e the failure
+   * @param failure the classified failure
    * @return the interaction description
    */
-  private String describeFailure(String serverUrl, Exception e) {
-    RegistrationFailureReason reason = RegistrationFailureReason.UNKNOWN;
-    Integer httpStatus = null;
-    if (e instanceof ServerCommunicationException communication
-        && communication.getReason() != null) {
-      reason = communication.getReason();
-      httpStatus = communication.getHttpStatus();
-    }
-    String detail = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
-    String statusPart = httpStatus != null ? ", HTTP " + httpStatus : "";
+  private String describeFailure(String serverUrl, RegistrationFailedException failure) {
+    RegistrationFailureReason reason = failure.getReason();
+    String statusPart =
+        failure.getHttpStatus().stream()
+            .mapToObj(status -> ", HTTP " + status)
+            .findFirst()
+            .orElse("");
     return """
         Registration failed: %s
         What to check: %s
         Technical detail: %s [%s%s]
         Server: %s"""
-        .formatted(reason.summary(), reason.hint(), detail, reason, statusPart, serverUrl);
+        .formatted(
+            reason.summary(), reason.hint(), failure.getMessage(), reason, statusPart, serverUrl);
+  }
+
+  private static String messageOrClassName(RuntimeException e) {
+    return e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
   }
 }
