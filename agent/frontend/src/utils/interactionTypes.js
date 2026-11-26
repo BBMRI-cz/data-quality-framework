@@ -12,6 +12,7 @@ export function getInteractionTypeClass(type) {
     UPDATE: 'type-update',
     COMMUNICATION: 'type-communication',
     REGISTRATION: 'type-registration',
+    STATUS_CHECK: 'type-status-check',
   };
   return classes[type] || '';
 }
@@ -26,6 +27,7 @@ export function getInteractionTypeBadge(type) {
     UPDATE: 'bg-primary',
     COMMUNICATION: 'bg-success',
     REGISTRATION: 'bg-info',
+    STATUS_CHECK: 'bg-dark',
   };
   return classes[type] || 'bg-secondary';
 }
@@ -40,6 +42,7 @@ export function getInteractionTypeIcon(type) {
     UPDATE: 'bi bi-pencil-square',
     COMMUNICATION: 'bi bi-arrow-left-right',
     REGISTRATION: 'bi bi-person-plus-fill',
+    STATUS_CHECK: 'bi bi-activity',
   };
   return icons[type] || 'bi bi-circle';
 }
@@ -54,6 +57,7 @@ export function formatInteractionType(type) {
     UPDATE: 'Update',
     COMMUNICATION: 'Communication',
     REGISTRATION: 'Registration',
+    STATUS_CHECK: 'Status check',
   };
   return labels[type] || type;
 }

@@ -67,6 +67,27 @@ export async function update(id, updateData) {
 }
 
 /**
+ * Fetches the registration lifecycle state of a server
+ * @param {string|number} id
+ * @returns {Promise<object>}
+ */
+export async function getRegistration(id) {
+  const response = await api.get(`${BASE_URL}/${id}/registration`);
+  return response.data.content || response.data;
+}
+
+/**
+ * Requests an asynchronous registration retry.
+ * Sets __skipErrorNotification so the API interceptor does not toast failures for
+ * this request; the calling page owns the retry failure notification.
+ * @param {string|number} id
+ * @returns {Promise<void>}
+ */
+export async function retryRegistration(id) {
+  await api.post(`${BASE_URL}/${id}/registration`, null, { __skipErrorNotification: true });
+}
+
+/**
  * Deletes a server
  * @param {string|number} id
  * @returns {Promise<void>}
@@ -80,5 +101,7 @@ export const serverService = {
   get,
   create,
   update,
+  getRegistration,
+  retryRegistration,
   delete: remove,
 };

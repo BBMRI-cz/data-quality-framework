@@ -59,12 +59,12 @@
     isRegistering.value = true;
     registrationFailure.value = null;
     try {
-      await serverStore.createServer(data);
-      notificationService.success(
+      const created = await serverStore.createServer(data);
+      notificationService.info(
         'Registration Requested',
-        `${data.name} was added. Registration request sent to the central server — check the server detail page for the outcome.`
+        'Registration request sent — waiting for the central server to confirm…'
       );
-      router.push('/servers');
+      router.push(`/servers/${created.id}`);
     } catch (error) {
       const status = error.response?.status ?? 0;
       const detail = serverStore.error || 'Unable to register server. Please try again.';

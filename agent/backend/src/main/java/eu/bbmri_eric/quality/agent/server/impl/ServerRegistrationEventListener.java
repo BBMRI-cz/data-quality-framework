@@ -11,6 +11,7 @@ import eu.bbmri_eric.quality.agent.server.RegistrationCredentials;
 import eu.bbmri_eric.quality.agent.server.RegistrationFailedException;
 import eu.bbmri_eric.quality.agent.server.RegistrationFailureReason;
 import eu.bbmri_eric.quality.agent.server.domain.InteractionType;
+import eu.bbmri_eric.quality.agent.server.domain.RegistrationStatus;
 import eu.bbmri_eric.quality.agent.server.domain.Server;
 import eu.bbmri_eric.quality.agent.server.domain.ServerConnectionStatus;
 import eu.bbmri_eric.quality.agent.server.domain.ServerInteraction;
@@ -103,6 +104,10 @@ class ServerRegistrationEventListener {
               server.setClientId(credentials.getClientId());
               server.setClientSecret(credentials.getClientSecret());
               server.setStatus(ServerConnectionStatus.PENDING);
+              server.setRegistrationStatus(RegistrationStatus.REGISTERED_PENDING_APPROVAL);
+              server.setRegistrationRegisteredAt(LocalDateTime.now());
+              server.setRegistrationErrorReason(null);
+              server.setRegistrationErrorMessage(null);
               server.setRegistrationRetryCount(null);
               server.setNextRegistrationRetryAt(null);
               serverRepository.save(server);
@@ -125,11 +130,14 @@ class ServerRegistrationEventListener {
             server -> {
               boolean retryScheduled =
                   failure.getReason().isRetryable() && usedSweepRounds(server) < MAX_SWEEP_ROUNDS;
+              String description =
+                  describeAttemptedFailure(serverUrl, failure, attempts, retryScheduled);
               server.setStatus(ServerConnectionStatus.ERROR);
               server.addInteraction(
-                  new ServerInteraction(
-                      InteractionType.REGISTRATION,
-                      describeAttemptedFailure(serverUrl, failure, attempts, retryScheduled)));
+                  new ServerInteraction(InteractionType.REGISTRATION, description));
+              server.setRegistrationStatus(RegistrationStatus.FAILED);
+              server.setRegistrationErrorReason(failure.getReason().name());
+              server.setRegistrationErrorMessage(description);
               server.setNextRegistrationRetryAt(
                   retryScheduled ? LocalDateTime.now().plus(RETRY_DELAY) : null);
               serverRepository.save(server);

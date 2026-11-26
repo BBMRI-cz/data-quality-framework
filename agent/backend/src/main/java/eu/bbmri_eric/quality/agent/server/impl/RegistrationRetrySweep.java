@@ -4,6 +4,7 @@ import static eu.bbmri_eric.quality.agent.server.impl.RegistrationRetryConstants
 import static eu.bbmri_eric.quality.agent.server.impl.RegistrationRetryConstants.RETRY_DELAY;
 
 import eu.bbmri_eric.quality.agent.common.EventPublisher;
+import eu.bbmri_eric.quality.agent.server.domain.RegistrationStatus;
 import eu.bbmri_eric.quality.agent.server.domain.Server;
 import eu.bbmri_eric.quality.agent.server.event.ServerRegistrationEvent;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
@@ -66,6 +67,7 @@ class RegistrationRetrySweep {
       int usedRounds =
           server.getRegistrationRetryCount() == null ? 0 : server.getRegistrationRetryCount();
       int round = Math.min(usedRounds + 1, MAX_SWEEP_ROUNDS);
+      server.setRegistrationStatus(RegistrationStatus.REGISTERING);
       server.setRegistrationRetryCount(round);
       server.setNextRegistrationRetryAt(LocalDateTime.now().plus(RETRY_DELAY));
       serverRepository.save(server);

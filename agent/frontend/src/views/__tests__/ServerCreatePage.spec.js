@@ -2,14 +2,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
 import { createPinia } from 'pinia';
 
+const { pushMock } = vi.hoisted(() => ({ pushMock: vi.fn() }));
+
 vi.mock('vue-router', () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: pushMock }),
 }));
 
 vi.mock('@/services/notificationService.js', () => ({
   notificationService: {
     error: vi.fn(),
     success: vi.fn(),
+    info: vi.fn(),
   },
 }));
 
@@ -165,14 +168,12 @@ describe('ServerCreatePage', () => {
     await wrapper.find('form').trigger('submit');
     await flushPromises();
 
-    expect(notificationService.success).toHaveBeenCalledWith(
+    expect(notificationService.info).toHaveBeenCalledWith(
       'Registration Requested',
-      expect.stringContaining('check the server detail page')
+      'Registration request sent — waiting for the central server to confirm…'
     );
-    expect(notificationService.success).not.toHaveBeenCalledWith(
-      'Server Registered',
-      expect.anything()
-    );
+    expect(notificationService.success).not.toHaveBeenCalled();
     expect(notificationService.error).not.toHaveBeenCalled();
+    expect(pushMock).toHaveBeenCalledWith('/servers/1');
   });
 });

@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import eu.bbmri_eric.quality.agent.common.EventPublisher;
+import eu.bbmri_eric.quality.agent.server.domain.RegistrationStatus;
 import eu.bbmri_eric.quality.agent.server.domain.Server;
 import eu.bbmri_eric.quality.agent.server.event.ServerRegistrationEvent;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
@@ -137,5 +138,17 @@ class RegistrationRetrySweepTest {
 
     verify(serverRepository, never()).save(any());
     verifyNoInteractions(eventPublisher);
+  }
+
+  @Test
+  void retryDueRegistrations_dispatch_setsRegisteringStatus() {
+    Server server = dueServer();
+    server.setRegistrationStatus(RegistrationStatus.FAILED);
+    when(serverRepository.findAllByNextRegistrationRetryAtLessThanEqual(any()))
+        .thenReturn(List.of(server));
+
+    sweep.retryDueRegistrations();
+
+    assertThat(server.getRegistrationStatus()).isEqualTo(RegistrationStatus.REGISTERING);
   }
 }

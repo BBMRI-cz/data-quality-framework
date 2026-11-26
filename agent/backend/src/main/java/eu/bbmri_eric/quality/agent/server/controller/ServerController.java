@@ -3,8 +3,10 @@ package eu.bbmri_eric.quality.agent.server.controller;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
+import eu.bbmri_eric.quality.agent.server.ServerRegistrationService;
 import eu.bbmri_eric.quality.agent.server.ServerService;
 import eu.bbmri_eric.quality.agent.server.dto.DetailedServerDto;
+import eu.bbmri_eric.quality.agent.server.dto.RegistrationStateDto;
 import eu.bbmri_eric.quality.agent.server.dto.ServerCreateDto;
 import eu.bbmri_eric.quality.agent.server.dto.ServerDto;
 import eu.bbmri_eric.quality.agent.server.dto.ServerUpdateDto;
@@ -28,10 +30,15 @@ import org.springframework.web.bind.annotation.*;
 class ServerController {
 
   private final ServerService serverService;
+  private final ServerRegistrationService serverRegistrationService;
   private final ServerLinkBuilder linkBuilder;
 
-  public ServerController(ServerService serverService, ServerLinkBuilder linkBuilder) {
+  public ServerController(
+      ServerService serverService,
+      ServerRegistrationService serverRegistrationService,
+      ServerLinkBuilder linkBuilder) {
     this.serverService = serverService;
+    this.serverRegistrationService = serverRegistrationService;
     this.linkBuilder = linkBuilder;
   }
 
@@ -89,6 +96,21 @@ class ServerController {
       @Parameter(description = "Server ID", required = true) @PathVariable String id) {
     serverService.deleteById(id);
     return ResponseEntity.noContent().build();
+  }
+
+  @GetMapping("/{id}/registration")
+  @Operation(
+      summary = "Get registration state",
+      description = "Retrieves the registration lifecycle state for the given server")
+  public ResponseEntity<EntityModel<RegistrationStateDto>> getRegistration(
+      @Parameter(description = "Server ID", required = true) @PathVariable String id) {
+    RegistrationStateDto registration = serverRegistrationService.findByServerId(id);
+    EntityModel<RegistrationStateDto> registrationModel =
+        EntityModel.of(
+            registration,
+            linkTo(methodOn(ServerController.class).getRegistration(id)).withSelfRel(),
+            linkTo(methodOn(ServerController.class).findById(id)).withRel("server"));
+    return ResponseEntity.ok(registrationModel);
   }
 
   @PostMapping("/{id}/registration")

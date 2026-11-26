@@ -18,6 +18,7 @@ import eu.bbmri_eric.quality.agent.server.RegistrationCredentials;
 import eu.bbmri_eric.quality.agent.server.RegistrationFailedException;
 import eu.bbmri_eric.quality.agent.server.RegistrationFailureReason;
 import eu.bbmri_eric.quality.agent.server.domain.InteractionType;
+import eu.bbmri_eric.quality.agent.server.domain.RegistrationStatus;
 import eu.bbmri_eric.quality.agent.server.domain.Server;
 import eu.bbmri_eric.quality.agent.server.domain.ServerConnectionStatus;
 import eu.bbmri_eric.quality.agent.server.domain.ServerInteraction;
@@ -326,5 +327,36 @@ class ServerRegistrationEventListenerTest {
     listener.handleServerRegistration(new ServerRegistrationEvent("agent-1", SERVER_URL));
 
     verify(serverRepository, never()).save(any());
+  }
+
+  @Test
+  void handleServerRegistration_success_clearsPreviousFailureAndRecordsPendingApproval() {
+    when(client.register()).thenReturn(new RegistrationCredentials("client-1", "secret-1"));
+    server.setRegistrationStatus(RegistrationStatus.FAILED);
+    server.setRegistrationErrorReason("UNREACHABLE");
+    server.setRegistrationErrorMessage("Registration failed: Cannot reach the central server");
+
+    listener.handleServerRegistration(new ServerRegistrationEvent("agent-1", SERVER_URL));
+
+    assertThat(server.getRegistrationStatus())
+        .isEqualTo(RegistrationStatus.REGISTERED_PENDING_APPROVAL);
+    assertThat(server.getRegistrationRegisteredAt()).isNotNull();
+    assertThat(server.getRegistrationErrorReason()).isNull();
+    assertThat(server.getRegistrationErrorMessage()).isNull();
+  }
+
+  @Test
+  void handleServerRegistration_finalFailure_recordsFailedStateMatchingInteraction() {
+    when(client.register())
+        .thenThrow(
+            RegistrationFailedException.forHttpStatus(
+                HttpStatus.UNAUTHORIZED, "Bad credentials", null));
+
+    listener.handleServerRegistration(new ServerRegistrationEvent("agent-1", SERVER_URL));
+
+    assertThat(server.getRegistrationStatus()).isEqualTo(RegistrationStatus.FAILED);
+    assertThat(server.getRegistrationErrorReason()).isEqualTo("UNAUTHORIZED");
+    assertThat(server.getRegistrationErrorMessage())
+        .isEqualTo(registrationDescriptions().getFirst());
   }
 }

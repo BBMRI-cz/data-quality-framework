@@ -1,9 +1,13 @@
 package eu.bbmri_eric.quality.agent.server.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.endsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import eu.bbmri_eric.quality.agent.server.domain.RegistrationStatus;
+import eu.bbmri_eric.quality.agent.server.domain.Server;
+import eu.bbmri_eric.quality.agent.server.domain.ServerConnectionStatus;
 import eu.bbmri_eric.quality.agent.server.dto.ServerCreateDto;
 import eu.bbmri_eric.quality.agent.server.dto.ServerUpdateDto;
 import org.junit.jupiter.api.Test;
@@ -11,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +31,8 @@ class ServerControllerTest {
   @Autowired private MockMvc mockMvc;
 
   @Autowired private JsonMapper objectMapper;
+
+  @Autowired private ServerRepository serverRepository;
 
   @Test
   @WithUserDetails("admin")
@@ -529,5 +536,57 @@ class ServerControllerTest {
         .andExpect(status().isOk());
 
     mockMvc.perform(post(location + "/registration")).andExpect(status().isConflict());
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void getRegistration_existingServer_returnsStateWithLinks() throws Exception {
+    Server server = serverRepository.save(new Server("https://reg.example.com", "Reg Server"));
+    server.setRegistrationStatus(RegistrationStatus.REGISTERING);
+    server.setRegistrationRetryCount(1);
+    server.setNextRegistrationRetryAt(java.time.LocalDateTime.now().plusMinutes(15));
+
+    mockMvc
+        .perform(get(SERVERS_ENDPOINT + "/" + server.getId() + "/registration"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("REGISTERING"))
+        .andExpect(jsonPath("$.attempts").value(1))
+        .andExpect(jsonPath("$.nextRetryAt").exists())
+        .andExpect(jsonPath("$._links.self.href", endsWith("/registration")))
+        .andExpect(
+            jsonPath("$._links.server.href", endsWith(SERVERS_ENDPOINT + "/" + server.getId())));
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void getRegistration_activeApprovedServer_derivesActiveStatus() throws Exception {
+    Server server = serverRepository.save(new Server("https://reg-active.example.com", "Reg A"));
+    server.setRegistrationStatus(RegistrationStatus.REGISTERED_PENDING_APPROVAL);
+    server.setStatus(ServerConnectionStatus.ACTIVE);
+
+    mockMvc
+        .perform(get(SERVERS_ENDPOINT + "/" + server.getId() + "/registration"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("ACTIVE"));
+    mockMvc
+        .perform(get(SERVERS_ENDPOINT + "/" + server.getId()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.registration.status").value("ACTIVE"));
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void getRegistration_unknownServer_returnsNotFound() throws Exception {
+    mockMvc
+        .perform(get(SERVERS_ENDPOINT + "/non-existing-id/registration"))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  @WithAnonymousUser
+  void getRegistration_anonymous_returnsUnauthorized() throws Exception {
+    mockMvc
+        .perform(get(SERVERS_ENDPOINT + "/any-id/registration"))
+        .andExpect(status().isUnauthorized());
   }
 }

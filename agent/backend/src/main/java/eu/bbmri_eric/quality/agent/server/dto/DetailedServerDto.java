@@ -24,6 +24,9 @@ public class DetailedServerDto extends ServerDto {
   @Schema(description = "List of interactions logged for this server")
   private List<ServerInteractionDto> interactions;
 
+  @Schema(description = "Registration lifecycle state with the central server")
+  private RegistrationStateDto registration;
+
   /** Default constructor. */
   public DetailedServerDto() {
     super();
