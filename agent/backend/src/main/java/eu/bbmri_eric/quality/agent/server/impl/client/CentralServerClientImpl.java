@@ -6,11 +6,13 @@ import eu.bbmri_eric.quality.agent.dataquality.dto.ObfuscatedReportDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.agent.server.CentralServerClient;
 import eu.bbmri_eric.quality.agent.server.RegistrationCredentials;
+import eu.bbmri_eric.quality.agent.server.RegistrationFailedException;
 import eu.bbmri_eric.quality.agent.server.ServerCommunicationException;
 import eu.bbmri_eric.quality.agent.server.domain.ServerConnectionStatus;
 import eu.bbmri_eric.quality.agent.server.dto.ManifestDto;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.info.BuildProperties;
@@ -29,6 +31,9 @@ import org.springframework.web.client.RestTemplate;
 class CentralServerClientImpl implements CentralServerClient {
 
   private static final Logger log = LoggerFactory.getLogger(CentralServerClientImpl.class);
+
+  private static final RegistrationFailureClassifier FAILURE_CLASSIFIER =
+      new RegistrationFailureClassifier();
 
   // API Endpoints
   private static final String AGENTS_ENDPOINT = "/api/v1/agents";
@@ -61,11 +66,26 @@ class CentralServerClientImpl implements CentralServerClient {
   /**
    * Registers an agent with the central server.
    *
-   * @return registration credentials containing clientId and clientSecret, or null if registration
-   *     fails
+   * @return registration credentials containing clientId and clientSecret
+   * @throws RegistrationFailedException if the registration request fails or the server returns an
+   *     incomplete registration response
    */
   @Override
   public RegistrationCredentials register() {
+    try {
+      return exchangeRegistration();
+    } catch (RestClientException e) {
+      throw FAILURE_CLASSIFIER.classify(e);
+    }
+  }
+
+  /**
+   * Sends the registration request and converts the response into credentials.
+   *
+   * @return registration credentials containing clientId and clientSecret
+   * @throws RegistrationFailedException if the server returns an incomplete registration response
+   */
+  private RegistrationCredentials exchangeRegistration() {
     AgentRegistrationRequest request =
         new AgentRegistrationRequest(agentId, buildProperties.getVersion());
     HttpEntity<AgentRegistrationRequest> requestEntity = createJsonHttpEntity(request);
@@ -322,21 +342,43 @@ class CentralServerClientImpl implements CentralServerClient {
    * Handles the response from an agent registration request.
    *
    * @param response the registration response
-   * @return registration credentials, or null if response is incomplete
+   * @return registration credentials
+   * @throws RegistrationFailedException if the response is incomplete
    */
   private RegistrationCredentials parseRegistrationResponse(
       ResponseEntity<AgentRegistrationResponse> response) {
     AgentRegistrationResponse registrationResponse = response.getBody();
-    if (registrationResponse == null
-        || registrationResponse.getUser() == null
-        || registrationResponse.getUser().getUsername() == null
-        || registrationResponse.getUser().getTemporaryPassword() == null) {
-      throw new IllegalStateException(
-          "Incomplete registration response for agent " + agentId + " at server " + serverUrl);
+    Optional<String> missingField = findMissingRegistrationField(registrationResponse);
+    if (missingField.isPresent()) {
+      throw RegistrationFailedException.incompleteResponse(
+          response.getStatusCode(), missingField.get());
     }
     String clientId = registrationResponse.getUser().getUsername();
     String clientSecret = registrationResponse.getUser().getTemporaryPassword();
     return new RegistrationCredentials(clientId, clientSecret);
+  }
+
+  /**
+   * Determines the first missing field of a registration response.
+   *
+   * @param response the registration response body, may be null
+   * @return the name of the first missing field, or an empty {@link Optional} when the response is
+   *     complete
+   */
+  private static Optional<String> findMissingRegistrationField(AgentRegistrationResponse response) {
+    if (response == null) {
+      return Optional.of("body");
+    }
+    if (response.getUser() == null) {
+      return Optional.of("user");
+    }
+    if (response.getUser().getUsername() == null) {
+      return Optional.of("username");
+    }
+    if (response.getUser().getTemporaryPassword() == null) {
+      return Optional.of("temporaryPassword");
+    }
+    return Optional.empty();
   }
 
   /**

@@ -150,7 +150,9 @@
           </template>
           <template #description="{ item }">
             <div class="d-flex align-items-center gap-2">
-              <span>{{ truncateText(item.description, 50) }}</span>
+              <span class="description-first-line" :class="firstLineClasses(item)">
+                {{ firstLine(item.description) }}
+              </span>
               <button
                 v-if="isValidJson(item.description)"
                 class="btn btn-sm btn-outline-primary"
@@ -159,6 +161,15 @@
               >
                 <i class="bi bi-braces"></i>
                 JSON
+              </button>
+              <button
+                v-else-if="hasHiddenDetails(item.description)"
+                class="btn btn-sm btn-outline-secondary"
+                title="View interaction details"
+                @click.stop="openJsonModal(item.description)"
+              >
+                <i class="bi bi-card-text"></i>
+                Details
               </button>
             </div>
           </template>
@@ -202,7 +213,7 @@
   import { notificationService } from '@/services/notificationService.js';
   import { formatStatus, getStatusTextClass } from '@/utils/serverStatus.js';
   import { getInteractionTypeBadge } from '@/utils/interactionTypes.js';
-  import { truncateText, formatDateShort, formatTime, isValidJson } from '@/utils/stringUtils.js';
+  import { formatDateShort, formatTime, isValidJson } from '@/utils/stringUtils.js';
 
   const route = useRoute();
 
@@ -227,6 +238,10 @@
 
   const showKeyModal = ref(false);
   const isSavingKey = ref(false);
+
+  // Maximum length of a JSON description preview in the table cell; the JSON button opens the
+  // full content in the viewer modal.
+  const JSON_PREVIEW_LENGTH = 120;
 
   function openKeyModal() {
     showKeyModal.value = true;
@@ -271,6 +286,29 @@
       REGISTRATION: 'text-dark', // bg-info needs dark text for adequate contrast
     };
     return textColorByType[type] || 'text-white';
+  }
+
+  function firstLine(description) {
+    if (!description) {
+      return '';
+    }
+    const line = description.split('\n')[0];
+    if (isValidJson(description) && line.length > JSON_PREVIEW_LENGTH) {
+      return line.slice(0, JSON_PREVIEW_LENGTH) + '…';
+    }
+    return line;
+  }
+
+  // Details button for plain-text descriptions that don't fit on the first row
+  function hasHiddenDetails(description) {
+    return !!description && (description.includes('\n') || firstLine(description).length > 120);
+  }
+
+  function firstLineClasses(item) {
+    if (item.type === 'REGISTRATION' && item.description?.startsWith('Registration failed')) {
+      return 'text-danger fw-medium';
+    }
+    return '';
   }
 
   onMounted(fetchServer);
@@ -330,6 +368,11 @@
     font-weight: 600;
     text-transform: uppercase;
     padding: 0.35rem 0.65rem;
+  }
+
+  .description-first-line {
+    white-space: normal;
+    word-break: break-word;
   }
 
   .json-viewer,
