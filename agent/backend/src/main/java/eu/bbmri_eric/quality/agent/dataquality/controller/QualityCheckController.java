@@ -1,13 +1,13 @@
 package eu.bbmri_eric.quality.agent.dataquality.controller;
 
+import eu.bbmri_eric.quality.agent.dataquality.QualityCheckImportService;
 import eu.bbmri_eric.quality.agent.dataquality.QualityCheckService;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckBulkUpdateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
-import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckExportDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckFilterDTO;
-import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckImportDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckImportSummaryDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckTransferDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckUpdateDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -47,11 +47,15 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 class QualityCheckController {
 
   private final QualityCheckService qualityCheckService;
+  private final QualityCheckImportService qualityCheckImportService;
   private final QualityCheckLinkBuilder linkBuilder;
 
   QualityCheckController(
-      QualityCheckService qualityCheckService, QualityCheckLinkBuilder linkBuilder) {
+      QualityCheckService qualityCheckService,
+      QualityCheckImportService qualityCheckImportService,
+      QualityCheckLinkBuilder linkBuilder) {
     this.qualityCheckService = qualityCheckService;
+    this.qualityCheckImportService = qualityCheckImportService;
     this.linkBuilder = linkBuilder;
   }
 
@@ -119,7 +123,7 @@ class QualityCheckController {
             description = "JSON file with the exported quality checks",
             content = @Content(mediaType = "application/json"))
       })
-  public ResponseEntity<List<QualityCheckExportDTO>> export(
+  public ResponseEntity<List<QualityCheckTransferDTO>> export(
       @ParameterObject QualityCheckFilterDTO filter) {
     return ResponseEntity.ok()
         .contentType(MediaType.APPLICATION_JSON)
@@ -133,7 +137,7 @@ class QualityCheckController {
    * Fetches every check matching the filter: the export is unpaged and, unless the caller asked for
    * another field, sorted by name.
    */
-  private List<QualityCheckExportDTO> exportMatches(QualityCheckFilterDTO filter) {
+  private List<QualityCheckTransferDTO> exportMatches(QualityCheckFilterDTO filter) {
     filter.setPage(0);
     filter.setSize(Integer.MAX_VALUE);
     if (filter.getSort() == null) {
@@ -141,7 +145,7 @@ class QualityCheckController {
       filter.setOrder(QualityCheckFilterDTO.SortOrder.ASC);
     }
     return qualityCheckService.findAll(filter).getContent().stream()
-        .map(QualityCheckExportDTO::from)
+        .map(QualityCheckTransferDTO::from)
         .toList();
   }
 
@@ -155,18 +159,10 @@ class QualityCheckController {
               + " The whole file is validated before anything is saved; an invalid entry rejects"
               + " the import and reports the failing entries. No query is executed, no report is"
               + " started and no differential privacy budget is spent.")
-  @ApiResponses(
-      value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Counts of created, updated and unchanged checks",
-            content = @Content(mediaType = "application/json")),
-        @ApiResponse(responseCode = "400", description = "Invalid file content; nothing was saved")
-      })
   public ResponseEntity<QualityCheckImportSummaryDTO> importChecks(
       @RequestBody @NotEmpty(message = "At least one quality check import entry is required") @Valid
-          List<QualityCheckImportDTO> entries) {
-    return ResponseEntity.ok(qualityCheckService.importChecks(entries));
+          List<QualityCheckTransferDTO> entries) {
+    return ResponseEntity.ok(qualityCheckImportService.importChecks(entries));
   }
 
   @PutMapping("/{id}")

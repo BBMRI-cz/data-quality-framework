@@ -1130,6 +1130,41 @@ class QualityCheckIntegrationTests {
   }
 
   @Test
+  void import_changedCategory_movesCheckAndKeepsOldCategory() throws Exception {
+    Category alpha = categoryRepository.save(new Category("Alpha", "#FF5733"));
+    QualityCheck check = new QualityCheck("Moving check", "Moves", "SELECT 1");
+    check.setType(QualityCheckType.SQL);
+    check.setCategory(alpha);
+    qualityCheckRepository.save(check);
+
+    mockMvc
+        .perform(
+            post(API_QUALITY_CHECKS + "/import")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    [
+                      {
+                        "name": "Moving check",
+                        "description": "Moves",
+                        "query": "SELECT 1",
+                        "type": "SQL",
+                        "warningThreshold": 10,
+                        "errorThreshold": 30,
+                        "category": "Beta"
+                      }
+                    ]
+                    """))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.updated").value(1));
+
+    QualityCheck moved = qualityCheckRepository.findById(check.getId()).orElseThrow();
+    assertThat(moved.getCategory().getName()).isEqualTo("Beta");
+    assertThat(categoryRepository.findById(alpha.getId()).orElseThrow().getName())
+        .isEqualTo("Alpha");
+  }
+
+  @Test
   void import_invalidEntry_returns400AndSavesNothing() throws Exception {
     String entries =
         """
