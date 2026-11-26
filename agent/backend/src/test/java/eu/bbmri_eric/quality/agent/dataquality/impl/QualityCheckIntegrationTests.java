@@ -811,6 +811,61 @@ class QualityCheckIntegrationTests {
   }
 
   @Test
+  void findAll_withMultipleCategoryNames_returnsChecksFromAllCategories() throws Exception {
+    saveCheckInCategory("Data Completeness", "Completeness Check");
+    saveCheckInCategory("Validity", "Validity Check");
+    qualityCheckRepository.save(
+        new QualityCheck("Uncategorized Check", "Without category", "define Test: false"));
+
+    mockMvc
+        .perform(get(API_QUALITY_CHECKS).param("categoryName", "Data Completeness", "Validity"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$._embedded.quality-checks.length()").value(2))
+        .andExpect(jsonPath("$.page.totalElements").value(2));
+  }
+
+  @Test
+  void export_withMultipleCategoryNames_returnsChecksFromAllCategories() throws Exception {
+    saveCheckInCategory("Data Completeness", "Completeness Check");
+    saveCheckInCategory("Validity", "Validity Check");
+    qualityCheckRepository.save(
+        new QualityCheck("Uncategorized Check", "Without category", "define Test: false"));
+
+    mockMvc
+        .perform(
+            get(API_QUALITY_CHECKS + "/export")
+                .param("categoryName", "Data Completeness", "Validity"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(2))
+        .andExpect(jsonPath("$[0].name").value("Completeness Check"))
+        .andExpect(jsonPath("$[1].name").value("Validity Check"));
+  }
+
+  @Test
+  void export_withCategoryNameAndBlank_returnsCategoryAndUncategorized() throws Exception {
+    saveCheckInCategory("Data Completeness", "Completeness Check");
+    saveCheckInCategory("Validity", "Validity Check");
+    qualityCheckRepository.save(
+        new QualityCheck("Uncategorized Check", "Without category", "define Test: false"));
+
+    mockMvc
+        .perform(get(API_QUALITY_CHECKS + "/export").param("categoryName", "Data Completeness", ""))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(2))
+        .andExpect(jsonPath("$[0].name").value("Completeness Check"))
+        .andExpect(jsonPath("$[1].name").value("Uncategorized Check"));
+  }
+
+  private void saveCheckInCategory(String categoryName, String checkName) {
+    Category category = categoryRepository.save(new Category(categoryName, "#FF5733"));
+    QualityCheck qualityCheck =
+        qualityCheckRepository.save(
+            new QualityCheck(checkName, "With category", "define Test: true"));
+    qualityCheck.setCategory(category);
+    qualityCheckRepository.save(qualityCheck);
+  }
+
+  @Test
   void findAll_withEmptyCategoryNameFilter_returnsUncategorizedQualityChecks() throws Exception {
     Category category = categoryRepository.save(new Category("Data Completeness", "#FF5733"));
     QualityCheck categorizedCheck =

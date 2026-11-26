@@ -17,7 +17,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.hateoas.EntityModel;
@@ -35,7 +34,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -109,7 +107,9 @@ class QualityCheckController {
       summary = "Export quality checks as a JSON file",
       description =
           "Downloads the quality checks as a portable JSON file for import into another agent or"
-              + " version control. Checks are never executed and no report is started.")
+              + " version control. All checks matching the filter are returned, ignoring"
+              + " pagination and sorted by name by default. Checks are never executed and no report"
+              + " is started.")
   @ApiResponses(
       value = {
         @ApiResponse(
@@ -118,20 +118,29 @@ class QualityCheckController {
             content = @Content(mediaType = "application/json"))
       })
   public ResponseEntity<List<QualityCheckExportDTO>> export(
-      @Parameter(
-              description =
-                  "Filter by category name; omit for all checks, blank for uncategorized checks")
-          @RequestParam(name = "categoryName", required = false)
-          String categoryName) {
+      @ParameterObject QualityCheckFilterDTO filter) {
     return ResponseEntity.ok()
         .contentType(MediaType.APPLICATION_JSON)
         .header(
             HttpHeaders.CONTENT_DISPOSITION,
-            ContentDisposition.attachment()
-                .filename("quality-checks.json", StandardCharsets.UTF_8)
-                .build()
-                .toString())
-        .body(qualityCheckService.exportAll(categoryName));
+            ContentDisposition.attachment().filename("quality-checks.json").build().toString())
+        .body(exportMatches(filter));
+  }
+
+  /**
+   * Fetches every check matching the filter: the export is unpaged and, unless the caller asked for
+   * another field, sorted by name.
+   */
+  private List<QualityCheckExportDTO> exportMatches(QualityCheckFilterDTO filter) {
+    filter.setPage(0);
+    filter.setSize(Integer.MAX_VALUE);
+    if (filter.getSort() == null) {
+      filter.setSort("name");
+      filter.setOrder(QualityCheckFilterDTO.SortOrder.ASC);
+    }
+    return qualityCheckService.findAll(filter).getContent().stream()
+        .map(QualityCheckExportDTO::from)
+        .toList();
   }
 
   @PutMapping("/{id}")

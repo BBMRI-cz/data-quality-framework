@@ -3,8 +3,10 @@ package eu.bbmri_eric.quality.agent.common;
 import eu.bbmri_eric.quality.agent.common.dto.FilterDTO;
 import eu.bbmri_eric.quality.agent.common.dto.PageResponse;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import lombok.NonNull;
 import lombok.extern.apachecommons.CommonsLog;
@@ -83,9 +85,14 @@ public class LinkBuilder {
 
     for (Field field : fields) {
       try {
+        if (Modifier.isStatic(field.getModifiers())) {
+          continue;
+        }
         field.setAccessible(true);
         Object value = field.get(filterDTO);
-        if (value != null) {
+        if (value instanceof Collection<?> values) {
+          values.forEach(item -> queryParams.add(field.getName(), String.valueOf(item)));
+        } else if (value != null) {
           queryParams.add(field.getName(), String.valueOf(value));
         }
       } catch (Exception e) {

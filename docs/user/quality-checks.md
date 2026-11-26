@@ -7,7 +7,9 @@ The **Quality Checks** page lists all data quality checks configured on your age
 
 Click **Export** to download your quality checks as a JSON file (`quality-checks.json`). The
 export respects the current category filter: with no filter selected you get every check, and
-with a category selected you get only that category's checks.
+with a category selected you get only that category's checks. The API behind the button also
+accepts several `categoryName` parameters at once, which are combined with OR, while the page
+itself always exports the currently selected category.
 
 Exporting is read-only — it never runs the check queries, never starts a report, and never
 spends any differential privacy budget.

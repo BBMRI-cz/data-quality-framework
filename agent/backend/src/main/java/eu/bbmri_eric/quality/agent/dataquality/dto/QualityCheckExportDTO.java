@@ -2,7 +2,6 @@ package eu.bbmri_eric.quality.agent.dataquality.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import eu.bbmri_eric.quality.agent.dataquality.QualityCheckType;
-import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
@@ -48,12 +47,12 @@ public class QualityCheckExportDTO {
   private String category;
 
   /**
-   * Maps a quality check entity to its portable export representation.
+   * Maps a quality check to its portable export representation.
    *
-   * @param check the entity to map
+   * @param check the check to map
    * @return the export DTO, with the category carried by name
    */
-  public static QualityCheckExportDTO from(QualityCheck check) {
+  public static QualityCheckExportDTO from(QualityCheckDTO check) {
     QualityCheckExportDTO dto = new QualityCheckExportDTO();
     dto.setName(check.getName());
     dto.setDescription(check.getDescription());
