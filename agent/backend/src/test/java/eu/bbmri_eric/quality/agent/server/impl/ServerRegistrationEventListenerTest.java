@@ -6,6 +6,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import eu.bbmri_eric.quality.agent.server.CentralServerClient;
 import eu.bbmri_eric.quality.agent.server.CentralServerClientFactory;
 import eu.bbmri_eric.quality.agent.server.RegistrationCredentials;
@@ -18,8 +21,10 @@ import eu.bbmri_eric.quality.agent.server.domain.ServerInteraction;
 import eu.bbmri_eric.quality.agent.server.event.ServerRegistrationEvent;
 import java.util.List;
 import java.util.Optional;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 class ServerRegistrationEventListenerTest {
@@ -30,6 +35,8 @@ class ServerRegistrationEventListenerTest {
   private ServerRepository serverRepository;
   private Server server;
   private ServerRegistrationEventListener listener;
+  private Logger listenerLogger;
+  private ListAppender<ILoggingEvent> logAppender;
 
   @BeforeEach
   void setUp() {
@@ -41,6 +48,15 @@ class ServerRegistrationEventListenerTest {
     server = new Server(SERVER_URL, "Central Server");
     when(serverRepository.findByUrl(SERVER_URL)).thenReturn(Optional.of(server));
     listener = new ServerRegistrationEventListener(clientFactory, serverRepository);
+    listenerLogger = (Logger) LoggerFactory.getLogger(ServerRegistrationEventListener.class);
+    logAppender = new ListAppender<>();
+    logAppender.start();
+    listenerLogger.addAppender(logAppender);
+  }
+
+  @AfterEach
+  void tearDown() {
+    listenerLogger.detachAndStopAllAppenders();
   }
 
   private List<String> registrationDescriptions() {
@@ -131,5 +147,33 @@ class ServerRegistrationEventListenerTest {
             trace.
             Technical detail: boom [UNKNOWN]
             Server: https://central.example.com""");
+  }
+
+  @Test
+  void handleServerRegistration_unknownReasonFailure_logsWarnWithStacktrace() {
+    when(client.register())
+        .thenThrow(
+            RegistrationFailedException.forReason(
+                RegistrationFailureReason.UNKNOWN,
+                "Unexpected client failure",
+                new IllegalStateException("root cause")));
+
+    listener.handleServerRegistration(new ServerRegistrationEvent("agent-1", SERVER_URL));
+
+    assertThat(logAppender.list).hasSize(1);
+    assertThat(logAppender.list.getFirst().getThrowableProxy()).isNotNull();
+  }
+
+  @Test
+  void handleServerRegistration_classifiedFailure_logsWarnWithoutStacktrace() {
+    when(client.register())
+        .thenThrow(
+            RegistrationFailedException.forHttpStatus(
+                HttpStatus.CONFLICT, "Agent agent-1 already exists", null));
+
+    listener.handleServerRegistration(new ServerRegistrationEvent("agent-1", SERVER_URL));
+
+    assertThat(logAppender.list).hasSize(1);
+    assertThat(logAppender.list.getFirst().getThrowableProxy()).isNull();
   }
 }

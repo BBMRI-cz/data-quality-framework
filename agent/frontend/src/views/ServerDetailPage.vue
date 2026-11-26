@@ -239,6 +239,10 @@
   const showKeyModal = ref(false);
   const isSavingKey = ref(false);
 
+  // Maximum length of a JSON description preview in the table cell; the JSON button opens the
+  // full content in the viewer modal.
+  const JSON_PREVIEW_LENGTH = 120;
+
   function openKeyModal() {
     showKeyModal.value = true;
   }
@@ -285,7 +289,14 @@
   }
 
   function firstLine(description) {
-    return description ? description.split('\n')[0] : '';
+    if (!description) {
+      return '';
+    }
+    const line = description.split('\n')[0];
+    if (isValidJson(description) && line.length > JSON_PREVIEW_LENGTH) {
+      return line.slice(0, JSON_PREVIEW_LENGTH) + '…';
+    }
+    return line;
   }
 
   // Details button for plain-text descriptions that don't fit on the first row

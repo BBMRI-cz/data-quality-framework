@@ -15,17 +15,17 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 import javax.net.ssl.SSLException;
-import org.apache.hc.client5.http.ConnectTimeoutException;
+import org.apache.hc.core5.http.ConnectionRequestTimeoutException;
 import org.springframework.web.client.HttpStatusCodeException;
-import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
 
 /**
  * Classifies low-level REST client failures of a registration request into {@link
  * RegistrationFailedException}s carrying a {@link RegistrationFailureReason}. HTTP error responses
  * are classified by status and their RFC-7807 ProblemDetail {@code detail} is extracted as the
- * failure message; I/O failures are classified by walking the cause chain for timeouts, TLS
- * problems and unreachable hosts.
+ * failure message; all other client failures (I/O errors, including timeouts while reading the
+ * response body) are classified by walking the cause chain for timeouts, TLS problems and
+ * unreachable hosts.
  */
 final class RegistrationFailureClassifier {
 
@@ -42,10 +42,7 @@ final class RegistrationFailureClassifier {
   RegistrationFailedException classify(RestClientException failure) {
     return switch (failure) {
       case HttpStatusCodeException response -> fromHttpResponse(response);
-      case ResourceAccessException ioFailure -> fromIoFailure(ioFailure);
-      default ->
-          RegistrationFailedException.forReason(
-              RegistrationFailureReason.UNKNOWN, failure.getMessage(), failure);
+      default -> fromCauseChain(failure);
     };
   }
 
@@ -57,7 +54,7 @@ final class RegistrationFailureClassifier {
     return RegistrationFailedException.forHttpStatus(response.getStatusCode(), message, response);
   }
 
-  private static RegistrationFailedException fromIoFailure(ResourceAccessException failure) {
+  private static RegistrationFailedException fromCauseChain(RestClientException failure) {
     List<Throwable> causeChain =
         Stream.iterate(failure, Objects::nonNull, Throwable::getCause)
             .limit(MAX_CAUSE_DEPTH)
@@ -76,7 +73,7 @@ final class RegistrationFailureClassifier {
 
   private static Optional<RegistrationFailureReason> reasonFor(Throwable cause) {
     return switch (cause) {
-      case ConnectTimeoutException _, SocketTimeoutException _, HttpTimeoutException _ ->
+      case SocketTimeoutException _, ConnectionRequestTimeoutException _, HttpTimeoutException _ ->
           Optional.of(RegistrationFailureReason.TIMEOUT);
       case SSLException _ -> Optional.of(RegistrationFailureReason.TLS);
       case UnknownHostException _, ConnectException _, NoRouteToHostException _ ->

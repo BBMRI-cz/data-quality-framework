@@ -47,7 +47,7 @@ class ServerRegistrationEventListener {
       updateServerWithCredentials(serverUrl, credentials);
     } catch (RegistrationFailedException e) {
       String failure = describeFailure(serverUrl, e);
-      log.warn("Registration with server {} failed: {}", serverUrl, failure);
+      logFailure(serverUrl, failure, e);
       recordRegistrationFailure(serverUrl, failure);
     } catch (RuntimeException e) {
       log.error("Unexpected error while registering with server {}", serverUrl, e);
@@ -109,6 +109,19 @@ class ServerRegistrationEventListener {
         Server: %s"""
         .formatted(
             reason.summary(), reason.hint(), failure.getMessage(), reason, statusPart, serverUrl);
+  }
+
+  /**
+   * Logs a failed registration. Unclassified failures include the stack trace, because the {@link
+   * RegistrationFailureReason#UNKNOWN} hint points operators to the agent log for it.
+   */
+  private static void logFailure(
+      String serverUrl, String description, RegistrationFailedException failure) {
+    if (failure.getReason() == RegistrationFailureReason.UNKNOWN) {
+      log.warn("Registration with server {} failed: {}", serverUrl, description, failure);
+      return;
+    }
+    log.warn("Registration with server {} failed: {}", serverUrl, description);
   }
 
   private static String messageOrClassName(RuntimeException e) {

@@ -56,13 +56,15 @@ public final class RegistrationFailedException extends ServerCommunicationExcept
   /**
    * Creates the exception for a registration whose response was accepted but incomplete.
    *
+   * @param status the HTTP status of the incomplete response
    * @param missingField the name of the first missing response field
    * @return the exception
    */
-  public static RegistrationFailedException incompleteResponse(String missingField) {
+  public static RegistrationFailedException incompleteResponse(
+      HttpStatusCode status, String missingField) {
     return new RegistrationFailedException(
         RegistrationFailureReason.INCOMPLETE_RESPONSE,
-        null,
+        status.value(),
         "Incomplete registration response: missing %s".formatted(missingField),
         null);
   }

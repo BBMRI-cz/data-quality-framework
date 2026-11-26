@@ -350,7 +350,8 @@ class CentralServerClientImpl implements CentralServerClient {
     AgentRegistrationResponse registrationResponse = response.getBody();
     Optional<String> missingField = findMissingRegistrationField(registrationResponse);
     if (missingField.isPresent()) {
-      throw RegistrationFailedException.incompleteResponse(missingField.get());
+      throw RegistrationFailedException.incompleteResponse(
+          response.getStatusCode(), missingField.get());
     }
     String clientId = registrationResponse.getUser().getUsername();
     String clientSecret = registrationResponse.getUser().getTemporaryPassword();

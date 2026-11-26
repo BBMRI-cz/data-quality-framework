@@ -21,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import javax.net.ssl.SSLHandshakeException;
 import org.apache.hc.client5.http.ConnectTimeoutException;
+import org.apache.hc.core5.http.ConnectionRequestTimeoutException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.info.BuildProperties;
@@ -419,6 +420,36 @@ class CentralServerClientImplTest {
   }
 
   @Test
+  void register_readTimeoutWhileExtractingBody_throwsTimeout() {
+    stubRegistrationThrowing(
+        new RestClientException(
+            "Error while extracting response for type [AgentRegistrationResponse] and content"
+                + " type [application/json]",
+            new SocketTimeoutException("Read timed out")));
+
+    assertThatThrownBy(() -> client.register())
+        .isInstanceOfSatisfying(
+            RegistrationFailedException.class,
+            ex -> {
+              assertThat(ex.getReason()).isEqualTo(RegistrationFailureReason.TIMEOUT);
+              assertThat(ex.getHttpStatus()).isEmpty();
+              assertThat(ex).hasMessageContaining("Read timed out");
+            });
+  }
+
+  @Test
+  void register_connectionPoolTimeout_throwsTimeout() {
+    stubRegistrationThrowing(
+        new ResourceAccessException(
+            "I/O error on POST request", new ConnectionRequestTimeoutException()));
+
+    assertThatThrownBy(() -> client.register())
+        .isInstanceOfSatisfying(
+            RegistrationFailedException.class,
+            ex -> assertThat(ex.getReason()).isEqualTo(RegistrationFailureReason.TIMEOUT));
+  }
+
+  @Test
   void register_connectTimeout_throwsTimeout() {
     stubRegistrationThrowing(
         new ResourceAccessException(
@@ -480,6 +511,7 @@ class CentralServerClientImplTest {
             RegistrationFailedException.class,
             ex -> {
               assertThat(ex.getReason()).isEqualTo(RegistrationFailureReason.INCOMPLETE_RESPONSE);
+              assertThat(ex.getHttpStatus()).hasValue(200);
               assertThat(ex)
                   .hasMessage("Incomplete registration response: missing temporaryPassword");
             });

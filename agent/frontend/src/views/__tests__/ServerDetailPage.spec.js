@@ -109,4 +109,25 @@ describe('ServerDetailPage', () => {
     expect(wrapper.find('.description-first-line').text()).toBe('OK');
     expect(findDetailsButton(wrapper)).toBeUndefined();
   });
+
+  it('truncates long compact-JSON descriptions and keeps the JSON button', async () => {
+    const description = JSON.stringify({
+      total: 1000,
+      passed: 850,
+      failed: 150,
+      details: 'x'.repeat(300),
+    });
+    serverService.get.mockResolvedValue(
+      serverWith([{ id: 1, type: 'COMMUNICATION', timestamp: '2026-01-01T10:00:00Z', description }])
+    );
+    const wrapper = mountPage();
+    await flushPromises();
+
+    const preview = wrapper.find('.description-first-line').text();
+    expect(preview.length).toBeLessThanOrEqual(121);
+    expect(preview.endsWith('…')).toBe(true);
+
+    const jsonButton = wrapper.findAll('button').find((button) => button.text().trim() === 'JSON');
+    expect(jsonButton).toBeTruthy();
+  });
 });
