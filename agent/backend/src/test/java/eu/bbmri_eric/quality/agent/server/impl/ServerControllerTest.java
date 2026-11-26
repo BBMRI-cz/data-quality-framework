@@ -469,4 +469,65 @@ class ServerControllerTest {
         .andExpect(jsonPath("$._embedded.servers").isNotEmpty())
         .andExpect(jsonPath("$._links.self").exists());
   }
+
+  @Test
+  @WithUserDetails("admin")
+  void retryRegistration_serverWithoutCredentials_accepted() throws Exception {
+    ServerCreateDto createDto = new ServerCreateDto();
+    createDto.setUrl("https://example.com");
+    createDto.setName("Test Server");
+
+    String location =
+        mockMvc
+            .perform(
+                post(SERVERS_ENDPOINT)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(createDto)))
+            .andExpect(status().isCreated())
+            .andReturn()
+            .getResponse()
+            .getHeader("Location");
+
+    mockMvc.perform(post(location + "/registration/retry")).andExpect(status().isAccepted());
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void retryRegistration_nonExistingServer_returnsNotFound() throws Exception {
+    mockMvc
+        .perform(post(SERVERS_ENDPOINT + "/non-existing-id/registration/retry"))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void retryRegistration_serverWithCredentials_returnsConflict() throws Exception {
+    ServerCreateDto createDto = new ServerCreateDto();
+    createDto.setUrl("https://example.com");
+    createDto.setName("Test Server");
+
+    String location =
+        mockMvc
+            .perform(
+                post(SERVERS_ENDPOINT)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(createDto)))
+            .andExpect(status().isCreated())
+            .andReturn()
+            .getResponse()
+            .getHeader("Location");
+
+    ServerUpdateDto updateDto = new ServerUpdateDto();
+    updateDto.setClientId("client-1");
+    updateDto.setClientSecret("secret-1");
+
+    mockMvc
+        .perform(
+            put(location)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateDto)))
+        .andExpect(status().isOk());
+
+    mockMvc.perform(post(location + "/registration/retry")).andExpect(status().isConflict());
+  }
 }

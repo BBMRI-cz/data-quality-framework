@@ -118,4 +118,23 @@ class ServerServiceImpl implements ServerService {
     serverRepository.deleteById(id);
     log.info("Deleted server {}", id);
   }
+
+  @Override
+  public void retryRegistration(String id) {
+    Server server =
+        serverRepository
+            .findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Server not found with id: " + id));
+    if (!server.getClientId().isEmpty()) {
+      throw new EntityAlreadyExistsException(
+          "Server %s already holds registration credentials; remove and re-add the server instead"
+              .formatted(server.getUrl()));
+    }
+    server.setRegistrationRetryCount(0);
+    server.setNextRegistrationRetryAt(null);
+    serverRepository.save(server);
+    String agentId = settingsService.getSettings().getAgentId();
+    eventPublisher.publishEvent(new ServerRegistrationEvent(agentId, server.getUrl()));
+    log.info("Manual registration retry requested for server {}", server.getUrl());
+  }
 }

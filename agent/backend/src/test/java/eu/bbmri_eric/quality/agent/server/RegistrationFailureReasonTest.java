@@ -41,4 +41,21 @@ class RegistrationFailureReasonTest {
     assertThat(RegistrationFailureReason.fromHttpStatus(HttpStatus.valueOf(status)))
         .isEqualTo(expected);
   }
+
+  @ParameterizedTest(name = "isRetryable_{0}_is_{1}")
+  @CsvSource({
+    "UNREACHABLE, true",
+    "TIMEOUT, true",
+    "TLS, true",
+    "SERVER_ERROR, true",
+    "RATE_LIMITED, true",
+    "UNAUTHORIZED, false",
+    "CONFLICT, false",
+    "CLIENT_ERROR, false",
+    "INCOMPLETE_RESPONSE, false",
+    "UNKNOWN, false",
+  })
+  void isRetryable_reason_matchesRetryPolicy(RegistrationFailureReason reason, boolean expected) {
+    assertThat(reason.isRetryable()).isEqualTo(expected);
+  }
 }

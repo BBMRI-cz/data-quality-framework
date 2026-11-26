@@ -90,4 +90,14 @@ class ServerController {
     serverService.deleteById(id);
     return ResponseEntity.noContent().build();
   }
+
+  @PostMapping("/{id}/registration/retry")
+  @Operation(
+      summary = "Retry registration",
+      description = "Re-triggers registration with the central server (asynchronous)")
+  public ResponseEntity<Void> retryRegistration(
+      @Parameter(description = "Server ID", required = true) @PathVariable String id) {
+    serverService.retryRegistration(id);
+    return ResponseEntity.accepted().build();
+  }
 }
