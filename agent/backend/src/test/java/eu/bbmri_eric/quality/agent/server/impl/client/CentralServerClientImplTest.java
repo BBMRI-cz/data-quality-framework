@@ -481,9 +481,7 @@ class CentralServerClientImplTest {
             ex -> {
               assertThat(ex.getReason()).isEqualTo(RegistrationFailureReason.INCOMPLETE_RESPONSE);
               assertThat(ex)
-                  .hasMessageContaining("temporaryPassword")
-                  .hasMessageContaining("agent-1")
-                  .hasMessageContaining(SERVER_URL);
+                  .hasMessage("Incomplete registration response: missing temporaryPassword");
             });
   }
 

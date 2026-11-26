@@ -465,8 +465,7 @@ class CentralServerClientImpl implements CentralServerClient {
     String missingField = firstMissingRegistrationField(registrationResponse);
     if (missingField != null) {
       throw new ServerCommunicationException(
-          "Incomplete registration response for agent %s at server %s: missing %s"
-              .formatted(agentId, serverUrl, missingField),
+          "Incomplete registration response: missing %s".formatted(missingField),
           RegistrationFailureReason.INCOMPLETE_RESPONSE,
           null,
           null,

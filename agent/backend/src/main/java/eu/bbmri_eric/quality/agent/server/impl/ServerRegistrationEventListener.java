@@ -3,6 +3,7 @@ package eu.bbmri_eric.quality.agent.server.impl;
 import eu.bbmri_eric.quality.agent.server.CentralServerClient;
 import eu.bbmri_eric.quality.agent.server.CentralServerClientFactory;
 import eu.bbmri_eric.quality.agent.server.RegistrationCredentials;
+import eu.bbmri_eric.quality.agent.server.RegistrationFailureReason;
 import eu.bbmri_eric.quality.agent.server.ServerCommunicationException;
 import eu.bbmri_eric.quality.agent.server.domain.InteractionType;
 import eu.bbmri_eric.quality.agent.server.domain.ServerConnectionStatus;
@@ -79,23 +80,30 @@ class ServerRegistrationEventListener {
   }
 
   /**
-   * Builds the interaction description for a failed registration attempt. Classified failures carry
-   * the reason and HTTP status in brackets, followed by the exception message and the server URL;
-   * any other failure falls back to its plain message.
+   * Builds the multi-line interaction description for a failed registration attempt: a readable
+   * summary and a "what to check" hint for the failure reason, the technical detail with the
+   * exception message, reason and HTTP status (when known), and the server URL. Unclassified
+   * failures are reported as {@link RegistrationFailureReason#UNKNOWN}.
    *
    * @param serverUrl the URL of the central server
    * @param e the failure
    * @return the interaction description
    */
   private String describeFailure(String serverUrl, Exception e) {
+    RegistrationFailureReason reason = RegistrationFailureReason.UNKNOWN;
+    Integer httpStatus = null;
     if (e instanceof ServerCommunicationException communication
         && communication.getReason() != null) {
-      String statusPart =
-          communication.getHttpStatus() != null ? ", HTTP " + communication.getHttpStatus() : "";
-      String message = e.getMessage() != null ? e.getMessage() : communication.getReason().name();
-      return "Registration failed [%s%s]: %s (server: %s)"
-          .formatted(communication.getReason(), statusPart, message, serverUrl);
+      reason = communication.getReason();
+      httpStatus = communication.getHttpStatus();
     }
-    return e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+    String detail = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+    String statusPart = httpStatus != null ? ", HTTP " + httpStatus : "";
+    return """
+        Registration failed: %s
+        What to check: %s
+        Technical detail: %s [%s%s]
+        Server: %s"""
+        .formatted(reason.summary(), reason.hint(), detail, reason, statusPart, serverUrl);
   }
 }

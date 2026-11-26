@@ -64,9 +64,10 @@ class ServerRegistrationEventListenerTest {
   }
 
   @Test
-  void handleServerRegistration_classifiedFailure_recordsReasonAndStatus() throws Exception {
+  void handleServerRegistration_conflictFailure_recordsReadableFourLineDescription()
+      throws Exception {
     // message equals the ProblemDetail detail, exactly as CentralServerClientImpl produces it;
-    // the status must appear only once, in the bracketed prefix
+    // the status must appear only once, in the bracketed technical detail
     when(client.register())
         .thenThrow(
             new ServerCommunicationException(
@@ -84,19 +85,55 @@ class ServerRegistrationEventListenerTest {
     assertThat(descriptions).hasSize(1);
     assertThat(descriptions.getFirst())
         .isEqualTo(
-            "Registration failed [CONFLICT, HTTP 409]: Agent agent-1 already exists (server: "
-                + SERVER_URL
-                + ")");
+            """
+            Registration failed: This agent is already registered on the central server
+            What to check: Ask the central server administrator to remove the existing \
+            registration of this agent, then remove and add the server here again.
+            Technical detail: Agent agent-1 already exists [CONFLICT, HTTP 409]
+            Server: https://central.example.com""");
   }
 
   @Test
-  void handleServerRegistration_unclassifiedFailure_recordsGenericMessage() throws Exception {
+  void handleServerRegistration_unreachableFailure_omitsHttpStatusPart() throws Exception {
+    when(client.register())
+        .thenThrow(
+            new ServerCommunicationException(
+                "Connection refused", RegistrationFailureReason.UNREACHABLE, null, null, null));
+
+    listener.handleServerRegistration(new ServerRegistrationEvent("agent-1", SERVER_URL));
+
+    verify(serverRepository).save(server);
+    assertThat(server.getStatus()).isEqualTo(ServerConnectionStatus.ERROR);
+    List<String> descriptions = registrationDescriptions();
+    assertThat(descriptions).hasSize(1);
+    assertThat(descriptions.getFirst())
+        .isEqualTo(
+            "Registration failed: Cannot reach the central server\n"
+                + "What to check: Check the server URL and port, that the host name resolves"
+                + " (DNS), and that firewalls, proxies or Kubernetes NetworkPolicies allow"
+                + " outgoing connections from the agent.\n"
+                + "Technical detail: Connection refused [UNREACHABLE]\n"
+                + "Server: "
+                + SERVER_URL);
+  }
+
+  @Test
+  void handleServerRegistration_unclassifiedFailure_recordsUnknownReason() throws Exception {
     when(client.register()).thenThrow(new RuntimeException("boom"));
 
     listener.handleServerRegistration(new ServerRegistrationEvent("agent-1", SERVER_URL));
 
     verify(serverRepository).save(server);
     assertThat(server.getStatus()).isEqualTo(ServerConnectionStatus.ERROR);
-    assertThat(registrationDescriptions()).containsExactly("boom");
+    List<String> descriptions = registrationDescriptions();
+    assertThat(descriptions).hasSize(1);
+    assertThat(descriptions.getFirst())
+        .isEqualTo(
+            """
+            Registration failed: Registration failed for an unexpected reason
+            What to check: See the technical detail below and the agent log for the full stack \
+            trace.
+            Technical detail: boom [UNKNOWN]
+            Server: https://central.example.com""");
   }
 }
