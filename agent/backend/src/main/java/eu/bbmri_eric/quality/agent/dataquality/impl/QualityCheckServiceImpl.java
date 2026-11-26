@@ -125,7 +125,7 @@ class QualityCheckServiceImpl implements QualityCheckService {
   private Page<QualityCheck> fetchFilteredPage(
       QualityCheckFilterDTO filter, PageRequest pageRequest) {
     return qualityCheckRepository.findAll(
-        QualityCheckSpecification.withCategoryName(filter.getCategoryName()), pageRequest);
+        QualityCheckSpecification.withCategoryNames(filter.getCategoryName()), pageRequest);
   }
 
   private PageResponse<QualityCheckDTO> findAllInternal(

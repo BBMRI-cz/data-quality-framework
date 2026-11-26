@@ -9,6 +9,13 @@
 
     <div class="page-content">
       <div class="page-actions">
+        <ActionButton
+          variant="secondary"
+          icon="bi bi-download"
+          text="Export"
+          :loading="exporting"
+          @click="handleExport"
+        />
         <ActionButton to="/quality-checks/new" icon="bi bi-plus" text="Add Quality Check" />
       </div>
 
@@ -54,7 +61,9 @@
   import CategoryFilter from '@/components/CategoryFilter.vue';
   import { useQualityChecks } from '@/composables/useQualityChecks.js';
   import { categoryService } from '@/services/categoryService.js';
+  import { qualityCheckService } from '@/services/qualityCheckService.js';
   import { notificationService } from '@/services/notificationService.js';
+  import { downloadBlob } from '@/utils/downloadUtils.js';
 
   const route = useRoute();
   const router = useRouter();
@@ -72,6 +81,7 @@
   const selectedCategoryName = ref(null);
   const tableRef = ref(null);
   const bulkUpdating = ref(false);
+  const exporting = ref(false);
 
   const categoryNameForApi = computed(() => {
     if (selectedCategoryName.value === 'none') {
@@ -115,6 +125,21 @@
       );
     } finally {
       bulkUpdating.value = false;
+    }
+  };
+
+  const handleExport = async () => {
+    exporting.value = true;
+    try {
+      const { blob, filename } = await qualityCheckService.exportAll({
+        categoryName: categoryNameForApi.value,
+      });
+      downloadBlob(blob, filename);
+    } catch (error) {
+      console.error('Failed to export quality checks:', error);
+      notificationService.error('Export Failed', 'Unable to export the quality checks.');
+    } finally {
+      exporting.value = false;
     }
   };
 
@@ -177,6 +202,7 @@
   .page-actions {
     display: flex;
     justify-content: flex-end;
+    gap: var(--spacing-sm);
     margin-bottom: var(--spacing-md);
   }
 

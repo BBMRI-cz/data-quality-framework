@@ -4,10 +4,12 @@ import eu.bbmri_eric.quality.agent.dataquality.QualityCheckService;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckBulkUpdateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckExportDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckFilterDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckUpdateDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -19,6 +21,9 @@ import java.util.List;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.PagedModel;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -95,6 +100,47 @@ class QualityCheckController {
   public ResponseEntity<PagedModel<EntityModel<QualityCheckDTO>>> findAll(
       @ParameterObject QualityCheckFilterDTO filter) {
     return ResponseEntity.ok(linkBuilder.toPagedModel(qualityCheckService.findAll(filter), filter));
+  }
+
+  @GetMapping(value = "/export", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "Export quality checks as a JSON file",
+      description =
+          "Downloads the quality checks as a portable JSON file for import into another agent or"
+              + " version control. All checks matching the filter are returned, ignoring"
+              + " pagination and sorted by name by default. Checks are never executed and no report"
+              + " is started.")
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "JSON file with the exported quality checks",
+            content = @Content(mediaType = "application/json"))
+      })
+  public ResponseEntity<List<QualityCheckExportDTO>> export(
+      @ParameterObject QualityCheckFilterDTO filter) {
+    return ResponseEntity.ok()
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(
+            HttpHeaders.CONTENT_DISPOSITION,
+            ContentDisposition.attachment().filename("quality-checks.json").build().toString())
+        .body(exportMatches(filter));
+  }
+
+  /**
+   * Fetches every check matching the filter: the export is unpaged and, unless the caller asked for
+   * another field, sorted by name.
+   */
+  private List<QualityCheckExportDTO> exportMatches(QualityCheckFilterDTO filter) {
+    filter.setPage(0);
+    filter.setSize(Integer.MAX_VALUE);
+    if (filter.getSort() == null) {
+      filter.setSort("name");
+      filter.setOrder(QualityCheckFilterDTO.SortOrder.ASC);
+    }
+    return qualityCheckService.findAll(filter).getContent().stream()
+        .map(QualityCheckExportDTO::from)
+        .toList();
   }
 
   @PutMapping("/{id}")

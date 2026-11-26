@@ -2,6 +2,7 @@ package eu.bbmri_eric.quality.agent.dataquality.dto;
 
 import eu.bbmri_eric.quality.agent.common.dto.FilterDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,9 +23,11 @@ public class QualityCheckFilterDTO extends FilterDTO {
 
   @Schema(
       description =
-          "Category name to filter by. When omitted, no category filter is applied. When blank, only uncategorized quality checks are returned.",
+          "Category names to filter by; repeat the parameter to match several categories, which"
+              + " are combined with OR. When omitted, no category filter is applied. When blank,"
+              + " only uncategorized quality checks are returned.",
       example = "Data Completeness")
-  private String categoryName;
+  private List<String> categoryName;
 
   /**
    * Constructs a filter with pagination/sorting parameters only.

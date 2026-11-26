@@ -1,11 +1,13 @@
 package eu.bbmri_eric.quality.agent.dataquality.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -24,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.json.JsonMapper;
@@ -723,6 +726,143 @@ class QualityCheckIntegrationTests {
         .andExpect(jsonPath("$._embedded.quality-checks").isArray())
         .andExpect(jsonPath("$._embedded.quality-checks.length()").value(2))
         .andExpect(jsonPath("$.page.totalElements").value(2));
+  }
+
+  @Test
+  void export_all_returnsJsonAttachmentWithPortableFields() throws Exception {
+    Category category = categoryRepository.save(new Category("Data Completeness", "#FF5733"));
+    QualityCheck categorizedCheck =
+        qualityCheckRepository.save(
+            new QualityCheck("Categorized Check", "With category", "define Test: true"));
+    categorizedCheck.setType(QualityCheckType.SQL);
+    categorizedCheck.setWarningThreshold(15);
+    categorizedCheck.setErrorThreshold(45);
+    categorizedCheck.setEpsilonBudget(1.0);
+    categorizedCheck.setCategory(category);
+    qualityCheckRepository.save(categorizedCheck);
+    qualityCheckRepository.save(
+        new QualityCheck("Uncategorized Check", "Without category", "define Test: false"));
+
+    mockMvc
+        .perform(get(API_QUALITY_CHECKS + "/export"))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(
+            header()
+                .string(
+                    "Content-Disposition",
+                    containsString("attachment; filename=\"quality-checks.json\"")))
+        .andExpect(jsonPath("$.length()").value(2))
+        .andExpect(jsonPath("$[0].name").value("Categorized Check"))
+        .andExpect(jsonPath("$[0].description").value("With category"))
+        .andExpect(jsonPath("$[0].query").value("define Test: true"))
+        .andExpect(jsonPath("$[0].type").value("SQL"))
+        .andExpect(jsonPath("$[0].warningThreshold").value(15))
+        .andExpect(jsonPath("$[0].errorThreshold").value(45))
+        .andExpect(jsonPath("$[0].epsilonBudget").value(1.0))
+        .andExpect(jsonPath("$[0].category").value("Data Completeness"))
+        .andExpect(jsonPath("$[1].name").value("Uncategorized Check"))
+        .andExpect(jsonPath("$[1].category").doesNotExist())
+        .andExpect(jsonPath("$[1].epsilonBudget").doesNotExist())
+        .andExpect(jsonPath("$[*].id").doesNotExist())
+        .andExpect(jsonPath("$[*].active").doesNotExist());
+  }
+
+  @Test
+  void export_withCategoryNameFilter_returnsOnlyMatchingChecks() throws Exception {
+    Category category = categoryRepository.save(new Category("Data Completeness", "#FF5733"));
+    QualityCheck categorizedCheck =
+        qualityCheckRepository.save(
+            new QualityCheck("Categorized Check", "With category", "define Test: true"));
+    categorizedCheck.setCategory(category);
+    qualityCheckRepository.save(categorizedCheck);
+    qualityCheckRepository.save(
+        new QualityCheck("Uncategorized Check", "Without category", "define Test: false"));
+
+    mockMvc
+        .perform(get(API_QUALITY_CHECKS + "/export").param("categoryName", "Data Completeness"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(1))
+        .andExpect(jsonPath("$[0].name").value("Categorized Check"));
+  }
+
+  @Test
+  void export_withBlankCategoryName_returnsOnlyUncategorized() throws Exception {
+    Category category = categoryRepository.save(new Category("Data Completeness", "#FF5733"));
+    QualityCheck categorizedCheck =
+        qualityCheckRepository.save(
+            new QualityCheck("Categorized Check", "With category", "define Test: true"));
+    categorizedCheck.setCategory(category);
+    qualityCheckRepository.save(categorizedCheck);
+    qualityCheckRepository.save(
+        new QualityCheck("Uncategorized Check", "Without category", "define Test: false"));
+
+    mockMvc
+        .perform(get(API_QUALITY_CHECKS + "/export").param("categoryName", ""))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(1))
+        .andExpect(jsonPath("$[0].name").value("Uncategorized Check"));
+  }
+
+  @Test
+  @WithAnonymousUser
+  void export_withoutAuthentication_returnsUnauthorized() throws Exception {
+    mockMvc.perform(get(API_QUALITY_CHECKS + "/export")).andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  void findAll_withMultipleCategoryNames_returnsChecksFromAllCategories() throws Exception {
+    saveCheckInCategory("Data Completeness", "Completeness Check");
+    saveCheckInCategory("Validity", "Validity Check");
+    qualityCheckRepository.save(
+        new QualityCheck("Uncategorized Check", "Without category", "define Test: false"));
+
+    mockMvc
+        .perform(get(API_QUALITY_CHECKS).param("categoryName", "Data Completeness", "Validity"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$._embedded.quality-checks.length()").value(2))
+        .andExpect(jsonPath("$.page.totalElements").value(2));
+  }
+
+  @Test
+  void export_withMultipleCategoryNames_returnsChecksFromAllCategories() throws Exception {
+    saveCheckInCategory("Data Completeness", "Completeness Check");
+    saveCheckInCategory("Validity", "Validity Check");
+    qualityCheckRepository.save(
+        new QualityCheck("Uncategorized Check", "Without category", "define Test: false"));
+
+    mockMvc
+        .perform(
+            get(API_QUALITY_CHECKS + "/export")
+                .param("categoryName", "Data Completeness", "Validity"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(2))
+        .andExpect(jsonPath("$[0].name").value("Completeness Check"))
+        .andExpect(jsonPath("$[1].name").value("Validity Check"));
+  }
+
+  @Test
+  void export_withCategoryNameAndBlank_returnsCategoryAndUncategorized() throws Exception {
+    saveCheckInCategory("Data Completeness", "Completeness Check");
+    saveCheckInCategory("Validity", "Validity Check");
+    qualityCheckRepository.save(
+        new QualityCheck("Uncategorized Check", "Without category", "define Test: false"));
+
+    mockMvc
+        .perform(get(API_QUALITY_CHECKS + "/export").param("categoryName", "Data Completeness", ""))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(2))
+        .andExpect(jsonPath("$[0].name").value("Completeness Check"))
+        .andExpect(jsonPath("$[1].name").value("Uncategorized Check"));
+  }
+
+  private void saveCheckInCategory(String categoryName, String checkName) {
+    Category category = categoryRepository.save(new Category(categoryName, "#FF5733"));
+    QualityCheck qualityCheck =
+        qualityCheckRepository.save(
+            new QualityCheck(checkName, "With category", "define Test: true"));
+    qualityCheck.setCategory(category);
+    qualityCheckRepository.save(qualityCheck);
   }
 
   @Test
