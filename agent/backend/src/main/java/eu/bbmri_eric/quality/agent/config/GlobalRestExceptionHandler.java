@@ -1,6 +1,7 @@
 package eu.bbmri_eric.quality.agent.config;
 
 import eu.bbmri_eric.quality.agent.common.exception.EntityAlreadyExistsException;
+import eu.bbmri_eric.quality.agent.dataquality.exception.QualityCheckImportValidationException;
 import eu.bbmri_eric.quality.agent.dataquality.exception.ReportGenerationInProgressException;
 import eu.bbmri_eric.quality.agent.server.ServerCommunicationException;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -367,6 +368,23 @@ class GlobalRestExceptionHandler {
     }
     problemDetail.setProperty("validationErrors", validationErrors);
 
+    return problemDetail;
+  }
+
+  @ExceptionHandler(QualityCheckImportValidationException.class)
+  @ApiResponse(
+      responseCode = "400",
+      description = "Import Validation Failed",
+      content =
+          @Content(
+              mediaType = "application/problem+json",
+              schema = @Schema(implementation = ProblemDetail.class)))
+  public ProblemDetail handleImportValidation(QualityCheckImportValidationException ex) {
+    logger.debug("Quality check import validation failed: {}", ex.getMessage());
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+    problemDetail.setTitle("Import Validation Failed");
+    problemDetail.setProperty("invalidEntries", ex.getErrors());
     return problemDetail;
   }
 }

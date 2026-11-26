@@ -16,6 +16,20 @@
           :loading="exporting"
           @click="handleExport"
         />
+        <ActionButton
+          variant="secondary"
+          icon="bi bi-upload"
+          text="Import"
+          :loading="importing"
+          @click="fileInput.click()"
+        />
+        <input
+          ref="fileInput"
+          type="file"
+          accept=".json,application/json"
+          style="display: none"
+          @change="handleImport"
+        />
         <ActionButton to="/quality-checks/new" icon="bi bi-plus" text="Add Quality Check" />
       </div>
 
@@ -82,6 +96,8 @@
   const tableRef = ref(null);
   const bulkUpdating = ref(false);
   const exporting = ref(false);
+  const importing = ref(false);
+  const fileInput = ref(null);
 
   const categoryNameForApi = computed(() => {
     if (selectedCategoryName.value === 'none') {
@@ -140,6 +156,53 @@
       notificationService.error('Export Failed', 'Unable to export the quality checks.');
     } finally {
       exporting.value = false;
+    }
+  };
+
+  const importErrorMessage = (error) => {
+    const data = error.response?.data;
+    if (data?.invalidEntries?.length) {
+      const detail = data.detail || 'The file contains invalid entries.';
+      return `${detail} (${data.invalidEntries.length} invalid entries)`;
+    }
+    const fieldErrors = data?.violations || data?.validationErrors;
+    if (fieldErrors) {
+      const fields = Object.entries(fieldErrors)
+        .map(([field, message]) => `${field}: ${message}`)
+        .join('; ');
+      return `The file contains invalid entries. ${fields}`;
+    }
+    return data?.detail || 'Unable to import the quality checks. Please try again.';
+  };
+
+  const handleImport = async (event) => {
+    importing.value = true;
+    try {
+      const file = event.target.files[0];
+      if (!file) {
+        return;
+      }
+      let entries;
+      try {
+        entries = JSON.parse(await file.text());
+      } catch (parseError) {
+        console.error('Failed to parse the import file:', parseError);
+        notificationService.error('Import Failed', 'The file is not a valid JSON file.');
+        return;
+      }
+      const { created, updated, unchanged } = await qualityCheckService.importChecks(entries);
+      notificationService.success(
+        'Quality Checks Imported',
+        `Created: ${created}, Updated: ${updated}, Unchanged: ${unchanged}.`
+      );
+      loadCategories();
+      loadChecks();
+    } catch (error) {
+      console.error('Failed to import quality checks:', error);
+      notificationService.error('Import Failed', importErrorMessage(error), { autoClose: false });
+    } finally {
+      importing.value = false;
+      event.target.value = '';
     }
   };
 

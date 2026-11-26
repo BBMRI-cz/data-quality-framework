@@ -6,6 +6,8 @@ import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckExportDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckFilterDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckImportDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckImportSummaryDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckUpdateDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -141,6 +143,30 @@ class QualityCheckController {
     return qualityCheckService.findAll(filter).getContent().stream()
         .map(QualityCheckExportDTO::from)
         .toList();
+  }
+
+  @PostMapping(value = "/import", consumes = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "Import quality checks from a JSON file",
+      description =
+          "Creates or updates quality checks from a JSON array in the export file format. Checks"
+              + " are matched by exact name: new names are created, existing ones are updated only"
+              + " where a field differs. Categories are matched by name and created when missing."
+              + " The whole file is validated before anything is saved; an invalid entry rejects"
+              + " the import and reports the failing entries. No query is executed, no report is"
+              + " started and no differential privacy budget is spent.")
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Counts of created, updated and unchanged checks",
+            content = @Content(mediaType = "application/json")),
+        @ApiResponse(responseCode = "400", description = "Invalid file content; nothing was saved")
+      })
+  public ResponseEntity<QualityCheckImportSummaryDTO> importChecks(
+      @RequestBody @NotEmpty(message = "At least one quality check import entry is required") @Valid
+          List<QualityCheckImportDTO> entries) {
+    return ResponseEntity.ok(qualityCheckService.importChecks(entries));
   }
 
   @PutMapping("/{id}")

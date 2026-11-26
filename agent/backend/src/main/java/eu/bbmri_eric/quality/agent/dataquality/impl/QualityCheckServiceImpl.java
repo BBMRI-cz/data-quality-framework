@@ -6,15 +6,25 @@ import eu.bbmri_eric.quality.agent.common.dto.FilterDTO;
 import eu.bbmri_eric.quality.agent.common.dto.PageResponse;
 import eu.bbmri_eric.quality.agent.common.exception.EntityNotFoundException;
 import eu.bbmri_eric.quality.agent.dataquality.QualityCheckService;
+import eu.bbmri_eric.quality.agent.dataquality.QualityCheckType;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Category;
 import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckBulkUpdateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckFilterDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckImportDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckImportSummaryDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckUpdateDTO;
+import eu.bbmri_eric.quality.agent.dataquality.exception.QualityCheckImportValidationException;
+import eu.bbmri_eric.quality.agent.dataquality.exception.QualityCheckImportValidationException.EntryError;
 import eu.bbmri_eric.quality.agent.dataquality.exception.QualityCheckNotFoundException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -197,6 +207,174 @@ class QualityCheckServiceImpl implements QualityCheckService {
     }
     qualityCheck = qualityCheckRepository.save(qualityCheck);
     return modelMapper.map(qualityCheck, QualityCheckDTO.class);
+  }
+
+  @Override
+  @Transactional
+  @Audited(
+      action = AuditAction.QUALITY_CHECKS_IMPORTED,
+      module = "dataquality",
+      details = "Quality checks imported")
+  public QualityCheckImportSummaryDTO importChecks(List<QualityCheckImportDTO> entries) {
+    Map<String, List<QualityCheck>> existingByName =
+        qualityCheckRepository.findAll().stream()
+            .collect(Collectors.groupingBy(QualityCheck::getName));
+    List<EntryError> errors = collectImportErrors(entries, existingByName);
+    if (!errors.isEmpty()) {
+      throw new QualityCheckImportValidationException(errors);
+    }
+
+    Map<String, Category> categoriesByName = new HashMap<>();
+    int created = 0;
+    int updated = 0;
+    int unchanged = 0;
+    for (QualityCheckImportDTO entry : entries) {
+      QualityCheckType type = importedType(entry);
+      Category category = resolveImportedCategory(entry.getCategory(), categoriesByName);
+      List<QualityCheck> matches = existingByName.get(entry.getName());
+      if (matches == null) {
+        qualityCheckRepository.save(newImportedCheck(entry, type, category));
+        created++;
+      } else if (applyImportedValues(matches.getFirst(), entry, type, category)) {
+        updated++;
+      } else {
+        unchanged++;
+      }
+    }
+    logger.info(
+        "Imported {} quality checks: {} created, {} updated, {} unchanged",
+        entries.size(),
+        created,
+        updated,
+        unchanged);
+    return new QualityCheckImportSummaryDTO(created, updated, unchanged);
+  }
+
+  /** Validates every import entry up front; an empty list means the whole file can be applied. */
+  private List<EntryError> collectImportErrors(
+      List<QualityCheckImportDTO> entries, Map<String, List<QualityCheck>> existingByName) {
+    Map<String, Long> fileOccurrences =
+        entries.stream()
+            .collect(Collectors.groupingBy(QualityCheckImportDTO::getName, Collectors.counting()));
+    List<EntryError> errors = new ArrayList<>();
+    for (int i = 0; i < entries.size(); i++) {
+      QualityCheckImportDTO entry = entries.get(i);
+      int position = i + 1;
+      QualityCheckType type = importedType(entry);
+      if (fileOccurrences.get(entry.getName()) > 1) {
+        addImportError(errors, position, entry, "the name appears more than once in the file");
+        continue;
+      }
+      List<QualityCheck> matches = existingByName.get(entry.getName());
+      if (matches != null && matches.size() > 1) {
+        addImportError(
+            errors,
+            position,
+            entry,
+            "multiple existing checks are named '" + entry.getName() + "'");
+      } else if (type == QualityCheckType.JAVA) {
+        boolean builtinExists =
+            matches != null && matches.getFirst().getType() == QualityCheckType.JAVA;
+        if (!builtinExists) {
+          addImportError(
+              errors,
+              position,
+              entry,
+              "no existing built-in check named '"
+                  + entry.getName()
+                  + "'; JAVA checks can only be updated, never created");
+        }
+      } else if (matches != null && matches.getFirst().getType() == QualityCheckType.JAVA) {
+        addImportError(
+            errors,
+            position,
+            entry,
+            "'" + entry.getName() + "' is a built-in check; its type cannot be changed to " + type);
+      } else if (entry.getQuery() == null || entry.getQuery().isBlank()) {
+        addImportError(errors, position, entry, "query is required for type " + type);
+      }
+    }
+    return errors;
+  }
+
+  private void addImportError(
+      List<EntryError> errors, int position, QualityCheckImportDTO entry, String reason) {
+    errors.add(new EntryError(position, entry.getName(), reason));
+  }
+
+  /** Resolves the type of an import entry, defaulting to CQL like the create payload does. */
+  private static QualityCheckType importedType(QualityCheckImportDTO entry) {
+    return entry.getType() == null ? QualityCheckType.CQL : entry.getType();
+  }
+
+  /**
+   * Finds the category with the given name, creating it without a color when missing. Blank names
+   * mean uncategorized.
+   */
+  private Category resolveImportedCategory(
+      String categoryName, Map<String, Category> categoriesByName) {
+    if (categoryName == null || categoryName.isBlank()) {
+      return null;
+    }
+    return categoriesByName.computeIfAbsent(
+        categoryName,
+        name ->
+            categoryRepository
+                .findByName(name)
+                .orElseGet(() -> categoryRepository.save(new Category(name, null))));
+  }
+
+  private QualityCheck newImportedCheck(
+      QualityCheckImportDTO entry, QualityCheckType type, Category category) {
+    QualityCheck qualityCheck =
+        new QualityCheck(entry.getName(), entry.getDescription(), entry.getQuery());
+    qualityCheck.setType(type);
+    qualityCheck.setWarningThreshold(entry.getWarningThreshold());
+    qualityCheck.setErrorThreshold(entry.getErrorThreshold());
+    qualityCheck.setEpsilonBudget(entry.getEpsilonBudget());
+    qualityCheck.setCategory(category);
+    return qualityCheck;
+  }
+
+  /**
+   * Overwrites the imported fields of an existing check, but only those that actually differ; the
+   * active flag is not part of the format and is never touched, and the query of a JAVA check is
+   * implemented in the agent and never overwritten.
+   *
+   * @return true if the check was changed and saved, false if it was already up to date
+   */
+  private boolean applyImportedValues(
+      QualityCheck existing,
+      QualityCheckImportDTO entry,
+      QualityCheckType type,
+      Category category) {
+    String existingCategoryName =
+        existing.getCategory() == null ? null : existing.getCategory().getName();
+    String importedCategoryName = category == null ? null : category.getName();
+    boolean queryDiffers =
+        type != QualityCheckType.JAVA && !Objects.equals(existing.getQuery(), entry.getQuery());
+    boolean unchanged =
+        Objects.equals(existing.getDescription(), entry.getDescription())
+            && existing.getType() == type
+            && existing.getWarningThreshold() == entry.getWarningThreshold()
+            && existing.getErrorThreshold() == entry.getErrorThreshold()
+            && Objects.equals(existing.getEpsilonBudget(), entry.getEpsilonBudget())
+            && Objects.equals(existingCategoryName, importedCategoryName)
+            && !queryDiffers;
+    if (unchanged) {
+      return false;
+    }
+    existing.setDescription(entry.getDescription());
+    existing.setType(type);
+    existing.setWarningThreshold(entry.getWarningThreshold());
+    existing.setErrorThreshold(entry.getErrorThreshold());
+    existing.setEpsilonBudget(entry.getEpsilonBudget());
+    existing.setCategory(category);
+    if (queryDiffers) {
+      existing.setQuery(entry.getQuery());
+    }
+    qualityCheckRepository.save(existing);
+    return true;
   }
 
   private void setCategory(Long categoryId, QualityCheck qualityCheck) {

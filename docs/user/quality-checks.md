@@ -48,3 +48,33 @@ The file is a JSON array with one entry per quality check:
 | `errorThreshold` | yes | Percentage at which the check raises an error |
 | `epsilonBudget` | no | Differential privacy epsilon per report; omitted when unset |
 | `category` | no | Category name; omitted when the check is uncategorized |
+
+## Importing Quality Checks
+
+Click **Import** on the Quality Checks page and choose a JSON file in the format shown above —
+any file produced by **Export** imports unchanged. The API behind the button is
+`POST /api/quality-checks/import` with the JSON array as its request body. Like all quality
+check APIs it requires an authenticated user.
+
+Importing only writes check definitions — it never runs a query, never starts a report and never
+spends any differential privacy budget. The response reports the counts of created, updated and
+unchanged checks.
+
+Import rules:
+
+- Checks are matched by exact **name**: new names are created, existing ones are updated only
+  when a field differs, so re-importing the same file changes nothing. The enabled/disabled
+  state of existing checks is never touched.
+- `category` is a category **name**. Existing categories are matched by name; missing ones are
+  created without a color (edit them later to assign one).
+- The whole file is validated before anything is saved: if any entry is invalid, the import is
+  rejected with an error naming the offending entries and nothing is written.
+- Built-in `JAVA` checks are identified by name and can only be updated, never created; their
+  `query` is implemented in the agent, so the `query` field is ignored for them. An entry with
+  another type cannot replace a built-in check of the same name.
+- An absent `type` defaults to `CQL`.
+
+Note that renaming a built-in `JAVA` check on one agent makes its exported name unmatchable on
+another agent that still has the original name; the import then rejects that entry with a clear
+error and saves nothing. Checks whose name occurs more than once — in the file or among the
+existing checks — are rejected as well, since the name is used for matching.
