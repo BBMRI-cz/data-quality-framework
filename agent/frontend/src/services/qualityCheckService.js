@@ -47,6 +47,23 @@ export const qualityCheckService = {
     return response.data;
   },
 
+  /**
+   * Downloads the quality checks matching the filter as a portable JSON file
+   * @param {object} [options] - Export options
+   * @param {string} [options.categoryName] - Category filter; omit for all checks, '' for uncategorized
+   * @returns {Promise<{blob: Blob, filename: string}>}
+   */
+  async exportAll({ categoryName = null } = {}) {
+    const params = {};
+    if (categoryName !== null && categoryName !== undefined) {
+      params.categoryName = categoryName;
+    }
+    const response = await api.get(`${BASE_URL}/export`, { params, responseType: 'blob' });
+    const disposition = response.headers['content-disposition'] || '';
+    const match = disposition.match(/filename="?([^";]+)"?/);
+    return { blob: response.data, filename: match ? match[1] : 'quality-checks.json' };
+  },
+
   async delete(id) {
     await api.delete(`${BASE_URL}/${id}`);
   },

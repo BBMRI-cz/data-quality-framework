@@ -11,6 +11,7 @@ import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckBulkUpdateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckExportDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckFilterDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckUpdateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.exception.QualityCheckNotFoundException;
@@ -197,6 +198,16 @@ class QualityCheckServiceImpl implements QualityCheckService {
     }
     qualityCheck = qualityCheckRepository.save(qualityCheck);
     return modelMapper.map(qualityCheck, QualityCheckDTO.class);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<QualityCheckExportDTO> exportAll(String categoryName) {
+    return qualityCheckRepository
+        .findAll(QualityCheckSpecification.withCategoryName(categoryName), Sort.by("name"))
+        .stream()
+        .map(QualityCheckExportDTO::from)
+        .toList();
   }
 
   private void setCategory(Long categoryId, QualityCheck qualityCheck) {

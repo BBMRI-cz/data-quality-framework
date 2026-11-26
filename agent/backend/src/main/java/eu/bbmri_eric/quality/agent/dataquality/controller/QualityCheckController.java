@@ -4,10 +4,12 @@ import eu.bbmri_eric.quality.agent.dataquality.QualityCheckService;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckBulkUpdateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckExportDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckFilterDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckUpdateDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -15,10 +17,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.PagedModel;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -29,6 +35,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -95,6 +102,36 @@ class QualityCheckController {
   public ResponseEntity<PagedModel<EntityModel<QualityCheckDTO>>> findAll(
       @ParameterObject QualityCheckFilterDTO filter) {
     return ResponseEntity.ok(linkBuilder.toPagedModel(qualityCheckService.findAll(filter), filter));
+  }
+
+  @GetMapping(value = "/export", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "Export quality checks as a JSON file",
+      description =
+          "Downloads the quality checks as a portable JSON file for import into another agent or"
+              + " version control. Checks are never executed and no report is started.")
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "JSON file with the exported quality checks",
+            content = @Content(mediaType = "application/json"))
+      })
+  public ResponseEntity<List<QualityCheckExportDTO>> export(
+      @Parameter(
+              description =
+                  "Filter by category name; omit for all checks, blank for uncategorized checks")
+          @RequestParam(name = "categoryName", required = false)
+          String categoryName) {
+    return ResponseEntity.ok()
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(
+            HttpHeaders.CONTENT_DISPOSITION,
+            ContentDisposition.attachment()
+                .filename("quality-checks.json", StandardCharsets.UTF_8)
+                .build()
+                .toString())
+        .body(qualityCheckService.exportAll(categoryName));
   }
 
   @PutMapping("/{id}")

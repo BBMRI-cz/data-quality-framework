@@ -6,6 +6,7 @@ import eu.bbmri_eric.quality.agent.common.dto.PageResponse;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckBulkUpdateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckExportDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckFilterDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckUpdateDTO;
 import java.util.List;
@@ -31,4 +32,14 @@ public interface QualityCheckService
    * @return the updated quality checks
    */
   List<QualityCheckDTO> updateAll(List<QualityCheckBulkUpdateDTO> updateDTOs);
+
+  /**
+   * Exports quality checks as portable, importable entries.
+   *
+   * @param categoryName the category filter, following {@link QualityCheckFilterDTO} semantics:
+   *     {@code null} exports all checks, blank exports only uncategorized checks, otherwise only
+   *     checks in the category with that exact name
+   * @return the matching quality checks in export format, sorted by name
+   */
+  List<QualityCheckExportDTO> exportAll(String categoryName);
 }
