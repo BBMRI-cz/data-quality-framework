@@ -488,14 +488,14 @@ class ServerControllerTest {
             .getResponse()
             .getHeader("Location");
 
-    mockMvc.perform(post(location + "/registration/retry")).andExpect(status().isAccepted());
+    mockMvc.perform(post(location + "/registration")).andExpect(status().isAccepted());
   }
 
   @Test
   @WithUserDetails("admin")
   void retryRegistration_nonExistingServer_returnsNotFound() throws Exception {
     mockMvc
-        .perform(post(SERVERS_ENDPOINT + "/non-existing-id/registration/retry"))
+        .perform(post(SERVERS_ENDPOINT + "/non-existing-id/registration"))
         .andExpect(status().isNotFound());
   }
 
@@ -528,6 +528,6 @@ class ServerControllerTest {
                 .content(objectMapper.writeValueAsString(updateDto)))
         .andExpect(status().isOk());
 
-    mockMvc.perform(post(location + "/registration/retry")).andExpect(status().isConflict());
+    mockMvc.perform(post(location + "/registration")).andExpect(status().isConflict());
   }
 }

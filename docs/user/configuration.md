@@ -72,18 +72,14 @@ You can also define additional labels with `MANAGEMENT_METRICS_TAGS_<LABEL_NAME>
 
 #### Registration Retry
 
-If registration with the central server fails for a transient reason (unreachable server, timeout, TLS problem, HTTP 5xx or 429), the agent retries it up to 3 times in a row with exponential backoff (2 s, then 4 s). Permanent failures such as HTTP 409 are not retried. When all in-process attempts fail, a persistent sweep re-triggers the registration every 15 minutes for up to 8 rounds (~2 hours), after which the registration must be retried manually. The sweep also covers agents that started before the central server became reachable.
+If registration with the central server fails for a transient reason (unreachable server, timeout, TLS problem, HTTP 5xx or 429), the agent retries it up to 3 times in a row with exponential backoff (2 s, then 4 s). Permanent failures such as HTTP 409 are not retried. When all in-process attempts fail, the agent schedules the next automatic retry 15 minutes later and a background sweep (which polls every minute) re-triggers the registration when it is due, up to 8 rounds (~2 hours), after which the registration must be retried manually. The retry state is persisted, so an agent that started - or restarted while a retry was pending - before the central server became reachable recovers automatically. These retry parameters are fixed in the agent and cannot be configured.
 
-A manual retry is possible via the API: `POST /api/servers/{id}/registration/retry` answers `202 Accepted` when the retry was triggered (the outcome arrives asynchronously) or `409 Conflict` when the server already holds registration credentials.
+A manual retry is possible via the API: `POST /api/servers/{id}/registration` answers `202 Accepted` when the retry was triggered (the outcome arrives asynchronously) or `409 Conflict` when the server already holds registration credentials.
 
-| Variable                                              | Description                                                                        | Default |
-|:------------------------------------------------------|:-----------------------------------------------------------------------------------|:--------|
-| `AGENT_CENTRAL_SERVER_CONNECT_TIMEOUT`                | Timeout for establishing connections to the central server.                         | `5s`    |
-| `AGENT_CENTRAL_SERVER_READ_TIMEOUT`                   | Timeout for waiting for responses from the central server.                          | `10s`   |
-| `AGENT_CENTRAL_SERVER_REGISTRATION_MAX_ATTEMPTS`      | Registration attempts per registration run before the persistent sweep takes over.  | `3`     |
-| `AGENT_CENTRAL_SERVER_REGISTRATION_BACKOFF`           | Initial backoff between registration attempts (doubled with each attempt).          | `2s`    |
-| `AGENT_CENTRAL_SERVER_REGISTRATION_SWEEP_INTERVAL`    | Interval of the persistent retry sweep; also the delay to the next scheduled retry. | `15m`   |
-| `AGENT_CENTRAL_SERVER_REGISTRATION_MAX_SWEEP_ROUNDS`  | Sweep rounds after which only a manual retry remains possible.                      | `8`     |
+| Variable                               | Description                                                | Default |
+|:---------------------------------------|:------------------------------------------------------------|:--------|
+| `AGENT_CENTRAL_SERVER_CONNECT_TIMEOUT` | Timeout for establishing connections to the central server. | `5s`    |
+| `AGENT_CENTRAL_SERVER_READ_TIMEOUT`    | Timeout for waiting for responses from the central server.  | `10s`   |
 
 
 Additionally, as described above, you can override any internal application setting using the `APP_SETTING_` prefix. The complete set of application settings supported by the Data Quality Agent is:

@@ -22,7 +22,6 @@ import eu.bbmri_eric.quality.agent.server.domain.Server;
 import eu.bbmri_eric.quality.agent.server.domain.ServerConnectionStatus;
 import eu.bbmri_eric.quality.agent.server.domain.ServerInteraction;
 import eu.bbmri_eric.quality.agent.server.event.ServerRegistrationEvent;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -57,9 +56,7 @@ class ServerRegistrationEventListenerTest {
     serverRepository = mock(ServerRepository.class);
     server = new Server(SERVER_URL, "Central Server");
     when(serverRepository.findWithInteractionsByUrl(SERVER_URL)).thenReturn(Optional.of(server));
-    listener =
-        new ServerRegistrationEventListener(
-            clientFactory, serverRepository, 3, Duration.ZERO, Duration.ofMinutes(15), 8);
+    listener = new ServerRegistrationEventListener(clientFactory, serverRepository);
     listenerLogger = (Logger) LoggerFactory.getLogger(ServerRegistrationEventListener.class);
     logAppender = new ListAppender<>();
     logAppender.start();
@@ -289,6 +286,22 @@ class ServerRegistrationEventListenerTest {
   }
 
   @Test
+  void handleServerRegistration_successAfterError_restoresPendingAndClearsRetryState() {
+    when(client.register()).thenReturn(new RegistrationCredentials("client-1", "secret-1"));
+    server.setStatus(ServerConnectionStatus.ERROR);
+    server.setRegistrationRetryCount(4);
+    server.setNextRegistrationRetryAt(LocalDateTime.now().plusMinutes(5));
+
+    listener.handleServerRegistration(new ServerRegistrationEvent("agent-1", SERVER_URL));
+
+    assertThat(server.getStatus()).isEqualTo(ServerConnectionStatus.PENDING);
+    assertThat(server.getRegistrationRetryCount()).isNull();
+    assertThat(server.getNextRegistrationRetryAt()).isNull();
+    assertThat(registrationDescriptions())
+        .containsExactly("Registration accepted by central server; awaiting approval");
+  }
+
+  @Test
   void handleServerRegistration_firstRetryLogsAttemptWaitAndReason() {
     when(client.register())
         .thenThrow(
@@ -302,7 +315,7 @@ class ServerRegistrationEventListenerTest {
         .isEqualTo(
             "Registration attempt 1/3 with server "
                 + SERVER_URL
-                + " failed (TIMEOUT: read timeout after 10s), retrying in 0s");
+                + " failed (TIMEOUT: read timeout after 10s), retrying in 2s");
   }
 
   @Test

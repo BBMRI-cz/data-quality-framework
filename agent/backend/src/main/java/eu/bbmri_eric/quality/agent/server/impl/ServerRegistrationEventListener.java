@@ -1,5 +1,10 @@
 package eu.bbmri_eric.quality.agent.server.impl;
 
+import static eu.bbmri_eric.quality.agent.server.impl.RegistrationRetryConstants.INITIAL_BACKOFF;
+import static eu.bbmri_eric.quality.agent.server.impl.RegistrationRetryConstants.MAX_ATTEMPTS;
+import static eu.bbmri_eric.quality.agent.server.impl.RegistrationRetryConstants.MAX_SWEEP_ROUNDS;
+import static eu.bbmri_eric.quality.agent.server.impl.RegistrationRetryConstants.RETRY_DELAY;
+
 import eu.bbmri_eric.quality.agent.server.CentralServerClient;
 import eu.bbmri_eric.quality.agent.server.CentralServerClientFactory;
 import eu.bbmri_eric.quality.agent.server.RegistrationCredentials;
@@ -14,7 +19,6 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -24,6 +28,8 @@ import org.springframework.stereotype.Component;
  * registration is initiated, retrying transient failures in-process with exponential backoff. When
  * the in-process attempts are exhausted and the failure was transient, the next retry is scheduled
  * persistently via {@code nextRegistrationRetryAt} and picked up by {@link RegistrationRetrySweep}.
+ * A persisted success returns the server to {@link ServerConnectionStatus#PENDING} so the
+ * health-check scheduler resumes approval polling.
  *
  * <p>Runs without a surrounding transaction on purpose: neither the HTTP calls nor the backoff
  * sleeps may hold a database connection. Every read-modify-write path loads the server with its
@@ -37,31 +43,18 @@ class ServerRegistrationEventListener {
 
   private final CentralServerClientFactory clientFactory;
   private final ServerRepository serverRepository;
-  private final int maxAttempts;
-  private final Duration backoff;
-  private final Duration sweepInterval;
-  private final int maxSweepRounds;
 
   ServerRegistrationEventListener(
-      CentralServerClientFactory clientFactory,
-      ServerRepository serverRepository,
-      @Value("${agent.central-server.registration.max-attempts:3}") int maxAttempts,
-      @Value("${agent.central-server.registration.backoff:2s}") Duration backoff,
-      @Value("${agent.central-server.registration.sweep-interval:15m}") Duration sweepInterval,
-      @Value("${agent.central-server.registration.max-sweep-rounds:8}") int maxSweepRounds) {
+      CentralServerClientFactory clientFactory, ServerRepository serverRepository) {
     this.clientFactory = clientFactory;
     this.serverRepository = serverRepository;
-    this.maxAttempts = maxAttempts;
-    this.backoff = backoff;
-    this.sweepInterval = sweepInterval;
-    this.maxSweepRounds = maxSweepRounds;
   }
 
   @EventListener
   @Async
   void handleServerRegistration(ServerRegistrationEvent event) {
     String serverUrl = event.getServerUrl();
-    for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+    for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
       try {
         CentralServerClient client =
             clientFactory.createClient(event.getAgentId(), serverUrl, "", "");
@@ -70,15 +63,15 @@ class ServerRegistrationEventListener {
         updateServerWithCredentials(serverUrl, credentials);
         return;
       } catch (RegistrationFailedException e) {
-        if (!e.getReason().isRetryable() || attempt == maxAttempts) {
+        if (!e.getReason().isRetryable() || attempt == MAX_ATTEMPTS) {
           recordFinalFailure(serverUrl, e, attempt);
           return;
         }
-        Duration wait = backoff.multipliedBy(1L << (attempt - 1));
+        Duration wait = INITIAL_BACKOFF.multipliedBy(1L << (attempt - 1));
         log.warn(
             "Registration attempt {}/{} with server {} failed ({}: {}), retrying in {}",
             attempt,
-            maxAttempts,
+            MAX_ATTEMPTS,
             serverUrl,
             e.getReason(),
             e.getMessage(),
@@ -109,6 +102,7 @@ class ServerRegistrationEventListener {
                       "Registration accepted by central server; awaiting approval"));
               server.setClientId(credentials.getClientId());
               server.setClientSecret(credentials.getClientSecret());
+              server.setStatus(ServerConnectionStatus.PENDING);
               server.setRegistrationRetryCount(null);
               server.setNextRegistrationRetryAt(null);
               serverRepository.save(server);
@@ -130,14 +124,14 @@ class ServerRegistrationEventListener {
         .ifPresent(
             server -> {
               boolean retryScheduled =
-                  failure.getReason().isRetryable() && usedSweepRounds(server) < maxSweepRounds;
+                  failure.getReason().isRetryable() && usedSweepRounds(server) < MAX_SWEEP_ROUNDS;
               server.setStatus(ServerConnectionStatus.ERROR);
               server.addInteraction(
                   new ServerInteraction(
                       InteractionType.REGISTRATION,
                       describeAttemptedFailure(serverUrl, failure, attempts, retryScheduled)));
               server.setNextRegistrationRetryAt(
-                  retryScheduled ? LocalDateTime.now().plus(sweepInterval) : null);
+                  retryScheduled ? LocalDateTime.now().plus(RETRY_DELAY) : null);
               serverRepository.save(server);
             });
   }
@@ -164,7 +158,7 @@ class ServerRegistrationEventListener {
             ? "Automatic retry is scheduled."
             : "Automatic retries are exhausted; retry registration manually"
                 + " or remove and re-add the server.";
-    return description + "\nAttempts: %d of %d. %s".formatted(attempts, maxAttempts, outcome);
+    return description + "\nAttempts: %d of %d. %s".formatted(attempts, MAX_ATTEMPTS, outcome);
   }
 
   /**

@@ -91,7 +91,7 @@ class ServerController {
     return ResponseEntity.noContent().build();
   }
 
-  @PostMapping("/{id}/registration/retry")
+  @PostMapping("/{id}/registration")
   @Operation(
       summary = "Retry registration",
       description = "Re-triggers registration with the central server (asynchronous)")

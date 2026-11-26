@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -34,7 +35,7 @@ class RegistrationRetrySweepTest {
     SettingsService settingsService = mock(SettingsService.class);
     when(settingsService.getSettings())
         .thenReturn(SettingsDTO.builder().agentId("agent-1").build());
-    sweep = new RegistrationRetrySweep(serverRepository, settingsService, eventPublisher, 8);
+    sweep = new RegistrationRetrySweep(serverRepository, settingsService, eventPublisher);
   }
 
   private Server dueServer() {
@@ -48,10 +49,14 @@ class RegistrationRetrySweepTest {
     Server server = dueServer();
     when(serverRepository.findAllByNextRegistrationRetryAtLessThanEqual(any()))
         .thenReturn(List.of(server));
+    LocalDateTime beforeDispatch = LocalDateTime.now();
 
     sweep.retryDueRegistrations();
 
-    assertThat(server.getNextRegistrationRetryAt()).isNull();
+    assertThat(server.getNextRegistrationRetryAt())
+        .isBetween(
+            beforeDispatch.plus(RegistrationRetryConstants.RETRY_DELAY).minusMinutes(1),
+            beforeDispatch.plus(RegistrationRetryConstants.RETRY_DELAY).plusMinutes(1));
     assertThat(server.getRegistrationRetryCount()).isEqualTo(1);
     verify(serverRepository).save(server);
     ArgumentCaptor<ServerRegistrationEvent> event =
@@ -71,6 +76,42 @@ class RegistrationRetrySweepTest {
     sweep.retryDueRegistrations();
 
     assertThat(server.getRegistrationRetryCount()).isEqualTo(4);
+  }
+
+  @Test
+  void retryDueRegistrations_claimDueAgainAfterRestart_recoversRoundWithNewEvent() {
+    Server server = dueServer();
+    when(serverRepository.findAllByNextRegistrationRetryAtLessThanEqual(any()))
+        .thenReturn(List.of(server));
+
+    sweep.retryDueRegistrations();
+    assertThat(server.getRegistrationRetryCount()).isEqualTo(1);
+
+    // the claimed run never reached a persisted outcome and its claim became due across a restart
+    server.setNextRegistrationRetryAt(LocalDateTime.now().minusMinutes(1));
+    sweep.retryDueRegistrations();
+
+    assertThat(server.getRegistrationRetryCount()).isEqualTo(2);
+    assertThat(server.getNextRegistrationRetryAt()).isAfter(LocalDateTime.now());
+    verify(eventPublisher, times(2)).publishEvent(any(ServerRegistrationEvent.class));
+  }
+
+  @Test
+  void retryDueRegistrations_finalRoundClaimSurvivingRestart_republishesSameRound() {
+    Server server = dueServer();
+    server.setRegistrationRetryCount(RegistrationRetryConstants.MAX_SWEEP_ROUNDS);
+    when(serverRepository.findAllByNextRegistrationRetryAtLessThanEqual(any()))
+        .thenReturn(List.of(server));
+
+    sweep.retryDueRegistrations();
+
+    assertThat(server.getRegistrationRetryCount())
+        .isEqualTo(RegistrationRetryConstants.MAX_SWEEP_ROUNDS);
+    assertThat(server.getNextRegistrationRetryAt()).isAfter(LocalDateTime.now());
+    ArgumentCaptor<ServerRegistrationEvent> event =
+        ArgumentCaptor.forClass(ServerRegistrationEvent.class);
+    verify(eventPublisher).publishEvent(event.capture());
+    assertThat(event.getValue().getServerUrl()).isEqualTo(SERVER_URL);
   }
 
   @Test
