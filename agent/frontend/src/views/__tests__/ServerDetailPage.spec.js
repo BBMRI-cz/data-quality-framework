@@ -163,7 +163,7 @@ describe('ServerDetailPage', () => {
     const badge = card.find('.badge');
     expect(badge.classes()).toContain('bg-danger');
     expect(badge.text()).toBe('Failed');
-    expect(card.text()).toContain('Attempts: 3');
+    expect(card.text()).toContain('Automatic retry rounds: 3');
     expect(card.find('pre').text()).toBe(FAILED_REGISTRATION.lastErrorMessage);
     expect(card.text()).toContain('UNREACHABLE');
   });

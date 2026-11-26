@@ -80,12 +80,13 @@
               {{ formatRegistrationStatus(registration.status) }}
             </span>
             <div class="text-muted small">
-              Attempts: {{ registration.attempts }}
+              Automatic retry rounds: {{ registration.attempts }}
               <template v-if="registration.registeredAt">
                 &middot; Registered {{ formatDateShort(registration.registeredAt) }}
               </template>
               <template v-if="registration.nextRetryAt">
                 &middot; Next automatic retry: {{ formatDateShort(registration.nextRetryAt) }}
+                {{ formatTime(registration.nextRetryAt) }}
               </template>
             </div>
             <div v-if="registration.status === 'REGISTERING'" class="alert alert-info mt-3 mb-0">
