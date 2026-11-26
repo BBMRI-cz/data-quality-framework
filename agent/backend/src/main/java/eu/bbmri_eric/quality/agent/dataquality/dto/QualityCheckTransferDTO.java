@@ -32,6 +32,7 @@ public class QualityCheckTransferDTO {
   @Schema(description = "Name of the quality check", example = "Patient Age Validation")
   private String name;
 
+  @NotBlank(message = "Description is required")
   @Size(max = 1000, message = "Description must not exceed 1000 characters")
   @Schema(
       description = "Description of what the check validates",

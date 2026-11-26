@@ -1356,6 +1356,7 @@ class QualityCheckIntegrationTests {
                     [
                       {
                         "name": "Duplicate identifiers",
+                        "description": "Duplicate patients",
                         "query": "SELECT 1",
                         "type": "SQL",
                         "warningThreshold": 10,
@@ -1425,6 +1426,40 @@ class QualityCheckIntegrationTests {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("[]"))
         .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void import_nullEntry_returnsBadRequest() throws Exception {
+    mockMvc
+        .perform(
+            post(API_QUALITY_CHECKS + "/import")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("[null]"))
+        .andExpect(status().isBadRequest());
+    assertThat(qualityCheckRepository.count()).isZero();
+  }
+
+  @Test
+  void import_missingDescription_returnsBadRequest() throws Exception {
+    mockMvc
+        .perform(
+            post(API_QUALITY_CHECKS + "/import")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    [
+                      {
+                        "name": "No description",
+                        "query": "SELECT 1",
+                        "type": "SQL",
+                        "warningThreshold": 10,
+                        "errorThreshold": 30
+                      }
+                    ]
+                    """))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.violations['importChecks.entries[0].description']").exists());
+    assertThat(qualityCheckRepository.count()).isZero();
   }
 
   @Test

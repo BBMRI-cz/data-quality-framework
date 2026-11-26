@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import java.net.URI;
 import java.util.List;
 import org.springdoc.core.annotations.ParameterObject;
@@ -161,7 +162,8 @@ class QualityCheckController {
               + " started and no differential privacy budget is spent.")
   public ResponseEntity<QualityCheckImportSummaryDTO> importChecks(
       @RequestBody @NotEmpty(message = "At least one quality check import entry is required") @Valid
-          List<QualityCheckTransferDTO> entries) {
+          List<@NotNull(message = "Import entries must not be null") QualityCheckTransferDTO>
+              entries) {
     return ResponseEntity.ok(qualityCheckImportService.importChecks(entries));
   }
 

@@ -41,7 +41,7 @@ The file is a JSON array with one entry per quality check:
 | Field | Required | Description |
 | --- | --- | --- |
 | `name` | yes | Name of the check |
-| `description` | no | What the check validates |
+| `description` | yes | What the check validates |
 | `query` | yes | CQL/SQL query (or script) executed by the check |
 | `type` | yes | Check type, e.g. `CQL`, `SQL`, `JAVA` or `PYTHON` |
 | `warningThreshold` | yes | Percentage at which the check raises a warning |
