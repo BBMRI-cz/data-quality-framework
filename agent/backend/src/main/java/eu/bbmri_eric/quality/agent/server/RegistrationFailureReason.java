@@ -90,6 +90,22 @@ public enum RegistrationFailureReason {
   }
 
   /**
+   * Gets whether a registration that failed with this reason may be retried automatically. Only
+   * transient failures (connectivity problems, timeouts, TLS handshake failures, server errors and
+   * rate limiting) are retryable; failures that require a configuration change or administrative
+   * action are not.
+   *
+   * @return true when an automatic retry makes sense, false otherwise
+   */
+  public boolean isRetryable() {
+    return this == UNREACHABLE
+        || this == TIMEOUT
+        || this == TLS
+        || this == SERVER_ERROR
+        || this == RATE_LIMITED;
+  }
+
+  /**
    * Maps the HTTP status of a failed registration response to the corresponding failure reason.
    *
    * @param status the HTTP status returned by the central server

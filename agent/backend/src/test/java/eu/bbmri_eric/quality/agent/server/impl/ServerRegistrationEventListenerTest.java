@@ -1,8 +1,11 @@
 package eu.bbmri_eric.quality.agent.server.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -19,17 +22,23 @@ import eu.bbmri_eric.quality.agent.server.domain.Server;
 import eu.bbmri_eric.quality.agent.server.domain.ServerConnectionStatus;
 import eu.bbmri_eric.quality.agent.server.domain.ServerInteraction;
 import eu.bbmri_eric.quality.agent.server.event.ServerRegistrationEvent;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 class ServerRegistrationEventListenerTest {
 
   private static final String SERVER_URL = "https://central.example.com";
+  private static final String RETRY_SUFFIX = "\nAttempts: 3 of 3. Automatic retry is scheduled.";
 
   private CentralServerClient client;
   private ServerRepository serverRepository;
@@ -46,7 +55,7 @@ class ServerRegistrationEventListenerTest {
         .thenReturn(client);
     serverRepository = mock(ServerRepository.class);
     server = new Server(SERVER_URL, "Central Server");
-    when(serverRepository.findByUrl(SERVER_URL)).thenReturn(Optional.of(server));
+    when(serverRepository.findWithInteractionsByUrl(SERVER_URL)).thenReturn(Optional.of(server));
     listener = new ServerRegistrationEventListener(clientFactory, serverRepository);
     listenerLogger = (Logger) LoggerFactory.getLogger(ServerRegistrationEventListener.class);
     logAppender = new ListAppender<>();
@@ -64,6 +73,24 @@ class ServerRegistrationEventListenerTest {
         .filter(interaction -> interaction.getType() == InteractionType.REGISTRATION)
         .map(ServerInteraction::getDescription)
         .toList();
+  }
+
+  private static Stream<Arguments> retryableFailures() {
+    return Stream.of(
+        Arguments.of(RegistrationFailureReason.UNREACHABLE),
+        Arguments.of(RegistrationFailureReason.TIMEOUT),
+        Arguments.of(RegistrationFailureReason.TLS),
+        Arguments.of(RegistrationFailureReason.SERVER_ERROR),
+        Arguments.of(RegistrationFailureReason.RATE_LIMITED));
+  }
+
+  private static Stream<Arguments> nonRetryableFailures() {
+    return Stream.of(
+        Arguments.of(RegistrationFailureReason.UNAUTHORIZED),
+        Arguments.of(RegistrationFailureReason.CONFLICT),
+        Arguments.of(RegistrationFailureReason.CLIENT_ERROR),
+        Arguments.of(RegistrationFailureReason.INCOMPLETE_RESPONSE),
+        Arguments.of(RegistrationFailureReason.UNKNOWN));
   }
 
   @Test
@@ -91,6 +118,7 @@ class ServerRegistrationEventListenerTest {
 
     listener.handleServerRegistration(new ServerRegistrationEvent("agent-1", SERVER_URL));
 
+    verify(client).register();
     verify(serverRepository).save(server);
     assertThat(server.getStatus()).isEqualTo(ServerConnectionStatus.ERROR);
     List<String> descriptions = registrationDescriptions();
@@ -114,6 +142,7 @@ class ServerRegistrationEventListenerTest {
 
     listener.handleServerRegistration(new ServerRegistrationEvent("agent-1", SERVER_URL));
 
+    verify(client, times(3)).register();
     verify(serverRepository).save(server);
     assertThat(server.getStatus()).isEqualTo(ServerConnectionStatus.ERROR);
     List<String> descriptions = registrationDescriptions();
@@ -126,7 +155,8 @@ class ServerRegistrationEventListenerTest {
                 + " outgoing connections from the agent.\n"
                 + "Technical detail: Connection refused [UNREACHABLE]\n"
                 + "Server: "
-                + SERVER_URL);
+                + SERVER_URL
+                + RETRY_SUFFIX);
   }
 
   @Test
@@ -135,6 +165,7 @@ class ServerRegistrationEventListenerTest {
 
     listener.handleServerRegistration(new ServerRegistrationEvent("agent-1", SERVER_URL));
 
+    verify(client).register();
     verify(serverRepository).save(server);
     assertThat(server.getStatus()).isEqualTo(ServerConnectionStatus.ERROR);
     List<String> descriptions = registrationDescriptions();
@@ -175,5 +206,125 @@ class ServerRegistrationEventListenerTest {
 
     assertThat(logAppender.list).hasSize(1);
     assertThat(logAppender.list.getFirst().getThrowableProxy()).isNull();
+  }
+
+  @ParameterizedTest
+  @MethodSource("retryableFailures")
+  void handleServerRegistration_retryableFailure_retriesThreeTimesAndSchedulesSweep(
+      RegistrationFailureReason reason) {
+    when(client.register())
+        .thenThrow(RegistrationFailedException.forReason(reason, "transient failure", null));
+
+    listener.handleServerRegistration(new ServerRegistrationEvent("agent-1", SERVER_URL));
+
+    verify(client, times(3)).register();
+    verify(serverRepository).save(server);
+    assertThat(server.getStatus()).isEqualTo(ServerConnectionStatus.ERROR);
+    List<String> descriptions = registrationDescriptions();
+    assertThat(descriptions).hasSize(1);
+    assertThat(descriptions.getFirst()).startsWith("Registration failed: ").endsWith(RETRY_SUFFIX);
+    assertThat(server.getNextRegistrationRetryAt()).isNotNull();
+  }
+
+  @Test
+  void handleServerRegistration_transientFailureWithExhaustedSweepRounds_requiresManualRetry() {
+    when(client.register())
+        .thenThrow(
+            RegistrationFailedException.forReason(
+                RegistrationFailureReason.TIMEOUT, "Read timed out", null));
+    server.setRegistrationRetryCount(8);
+
+    listener.handleServerRegistration(new ServerRegistrationEvent("agent-1", SERVER_URL));
+
+    verify(client, times(3)).register();
+    assertThat(server.getRegistrationRetryCount()).isEqualTo(8);
+    assertThat(server.getNextRegistrationRetryAt()).isNull();
+    assertThat(registrationDescriptions().getFirst())
+        .endsWith(
+            "\nAttempts: 3 of 3. Automatic retries are exhausted; retry registration manually"
+                + " or remove and re-add the server.");
+  }
+
+  @ParameterizedTest
+  @MethodSource("nonRetryableFailures")
+  void handleServerRegistration_nonRetryableFailure_stopsAfterOneAttemptWithoutSuffix(
+      RegistrationFailureReason reason) {
+    when(client.register())
+        .thenThrow(RegistrationFailedException.forReason(reason, "permanent failure", null));
+    server.setNextRegistrationRetryAt(LocalDateTime.now().plusMinutes(5));
+
+    listener.handleServerRegistration(new ServerRegistrationEvent("agent-1", SERVER_URL));
+
+    verify(client).register();
+    assertThat(server.getStatus()).isEqualTo(ServerConnectionStatus.ERROR);
+    assertThat(registrationDescriptions().getFirst()).doesNotContain("Attempts:");
+    assertThat(server.getNextRegistrationRetryAt()).isNull();
+  }
+
+  @Test
+  void handleServerRegistration_successAfterTransientFailures_clearsRetryState() {
+    when(client.register())
+        .thenThrow(
+            RegistrationFailedException.forReason(
+                RegistrationFailureReason.UNREACHABLE, "Connection refused", null))
+        .thenThrow(
+            RegistrationFailedException.forReason(
+                RegistrationFailureReason.UNREACHABLE, "Connection refused", null))
+        .thenReturn(new RegistrationCredentials("client-1", "secret-1"));
+    server.setRegistrationRetryCount(3);
+    server.setNextRegistrationRetryAt(LocalDateTime.now().plusMinutes(5));
+
+    listener.handleServerRegistration(new ServerRegistrationEvent("agent-1", SERVER_URL));
+
+    verify(client, times(3)).register();
+    assertThat(server.getClientId()).isEqualTo("client-1");
+    assertThat(server.getClientSecret()).isEqualTo("secret-1");
+    assertThat(server.getRegistrationRetryCount()).isNull();
+    assertThat(server.getNextRegistrationRetryAt()).isNull();
+    assertThat(registrationDescriptions())
+        .containsExactly("Registration accepted by central server; awaiting approval");
+  }
+
+  @Test
+  void handleServerRegistration_successAfterError_restoresPendingAndClearsRetryState() {
+    when(client.register()).thenReturn(new RegistrationCredentials("client-1", "secret-1"));
+    server.setStatus(ServerConnectionStatus.ERROR);
+    server.setRegistrationRetryCount(4);
+    server.setNextRegistrationRetryAt(LocalDateTime.now().plusMinutes(5));
+
+    listener.handleServerRegistration(new ServerRegistrationEvent("agent-1", SERVER_URL));
+
+    assertThat(server.getStatus()).isEqualTo(ServerConnectionStatus.PENDING);
+    assertThat(server.getRegistrationRetryCount()).isNull();
+    assertThat(server.getNextRegistrationRetryAt()).isNull();
+    assertThat(registrationDescriptions())
+        .containsExactly("Registration accepted by central server; awaiting approval");
+  }
+
+  @Test
+  void handleServerRegistration_firstRetryLogsAttemptWaitAndReason() {
+    when(client.register())
+        .thenThrow(
+            RegistrationFailedException.forReason(
+                RegistrationFailureReason.TIMEOUT, "read timeout after 10s", null));
+
+    listener.handleServerRegistration(new ServerRegistrationEvent("agent-1", SERVER_URL));
+
+    assertThat(logAppender.list).hasSize(3);
+    assertThat(logAppender.list.getFirst().getFormattedMessage())
+        .isEqualTo(
+            "Registration attempt 1/3 with server "
+                + SERVER_URL
+                + " failed (TIMEOUT: read timeout after 10s), retrying in 2s");
+  }
+
+  @Test
+  void handleServerRegistration_serverDisappearedDuringRegistration_savesNothing() {
+    when(client.register()).thenReturn(new RegistrationCredentials("client-1", "secret-1"));
+    when(serverRepository.findWithInteractionsByUrl(SERVER_URL)).thenReturn(Optional.empty());
+
+    listener.handleServerRegistration(new ServerRegistrationEvent("agent-1", SERVER_URL));
+
+    verify(serverRepository, never()).save(any());
   }
 }

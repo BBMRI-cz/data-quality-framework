@@ -10,6 +10,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -45,6 +46,16 @@ public class Server {
   @NotNull
   @Enumerated(EnumType.STRING)
   private ServerConnectionStatus status = ServerConnectionStatus.PENDING;
+
+  /**
+   * Number of automatic registration sweep rounds already used; operational state, not identity.
+   */
+  @Column(name = "registration_retry_count")
+  private Integer registrationRetryCount;
+
+  /** When the next automatic registration retry is scheduled, or null when none is pending. */
+  @Column(name = "next_registration_retry_at")
+  private LocalDateTime nextRegistrationRetryAt;
 
   @OneToMany(mappedBy = "serverId", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<ServerInteraction> interactions = new ArrayList<>();
@@ -170,6 +181,22 @@ public class Server {
 
   public List<ServerInteraction> getInteractions() {
     return Collections.unmodifiableList(interactions);
+  }
+
+  public Integer getRegistrationRetryCount() {
+    return registrationRetryCount;
+  }
+
+  public void setRegistrationRetryCount(Integer registrationRetryCount) {
+    this.registrationRetryCount = registrationRetryCount;
+  }
+
+  public LocalDateTime getNextRegistrationRetryAt() {
+    return nextRegistrationRetryAt;
+  }
+
+  public void setNextRegistrationRetryAt(LocalDateTime nextRegistrationRetryAt) {
+    this.nextRegistrationRetryAt = nextRegistrationRetryAt;
   }
 
   public void addInteraction(ServerInteraction interaction) {

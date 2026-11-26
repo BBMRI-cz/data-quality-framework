@@ -70,6 +70,18 @@ The following are standard environment variables recognized by the Data Quality 
 | `OTEL_EXPORTER_OTLP_AUTHORIZATION`    | Optional Authorization header value (for example `Bearer <token>`) sent with OTLP metrics requests. | (Not set)                                       |
 You can also define additional labels with `MANAGEMENT_METRICS_TAGS_<LABEL_NAME>`.
 
+#### Registration Retry
+
+If registration with the central server fails for a transient reason (unreachable server, timeout, TLS problem, HTTP 5xx or 429), the agent retries it up to 3 times in a row with exponential backoff (2 s, then 4 s). Permanent failures such as HTTP 409 are not retried. When all in-process attempts fail, the agent schedules the next automatic retry 15 minutes later and a background sweep (which polls every minute) re-triggers the registration when it is due, up to 8 rounds (~2 hours), after which the registration must be retried manually. The retry state is persisted, so an agent that started - or restarted while a retry was pending - before the central server became reachable recovers automatically. These retry parameters are fixed in the agent and cannot be configured.
+
+A manual retry is possible via the API: `POST /api/servers/{id}/registration` answers `202 Accepted` when the retry was triggered (the outcome arrives asynchronously) or `409 Conflict` when the server already holds registration credentials.
+
+| Variable                               | Description                                                | Default |
+|:---------------------------------------|:------------------------------------------------------------|:--------|
+| `AGENT_CENTRAL_SERVER_CONNECT_TIMEOUT` | Timeout for establishing connections to the central server. | `5s`    |
+| `AGENT_CENTRAL_SERVER_READ_TIMEOUT`    | Timeout for waiting for responses from the central server.  | `10s`   |
+
+
 Additionally, as described above, you can override any internal application setting using the `APP_SETTING_` prefix. The complete set of application settings supported by the Data Quality Agent is:
 
 | Setting          | Description                                                                                       | Default                     |

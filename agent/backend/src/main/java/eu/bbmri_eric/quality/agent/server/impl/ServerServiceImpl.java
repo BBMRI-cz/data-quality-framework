@@ -1,5 +1,7 @@
 package eu.bbmri_eric.quality.agent.server.impl;
 
+import static eu.bbmri_eric.quality.agent.server.impl.RegistrationRetryConstants.RETRY_DELAY;
+
 import eu.bbmri_eric.quality.agent.common.EventPublisher;
 import eu.bbmri_eric.quality.agent.common.exception.EntityAlreadyExistsException;
 import eu.bbmri_eric.quality.agent.server.ServerService;
@@ -11,6 +13,7 @@ import eu.bbmri_eric.quality.agent.server.dto.ServerUpdateDto;
 import eu.bbmri_eric.quality.agent.server.event.ServerRegistrationEvent;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import jakarta.persistence.EntityNotFoundException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.StreamSupport;
 import org.modelmapper.ModelMapper;
@@ -117,5 +120,26 @@ class ServerServiceImpl implements ServerService {
     }
     serverRepository.deleteById(id);
     log.info("Deleted server {}", id);
+  }
+
+  @Override
+  public void retryRegistration(String id) {
+    Server server =
+        serverRepository
+            .findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Server not found with id: " + id));
+    if (!server.getClientId().isEmpty()) {
+      throw new EntityAlreadyExistsException(
+          "Server %s already holds registration credentials; remove and re-add the server instead"
+              .formatted(server.getUrl()));
+    }
+    // Dispatch claim, same rule as the sweep: every dispatch persists an expiring retry date
+    // before publishing the event, so a crash before any outcome lets the sweep recover the retry.
+    server.setRegistrationRetryCount(0);
+    server.setNextRegistrationRetryAt(LocalDateTime.now().plus(RETRY_DELAY));
+    serverRepository.save(server);
+    String agentId = settingsService.getSettings().getAgentId();
+    eventPublisher.publishEvent(new ServerRegistrationEvent(agentId, server.getUrl()));
+    log.info("Manual registration retry requested for server {}", server.getUrl());
   }
 }
