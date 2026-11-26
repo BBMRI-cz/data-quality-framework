@@ -1,20 +1,24 @@
 package eu.bbmri_eric.quality.server.dataquality;
 
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentDTO;
-import eu.bbmri_eric.quality.server.dataquality.dto.AgentRegistration;
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentRegistrationRequest;
+import eu.bbmri_eric.quality.server.dataquality.dto.AgentRegistrationResult;
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentUpdateRequest;
 import java.util.List;
 
 /** Service interface for managing agents and their lifecycle. */
 public interface AgentService {
   /**
-   * Creates a new agent with associated user credentials.
+   * Registers a new agent with associated user credentials, or idempotently re-registers an
+   * existing agent when the registration comes from the IP address it is already registered from.
+   * Re-registration rotates the agent's credentials, permanently invalidating the previous ones.
    *
    * @param createAgentDto the agent registration request containing agent details
-   * @return the created agent registration with agent and user information
+   * @param ipAddress the client IP address of the registration request
+   * @return the registration result with agent and user information and a flag telling whether the
+   *     agent was re-registered instead of newly created
    */
-  AgentRegistration create(AgentRegistrationRequest createAgentDto, String ipAddress);
+  AgentRegistrationResult create(AgentRegistrationRequest createAgentDto, String ipAddress);
 
   /**
    * Updates an existing agent's information.

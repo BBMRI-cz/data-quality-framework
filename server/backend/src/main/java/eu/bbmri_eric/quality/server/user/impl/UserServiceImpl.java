@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.server.user.impl;
 
+import eu.bbmri_eric.quality.server.common.EntityNotFoundException;
 import eu.bbmri_eric.quality.server.common.dto.FilterDTO;
 import eu.bbmri_eric.quality.server.common.dto.PageResponse;
 import eu.bbmri_eric.quality.server.user.AuthenticationContextService;
@@ -135,6 +136,20 @@ public class UserServiceImpl implements UserService {
     }
     String encodedPassword = passwordEncoder.encode(passwordChangeRequest.getNewPassword());
     user.setPassword(encodedPassword);
+  }
+
+  @Override
+  @Transactional
+  public UserDTO rotateAgentPassword(String agentId) {
+    User user =
+        userRepository
+            .findByAgentId(agentId)
+            .orElseThrow(() -> new EntityNotFoundException("User not found for agent: " + agentId));
+    String rawPassword = generateRandomPassword();
+    user.setPassword(passwordEncoder.encode(rawPassword));
+    UserDTO rotatedUser = modelMapper.map(userRepository.save(user), UserDTO.class);
+    rotatedUser.setTemporaryPassword(rawPassword);
+    return rotatedUser;
   }
 
   @Override

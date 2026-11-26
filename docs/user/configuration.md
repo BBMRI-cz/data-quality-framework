@@ -70,6 +70,15 @@ The following are standard environment variables recognized by the Data Quality 
 | `OTEL_EXPORTER_OTLP_AUTHORIZATION`    | Optional Authorization header value (for example `Bearer <token>`) sent with OTLP metrics requests. | (Not set)                                       |
 You can also define additional labels with `MANAGEMENT_METRICS_TAGS_<LABEL_NAME>`.
 
+#### Registration Lifecycle
+
+The central server treats agent registration as idempotent for a returning agent:
+
+*   Unknown agent ID: the server registers the agent and answers `201 Created` with the agent's client credentials (username and temporary password).
+*   Same agent ID, same IP address as registered: the server answers `200 OK` with fresh credentials. This re-registration **rotates the agent's password and permanently invalidates the old credentials**, so a lost or compromised registration is self-healing on the agent's next registration attempt.
+*   Same agent ID, different IP address: the server answers `409 Conflict` naming both addresses. If the agent genuinely moved to a new address, delete the agent in the server UI and register again.
+*   Different agent ID from an IP address already used by another agent: the server answers `429 Too Many Requests`. Delete the conflicting agent in the server UI to free the address.
+
 #### Registration Retry
 
 If registration with the central server fails for a transient reason (unreachable server, timeout, TLS problem, HTTP 5xx or 429), the agent retries it up to 3 times in a row with exponential backoff (2 s, then 4 s). Permanent failures such as HTTP 409 are not retried. When all in-process attempts fail, the agent schedules the next automatic retry 15 minutes later and a background sweep (which polls every minute) re-triggers the registration when it is due, up to 8 rounds (~2 hours), after which the registration must be retried manually. The retry state is persisted, so an agent that started - or restarted while a retry was pending - before the central server became reachable recovers automatically. These retry parameters are fixed in the agent and cannot be configured.
