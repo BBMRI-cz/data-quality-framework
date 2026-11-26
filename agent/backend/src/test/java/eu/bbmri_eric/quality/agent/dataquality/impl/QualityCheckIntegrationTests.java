@@ -884,4 +884,656 @@ class QualityCheckIntegrationTests {
         .andExpect(jsonPath("$._embedded.quality-checks[0].name").value("Uncategorized Check"))
         .andExpect(jsonPath("$.page.totalElements").value(1));
   }
+
+  @Test
+  void import_newChecks_createsThem() throws Exception {
+    String entries =
+        """
+        [
+          {
+            "name": "Imported SQL check",
+            "description": "Imported via file",
+            "query": "SELECT 1",
+            "type": "SQL",
+            "warningThreshold": 15,
+            "errorThreshold": 45,
+            "category": "Imported Category"
+          },
+          {
+            "name": "Imported CQL check",
+            "description": "With epsilon",
+            "query": "define Test: true",
+            "type": "CQL",
+            "warningThreshold": 10,
+            "errorThreshold": 30,
+            "epsilonBudget": 1.0
+          }
+        ]
+        """;
+
+    mockMvc
+        .perform(
+            post(API_QUALITY_CHECKS + "/import")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(entries))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.created").value(2))
+        .andExpect(jsonPath("$.updated").value(0))
+        .andExpect(jsonPath("$.unchanged").value(0));
+
+    List<QualityCheck> checks = qualityCheckRepository.findAll();
+    assertThat(checks).hasSize(2);
+    QualityCheck sqlCheck = findCheckByName(checks, "Imported SQL check");
+    assertThat(sqlCheck.getType()).isEqualTo(QualityCheckType.SQL);
+    assertThat(sqlCheck.getQuery()).isEqualTo("SELECT 1");
+    assertThat(sqlCheck.getDescription()).isEqualTo("Imported via file");
+    assertThat(sqlCheck.getWarningThreshold()).isEqualTo(15);
+    assertThat(sqlCheck.getErrorThreshold()).isEqualTo(45);
+    assertThat(sqlCheck.getEpsilonBudget()).isNull();
+    assertThat(sqlCheck.getCategory()).isNotNull();
+    assertThat(sqlCheck.getCategory().getName()).isEqualTo("Imported Category");
+    QualityCheck cqlCheck = findCheckByName(checks, "Imported CQL check");
+    assertThat(cqlCheck.getType()).isEqualTo(QualityCheckType.CQL);
+    assertThat(cqlCheck.getEpsilonBudget()).isEqualTo(1.0);
+    assertThat(cqlCheck.getCategory()).isNull();
+    assertThat(cqlCheck.isActive()).isTrue();
+  }
+
+  @Test
+  void import_sameFileTwice_reportsAllUnchanged() throws Exception {
+    String entries =
+        """
+        [
+          {
+            "name": "Stable check",
+            "description": "One",
+            "query": "SELECT 1",
+            "type": "SQL",
+            "warningThreshold": 10,
+            "errorThreshold": 30
+          },
+          {
+            "name": "Other check",
+            "description": "Two",
+            "query": "define Test: true",
+            "type": "CQL",
+            "warningThreshold": 20,
+            "errorThreshold": 40,
+            "epsilonBudget": 0.5
+          }
+        ]
+        """;
+
+    mockMvc
+        .perform(
+            post(API_QUALITY_CHECKS + "/import")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(entries))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.created").value(2));
+
+    List<Long> idsBefore =
+        qualityCheckRepository.findAll().stream().map(QualityCheck::getId).sorted().toList();
+
+    mockMvc
+        .perform(
+            post(API_QUALITY_CHECKS + "/import")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(entries))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.created").value(0))
+        .andExpect(jsonPath("$.updated").value(0))
+        .andExpect(jsonPath("$.unchanged").value(2));
+
+    List<Long> idsAfter =
+        qualityCheckRepository.findAll().stream().map(QualityCheck::getId).sorted().toList();
+    assertThat(idsAfter).isEqualTo(idsBefore);
+  }
+
+  @Test
+  void import_changedFields_updatesExistingOnly() throws Exception {
+    String firstImport =
+        """
+        [
+          {
+            "name": "Check A",
+            "description": "First",
+            "query": "SELECT 1",
+            "type": "SQL",
+            "warningThreshold": 10,
+            "errorThreshold": 30
+          },
+          {
+            "name": "Check B",
+            "description": "Second",
+            "query": "define Test: true",
+            "type": "CQL",
+            "warningThreshold": 10,
+            "errorThreshold": 30
+          },
+          {
+            "name": "Check C",
+            "description": "Third",
+            "query": "SELECT 3",
+            "type": "SQL",
+            "warningThreshold": 10,
+            "errorThreshold": 30
+          }
+        ]
+        """;
+    mockMvc
+        .perform(
+            post(API_QUALITY_CHECKS + "/import")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(firstImport))
+        .andExpect(status().isOk());
+    QualityCheck checkA = findCheckByName(qualityCheckRepository.findAll(), "Check A");
+    checkA.setActive(false);
+    qualityCheckRepository.save(checkA);
+
+    String secondImport =
+        """
+        [
+          {
+            "name": "Check A",
+            "description": "First",
+            "query": "SELECT 1",
+            "type": "SQL",
+            "warningThreshold": 10,
+            "errorThreshold": 50
+          },
+          {
+            "name": "Check B",
+            "description": "Second",
+            "query": "define Test: false",
+            "type": "CQL",
+            "warningThreshold": 10,
+            "errorThreshold": 30
+          },
+          {
+            "name": "Check C",
+            "description": "Third",
+            "query": "SELECT 3",
+            "type": "SQL",
+            "warningThreshold": 10,
+            "errorThreshold": 30
+          }
+        ]
+        """;
+    mockMvc
+        .perform(
+            post(API_QUALITY_CHECKS + "/import")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(secondImport))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.created").value(0))
+        .andExpect(jsonPath("$.updated").value(2))
+        .andExpect(jsonPath("$.unchanged").value(1));
+
+    List<QualityCheck> checks = qualityCheckRepository.findAll();
+    assertThat(checks).hasSize(3);
+    QualityCheck updatedA = findCheckByName(checks, "Check A");
+    assertThat(updatedA.getErrorThreshold()).isEqualTo(50);
+    assertThat(updatedA.getWarningThreshold()).isEqualTo(10);
+    assertThat(updatedA.isActive()).isFalse();
+    QualityCheck updatedB = findCheckByName(checks, "Check B");
+    assertThat(updatedB.getQuery()).isEqualTo("define Test: false");
+    QualityCheck unchangedC = findCheckByName(checks, "Check C");
+    assertThat(unchangedC.getDescription()).isEqualTo("Third");
+    assertThat(unchangedC.isActive()).isTrue();
+  }
+
+  @Test
+  void import_categoryByName_matchesExistingAndCreatesMissing() throws Exception {
+    Category existingCategory = categoryRepository.save(new Category("Alpha", "#FF5733"));
+    String entries =
+        """
+        [
+          {
+            "name": "Check in Alpha",
+            "description": "Existing",
+            "query": "SELECT 1",
+            "type": "SQL",
+            "warningThreshold": 10,
+            "errorThreshold": 30,
+            "category": "Alpha"
+          },
+          {
+            "name": "Check in Beta",
+            "description": "Missing",
+            "query": "SELECT 2",
+            "type": "SQL",
+            "warningThreshold": 10,
+            "errorThreshold": 30,
+            "category": "Beta"
+          }
+        ]
+        """;
+
+    mockMvc
+        .perform(
+            post(API_QUALITY_CHECKS + "/import")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(entries))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.created").value(2));
+
+    List<QualityCheck> checks = qualityCheckRepository.findAll();
+    QualityCheck alphaCheck = findCheckByName(checks, "Check in Alpha");
+    assertThat(alphaCheck.getCategory()).isNotNull();
+    assertThat(alphaCheck.getCategory().getId()).isEqualTo(existingCategory.getId());
+    assertThat(alphaCheck.getCategory().getColorHex()).isEqualTo("#FF5733");
+    QualityCheck betaCheck = findCheckByName(checks, "Check in Beta");
+    assertThat(betaCheck.getCategory()).isNotNull();
+    assertThat(betaCheck.getCategory().getName()).isEqualTo("Beta");
+    assertThat(betaCheck.getCategory().getColorHex()).isNull();
+  }
+
+  @Test
+  void import_changedCategory_movesCheckAndKeepsOldCategory() throws Exception {
+    Category alpha = categoryRepository.save(new Category("Alpha", "#FF5733"));
+    QualityCheck check = new QualityCheck("Moving check", "Moves", "SELECT 1");
+    check.setType(QualityCheckType.SQL);
+    check.setCategory(alpha);
+    qualityCheckRepository.save(check);
+
+    mockMvc
+        .perform(
+            post(API_QUALITY_CHECKS + "/import")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    [
+                      {
+                        "name": "Moving check",
+                        "description": "Moves",
+                        "query": "SELECT 1",
+                        "type": "SQL",
+                        "warningThreshold": 10,
+                        "errorThreshold": 30,
+                        "category": "Beta"
+                      }
+                    ]
+                    """))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.updated").value(1));
+
+    QualityCheck moved = qualityCheckRepository.findById(check.getId()).orElseThrow();
+    assertThat(moved.getCategory().getName()).isEqualTo("Beta");
+    assertThat(categoryRepository.findById(alpha.getId()).orElseThrow().getName())
+        .isEqualTo("Alpha");
+  }
+
+  @Test
+  void import_invalidEntry_returns400AndSavesNothing() throws Exception {
+    String entries =
+        """
+        [
+          {
+            "name": "Valid check",
+            "description": "Ok",
+            "query": "SELECT 1",
+            "type": "SQL",
+            "warningThreshold": 10,
+            "errorThreshold": 30
+          },
+          {
+            "name": "Threshold-less check",
+            "description": "Missing warning threshold",
+            "query": "SELECT 2",
+            "type": "SQL",
+            "errorThreshold": 30
+          }
+        ]
+        """;
+
+    String response =
+        mockMvc
+            .perform(
+                post(API_QUALITY_CHECKS + "/import")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(entries))
+            .andExpect(status().isBadRequest())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    assertThat(response).contains("warningThreshold").contains("[1]");
+    assertThat(qualityCheckRepository.count()).isZero();
+    assertThat(categoryRepository.count()).isZero();
+  }
+
+  @Test
+  void import_duplicateNamesInFile_returns400AndSavesNothing() throws Exception {
+    String entries =
+        """
+        [
+          {
+            "name": "Twice named",
+            "description": "First",
+            "query": "SELECT 1",
+            "type": "SQL",
+            "warningThreshold": 10,
+            "errorThreshold": 30
+          },
+          {
+            "name": "Twice named",
+            "description": "Second",
+            "query": "SELECT 2",
+            "type": "SQL",
+            "warningThreshold": 10,
+            "errorThreshold": 30
+          }
+        ]
+        """;
+
+    mockMvc
+        .perform(
+            post(API_QUALITY_CHECKS + "/import")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(entries))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.title").value("Import Validation Failed"))
+        .andExpect(jsonPath("$.invalidEntries.length()").value(2))
+        .andExpect(jsonPath("$.invalidEntries[0].index").value(1))
+        .andExpect(jsonPath("$.invalidEntries[1].index").value(2))
+        .andExpect(jsonPath("$.invalidEntries[0].name").value("Twice named"))
+        .andExpect(
+            jsonPath("$.invalidEntries[0].reason")
+                .value("the name appears more than once in the file"));
+
+    assertThat(qualityCheckRepository.count()).isZero();
+  }
+
+  @Test
+  void import_nameMatchingMultipleExistingChecks_returns400() throws Exception {
+    qualityCheckRepository.save(new QualityCheck("Ambiguous", "First one", "SELECT 1"));
+    qualityCheckRepository.save(new QualityCheck("Ambiguous", "Second one", "SELECT 2"));
+
+    mockMvc
+        .perform(
+            post(API_QUALITY_CHECKS + "/import")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    [
+                      {
+                        "name": "Ambiguous",
+                        "description": "Updated",
+                        "query": "SELECT 3",
+                        "type": "SQL",
+                        "warningThreshold": 10,
+                        "errorThreshold": 30
+                      }
+                    ]
+                    """))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.invalidEntries[0].name").value("Ambiguous"))
+        .andExpect(
+            jsonPath("$.invalidEntries[0].reason")
+                .value("multiple existing checks are named 'Ambiguous'"));
+
+    assertThat(qualityCheckRepository.count()).isEqualTo(2);
+  }
+
+  @Test
+  void import_javaEntry_updatesExistingBuiltIn() throws Exception {
+    QualityCheck builtin = new QualityCheck("Duplicate identifiers", "Duplicate patients", null);
+    builtin.setType(QualityCheckType.JAVA);
+    qualityCheckRepository.save(builtin);
+
+    mockMvc
+        .perform(
+            post(API_QUALITY_CHECKS + "/import")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    [
+                      {
+                        "name": "Duplicate identifiers",
+                        "description": "Duplicate patients",
+                        "type": "JAVA",
+                        "warningThreshold": 20,
+                        "errorThreshold": 40
+                      }
+                    ]
+                    """))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.created").value(0))
+        .andExpect(jsonPath("$.updated").value(1))
+        .andExpect(jsonPath("$.unchanged").value(0));
+
+    QualityCheck updated =
+        findCheckByName(qualityCheckRepository.findAll(), "Duplicate identifiers");
+    assertThat(updated.getQuery()).isNull();
+    assertThat(updated.getWarningThreshold()).isEqualTo(20);
+    assertThat(updated.getErrorThreshold()).isEqualTo(40);
+  }
+
+  @Test
+  void import_javaEntryWithoutMatchingCheck_returns400() throws Exception {
+    mockMvc
+        .perform(
+            post(API_QUALITY_CHECKS + "/import")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    [
+                      {
+                        "name": "Unknown built-in",
+                        "description": "Cannot be created",
+                        "type": "JAVA",
+                        "warningThreshold": 10,
+                        "errorThreshold": 30
+                      }
+                    ]
+                    """))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.title").value("Import Validation Failed"))
+        .andExpect(jsonPath("$.invalidEntries[0].index").value(1))
+        .andExpect(jsonPath("$.invalidEntries[0].name").value("Unknown built-in"))
+        .andExpect(
+            jsonPath("$.invalidEntries[0].reason")
+                .value(
+                    "no existing built-in check named 'Unknown built-in';"
+                        + " JAVA checks can only be updated, never created"));
+
+    assertThat(qualityCheckRepository.count()).isZero();
+  }
+
+  @Test
+  void import_nonJavaEntryMatchingBuiltIn_returns400AndKeepsBuiltIn() throws Exception {
+    QualityCheck builtin = new QualityCheck("Duplicate identifiers", "Duplicate patients", null);
+    builtin.setType(QualityCheckType.JAVA);
+    qualityCheckRepository.save(builtin);
+
+    mockMvc
+        .perform(
+            post(API_QUALITY_CHECKS + "/import")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    [
+                      {
+                        "name": "Duplicate identifiers",
+                        "description": "Duplicate patients",
+                        "query": "SELECT 1",
+                        "type": "SQL",
+                        "warningThreshold": 10,
+                        "errorThreshold": 30
+                      }
+                    ]
+                    """))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.invalidEntries[0].index").value(1))
+        .andExpect(
+            jsonPath("$.invalidEntries[0].reason")
+                .value(
+                    "'Duplicate identifiers' is a built-in check; its type cannot be changed to SQL"));
+
+    QualityCheck reloaded = qualityCheckRepository.findById(builtin.getId()).orElseThrow();
+    assertThat(reloaded.getType()).isEqualTo(QualityCheckType.JAVA);
+    assertThat(reloaded.getQuery()).isNull();
+  }
+
+  @Test
+  void import_javaEntryWithQuery_ignoresQuery() throws Exception {
+    QualityCheck builtin = new QualityCheck("Builtin check", "Built-in logic", "BUILT-IN");
+    builtin.setType(QualityCheckType.JAVA);
+    qualityCheckRepository.save(builtin);
+
+    mockMvc
+        .perform(
+            post(API_QUALITY_CHECKS + "/import")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    [
+                      {
+                        "name": "Builtin check",
+                        "description": "Built-in logic",
+                        "query": "SHOULD BE IGNORED",
+                        "type": "JAVA",
+                        "warningThreshold": 25,
+                        "errorThreshold": 30
+                      }
+                    ]
+                    """))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.updated").value(1));
+
+    QualityCheck updated = findCheckByName(qualityCheckRepository.findAll(), "Builtin check");
+    assertThat(updated.getQuery()).isEqualTo("BUILT-IN");
+    assertThat(updated.getWarningThreshold()).isEqualTo(25);
+  }
+
+  @Test
+  @WithAnonymousUser
+  void import_withoutAuthentication_returnsUnauthorized() throws Exception {
+    mockMvc
+        .perform(
+            post(API_QUALITY_CHECKS + "/import")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("[]"))
+        .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  void import_emptyArray_returnsBadRequest() throws Exception {
+    mockMvc
+        .perform(
+            post(API_QUALITY_CHECKS + "/import")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("[]"))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void import_nullEntry_returnsBadRequest() throws Exception {
+    mockMvc
+        .perform(
+            post(API_QUALITY_CHECKS + "/import")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("[null]"))
+        .andExpect(status().isBadRequest());
+    assertThat(qualityCheckRepository.count()).isZero();
+  }
+
+  @Test
+  void import_missingDescription_returnsBadRequest() throws Exception {
+    mockMvc
+        .perform(
+            post(API_QUALITY_CHECKS + "/import")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    [
+                      {
+                        "name": "No description",
+                        "query": "SELECT 1",
+                        "type": "SQL",
+                        "warningThreshold": 10,
+                        "errorThreshold": 30
+                      }
+                    ]
+                    """))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.violations['importChecks.entries[0].description']").exists());
+    assertThat(qualityCheckRepository.count()).isZero();
+  }
+
+  @Test
+  void import_malformedJson_returnsBadRequest() throws Exception {
+    mockMvc
+        .perform(
+            post(API_QUALITY_CHECKS + "/import")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{not a json array"))
+        .andExpect(status().isBadRequest());
+
+    assertThat(qualityCheckRepository.count()).isZero();
+  }
+
+  @Test
+  void exportImportRoundTrip_recreatesChecksAndReImportIsUnchanged() throws Exception {
+    Category category = categoryRepository.save(new Category("Data Completeness", "#FF5733"));
+    QualityCheck categorizedCheck =
+        qualityCheckRepository.save(
+            new QualityCheck("Categorized Check", "With category", "define Test: true"));
+    categorizedCheck.setType(QualityCheckType.SQL);
+    categorizedCheck.setEpsilonBudget(1.0);
+    categorizedCheck.setCategory(category);
+    qualityCheckRepository.save(categorizedCheck);
+    qualityCheckRepository.save(
+        new QualityCheck("Uncategorized Check", "Without category", "define Test: false"));
+    QualityCheck builtin = new QualityCheck("Duplicate identifiers", "Duplicate patients", null);
+    builtin.setType(QualityCheckType.JAVA);
+    builtin.setEpsilonBudget(0.2);
+    qualityCheckRepository.save(builtin);
+
+    String exported =
+        mockMvc
+            .perform(get(API_QUALITY_CHECKS + "/export"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    qualityCheckRepository.delete(categorizedCheck);
+    qualityCheckRepository.delete(
+        findCheckByName(qualityCheckRepository.findAll(), "Uncategorized Check"));
+
+    mockMvc
+        .perform(
+            post(API_QUALITY_CHECKS + "/import")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(exported))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.created").value(2))
+        .andExpect(jsonPath("$.updated").value(0))
+        .andExpect(jsonPath("$.unchanged").value(1));
+
+    String exportedAgain =
+        mockMvc
+            .perform(get(API_QUALITY_CHECKS + "/export"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    assertThat(exportedAgain).isEqualTo(exported);
+
+    mockMvc
+        .perform(
+            post(API_QUALITY_CHECKS + "/import")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(exported))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.created").value(0))
+        .andExpect(jsonPath("$.updated").value(0))
+        .andExpect(jsonPath("$.unchanged").value(3));
+  }
+
+  private static QualityCheck findCheckByName(List<QualityCheck> checks, String name) {
+    return checks.stream().filter(check -> check.getName().equals(name)).findFirst().orElseThrow();
+  }
 }

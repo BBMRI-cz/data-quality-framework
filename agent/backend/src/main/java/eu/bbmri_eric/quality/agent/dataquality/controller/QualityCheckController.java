@@ -1,11 +1,13 @@
 package eu.bbmri_eric.quality.agent.dataquality.controller;
 
+import eu.bbmri_eric.quality.agent.dataquality.QualityCheckImportService;
 import eu.bbmri_eric.quality.agent.dataquality.QualityCheckService;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckBulkUpdateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckCreateDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
-import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckExportDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckFilterDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckImportSummaryDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckTransferDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckUpdateDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,6 +18,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import java.net.URI;
 import java.util.List;
 import org.springdoc.core.annotations.ParameterObject;
@@ -45,11 +48,15 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 class QualityCheckController {
 
   private final QualityCheckService qualityCheckService;
+  private final QualityCheckImportService qualityCheckImportService;
   private final QualityCheckLinkBuilder linkBuilder;
 
   QualityCheckController(
-      QualityCheckService qualityCheckService, QualityCheckLinkBuilder linkBuilder) {
+      QualityCheckService qualityCheckService,
+      QualityCheckImportService qualityCheckImportService,
+      QualityCheckLinkBuilder linkBuilder) {
     this.qualityCheckService = qualityCheckService;
+    this.qualityCheckImportService = qualityCheckImportService;
     this.linkBuilder = linkBuilder;
   }
 
@@ -117,7 +124,7 @@ class QualityCheckController {
             description = "JSON file with the exported quality checks",
             content = @Content(mediaType = "application/json"))
       })
-  public ResponseEntity<List<QualityCheckExportDTO>> export(
+  public ResponseEntity<List<QualityCheckTransferDTO>> export(
       @ParameterObject QualityCheckFilterDTO filter) {
     return ResponseEntity.ok()
         .contentType(MediaType.APPLICATION_JSON)
@@ -131,7 +138,7 @@ class QualityCheckController {
    * Fetches every check matching the filter: the export is unpaged and, unless the caller asked for
    * another field, sorted by name.
    */
-  private List<QualityCheckExportDTO> exportMatches(QualityCheckFilterDTO filter) {
+  private List<QualityCheckTransferDTO> exportMatches(QualityCheckFilterDTO filter) {
     filter.setPage(0);
     filter.setSize(Integer.MAX_VALUE);
     if (filter.getSort() == null) {
@@ -139,8 +146,25 @@ class QualityCheckController {
       filter.setOrder(QualityCheckFilterDTO.SortOrder.ASC);
     }
     return qualityCheckService.findAll(filter).getContent().stream()
-        .map(QualityCheckExportDTO::from)
+        .map(QualityCheckTransferDTO::from)
         .toList();
+  }
+
+  @PostMapping(value = "/import", consumes = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "Import quality checks from a JSON file",
+      description =
+          "Creates or updates quality checks from a JSON array in the export file format. Checks"
+              + " are matched by exact name: new names are created, existing ones are updated only"
+              + " where a field differs. Categories are matched by name and created when missing."
+              + " The whole file is validated before anything is saved; an invalid entry rejects"
+              + " the import and reports the failing entries. No query is executed, no report is"
+              + " started and no differential privacy budget is spent.")
+  public ResponseEntity<QualityCheckImportSummaryDTO> importChecks(
+      @RequestBody @NotEmpty(message = "At least one quality check import entry is required") @Valid
+          List<@NotNull(message = "Import entries must not be null") QualityCheckTransferDTO>
+              entries) {
+    return ResponseEntity.ok(qualityCheckImportService.importChecks(entries));
   }
 
   @PutMapping("/{id}")
