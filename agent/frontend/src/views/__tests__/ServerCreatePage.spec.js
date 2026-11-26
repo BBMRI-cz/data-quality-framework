@@ -156,4 +156,23 @@ describe('ServerCreatePage', () => {
     expect(findTryAgainButton(wrapper)).toBeUndefined();
     expect(wrapper.find('.alert-danger').exists()).toBe(false);
   });
+
+  it('reports the registration as requested, not confirmed, after a successful submit', async () => {
+    serverService.create.mockResolvedValue({ id: 1 });
+    const wrapper = mountPage();
+
+    await fillForm(wrapper);
+    await wrapper.find('form').trigger('submit');
+    await flushPromises();
+
+    expect(notificationService.success).toHaveBeenCalledWith(
+      'Registration Requested',
+      expect.stringContaining('check the server detail page')
+    );
+    expect(notificationService.success).not.toHaveBeenCalledWith(
+      'Server Registered',
+      expect.anything()
+    );
+    expect(notificationService.error).not.toHaveBeenCalled();
+  });
 });

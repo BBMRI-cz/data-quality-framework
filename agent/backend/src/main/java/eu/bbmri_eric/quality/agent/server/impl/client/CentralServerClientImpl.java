@@ -1,16 +1,27 @@
 package eu.bbmri_eric.quality.agent.server.impl.client;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.bbmri_eric.quality.agent.dataquality.QualityCheckType;
 import eu.bbmri_eric.quality.agent.dataquality.dto.CategoryDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ObfuscatedReportDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.agent.server.CentralServerClient;
 import eu.bbmri_eric.quality.agent.server.RegistrationCredentials;
+import eu.bbmri_eric.quality.agent.server.RegistrationFailureReason;
 import eu.bbmri_eric.quality.agent.server.ServerCommunicationException;
 import eu.bbmri_eric.quality.agent.server.domain.ServerConnectionStatus;
 import eu.bbmri_eric.quality.agent.server.dto.ManifestDto;
+import java.net.ConnectException;
+import java.net.NoRouteToHostException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
+import java.net.http.HttpTimeoutException;
 import java.util.List;
 import java.util.Objects;
+import javax.net.ssl.SSLException;
+import org.apache.hc.client5.http.ConnectTimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.info.BuildProperties;
@@ -19,6 +30,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -29,6 +42,9 @@ import org.springframework.web.client.RestTemplate;
 class CentralServerClientImpl implements CentralServerClient {
 
   private static final Logger log = LoggerFactory.getLogger(CentralServerClientImpl.class);
+
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  private static final int DETAIL_MAX_LENGTH = 500;
 
   // API Endpoints
   private static final String AGENTS_ENDPOINT = "/api/v1/agents";
@@ -71,12 +87,16 @@ class CentralServerClientImpl implements CentralServerClient {
     HttpEntity<AgentRegistrationRequest> requestEntity = createJsonHttpEntity(request);
     String registrationUrl = buildApiUrl(AGENTS_ENDPOINT);
     log.info("Registering agent {} with central server {}", agentId, serverUrl);
-    ResponseEntity<AgentRegistrationResponse> response =
-        restTemplate.exchange(
-            registrationUrl, HttpMethod.POST, requestEntity, AgentRegistrationResponse.class);
-    RegistrationCredentials credentials = parseRegistrationResponse(response);
-    log.info("Successfully registered agent {} with central server {}", agentId, serverUrl);
-    return credentials;
+    try {
+      ResponseEntity<AgentRegistrationResponse> response =
+          restTemplate.exchange(
+              registrationUrl, HttpMethod.POST, requestEntity, AgentRegistrationResponse.class);
+      RegistrationCredentials credentials = parseRegistrationResponse(response);
+      log.info("Successfully registered agent {} with central server {}", agentId, serverUrl);
+      return credentials;
+    } catch (RestClientException e) {
+      throw registrationFailure(e);
+    }
   }
 
   /**
@@ -265,6 +285,121 @@ class CentralServerClientImpl implements CentralServerClient {
   }
 
   /**
+   * Classifies a low-level registration failure into a {@link ServerCommunicationException}
+   * carrying a {@link RegistrationFailureReason}, the HTTP status and the server's ProblemDetail
+   * {@code detail} message where they are known.
+   *
+   * @param cause the original client exception
+   * @return the classified exception to throw
+   */
+  ServerCommunicationException registrationFailure(RestClientException cause) {
+    log.warn("Registration request to server {} failed: {}", serverUrl, cause.getMessage());
+    if (cause instanceof HttpStatusCodeException http) {
+      int status = http.getStatusCode().value();
+      String detail = extractProblemDetail(http.getResponseBodyAsString());
+      String text = detail != null ? detail : http.getStatusText();
+      String message = text != null && !text.isBlank() ? text : "HTTP " + status;
+      return new ServerCommunicationException(
+          message, classifyStatus(status), status, detail, cause);
+    }
+    if (cause instanceof ResourceAccessException access) {
+      Throwable root = rootCause(access);
+      String message = root.getMessage() != null ? root.getMessage() : access.getMessage();
+      return new ServerCommunicationException(
+          message, classifyRootCause(access), null, null, cause);
+    }
+    return new ServerCommunicationException(
+        cause.getMessage(), RegistrationFailureReason.UNKNOWN, null, null, cause);
+  }
+
+  /**
+   * Maps an HTTP response status to a registration failure reason.
+   *
+   * @param status the HTTP status code
+   * @return the corresponding failure reason
+   */
+  private static RegistrationFailureReason classifyStatus(int status) {
+    return switch (status) {
+      case 401, 403 -> RegistrationFailureReason.UNAUTHORIZED;
+      case 409 -> RegistrationFailureReason.CONFLICT;
+      case 429 -> RegistrationFailureReason.RATE_LIMITED;
+      default -> {
+        if (status >= 500) {
+          yield RegistrationFailureReason.SERVER_ERROR;
+        } else if (status >= 400) {
+          yield RegistrationFailureReason.CLIENT_ERROR;
+        } else {
+          yield RegistrationFailureReason.UNKNOWN;
+        }
+      }
+    };
+  }
+
+  /**
+   * Classifies the root cause of an I/O failure during a registration request.
+   *
+   * @param e the access exception whose cause chain describes the failure
+   * @return the corresponding failure reason
+   */
+  private static RegistrationFailureReason classifyRootCause(Throwable e) {
+    Throwable cause = e;
+    for (int depth = 0; depth < 5 && cause != null; depth++, cause = cause.getCause()) {
+      if (cause instanceof SocketTimeoutException
+          || cause instanceof ConnectTimeoutException
+          || cause instanceof HttpTimeoutException) {
+        return RegistrationFailureReason.TIMEOUT;
+      }
+      if (cause instanceof SSLException) {
+        return RegistrationFailureReason.TLS;
+      }
+      if (cause instanceof UnknownHostException
+          || cause instanceof ConnectException
+          || cause instanceof NoRouteToHostException) {
+        return RegistrationFailureReason.UNREACHABLE;
+      }
+    }
+    return RegistrationFailureReason.UNKNOWN;
+  }
+
+  /**
+   * Walks the cause chain of an exception to the deepest cause.
+   *
+   * @param e the exception to walk
+   * @return the deepest cause in the chain
+   */
+  private static Throwable rootCause(Throwable e) {
+    Throwable current = e;
+    for (int depth = 0; depth < 5 && current.getCause() != null; depth++) {
+      current = current.getCause();
+    }
+    return current;
+  }
+
+  /**
+   * Extracts the human-readable {@code detail} from an RFC-7807 ProblemDetail response body.
+   *
+   * @param body the raw response body, may be null or non-JSON
+   * @return the detail text capped at {@value #DETAIL_MAX_LENGTH} characters, or null when absent
+   *     or unparseable
+   */
+  private static String extractProblemDetail(String body) {
+    if (body == null || !body.trim().startsWith("{")) {
+      return null;
+    }
+    try {
+      JsonNode node = OBJECT_MAPPER.readTree(body);
+      JsonNode detail = node.get("detail");
+      if (detail == null || !detail.isTextual()) {
+        return null;
+      }
+      String text = detail.asText();
+      return text.length() > DETAIL_MAX_LENGTH ? text.substring(0, DETAIL_MAX_LENGTH) : text;
+    } catch (JsonProcessingException e) {
+      return null;
+    }
+  }
+
+  /**
    * Authenticates with the central server and retrieves a bearer token.
    *
    * @return the authentication token, or null if authentication fails
@@ -327,16 +462,41 @@ class CentralServerClientImpl implements CentralServerClient {
   private RegistrationCredentials parseRegistrationResponse(
       ResponseEntity<AgentRegistrationResponse> response) {
     AgentRegistrationResponse registrationResponse = response.getBody();
-    if (registrationResponse == null
-        || registrationResponse.getUser() == null
-        || registrationResponse.getUser().getUsername() == null
-        || registrationResponse.getUser().getTemporaryPassword() == null) {
-      throw new IllegalStateException(
-          "Incomplete registration response for agent " + agentId + " at server " + serverUrl);
+    String missingField = firstMissingRegistrationField(registrationResponse);
+    if (missingField != null) {
+      throw new ServerCommunicationException(
+          "Incomplete registration response for agent %s at server %s: missing %s"
+              .formatted(agentId, serverUrl, missingField),
+          RegistrationFailureReason.INCOMPLETE_RESPONSE,
+          null,
+          null,
+          null);
     }
     String clientId = registrationResponse.getUser().getUsername();
     String clientSecret = registrationResponse.getUser().getTemporaryPassword();
     return new RegistrationCredentials(clientId, clientSecret);
+  }
+
+  /**
+   * Determines the first missing field of a registration response.
+   *
+   * @param response the registration response body, may be null
+   * @return the name of the first missing field, or null when the response is complete
+   */
+  private static String firstMissingRegistrationField(AgentRegistrationResponse response) {
+    if (response == null) {
+      return "body";
+    }
+    if (response.getUser() == null) {
+      return "user";
+    }
+    if (response.getUser().getUsername() == null) {
+      return "username";
+    }
+    if (response.getUser().getTemporaryPassword() == null) {
+      return "temporaryPassword";
+    }
+    return null;
   }
 
   /**

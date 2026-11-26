@@ -3,6 +3,7 @@ package eu.bbmri_eric.quality.agent.server.impl;
 import eu.bbmri_eric.quality.agent.server.CentralServerClient;
 import eu.bbmri_eric.quality.agent.server.CentralServerClientFactory;
 import eu.bbmri_eric.quality.agent.server.RegistrationCredentials;
+import eu.bbmri_eric.quality.agent.server.ServerCommunicationException;
 import eu.bbmri_eric.quality.agent.server.domain.InteractionType;
 import eu.bbmri_eric.quality.agent.server.domain.ServerConnectionStatus;
 import eu.bbmri_eric.quality.agent.server.domain.ServerInteraction;
@@ -40,10 +41,12 @@ class ServerRegistrationEventListener {
       CentralServerClient client =
           clientFactory.createClient(event.getAgentId(), event.getServerUrl(), "", "");
       RegistrationCredentials credentials = client.register();
+      log.info("Registration with server {} succeeded; awaiting approval", event.getServerUrl());
       updateServerWithCredentials(event.getServerUrl(), credentials);
     } catch (Exception e) {
-      log.error("Error registering with server {}", event.getServerUrl(), e);
-      recordRegistrationFailure(event.getServerUrl(), extractErrorMessage(e));
+      String failure = describeFailure(event.getServerUrl(), e);
+      log.info("Registration attempt with server {} failed: {}", event.getServerUrl(), failure);
+      recordRegistrationFailure(event.getServerUrl(), failure);
     }
   }
 
@@ -53,7 +56,9 @@ class ServerRegistrationEventListener {
         .ifPresentOrElse(
             server -> {
               server.addInteraction(
-                  new ServerInteraction(InteractionType.REGISTRATION, "Registration request sent"));
+                  new ServerInteraction(
+                      InteractionType.REGISTRATION,
+                      "Registration accepted by central server; awaiting approval"));
               server.setClientId(credentials.getClientId());
               server.setClientSecret(credentials.getClientSecret());
               serverRepository.save(server);
@@ -73,8 +78,24 @@ class ServerRegistrationEventListener {
             });
   }
 
-  private String extractErrorMessage(Exception e) {
-    String message = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
-    return message.length() > 500 ? message.substring(0, 500) : message;
+  /**
+   * Builds the interaction description for a failed registration attempt. Classified failures carry
+   * the reason and HTTP status in brackets, followed by the exception message and the server URL;
+   * any other failure falls back to its plain message.
+   *
+   * @param serverUrl the URL of the central server
+   * @param e the failure
+   * @return the interaction description
+   */
+  private String describeFailure(String serverUrl, Exception e) {
+    if (e instanceof ServerCommunicationException communication
+        && communication.getReason() != null) {
+      String statusPart =
+          communication.getHttpStatus() != null ? ", HTTP " + communication.getHttpStatus() : "";
+      String message = e.getMessage() != null ? e.getMessage() : communication.getReason().name();
+      return "Registration failed [%s%s]: %s (server: %s)"
+          .formatted(communication.getReason(), statusPart, message, serverUrl);
+    }
+    return e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
   }
 }

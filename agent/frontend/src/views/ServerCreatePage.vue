@@ -61,8 +61,8 @@
     try {
       await serverStore.createServer(data);
       notificationService.success(
-        'Server Registered',
-        `${data.name} has been registered successfully`
+        'Registration Requested',
+        `${data.name} was added. Registration request sent to the central server — check the server detail page for the outcome.`
       );
       router.push('/servers');
     } catch (error) {
