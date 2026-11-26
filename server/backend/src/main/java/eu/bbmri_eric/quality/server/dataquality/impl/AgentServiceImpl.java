@@ -6,10 +6,12 @@ import eu.bbmri_eric.quality.server.common.TooManyRequestsException;
 import eu.bbmri_eric.quality.server.dataquality.AgentService;
 import eu.bbmri_eric.quality.server.dataquality.domain.Agent;
 import eu.bbmri_eric.quality.server.dataquality.domain.AgentInteractionType;
+import eu.bbmri_eric.quality.server.dataquality.domain.AgentStatus;
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentInteractionDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentRegistration;
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentRegistrationRequest;
+import eu.bbmri_eric.quality.server.dataquality.dto.AgentRegistrationResult;
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentUpdateRequest;
 import eu.bbmri_eric.quality.server.user.AuthenticationContextService;
 import eu.bbmri_eric.quality.server.user.UserRole;
@@ -20,6 +22,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -28,6 +32,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional
 class AgentServiceImpl implements AgentService {
+
+  private static final Logger logger = LoggerFactory.getLogger(AgentServiceImpl.class);
 
   private static final String IPV4_MAPPED_IPV6_PREFIX = "::ffff:";
 
@@ -48,24 +54,25 @@ class AgentServiceImpl implements AgentService {
   }
 
   @Override
-  public AgentRegistration create(AgentRegistrationRequest createAgentDto, String ipAddress) {
-    if (agentRepository.existsById(createAgentDto.getId())) {
-      throw new EntityAlreadyExistsException(
-          "Agent %s already exists".formatted(createAgentDto.getId()));
-    }
+  public AgentRegistrationResult create(AgentRegistrationRequest createAgentDto, String ipAddress) {
     String clientIpAddress = toBareIpAddress(ipAddress);
+    Optional<Agent> existingAgent = agentRepository.findByIdForUpdate(createAgentDto.getId());
+    if (existingAgent.isPresent()) {
+      return reRegister(existingAgent.get(), createAgentDto, clientIpAddress);
+    }
     if (clientIpAddress != null) {
       Optional<Agent> conflictingAgent = agentRepository.findFirstByIpAddress(clientIpAddress);
       if (conflictingAgent.isPresent()) {
         Agent conflicting = conflictingAgent.get();
-        String conflictingDescription =
+        String detail =
             conflicting.getName() == null
-                ? conflicting.getId()
-                : "%s (%s)".formatted(conflicting.getId(), conflicting.getName());
-        throw new TooManyRequestsException(
-            ("Agent %s is already registered from IP address %s. Delete that agent in the server UI"
-                    + " to register a new agent from this address.")
-                .formatted(conflictingDescription, clientIpAddress));
+                ? ("Another agent is already registered from IP address %s. Delete that agent in"
+                        + " the server UI to register a new agent from this address.")
+                    .formatted(clientIpAddress)
+                : ("Another agent (%s) is already registered from IP address %s. Delete that agent"
+                        + " in the server UI to register a new agent from this address.")
+                    .formatted(conflicting.getName(), clientIpAddress);
+        throw new TooManyRequestsException(detail);
       }
     }
     Agent agent = new Agent(createAgentDto.getId(), clientIpAddress);
@@ -80,7 +87,37 @@ class AgentServiceImpl implements AgentService {
     UserDTO agentUser =
         userService.createUser(
             new UserCreateDTO("Agent %s".formatted(savedAgent.getId()), savedAgent.getId()));
-    return new AgentRegistration(modelMapper.map(savedAgent, AgentDTO.class), agentUser);
+    return new AgentRegistrationResult(
+        new AgentRegistration(modelMapper.map(savedAgent, AgentDTO.class), agentUser), false);
+  }
+
+  private AgentRegistrationResult reRegister(
+      Agent agent, AgentRegistrationRequest createAgentDto, String clientIpAddress) {
+    if (!Objects.equals(clientIpAddress, agent.getIpAddress())) {
+      throw new EntityAlreadyExistsException(
+          ("Agent %s is already registered from IP address %s. Re-registration is only allowed"
+                  + " from the same address (this request came from %s). Delete this agent in the"
+                  + " server UI to register again from this address.")
+              .formatted(agent.getId(), agent.getIpAddress(), clientIpAddress));
+    }
+    if (agent.getStatus() != AgentStatus.PENDING) {
+      throw new EntityAlreadyExistsException(
+          ("Agent %s has already been approved (status %s) and cannot re-register. An"
+                  + " administrator must delete it in the server UI before it can register again.")
+              .formatted(agent.getId(), agent.getStatus()));
+    }
+    agent.addInteraction(AgentInteractionType.REGISTRATION);
+    if (!Objects.equals(createAgentDto.getVersion(), agent.getVersion())) {
+      agent.setVersion(createAgentDto.getVersion());
+    }
+    UserDTO agentUser = userService.rotateAgentPassword(agent.getId());
+    Agent savedAgent = agentRepository.save(agent);
+    logger.info(
+        "Agent {} re-registered from IP {}; rotated its credentials (previous password invalidated)",
+        agent.getId(),
+        clientIpAddress);
+    return new AgentRegistrationResult(
+        new AgentRegistration(modelMapper.map(savedAgent, AgentDTO.class), agentUser), true);
   }
 
   @Override

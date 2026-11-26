@@ -48,6 +48,17 @@ public interface UserService
   void deleteUser(String agentId);
 
   /**
+   * Replace the password of the agent user with a freshly generated one, permanently invalidating
+   * the previous credentials. The username (the agent's client ID) is left unchanged.
+   *
+   * @param agentId the agent ID associated with the user
+   * @return the updated user with the new password set as temporary password
+   * @throws eu.bbmri_eric.quality.server.common.EntityNotFoundException if no user exists for the
+   *     agent
+   */
+  UserDTO rotateAgentPassword(String agentId);
+
+  /**
    * Replace the roles assigned to a human user. Restricted to administrators. The HUMAN_USER role
    * must always be kept, so in practice this grants or revokes ADMIN.
    *

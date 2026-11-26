@@ -1,13 +1,18 @@
 package eu.bbmri_eric.quality.server.dataquality.impl;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import eu.bbmri_eric.quality.server.dataquality.domain.Agent;
+import eu.bbmri_eric.quality.server.dataquality.domain.AgentInteraction;
 import eu.bbmri_eric.quality.server.dataquality.domain.AgentInteractionType;
 import eu.bbmri_eric.quality.server.dataquality.domain.AgentStatus;
 import eu.bbmri_eric.quality.server.dataquality.domain.Report;
@@ -18,6 +23,7 @@ import eu.bbmri_eric.quality.server.user.UserService;
 import eu.bbmri_eric.quality.server.user.domain.User;
 import eu.bbmri_eric.quality.server.user.dto.UserCreateDTO;
 import eu.bbmri_eric.quality.server.user.impl.UserRepository;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.context.ActiveProfiles;
@@ -47,6 +54,7 @@ class AgentControllerIntegrationTest {
 
   @Autowired private UserService userService;
   @Autowired private UserRepository userRepository;
+  @Autowired private PasswordEncoder passwordEncoder;
 
   private static final String HUMAN_USERNAME = "viewer";
 
@@ -199,6 +207,172 @@ class AgentControllerIntegrationTest {
   }
 
   @Test
+  void create_shouldReturnOkForSameAgentIdAndSameIp() throws Exception {
+    String agentId = UUID.randomUUID().toString();
+    agentRepository.save(new Agent(agentId, "192.168.1.5"));
+    userService.createUser(new UserCreateDTO("Agent " + agentId, agentId));
+    AgentRegistrationRequest createDto = new AgentRegistrationRequest(agentId);
+    mockMvc
+        .perform(
+            post(API_V_1_AGENTS)
+                .with(
+                    request -> {
+                      request.setRemoteAddr("192.168.1.5");
+                      return request;
+                    })
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDto)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.agent.id").value(agentId))
+        .andExpect(jsonPath("$.user.username").exists())
+        .andExpect(jsonPath("$.user.temporaryPassword").exists());
+  }
+
+  @Test
+  void create_shouldRotatePasswordOnReRegistration() throws Exception {
+    String agentId = UUID.randomUUID().toString();
+    AgentRegistrationRequest createDto = new AgentRegistrationRequest(agentId);
+    String firstBody =
+        mockMvc
+            .perform(
+                post(API_V_1_AGENTS)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(createDto)))
+            .andExpect(status().isCreated())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    String oldPassword = objectMapper.readTree(firstBody).at("/user/temporaryPassword").asText();
+
+    String secondBody =
+        mockMvc
+            .perform(
+                post(API_V_1_AGENTS)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(createDto)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.user.username").exists())
+            .andExpect(jsonPath("$.user.temporaryPassword").exists())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    String newPassword = objectMapper.readTree(secondBody).at("/user/temporaryPassword").asText();
+
+    assertNotEquals(oldPassword, newPassword);
+    String storedPassword = userRepository.findByAgentId(agentId).orElseThrow().getPassword();
+    assertFalse(passwordEncoder.matches(oldPassword, storedPassword));
+    assertTrue(passwordEncoder.matches(newPassword, storedPassword));
+  }
+
+  @Test
+  void create_shouldUpdateVersionOnReRegistration() throws Exception {
+    String agentId = UUID.randomUUID().toString();
+    Agent agent = new Agent(agentId, "192.168.1.6");
+    agent.setVersion("1.0.0");
+    agentRepository.save(agent);
+    userService.createUser(new UserCreateDTO("Agent " + agentId, agentId));
+    AgentRegistrationRequest createDto = new AgentRegistrationRequest(agentId, "2.0.0");
+    mockMvc
+        .perform(
+            post(API_V_1_AGENTS)
+                .with(
+                    request -> {
+                      request.setRemoteAddr("192.168.1.6");
+                      return request;
+                    })
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDto)))
+        .andExpect(status().isOk());
+    assertEquals("2.0.0", agentRepository.findById(agentId).orElseThrow().getVersion());
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void create_shouldRecordRegistrationInteractionOnReRegistration() throws Exception {
+    String agentId = UUID.randomUUID().toString();
+    Agent agent = new Agent(agentId, "192.168.1.7");
+    agent.setVersion("1.0.0");
+    agentRepository.save(agent);
+    userService.createUser(new UserCreateDTO("Agent " + agentId, agentId));
+    AgentRegistrationRequest createDto = new AgentRegistrationRequest(agentId, "1.0.0");
+    mockMvc
+        .perform(
+            post(API_V_1_AGENTS)
+                .with(
+                    request -> {
+                      request.setRemoteAddr("192.168.1.7");
+                      return request;
+                    })
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDto)))
+        .andExpect(status().isOk());
+
+    mockMvc
+        .perform(get(API_V_1_AGENTS_ID, agentId).param("expand", "interactions"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.interactions[*].type").value(hasItem("REGISTRATION")));
+
+    List<AgentInteractionType> types =
+        agentRepository.findById(agentId).orElseThrow().getInteractions().stream()
+            .map(AgentInteraction::getType)
+            .toList();
+    assertEquals(2, types.stream().filter(t -> t == AgentInteractionType.REGISTRATION).count());
+  }
+
+  @Test
+  void create_shouldRejectReRegistrationOfApprovedAgent() throws Exception {
+    String agentId = UUID.randomUUID().toString();
+    Agent agent = new Agent(agentId, "192.168.1.40");
+    agent.setStatus(AgentStatus.ACTIVE);
+    agentRepository.save(agent);
+    userService.createUser(new UserCreateDTO("Agent " + agentId, agentId));
+    String storedPassword = userRepository.findByAgentId(agentId).orElseThrow().getPassword();
+
+    AgentRegistrationRequest createDto = new AgentRegistrationRequest(agentId);
+    mockMvc
+        .perform(
+            post(API_V_1_AGENTS)
+                .with(
+                    request -> {
+                      request.setRemoteAddr("192.168.1.40");
+                      return request;
+                    })
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDto)))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.detail", containsString("approved")));
+
+    assertEquals(storedPassword, userRepository.findByAgentId(agentId).orElseThrow().getPassword());
+    long registrationCount =
+        agentRepository.findById(agentId).orElseThrow().getInteractions().stream()
+            .map(AgentInteraction::getType)
+            .filter(t -> t == AgentInteractionType.REGISTRATION)
+            .count();
+    assertEquals(1, registrationCount);
+  }
+
+  @Test
+  void create_shouldReturnConflictForSameAgentIdFromDifferentIp() throws Exception {
+    String agentId = UUID.randomUUID().toString();
+    agentRepository.save(new Agent(agentId, "10.0.0.1"));
+    AgentRegistrationRequest createDto = new AgentRegistrationRequest(agentId);
+    mockMvc
+        .perform(
+            post(API_V_1_AGENTS)
+                .with(
+                    request -> {
+                      request.setRemoteAddr("10.0.0.2");
+                      return request;
+                    })
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDto)))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.detail", containsString("10.0.0.1")))
+        .andExpect(jsonPath("$.detail", containsString("10.0.0.2")))
+        .andExpect(jsonPath("$.detail", containsString("Delete")));
+  }
+
+  @Test
   void create_shouldHandleDuplicateAgentId() throws Exception {
     String agentId = UUID.randomUUID().toString();
     Agent existingAgent = new Agent(agentId);
@@ -249,9 +423,9 @@ class AgentControllerIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createDto)))
         .andExpect(status().isTooManyRequests())
-        .andExpect(jsonPath("$.detail", containsString(conflictingAgentId)))
         .andExpect(jsonPath("$.detail", containsString("Site A")))
-        .andExpect(jsonPath("$.detail", containsString("Delete")));
+        .andExpect(jsonPath("$.detail", containsString("Delete")))
+        .andExpect(jsonPath("$.detail", not(containsString(conflictingAgentId))));
   }
 
   @Test

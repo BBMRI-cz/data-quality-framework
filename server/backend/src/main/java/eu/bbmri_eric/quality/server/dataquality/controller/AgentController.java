@@ -4,6 +4,7 @@ import eu.bbmri_eric.quality.server.dataquality.AgentService;
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentRegistration;
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentRegistrationRequest;
+import eu.bbmri_eric.quality.server.dataquality.dto.AgentRegistrationResult;
 import eu.bbmri_eric.quality.server.dataquality.dto.AgentUpdateRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
@@ -34,8 +35,9 @@ class AgentController {
   public ResponseEntity<EntityModel<AgentRegistration>> create(
       @Valid @RequestBody AgentRegistrationRequest createAgentDto, HttpServletRequest request) {
     String ipAddress = getClientIpAddress(request);
-    AgentRegistration createdAgentDto = agentService.create(createAgentDto, ipAddress);
-    return ResponseEntity.status(HttpStatus.CREATED).body(EntityModel.of(createdAgentDto));
+    AgentRegistrationResult result = agentService.create(createAgentDto, ipAddress);
+    return ResponseEntity.status(result.reRegistered() ? HttpStatus.OK : HttpStatus.CREATED)
+        .body(EntityModel.of(result.registration()));
   }
 
   private String getClientIpAddress(HttpServletRequest request) {
