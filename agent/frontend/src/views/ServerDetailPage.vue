@@ -103,8 +103,32 @@
             >
               <div v-if="registration.lastErrorReason" class="fw-semibold text-danger mb-1">
                 {{ registration.lastErrorReason }}
+                <a
+                  class="link-primary small fw-normal ms-2"
+                  :href="getRegistrationHelpUrl(registration.lastErrorReason)"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  What does this mean?
+                </a>
               </div>
               <pre class="json-viewer">{{ registration.lastErrorMessage }}</pre>
+            </div>
+            <div
+              v-if="
+                registration.status === 'REGISTERED_PENDING_APPROVAL' && server.status === 'PENDING'
+              "
+              class="text-muted small mt-3 mb-0"
+            >
+              Waiting for the central server's administrator to approve this agent.
+              <a
+                class="link-primary"
+                :href="getRegistrationHelpUrl('PENDING_APPROVAL')"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                How approval works
+              </a>
             </div>
           </div>
         </div>
@@ -275,6 +299,7 @@
     getRegistrationBadgeClass,
     getRegistrationTooltip,
     canRetryRegistration,
+    getRegistrationHelpUrl,
   } from '@/utils/registrationStatus.js';
   import { formatDateShort, formatTime, isValidJson } from '@/utils/stringUtils.js';
 

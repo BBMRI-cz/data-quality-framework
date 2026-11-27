@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   TERMINAL_REGISTRATION_STATES,
+  REGISTRATION_HELP_URL,
   formatRegistrationStatus,
   getRegistrationBadgeClass,
   getRegistrationTooltip,
   canRetryRegistration,
+  getRegistrationHelpUrl,
 } from '@/utils/registrationStatus.js';
 
 describe('registrationStatus', () => {
@@ -55,5 +57,32 @@ describe('registrationStatus', () => {
       'ACTIVE',
       'FAILED',
     ]);
+  });
+
+  it('links every registration failure reason to its documentation anchor', () => {
+    const anchorByReason = {
+      UNREACHABLE: 'unreachable',
+      TIMEOUT: 'timeout',
+      TLS: 'tls',
+      UNAUTHORIZED: 'unauthorized',
+      CONFLICT: 'conflict',
+      RATE_LIMITED: 'rate-limited',
+      CLIENT_ERROR: 'client-error',
+      SERVER_ERROR: 'server-error',
+      INCOMPLETE_RESPONSE: 'incomplete-response',
+      UNKNOWN: 'unknown',
+    };
+    for (const [reason, anchor] of Object.entries(anchorByReason)) {
+      expect(getRegistrationHelpUrl(reason)).toBe(`${REGISTRATION_HELP_URL}#${anchor}`);
+    }
+    expect(getRegistrationHelpUrl('PENDING_APPROVAL')).toBe(
+      `${REGISTRATION_HELP_URL}#pending-approval`
+    );
+  });
+
+  it('falls back to the bare help URL for missing reasons', () => {
+    expect(getRegistrationHelpUrl(null)).toBe(REGISTRATION_HELP_URL);
+    expect(getRegistrationHelpUrl('')).toBe(REGISTRATION_HELP_URL);
+    expect(getRegistrationHelpUrl(undefined)).toBe(REGISTRATION_HELP_URL);
   });
 });

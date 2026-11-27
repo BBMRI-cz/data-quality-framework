@@ -233,6 +233,9 @@ public class GlobalRestExceptionHandler {
     ProblemDetail problemDetail =
         ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
     problemDetail.setTitle("Entity Already Exists");
+    if (ex.getType() != null) {
+      problemDetail.setType(ex.getType());
+    }
     return problemDetail;
   }
 
@@ -267,6 +270,9 @@ public class GlobalRestExceptionHandler {
     ProblemDetail problemDetail =
         ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
     problemDetail.setTitle("Too Many Requests");
+    if (ex.getType() != null) {
+      problemDetail.setType(ex.getType());
+    }
     return problemDetail;
   }
 

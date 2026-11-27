@@ -9,6 +9,15 @@
         <p class="section-description">
           The agent will send quality reports to this server and pull quality checks from it
         </p>
+        <a
+          class="docs-link"
+          :href="REGISTRATION_HELP_URL"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Having trouble connecting? See the troubleshooting guide.
+          <i class="bi bi-box-arrow-up-right"></i>
+        </a>
       </div>
     </div>
 
@@ -136,6 +145,7 @@
   import { validateServerUrl } from '@/api';
   import SaveButton from './SaveButton.vue';
   import { FormField, FormActions, FormTextarea } from '@/components/forms';
+  import { REGISTRATION_HELP_URL } from '@/utils/registrationStatus.js';
 
   defineProps({
     loading: {
@@ -273,6 +283,20 @@
     color: var(--color-gray-500);
     margin: 0;
     line-height: 1.5;
+  }
+
+  .docs-link {
+    color: var(--color-primary);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.875rem;
+    margin-top: var(--spacing-xs);
+  }
+
+  .docs-link:hover {
+    text-decoration: underline;
   }
 
   .server-form {

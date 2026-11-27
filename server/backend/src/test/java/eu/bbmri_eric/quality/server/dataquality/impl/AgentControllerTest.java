@@ -2,6 +2,7 @@ package eu.bbmri_eric.quality.server.dataquality.impl;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -57,6 +58,11 @@ class AgentControllerIntegrationTest {
   @Autowired private PasswordEncoder passwordEncoder;
 
   private static final String HUMAN_USERNAME = "viewer";
+
+  private static final String REGISTRATION_CONFLICT_DOC_TYPE =
+      "https://fdqf.bbmri-eric.eu/user/troubleshooting/registration#conflict";
+  private static final String REGISTRATION_RATE_LIMITED_DOC_TYPE =
+      "https://fdqf.bbmri-eric.eu/user/troubleshooting/registration#rate-limited";
 
   @BeforeEach
   void setUp() {
@@ -143,7 +149,10 @@ class AgentControllerIntegrationTest {
   @WithMockUser(roles = "ADMIN")
   void findById_shouldReturnNotFoundWhenAgentDoesNotExist() throws Exception {
     String nonExistentAgentId = UUID.randomUUID().toString();
-    mockMvc.perform(get(API_V_1_AGENTS_ID, nonExistentAgentId)).andExpect(status().isNotFound());
+    mockMvc
+        .perform(get(API_V_1_AGENTS_ID, nonExistentAgentId))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.type").doesNotExist());
   }
 
   @Test
@@ -340,7 +349,8 @@ class AgentControllerIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createDto)))
         .andExpect(status().isConflict())
-        .andExpect(jsonPath("$.detail", containsString("approved")));
+        .andExpect(jsonPath("$.detail", containsString("approved")))
+        .andExpect(jsonPath("$.type", is(REGISTRATION_CONFLICT_DOC_TYPE)));
 
     assertEquals(storedPassword, userRepository.findByAgentId(agentId).orElseThrow().getPassword());
     long registrationCount =
@@ -369,7 +379,8 @@ class AgentControllerIntegrationTest {
         .andExpect(status().isConflict())
         .andExpect(jsonPath("$.detail", containsString("10.0.0.1")))
         .andExpect(jsonPath("$.detail", containsString("10.0.0.2")))
-        .andExpect(jsonPath("$.detail", containsString("Delete")));
+        .andExpect(jsonPath("$.detail", containsString("Delete")))
+        .andExpect(jsonPath("$.type", is(REGISTRATION_CONFLICT_DOC_TYPE)));
   }
 
   @Test
@@ -383,7 +394,8 @@ class AgentControllerIntegrationTest {
             post(API_V_1_AGENTS)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createDto)))
-        .andExpect(status().isConflict());
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.type", is(REGISTRATION_CONFLICT_DOC_TYPE)));
   }
 
   @Test
@@ -402,7 +414,8 @@ class AgentControllerIntegrationTest {
                     })
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createDto)))
-        .andExpect(status().isTooManyRequests());
+        .andExpect(status().isTooManyRequests())
+        .andExpect(jsonPath("$.type", is(REGISTRATION_RATE_LIMITED_DOC_TYPE)));
   }
 
   @Test

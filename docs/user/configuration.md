@@ -70,40 +70,24 @@ The following are standard environment variables recognized by the Data Quality 
 | `OTEL_EXPORTER_OTLP_AUTHORIZATION`    | Optional Authorization header value (for example `Bearer <token>`) sent with OTLP metrics requests. | (Not set)                                       |
 You can also define additional labels with `MANAGEMENT_METRICS_TAGS_<LABEL_NAME>`.
 
-#### Registration Lifecycle
+### Connecting to a Central Server {#connecting-to-a-central-server}
 
-The central server treats agent registration as idempotent for a returning agent:
+An agent can share its reports with a central server. There are two ways to connect it:
 
-*   Unknown agent ID: the server registers the agent and answers `201 Created` with the agent's client credentials (username and temporary password).
-*   Same agent ID, same IP address as registered, agent still **pending approval**: the server answers `200 OK` with fresh credentials. This re-registration **rotates the agent's password and permanently invalidates the old credentials**, so a lost or compromised registration is self-healing on the agent's next registration attempt. Once an administrator has approved the agent, a re-registration is rejected with `409` and the agent must be deleted in the server UI before it can register again.
-*   Same agent ID, different IP address: the server answers `409 Conflict` naming both addresses. If the agent genuinely moved to a new address, delete the agent in the server UI and register again.
-*   Different agent ID from an IP address already used by another agent: the server answers `429 Too Many Requests`. Delete the conflicting agent in the server UI to free the address.
+*   **In the agent UI:** go to **Central Servers** and click **Add Central Server**.
+*   **At startup:** set `REPORTING_SERVER_URL` (and optionally `REPORTING_SERVER_NAME`). The agent adds
+    the server and registers when it starts.
 
-The same-IP rule assumes that agents at different sites do not share a public IP address. The `429` response names the conflicting agent but not its ID.
+The server's administrator then approves the agent. You can follow progress on the server's page in the
+agent. If registration fails for a temporary reason, the agent retries by itself. When something goes
+wrong, see [Connecting an Agent to a Central Server](./troubleshooting/registration.md).
 
-#### Registration Retry
+If the central server is slow to answer, for example behind a slow proxy, you can raise the time limits:
 
-If registration with the central server fails for a transient reason (unreachable server, timeout, TLS problem, HTTP 5xx or 429), the agent retries it up to 3 times in a row with exponential backoff (2 s, then 4 s). Permanent failures such as HTTP 409 are not retried. When all in-process attempts fail, the agent schedules the next automatic retry 15 minutes later and a background sweep (which polls every minute) re-triggers the registration when it is due, up to 8 rounds (~2 hours), after which the registration must be retried manually. The retry state is persisted, so an agent that started - or restarted while a retry was pending - before the central server became reachable recovers automatically. These retry parameters are fixed in the agent and cannot be configured.
-
-A manual retry is possible via the API: `POST /api/servers/{id}/registration` answers `202 Accepted` when the retry was triggered (the outcome arrives asynchronously) or `409 Conflict` when the server already holds registration credentials.
-
-#### Registration Status
-
-The agent tracks the lifecycle of its registration with each central server separately from the connection status. The registration status is one of:
-
-*   **UNREGISTERED** - no registration has been attempted or claimed for this server.
-*   **REGISTERING** - a registration request has been dispatched and no outcome has arrived yet; after a manual retry or a scheduled sweep re-trigger, the status shows this state until the central server answers.
-*   **REGISTERED_PENDING_APPROVAL** - the central server accepted the registration and returned credentials; an administrator still needs to approve the agent in the server UI.
-*   **ACTIVE** - registered and approved; the agent exchanges data with the central server.
-*   **FAILED** - the last registration run failed. The recorded reason (for example `UNREACHABLE` or `CONFLICT`, exposed as `lastErrorReason`) and the full failure description (`lastErrorMessage`) are exposed alongside the status.
-
-The current state is available via `GET /api/servers/{id}/registration` (it is also embedded in the server detail response under `registration`), and the server detail page shows a registration card with the status badge, the attempt count, the date of the next scheduled automatic retry (`nextRetryAt`, when one is pending) and - in the `FAILED` state - the error reason and message. The error details are only shown for `FAILED`; a `REGISTERING` state that follows a failure shows just the pending retry date. While the status is `REGISTERING`, the page updates automatically (every 3 seconds, for up to 2 minutes); failed or never-attempted registrations offer a **Retry Registration** button, which is equivalent to the manual retry API call above.
-
-| Variable                               | Description                                                | Default |
-|:---------------------------------------|:------------------------------------------------------------|:--------|
-| `AGENT_CENTRAL_SERVER_CONNECT_TIMEOUT` | Timeout for establishing connections to the central server. | `5s`    |
-| `AGENT_CENTRAL_SERVER_READ_TIMEOUT`    | Timeout for waiting for responses from the central server.  | `10s`   |
-
+| Variable                               | Description                                          | Default |
+|:---------------------------------------|:-----------------------------------------------------|:--------|
+| `AGENT_CENTRAL_SERVER_CONNECT_TIMEOUT` | How long to wait when connecting to the server.      | `5s`    |
+| `AGENT_CENTRAL_SERVER_READ_TIMEOUT`    | How long to wait for the server to answer.           | `10s`   |
 
 Additionally, as described above, you can override any internal application setting using the `APP_SETTING_` prefix. The complete set of application settings supported by the Data Quality Agent is:
 

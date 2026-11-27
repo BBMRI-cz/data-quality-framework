@@ -96,11 +96,14 @@ provides dashboards and views for multi-site data quality evaluation without acc
 
 ### Step 6 (Optional): Register the Server in the Agent UI
 
-1. In the Data Quality Agent UI (http://localhost:8081), navigate to **Settings** > **Reporting**
+1. In the Data Quality Agent UI (http://localhost:8081), navigate to **Central Servers**
 
-2. Configure the server connection:
+2. Click **Add Central Server** and fill in the form:
+    - Provide a name (Server Name)
     - Set the Server URL to: `http://quality-server:8082`
-    - Provide a name
+
+3. Click **Register Server**. The server's page opens; after a few seconds the **Registration** card
+   shows *Registered - pending approval*
 
 ### Step 7 (Optional): Approve the Agent in the Server UI
 
@@ -110,9 +113,9 @@ provides dashboards and views for multi-site data quality evaluation without acc
     - **Username**: `admin`
     - **Password**: `adminpass`
 
-3. Navigate to the **Agent Management** or **Pending Registrations** section
+3. Navigate to **Agents** and click your agent (its status is *Pending*)
 
-4. Find your agent registration request and approve it
+4. Click **Approve**
 
 5. Once approved, the agent can start sending quality reports to the central server
 
@@ -141,9 +144,8 @@ applications.
 
 **Test data upload fails**: Check that the Blaze FHIR server is accessible at http://localhost:8080/fhir.
 
-**Agent cannot register with server**: Ensure the Data Quality Server is running and accessible at the configured URL.
-
-**Agent registration not appearing**: Check the server logs and verify the network connectivity between containers.
+**Agent does not register with the server**: see
+[Connecting an Agent to a Central Server](/user/troubleshooting/registration).
 
 ### Getting Help
 

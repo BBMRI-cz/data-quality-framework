@@ -168,6 +168,63 @@ describe('ServerDetailPage', () => {
     expect(card.text()).toContain('UNREACHABLE');
   });
 
+  it('links the failure reason to the matching documentation anchor', async () => {
+    serverService.get.mockResolvedValue(serverWith([], FAILED_REGISTRATION));
+    const wrapper = mountPage();
+    await flushPromises();
+
+    const link = wrapper.find('.registration-card a[href$="#unreachable"]');
+    expect(link.exists()).toBe(true);
+    expect(link.text()).toContain('What does this mean?');
+    wrapper.unmount();
+  });
+
+  it('offers the approval help link while pending approval', async () => {
+    serverService.get.mockResolvedValue({
+      ...serverWith([], {
+        status: 'REGISTERED_PENDING_APPROVAL',
+        lastErrorReason: null,
+        lastErrorMessage: null,
+        registeredAt: '2026-01-01T10:00:00Z',
+        attempts: 1,
+      }),
+      status: 'PENDING',
+    });
+    const wrapper = mountPage();
+    await flushPromises();
+
+    const card = wrapper.find('.registration-card');
+    expect(card.text()).toContain(
+      "Waiting for the central server's administrator to approve this agent."
+    );
+    const link = card.find('a[href$="#pending-approval"]');
+    expect(link.exists()).toBe(true);
+    expect(link.text()).toContain('How approval works');
+    wrapper.unmount();
+  });
+
+  it('hides the approval hint when pending approval but the connection status is ERROR', async () => {
+    serverService.get.mockResolvedValue(
+      serverWith([], {
+        status: 'REGISTERED_PENDING_APPROVAL',
+        lastErrorReason: null,
+        lastErrorMessage: null,
+        registeredAt: '2026-01-01T10:00:00Z',
+        attempts: 1,
+      })
+    );
+    const wrapper = mountPage();
+    await flushPromises();
+
+    const card = wrapper.find('.registration-card');
+    expect(card.exists()).toBe(true);
+    expect(card.text()).not.toContain(
+      "Waiting for the central server's administrator to approve this agent."
+    );
+    expect(card.find('a[href$="#pending-approval"]').exists()).toBe(false);
+    wrapper.unmount();
+  });
+
   it('hides stale error details and shows the retry date while registering', async () => {
     serverService.get.mockResolvedValue(
       serverWith([], {
@@ -186,6 +243,7 @@ describe('ServerDetailPage', () => {
     expect(card.find('pre').exists()).toBe(false);
     expect(card.text()).not.toContain('UNREACHABLE');
     expect(card.text()).toContain('Next automatic retry:');
+    expect(card.find('a').exists()).toBe(false);
     wrapper.unmount();
   });
 
