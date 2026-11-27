@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Transient;
 import jakarta.validation.constraints.NotNull;
 import java.util.HashSet;
 import java.util.Set;
@@ -40,6 +41,12 @@ public class Result {
   private Double epsilon;
   private String error;
   private String stratum;
+
+  /**
+   * Sensitivity the noise for this result is calibrated with, carried in memory from the executed
+   * check; {@code null} means {@link DataQualityCheck#DEFAULT_SENSITIVITY}. Not persisted.
+   */
+  @Transient private Integer sensitivity;
 
   @ElementCollection
   @CollectionTable(name = "result_patient_ids", joinColumns = @JoinColumn(name = "result_id"))

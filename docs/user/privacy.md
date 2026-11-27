@@ -99,11 +99,12 @@ biobank data needs some practical compromises to stay useful. These are the ones
   samples) shows up in the next report. Smaller changes usually stay hidden, but roughly one time in 25 a single
   patient's change is the one that crosses the line. Someone who knows that a specific person was added on a given
   day could then see which checks changed.
-- **Some counts can move by more than one per patient.** The protection assumes that one patient changes each count by
-  at most one. That is not true for the duplicate-identifier and invalid-ICD-10 checks, where one patient with many
-  records can move the count by 20 or more, or for the sample total, which assumes at most 20 samples per patient.
-  Patients outside these assumptions are less protected. If you write your own checks, make them count patients,
-  each at most once.
+- **How much one patient can move each count (its sensitivity).** The noise for each count assumes an upper bound on
+  how much one patient can change it. Most checks count patients, each at most once, so one patient changes them by at
+  most 1. The invalid-ICD-10 check counts distinct subjects, so its sensitivity is 1. The duplicate-identifier check
+  compares only the first identifier of each patient, so its sensitivity is 2. The sample total counts at most 20
+  samples per patient, so its sensitivity is 20. If you write your own checks, keep them counting patients, each at
+  most once.
 - **The checks themselves must be trustworthy.** Noise protects the result of a check, not its intent. A check written
   to single out one person (for example "count all patients if patient X has diagnosis Y") can defeat the protection.
   Install checks only from sources you trust, and review your own.

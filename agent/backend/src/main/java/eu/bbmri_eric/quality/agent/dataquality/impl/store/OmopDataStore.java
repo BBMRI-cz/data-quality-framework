@@ -19,6 +19,21 @@ import org.springframework.jdbc.support.JdbcUtils;
 @Slf4j
 public class OmopDataStore implements DataStore {
 
+  /**
+   * Per-person capped specimen count: the published total is the number of specimens attributable
+   * to a patient, at most {@link DataStore#SECONDARY_ENTITY_SENSITIVITY} per patient. Specimens
+   * without a {@code person_id} are not attributable to any patient and are excluded. Uses only
+   * {@code COALESCE}/{@code CASE}/grouped subquery so it runs on SQLite, H2, PostgreSQL, MySQL and
+   * Calcite alike.
+   */
+  private static final String COUNT_SECONDARY_ENTITIES_SQL =
+      """
+      SELECT COALESCE(SUM(CASE WHEN n > %d THEN %d ELSE n END), 0)
+      FROM (SELECT COUNT(*) AS n FROM specimen WHERE person_id IS NOT NULL GROUP BY person_id) s
+      """
+          .formatted(
+              DataStore.SECONDARY_ENTITY_SENSITIVITY, DataStore.SECONDARY_ENTITY_SENSITIVITY);
+
   private final JdbcTemplate jdbcTemplate;
 
   OmopDataStore(JdbcTemplate jdbcTemplate) {
@@ -140,7 +155,7 @@ public class OmopDataStore implements DataStore {
       return null;
     }
     try {
-      return jdbcTemplate.queryForObject("SELECT COUNT(*) FROM specimen", Integer.class);
+      return jdbcTemplate.queryForObject(COUNT_SECONDARY_ENTITIES_SQL, Integer.class);
     } catch (Exception e) {
       log.error("Failed to count secondary entities in SQL store: {}", e.getMessage(), e);
       return null;

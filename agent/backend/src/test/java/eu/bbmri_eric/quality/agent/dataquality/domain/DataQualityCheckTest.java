@@ -40,6 +40,14 @@ public class DataQualityCheckTest {
   }
 
   @Test
+  void getSensitivity_defaultReturnsOne() {
+    QualityCheck check = new QualityCheck();
+
+    assertEquals(1, DataQualityCheck.DEFAULT_SENSITIVITY);
+    assertEquals(1, check.getSensitivity());
+  }
+
+  @Test
   void testExecuteDoesNotThrow() {
     QualityCheck check = new QualityCheck();
     DataStore dataStore =

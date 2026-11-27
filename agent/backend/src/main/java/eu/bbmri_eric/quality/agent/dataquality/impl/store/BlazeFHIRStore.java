@@ -7,6 +7,7 @@ import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.api.ServerValidationModeEnum;
 import ca.uhn.fhir.rest.client.interceptor.BasicAuthInterceptor;
 import ca.uhn.fhir.rest.gclient.IQuery;
+import eu.bbmri_eric.quality.agent.dataquality.DataStore;
 import eu.bbmri_eric.quality.agent.dataquality.FHIRServer;
 import eu.bbmri_eric.quality.agent.dataquality.dto.DatabaseHealthDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
@@ -20,7 +21,9 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import javax.net.ssl.SSLContext;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
@@ -31,6 +34,7 @@ import org.apache.http.impl.conn.SystemDefaultRoutePlanner;
 import org.apache.http.ssl.SSLContexts;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Resource;
+import org.hl7.fhir.r4.model.Specimen;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -437,7 +441,32 @@ class BlazeFHIRStore implements FHIRServer {
 
   @Override
   public Integer countSecondaryEntities() {
-    return countResources("Specimen");
+    try {
+      return cappedSampleTotal(fetchAllResources("Specimen", List.of("id", "subject")));
+    } catch (Exception e) {
+      log.error("Failed to count secondary entities in FHIR store: {}", e.getMessage(), e);
+      return null;
+    }
+  }
+
+  /**
+   * Sums per-subject specimen counts, capping each subject's contribution at {@link
+   * DataStore#SECONDARY_ENTITY_SENSITIVITY}; specimens without an attributable subject are skipped.
+   * References are keyed by their id part so different reference forms of one subject cannot split
+   * into separate buckets.
+   */
+  static int cappedSampleTotal(List<Resource> specimens) {
+    Map<String, Integer> countsBySubject = new HashMap<>();
+    for (Resource resource : specimens) {
+      String subjectId = ((Specimen) resource).getSubject().getReferenceElement().getIdPart();
+      if (subjectId == null || subjectId.isBlank()) {
+        continue;
+      }
+      countsBySubject.merge(subjectId, 1, Integer::sum);
+    }
+    return countsBySubject.values().stream()
+        .mapToInt(n -> Math.min(n, DataStore.SECONDARY_ENTITY_SENSITIVITY))
+        .sum();
   }
 
   @Override
