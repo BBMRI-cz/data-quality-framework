@@ -8,11 +8,12 @@ import eu.bbmri_eric.quality.agent.server.domain.InteractionType;
 import eu.bbmri_eric.quality.agent.server.domain.ServerConnectionStatus;
 import eu.bbmri_eric.quality.agent.server.domain.ServerInteraction;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
-import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 import tools.jackson.databind.json.JsonMapper;
 
 @Component
@@ -22,6 +23,7 @@ class ReportSender {
   private final ReportService reportService;
   private final CentralServerClientFactory clientFactory;
   private final ServerRepository serverRepository;
+  private final ServerInteractionRepository serverInteractionRepository;
   private final SettingsService settingsService;
   private final JsonMapper objectMapper;
 
@@ -29,17 +31,28 @@ class ReportSender {
       ReportService reportService,
       CentralServerClientFactory clientFactory,
       ServerRepository serverRepository,
+      ServerInteractionRepository serverInteractionRepository,
       SettingsService settingsService,
       JsonMapper objectMapper) {
     this.reportService = reportService;
     this.clientFactory = clientFactory;
     this.serverRepository = serverRepository;
+    this.serverInteractionRepository = serverInteractionRepository;
     this.settingsService = settingsService;
     this.objectMapper = objectMapper;
   }
 
-  @EventListener
-  @Transactional
+  /**
+   * Sends a newly generated report to all active central servers. Runs only after the report
+   * pipeline transaction committed, so a report whose transaction rolled back is never sent and the
+   * server can never hold values the agent did not record. {@code @Async} runs the sends on a
+   * separate thread without a bound transaction: a failure here cannot affect the (already
+   * committed) report status, and no database connection is held during the HTTP calls.
+   *
+   * @param event the report generated event
+   */
+  @Async
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   protected void onFinished(ReportGeneratedEvent event) {
     ObfuscatedReportDTO reportDTO = reportService.getObfuscatedById(event.getReportId());
     String agentId = settingsService.getSettings().getAgentId();
@@ -47,14 +60,15 @@ class ReportSender {
         .findAllByStatusIs(ServerConnectionStatus.ACTIVE)
         .forEach(
             server -> {
-              var client =
-                  clientFactory.createClient(
-                      agentId, server.getUrl(), server.getClientId(), server.getClientSecret());
               try {
+                var client =
+                    clientFactory.createClient(
+                        agentId, server.getUrl(), server.getClientId(), server.getClientSecret());
                 client.sendReport(reportDTO);
                 String reportJson = objectMapper.writeValueAsString(reportDTO);
-                server.addInteraction(
-                    new ServerInteraction(InteractionType.COMMUNICATION, reportJson));
+                var interaction = new ServerInteraction(InteractionType.COMMUNICATION, reportJson);
+                interaction.setServerId(server.getId());
+                serverInteractionRepository.save(interaction);
               } catch (Exception e) {
                 log.error("Failed to send report to server {}", server.getUrl(), e);
               }
