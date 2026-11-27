@@ -38,6 +38,7 @@ export function useServerDetails(serverId) {
   const isRetryingRegistration = ref(false);
   let registrationTimer = null;
   let registrationDeadline = null;
+  let disposed = false;
 
   // Registration runs are asynchronous on the backend: poll while REGISTERING, bounded so a
   // hung run stops the polling instead of leaking the interval forever.
@@ -97,6 +98,7 @@ export function useServerDetails(serverId) {
 
     try {
       server.value = await serverService.get(serverId);
+      if (disposed) return;
       registration.value = server.value?.registration || null;
       if (registration.value?.status === 'REGISTERING') {
         startRegistrationPolling();
@@ -111,23 +113,38 @@ export function useServerDetails(serverId) {
 
   function stopRegistrationPolling() {
     if (registrationTimer) {
-      clearInterval(registrationTimer);
+      clearTimeout(registrationTimer);
       registrationTimer = null;
     }
   }
 
+  function scheduleRegistrationPoll() {
+    if (disposed || registrationTimer) {
+      return;
+    }
+    registrationTimer = setTimeout(() => {
+      registrationTimer = null;
+      refreshRegistration();
+    }, REGISTRATION_POLL_INTERVAL_MS);
+  }
+
   function startRegistrationPolling() {
-    if (registrationTimer) {
+    if (disposed || registrationTimer) {
       return;
     }
     registrationTimedOut.value = false;
     registrationDeadline = Date.now() + REGISTRATION_POLL_TIMEOUT_MS;
-    registrationTimer = setInterval(refreshRegistration, REGISTRATION_POLL_INTERVAL_MS);
+    scheduleRegistrationPoll();
   }
 
+  // Serialized setTimeout chain: the next poll is scheduled only once the previous one has
+  // fully completed, so a slow response can never overlap with (or be overwritten by) a
+  // stale one and a terminal state always wins.
   async function refreshRegistration() {
+    if (disposed) {
+      return;
+    }
     if (Date.now() >= registrationDeadline) {
-      stopRegistrationPolling();
       registrationTimedOut.value = true;
       return;
     }
@@ -135,18 +152,25 @@ export function useServerDetails(serverId) {
       registration.value = await serverService.getRegistration(serverId);
     } catch (err) {
       console.error('Error fetching registration state:', err);
+      scheduleRegistrationPoll();
+      return;
+    }
+    if (disposed) {
       return;
     }
     if (TERMINAL_REGISTRATION_STATES.includes(registration.value?.status)) {
       stopRegistrationPolling();
       await fetchServer();
+      return;
     }
+    scheduleRegistrationPoll();
   }
 
   async function retryRegistration() {
     isRetryingRegistration.value = true;
     try {
       await serverService.retryRegistration(serverId);
+      if (disposed) return;
       registration.value = { ...registration.value, status: 'REGISTERING' };
       notificationService.info(
         'Registration Requested',
@@ -166,7 +190,10 @@ export function useServerDetails(serverId) {
     }
   }
 
-  onUnmounted(stopRegistrationPolling);
+  onUnmounted(() => {
+    disposed = true;
+    stopRegistrationPolling();
+  });
 
   async function deleteServer() {
     if (!server.value) return;

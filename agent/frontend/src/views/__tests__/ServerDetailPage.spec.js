@@ -295,4 +295,67 @@ describe('ServerDetailPage', () => {
     expect(wrapper.find('.registration-card .badge').text()).toBe('Registering');
     wrapper.unmount();
   });
+
+  it('does not start a second poll while a registration request is still pending', async () => {
+    vi.useFakeTimers();
+    serverService.get.mockResolvedValue(
+      serverWith([], {
+        status: 'REGISTERING',
+        lastErrorReason: null,
+        lastErrorMessage: null,
+        registeredAt: null,
+        attempts: 0,
+      })
+    );
+    let resolvePending;
+    serverService.getRegistration
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolvePending = resolve;
+          })
+      )
+      .mockResolvedValue({ status: 'REGISTERING', attempts: 1 });
+
+    const wrapper = mountPage();
+    await vi.advanceTimersByTimeAsync(0);
+
+    await vi.advanceTimersByTimeAsync(3000);
+    await vi.advanceTimersByTimeAsync(9000);
+    expect(serverService.getRegistration).toHaveBeenCalledTimes(1);
+
+    resolvePending({ status: 'REGISTERING', attempts: 1 });
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(serverService.getRegistration).toHaveBeenCalledTimes(2);
+
+    wrapper.unmount();
+    vi.useRealTimers();
+  });
+
+  it('does not poll after unmounting while the initial server fetch is pending', async () => {
+    vi.useFakeTimers();
+    let resolveServer;
+    serverService.get.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveServer = resolve;
+        })
+    );
+
+    const wrapper = mountPage();
+    wrapper.unmount();
+    resolveServer(
+      serverWith([], {
+        status: 'REGISTERING',
+        lastErrorReason: null,
+        lastErrorMessage: null,
+        registeredAt: null,
+        attempts: 0,
+      })
+    );
+    await vi.advanceTimersByTimeAsync(10000);
+
+    expect(serverService.getRegistration).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
 });

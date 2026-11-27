@@ -113,6 +113,8 @@ class ServerServiceImplTest {
     ArgumentCaptor<Server> saved = ArgumentCaptor.forClass(Server.class);
     verify(serverRepository).save(saved.capture());
     assertThat(saved.getValue().getRegistrationStatus()).isEqualTo(RegistrationStatus.REGISTERING);
+    assertThat(saved.getValue().getRegistrationRetryCount()).isZero();
+    assertThat(saved.getValue().getNextRegistrationRetryAt()).isAfter(LocalDateTime.now());
   }
 
   @Test
