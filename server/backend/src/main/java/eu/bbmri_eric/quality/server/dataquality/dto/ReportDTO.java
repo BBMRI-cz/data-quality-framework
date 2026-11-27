@@ -34,6 +34,24 @@ public class ReportDTO {
   @Schema(description = "Quality check results for this report")
   private List<QualityCheckResultDTO> results;
 
+  @Schema(description = "Version of the agent that produced this report", example = "0.7.0")
+  private String agentVersion;
+
+  @Schema(description = "Privacy parameters that produced this report, if the agent reported them")
+  private PrivacyMetadataDTO privacy;
+
+  @Schema(description = "Epsilon spent on the released patient total", example = "0.1")
+  private Double totalPatientsEpsilon;
+
+  @Schema(description = "Sensitivity of the patient total query", example = "1")
+  private Integer totalPatientsSensitivity;
+
+  @Schema(description = "Epsilon spent on the released sample total", example = "0.1")
+  private Double totalSamplesEpsilon;
+
+  @Schema(description = "Sensitivity of the sample total query", example = "20")
+  private Integer totalSamplesSensitivity;
+
   public ReportDTO() {}
 
   public String getId() {
@@ -82,5 +100,53 @@ public class ReportDTO {
 
   public void setResults(List<QualityCheckResultDTO> results) {
     this.results = results;
+  }
+
+  public String getAgentVersion() {
+    return agentVersion;
+  }
+
+  public void setAgentVersion(String agentVersion) {
+    this.agentVersion = agentVersion;
+  }
+
+  public PrivacyMetadataDTO getPrivacy() {
+    return privacy;
+  }
+
+  public void setPrivacy(PrivacyMetadataDTO privacy) {
+    this.privacy = privacy;
+  }
+
+  public Double getTotalPatientsEpsilon() {
+    return totalPatientsEpsilon;
+  }
+
+  public void setTotalPatientsEpsilon(Double totalPatientsEpsilon) {
+    this.totalPatientsEpsilon = totalPatientsEpsilon;
+  }
+
+  public Integer getTotalPatientsSensitivity() {
+    return totalPatientsSensitivity;
+  }
+
+  public void setTotalPatientsSensitivity(Integer totalPatientsSensitivity) {
+    this.totalPatientsSensitivity = totalPatientsSensitivity;
+  }
+
+  public Double getTotalSamplesEpsilon() {
+    return totalSamplesEpsilon;
+  }
+
+  public void setTotalSamplesEpsilon(Double totalSamplesEpsilon) {
+    this.totalSamplesEpsilon = totalSamplesEpsilon;
+  }
+
+  public Integer getTotalSamplesSensitivity() {
+    return totalSamplesSensitivity;
+  }
+
+  public void setTotalSamplesSensitivity(Integer totalSamplesSensitivity) {
+    this.totalSamplesSensitivity = totalSamplesSensitivity;
   }
 }

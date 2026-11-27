@@ -6,8 +6,11 @@ import eu.bbmri_eric.quality.server.common.dto.PageResponse;
 import eu.bbmri_eric.quality.server.dataquality.ReportService;
 import eu.bbmri_eric.quality.server.dataquality.domain.Agent;
 import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheck;
+import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheckResult;
 import eu.bbmri_eric.quality.server.dataquality.domain.QualityCheckVersion;
 import eu.bbmri_eric.quality.server.dataquality.domain.Report;
+import eu.bbmri_eric.quality.server.dataquality.domain.ReportPrivacy;
+import eu.bbmri_eric.quality.server.dataquality.dto.PrivacyMetadataDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.QualityCheckResultDTO;
 import eu.bbmri_eric.quality.server.dataquality.dto.ReportCreateRequest;
 import eu.bbmri_eric.quality.server.dataquality.dto.ReportDTO;
@@ -119,12 +122,35 @@ class ReportServiceImpl implements ReportService {
     Report report = new Report();
     report.setTotalPatients(createRequest.getTotalPatients());
     report.setTotalSamples(createRequest.getTotalSamples());
+    report.setAgentVersion(createRequest.getAgentVersion());
+    report.setPrivacy(toReportPrivacy(createRequest.getPrivacy()));
+    report.setTotalPatientsEpsilon(createRequest.getTotalPatientsEpsilon());
+    report.setTotalPatientsSensitivity(createRequest.getTotalPatientsSensitivity());
+    report.setTotalSamplesEpsilon(createRequest.getTotalSamplesEpsilon());
+    report.setTotalSamplesSensitivity(createRequest.getTotalSamplesSensitivity());
 
     for (QualityCheckResultDTO resultDTO : createRequest.getResults()) {
       QualityCheckVersion version = resolveVersion(resultDTO.getHash(), resultDTO.getName());
-      report.addQualityCheckResult(version, resultDTO.getResult());
+      QualityCheckResult checkResult = report.addQualityCheckResult(version, resultDTO.getResult());
+      checkResult.setEpsilon(resultDTO.getEpsilon());
+      checkResult.setSensitivity(resultDTO.getSensitivity());
     }
     return report;
+  }
+
+  private static ReportPrivacy toReportPrivacy(PrivacyMetadataDTO privacy) {
+    if (privacy == null) {
+      return null;
+    }
+    ReportPrivacy reportPrivacy = new ReportPrivacy();
+    reportPrivacy.setMechanism(privacy.getMechanism());
+    reportPrivacy.setEpsilon(privacy.getEpsilon());
+    reportPrivacy.setDelta(privacy.getDelta());
+    reportPrivacy.setMinThreshold(privacy.getMinThreshold());
+    reportPrivacy.setCheckResultsEpsilon(privacy.getCheckResultsEpsilon());
+    reportPrivacy.setEntityTotalEpsilon(privacy.getEntityTotalEpsilon());
+    reportPrivacy.setEntityTotalMechanism(privacy.getEntityTotalMechanism());
+    return reportPrivacy;
   }
 
   private QualityCheckVersion resolveVersion(String hash, String name) {

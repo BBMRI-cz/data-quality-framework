@@ -22,6 +22,42 @@ public final class ReportCreateRequest {
   @Schema(description = "Total number of samples", requiredMode = Schema.RequiredMode.REQUIRED)
   private Integer totalSamples;
 
+  @Schema(
+      description = "Version of the agent that produced this report",
+      example = "0.7.0",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private String agentVersion;
+
+  @Schema(
+      description = "Privacy parameters that produced this report",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @Valid
+  private PrivacyMetadataDTO privacy;
+
+  @Schema(
+      description = "Epsilon spent on the released patient total",
+      example = "0.1",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private Double totalPatientsEpsilon;
+
+  @Schema(
+      description = "Sensitivity of the patient total query",
+      example = "1",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private Integer totalPatientsSensitivity;
+
+  @Schema(
+      description = "Epsilon spent on the released sample total",
+      example = "0.1",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private Double totalSamplesEpsilon;
+
+  @Schema(
+      description = "Sensitivity of the sample total query",
+      example = "20",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private Integer totalSamplesSensitivity;
+
   public ReportCreateRequest() {}
 
   /**
@@ -60,6 +96,30 @@ public final class ReportCreateRequest {
 
   public Integer getTotalSamples() {
     return totalSamples;
+  }
+
+  public String getAgentVersion() {
+    return agentVersion;
+  }
+
+  public PrivacyMetadataDTO getPrivacy() {
+    return privacy;
+  }
+
+  public Double getTotalPatientsEpsilon() {
+    return totalPatientsEpsilon;
+  }
+
+  public Integer getTotalPatientsSensitivity() {
+    return totalPatientsSensitivity;
+  }
+
+  public Double getTotalSamplesEpsilon() {
+    return totalSamplesEpsilon;
+  }
+
+  public Integer getTotalSamplesSensitivity() {
+    return totalSamplesSensitivity;
   }
 
   @Override

@@ -4,8 +4,13 @@ import eu.bbmri_eric.quality.agent.dataquality.QualityCheckService;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Result;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ObfuscatedReportDTO;
+import eu.bbmri_eric.quality.agent.dataquality.dto.PrivacyMetadataDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.QualityCheckResultDTO;
+import eu.bbmri_eric.quality.agent.dataquality.privacy.PrivacyBudget;
+import eu.bbmri_eric.quality.agent.dataquality.privacy.PrivacyParameters;
+import eu.bbmri_eric.quality.agent.settings.SettingsService;
+import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
@@ -16,6 +21,7 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.info.BuildProperties;
 import org.springframework.stereotype.Component;
 
 /**
@@ -23,15 +29,26 @@ import org.springframework.stereotype.Component;
  * check-result values are ratios of a noisy count over the noisy patient total, rounded to two
  * decimals; check identities are exposed only as a SHA-256 hash of the query text (never the query
  * or the check name); entity totals come from the noisy totals stored on the report.
+ *
+ * <p>The payload also carries data-independent interpretation metadata: the agent version, the
+ * configured privacy parameters with their budget split, and the epsilon and sensitivity of every
+ * released value.
  */
 @Slf4j
 @Component
 class ObfuscatedReportAssembler {
 
   private final QualityCheckService qualityCheckService;
+  private final SettingsService settingsService;
+  private final BuildProperties buildProperties;
 
-  ObfuscatedReportAssembler(QualityCheckService qualityCheckService) {
+  ObfuscatedReportAssembler(
+      QualityCheckService qualityCheckService,
+      SettingsService settingsService,
+      BuildProperties buildProperties) {
     this.qualityCheckService = qualityCheckService;
+    this.settingsService = settingsService;
+    this.buildProperties = buildProperties;
   }
 
   ObfuscatedReportDTO assemble(Report report) {
@@ -53,10 +70,47 @@ class ObfuscatedReportAssembler {
                             sha256))
                 .toList();
     log.debug("Prepared obfuscated report {} with {} results", report.getId(), results.size());
-    return new ObfuscatedReportDTO(
-        results,
-        report.getObfuscatedNumberOfEntities(),
-        report.getObfuscatedNumberOfSecondaryEntities());
+    ObfuscatedReportDTO dto =
+        new ObfuscatedReportDTO(
+            results,
+            report.getObfuscatedNumberOfEntities(),
+            report.getObfuscatedNumberOfSecondaryEntities());
+    addInterpretationMetadata(dto, report);
+    return dto;
+  }
+
+  /**
+   * Adds the data-independent metadata a recipient needs to interpret the released values: agent
+   * version, configured privacy parameters with the budget split, and per-value
+   * epsilon/sensitivity. Totals metadata is only present when the total itself was released.
+   */
+  private void addInterpretationMetadata(ObfuscatedReportDTO dto, Report report) {
+    SettingsDTO settings = settingsService.getSettings();
+    PrivacyParameters parameters = PrivacyParameters.from(settings);
+    dto.setAgentVersion(buildProperties.getVersion());
+    dto.setPrivacy(privacyMetadata(settings, parameters));
+    double epsilonPerTotal = PrivacyBudget.epsilonPerEntityTotal(parameters.epsilon());
+    if (report.getObfuscatedNumberOfEntities() != null) {
+      dto.setTotalPatientsEpsilon(epsilonPerTotal);
+      dto.setTotalPatientsSensitivity(ObfuscationStep.PATIENT_SENSITIVITY);
+    }
+    if (report.getObfuscatedNumberOfSecondaryEntities() != null) {
+      dto.setTotalSamplesEpsilon(epsilonPerTotal);
+      dto.setTotalSamplesSensitivity(ObfuscationStep.SECONDARY_ENTITY_SENSITIVITY);
+    }
+  }
+
+  private static PrivacyMetadataDTO privacyMetadata(
+      SettingsDTO settings, PrivacyParameters parameters) {
+    PrivacyMetadataDTO privacy = new PrivacyMetadataDTO();
+    privacy.setMechanism(parameters.mechanism().name());
+    privacy.setEpsilon(parameters.epsilon());
+    privacy.setDelta(parameters.delta());
+    privacy.setMinThreshold(settings.getMinThreshold());
+    privacy.setCheckResultsEpsilon(PrivacyBudget.epsilonForCheckResults(parameters.epsilon()));
+    privacy.setEntityTotalEpsilon(PrivacyBudget.epsilonPerEntityTotal(parameters.epsilon()));
+    privacy.setEntityTotalMechanism(ObfuscationStep.ENTITY_TOTAL_MECHANISM.name());
+    return privacy;
   }
 
   private static QualityCheckResultDTO toObfuscatedResult(
@@ -71,7 +125,11 @@ class ObfuscatedReportAssembler {
       boundedRatio = Math.clamp(rounded, 0.0, 1.0);
     }
     return new QualityCheckResultDTO(
-        checkIdWithStratum(result, queriesByCheckId, sha256), result.getCheckName(), boundedRatio);
+        checkIdWithStratum(result, queriesByCheckId, sha256),
+        result.getCheckName(),
+        boundedRatio,
+        result.getEpsilon(),
+        ObfuscationStep.RESULT_SENSITIVITY);
   }
 
   private static Double ratio(Result result, Integer numberOfEntities) {

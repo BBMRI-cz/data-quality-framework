@@ -669,6 +669,173 @@ class ReportControllerTest {
 
   @Test
   @WithUserDetails("admin")
+  void create_shouldPersistAndReturnPrivacyMetadata() throws Exception {
+    String jsonRequest =
+        """
+        {
+          "agentVersion": "0.7.0",
+          "privacy": {
+            "mechanism": "LAPLACE",
+            "epsilon": 1.0,
+            "delta": 1.0E-8,
+            "minThreshold": 10,
+            "checkResultsEpsilon": 0.8,
+            "entityTotalEpsilon": 0.1,
+            "entityTotalMechanism": "LAPLACE"
+          },
+          "results": [
+            {
+              "hash": "privacy-hash",
+              "name": "Check A",
+              "result": 0.25
+            }
+          ],
+          "totalPatients": 1000,
+          "totalSamples": 2500,
+          "totalPatientsEpsilon": 0.1,
+          "totalPatientsSensitivity": 1,
+          "totalSamplesEpsilon": 0.1,
+          "totalSamplesSensitivity": 20
+        }
+        """;
+
+    String responseContent =
+        mockMvc
+            .perform(
+                post(API_V1_AGENTS_REPORTS, testAgentId)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(jsonRequest))
+            .andExpect(status().isCreated())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    String reportId = objectMapper.readTree(responseContent).get("id").asText();
+
+    mockMvc
+        .perform(get(API_V1_REPORTS_ID, reportId))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.agentVersion").value("0.7.0"))
+        .andExpect(jsonPath("$.privacy.mechanism").value("LAPLACE"))
+        .andExpect(jsonPath("$.privacy.epsilon").value(1.0))
+        .andExpect(jsonPath("$.privacy.delta").value(1.0e-8))
+        .andExpect(jsonPath("$.privacy.minThreshold").value(10))
+        .andExpect(jsonPath("$.privacy.checkResultsEpsilon").value(0.8))
+        .andExpect(jsonPath("$.privacy.entityTotalEpsilon").value(0.1))
+        .andExpect(jsonPath("$.privacy.entityTotalMechanism").value("LAPLACE"))
+        .andExpect(jsonPath("$.totalPatientsEpsilon").value(0.1))
+        .andExpect(jsonPath("$.totalPatientsSensitivity").value(1))
+        .andExpect(jsonPath("$.totalSamplesEpsilon").value(0.1))
+        .andExpect(jsonPath("$.totalSamplesSensitivity").value(20));
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void create_shouldPersistPerResultEpsilonAndSensitivity() throws Exception {
+    String jsonRequest =
+        """
+        {
+          "results": [
+            {
+              "hash": "epsilon-hash",
+              "name": "Check B",
+              "result": 0.5,
+              "epsilon": 0.8,
+              "sensitivity": 1
+            }
+          ]
+        }
+        """;
+
+    String responseContent =
+        mockMvc
+            .perform(
+                post(API_V1_AGENTS_REPORTS, testAgentId)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(jsonRequest))
+            .andExpect(status().isCreated())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    String reportId = objectMapper.readTree(responseContent).get("id").asText();
+
+    mockMvc
+        .perform(get(API_V1_REPORTS_ID, reportId))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.results[0].epsilon").value(0.8))
+        .andExpect(jsonPath("$.results[0].sensitivity").value(1));
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void create_shouldAcceptLegacyReportWithoutMetadata() throws Exception {
+    String jsonRequest =
+        """
+        {
+          "results": [
+            {
+              "hash": "legacy-hash",
+              "name": "Check C",
+              "result": 0.75
+            }
+          ],
+          "totalPatients": 100,
+          "totalSamples": 250
+        }
+        """;
+
+    String responseContent =
+        mockMvc
+            .perform(
+                post(API_V1_AGENTS_REPORTS, testAgentId)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(jsonRequest))
+            .andExpect(status().isCreated())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    String reportId = objectMapper.readTree(responseContent).get("id").asText();
+
+    mockMvc
+        .perform(get(API_V1_REPORTS_ID, reportId))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.privacy").doesNotExist())
+        .andExpect(jsonPath("$.agentVersion").doesNotExist())
+        .andExpect(jsonPath("$.totalPatientsEpsilon").doesNotExist())
+        .andExpect(jsonPath("$.totalSamplesSensitivity").doesNotExist())
+        .andExpect(jsonPath("$.results[0].epsilon").doesNotExist())
+        .andExpect(jsonPath("$.results[0].sensitivity").doesNotExist());
+  }
+
+  @Test
+  @WithUserDetails("admin")
+  void create_shouldIgnoreUnknownFields() throws Exception {
+    String jsonRequest =
+        """
+        {
+          "unknownField": "ignored",
+          "results": [
+            {
+              "hash": "unknown-in-result-hash",
+              "result": 0.95,
+              "unknownResultField": 42
+            }
+          ]
+        }
+        """;
+
+    mockMvc
+        .perform(
+            post(API_V1_AGENTS_REPORTS, testAgentId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonRequest))
+        .andExpect(status().isCreated());
+  }
+
+  @Test
+  @WithUserDetails("admin")
   void create_shouldRejectBlankHash() throws Exception {
     String jsonRequest =
         """

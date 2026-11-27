@@ -29,6 +29,10 @@ public class QualityCheckResult {
 
   private Double result;
 
+  private Double epsilon;
+
+  private Integer sensitivity;
+
   /** Default constructor for JPA. */
   protected QualityCheckResult() {}
 
@@ -101,6 +105,42 @@ public class QualityCheckResult {
    */
   public void setResult(Double result) {
     this.result = result;
+  }
+
+  /**
+   * Gets the epsilon that produced the released value, as reported by the agent.
+   *
+   * @return the epsilon, or null if not reported
+   */
+  public Double getEpsilon() {
+    return epsilon;
+  }
+
+  /**
+   * Sets the epsilon that produced the released value.
+   *
+   * @param epsilon the epsilon to set
+   */
+  public void setEpsilon(Double epsilon) {
+    this.epsilon = epsilon;
+  }
+
+  /**
+   * Gets the sensitivity of the released query, as reported by the agent.
+   *
+   * @return the sensitivity, or null if not reported
+   */
+  public Integer getSensitivity() {
+    return sensitivity;
+  }
+
+  /**
+   * Sets the sensitivity of the released query.
+   *
+   * @param sensitivity the sensitivity to set
+   */
+  public void setSensitivity(Integer sensitivity) {
+    this.sensitivity = sensitivity;
   }
 
   @Override
