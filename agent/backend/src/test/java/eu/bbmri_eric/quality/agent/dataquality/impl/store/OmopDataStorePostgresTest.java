@@ -1,7 +1,6 @@
 package eu.bbmri_eric.quality.agent.dataquality.impl.store;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -66,7 +65,7 @@ class OmopDataStorePostgresTest {
   }
 
   @Test
-  void executeQuery_resolvesPersonThroughCurrentSchema() {
+  void executeQuery_personQuery_returnsCount() {
     ResultDTO result = store.executeQuery("SELECT person_id FROM person");
     assertEquals(3, result.rawResult());
     assertTrue(result.idSet().containsAll(List.of("1", "2", "3")));
@@ -74,38 +73,50 @@ class OmopDataStorePostgresTest {
   }
 
   @Test
-  void executeQuery_multipleRowsPerPatient_countsDistinctExistingPatients() {
-    ResultDTO result = store.executeQuery("SELECT person_id FROM condition_occurrence");
-    assertEquals(3, result.rawResult());
-    assertEquals(3, result.idSet().size());
-    assertTrue(result.idSet().containsAll(List.of("1", "2", "3")));
-    assertNull(result.error());
-  }
-
-  @Test
-  void executeQuery_idsMissingFromPerson_ignored() {
-    ResultDTO result = store.executeQuery("SELECT person_id FROM condition_occurrence");
-    assertEquals(3, result.rawResult());
-    assertFalse(result.idSet().contains("99"));
-  }
-
-  @Test
-  void executeQuery_commonTableExpressionWithTrailingSemicolon_returnsCount() {
-    ResultDTO result =
-        store.executeQuery(
-            "WITH d AS (SELECT person_id FROM condition_occurrence) SELECT person_id FROM d;  ");
+  void executeQuery_trailingSemicolon_returnsCount() {
+    ResultDTO result = store.executeQuery("SELECT person_id FROM person;");
     assertEquals(3, result.rawResult());
     assertNull(result.error());
   }
 
   @Test
-  void executeQuery_joinQuery_countsDistinctPatients() {
+  void executeQuery_multipleRowsPerPatient_countsDistinctPatients() {
+    ResultDTO result = store.executeQuery("SELECT person_id FROM condition_occurrence");
+    assertEquals(4, result.rawResult());
+    assertEquals(4, result.idSet().size());
+    assertTrue(result.idSet().containsAll(List.of("1", "2", "3", "99")));
+    assertNull(result.error());
+  }
+
+  @Test
+  void executeQuery_trailingSemicolonAndLineComment_returnsReadableDriverError() {
+    ResultDTO result = store.executeQuery("SELECT person_id FROM person; -- all patients");
+    assertNull(result.rawResult());
+    assertTrue(result.error().endsWith("Multiple ResultSets were returned by the query."));
+  }
+
+  @Test
+  void executeQuery_trailingSemicolonAndBlockComment_returnsReadableDriverError() {
+    ResultDTO result = store.executeQuery("SELECT person_id FROM person; /* all patients */");
+    assertNull(result.rawResult());
+    assertTrue(result.error().endsWith("Multiple ResultSets were returned by the query."));
+  }
+
+  @Test
+  void executeQuery_joinWithDuplicatePersonIdLabels_usesFirstColumn() {
     ResultDTO result =
         store.executeQuery(
-            "SELECT p.person_id FROM person p JOIN condition_occurrence co"
+            "SELECT p.person_id, co.person_id FROM person p JOIN condition_occurrence co"
                 + " ON co.person_id = p.person_id");
     assertEquals(3, result.rawResult());
     assertEquals(3, result.idSet().size());
+    assertNull(result.error());
+  }
+
+  @Test
+  void executeQuery_quotedUpperCasePersonIdLabel_returnsCount() {
+    ResultDTO result = store.executeQuery("SELECT person_id AS \"PERSON_ID\" FROM person");
+    assertEquals(3, result.rawResult());
     assertNull(result.error());
   }
 

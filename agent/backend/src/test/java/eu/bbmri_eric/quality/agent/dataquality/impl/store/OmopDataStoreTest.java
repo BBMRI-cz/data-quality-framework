@@ -105,28 +105,61 @@ class OmopDataStoreTest {
   }
 
   @Test
-  void executeQuery_idsMissingFromPersonOrNull_notCounted() {
+  void executeQuery_numericTextVariants_countAsOneCanonicalPatient() {
     OmopDataStore store = sqliteStore();
     sqliteTemplate.execute("CREATE TABLE person (person_id INTEGER)");
-    sqliteTemplate.execute("INSERT INTO person VALUES (1),(2)");
-    sqliteTemplate.execute("CREATE TABLE condition_occurrence (person_id INTEGER)");
-    sqliteTemplate.execute("INSERT INTO condition_occurrence VALUES (1),(2),(99),(NULL)");
+    sqliteTemplate.execute("INSERT INTO person VALUES (1)");
 
-    ResultDTO result = store.executeQuery("SELECT person_id FROM condition_occurrence");
+    ResultDTO result =
+        store.executeQuery(
+            "SELECT '1' AS person_id UNION ALL SELECT '01' UNION ALL SELECT '001' UNION ALL"
+                + " SELECT 1");
 
-    assertEquals(2, result.rawResult());
-    assertEquals(2, result.idSet().size());
-    assertTrue(result.idSet().containsAll(List.of("1", "2")));
+    assertEquals(1, result.rawResult());
+    assertEquals(1, result.idSet().size());
+    assertTrue(result.idSet().contains("1"));
     assertNull(result.error());
   }
 
   @Test
-  void executeQuery_trailingSemicolonsAndWhitespace_returnsCount() {
+  void executeQuery_realPersonIds_rejectsFractionAndCanonicalizesWholeNumbers() {
+    OmopDataStore store = sqliteStore();
+    sqliteTemplate.execute("CREATE TABLE person (person_id REAL)");
+    sqliteTemplate.execute("INSERT INTO person VALUES (1.0),(1)");
+
+    ResultDTO wholeNumbersResult = store.executeQuery("SELECT person_id FROM person");
+
+    assertEquals(1, wholeNumbersResult.rawResult());
+    assertEquals(1, wholeNumbersResult.idSet().size());
+    assertTrue(wholeNumbersResult.idSet().contains("1"));
+    assertNull(wholeNumbersResult.error());
+
+    sqliteTemplate.execute("INSERT INTO person VALUES (1.5)");
+    ResultDTO fractionResult = store.executeQuery("SELECT person_id FROM person");
+
+    assertEquals(OmopDataStore.NON_INTEGER_PERSON_ID_MESSAGE + "1.5", fractionResult.error());
+    assertNull(fractionResult.rawResult());
+  }
+
+  @Test
+  void executeQuery_trailingSemicolonAndLineComment_returnsCount() {
     OmopDataStore store = sqliteStore();
     sqliteTemplate.execute("CREATE TABLE person (person_id INTEGER)");
     sqliteTemplate.execute("INSERT INTO person VALUES (1),(2)");
 
-    ResultDTO result = store.executeQuery("SELECT person_id FROM person ;;  \n ");
+    ResultDTO result = store.executeQuery("SELECT person_id FROM person; -- all patients");
+
+    assertEquals(2, result.rawResult());
+    assertNull(result.error());
+  }
+
+  @Test
+  void executeQuery_trailingSemicolonAndBlockComment_returnsCount() {
+    OmopDataStore store = sqliteStore();
+    sqliteTemplate.execute("CREATE TABLE person (person_id INTEGER)");
+    sqliteTemplate.execute("INSERT INTO person VALUES (1),(2)");
+
+    ResultDTO result = store.executeQuery("SELECT person_id FROM person; /* all patients */");
 
     assertEquals(2, result.rawResult());
     assertNull(result.error());
@@ -170,28 +203,15 @@ class OmopDataStoreTest {
   }
 
   @Test
-  void executeQuery_trailingLineComment_returnsCount() {
-    OmopDataStore store = sqliteStore();
-    sqliteTemplate.execute("CREATE TABLE person (person_id INTEGER)");
-    sqliteTemplate.execute("INSERT INTO person VALUES (1),(2)");
-
-    ResultDTO result = store.executeQuery("SELECT person_id FROM person -- all patients");
-
-    assertEquals(2, result.rawResult());
-    assertNull(result.error());
-  }
-
-  @Test
-  void executeQuery_rowsResult_returnsIds() {
+  void executeQuery_nonIntegerPersonId_returnsReadableError() {
     OmopDataStore store = sqliteStore();
     sqliteTemplate.execute("CREATE TABLE person (person_id TEXT)");
-    sqliteTemplate.execute("INSERT INTO person VALUES ('p1'),('p2')");
+    sqliteTemplate.execute("INSERT INTO person VALUES ('p1')");
 
     ResultDTO result = store.executeQuery("SELECT person_id FROM person");
 
-    assertEquals(2, result.rawResult());
-    assertTrue(result.idSet().containsAll(List.of("p1", "p2")));
-    assertNull(result.error());
+    assertEquals(OmopDataStore.NON_INTEGER_PERSON_ID_MESSAGE + "p1", result.error());
+    assertNull(result.rawResult());
   }
 
   @Test

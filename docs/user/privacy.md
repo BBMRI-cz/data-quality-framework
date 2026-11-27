@@ -89,9 +89,9 @@ does not show who. As long as the count stays within 5 of 67, the following repo
 
 ### Rules for your own SQL checks
 
-An SQL check must return `person_id` as its first column. The agent counts the distinct patients in the result who
-exist in the `person` table, so a patient listed several times counts once. A check that does not return `person_id`
-first fails with an error.
+An SQL check must return `person_id` as its first column. The agent counts the distinct `person_id` values in
+that column, so a patient listed several times counts once. A check that does not return `person_id` first fails
+with an error.
 
 ### Limits you should know about
 
