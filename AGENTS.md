@@ -55,6 +55,7 @@ Each backend is organized by domain modules within `eu.bbmri_eric.quality.[agent
   ├── impl/                         # Service implementation + repositories
   ├── domain/                       # Entity domain models
   ├── dto/                          # Data Transfer Objects
+  ├── exception/                    # Custom exceptions (handled in GlobalRestExceptionHandler)
   ├── event/                        # Domain events for inter-module communication
   ├── listener/                     # Event listeners (optional)
   └── scheduler/                    # Scheduled tasks (optional)
@@ -67,7 +68,7 @@ Example modules: `settings`, `dataquality`, `user`, `server` (communication with
 - Repositories are package-private in `impl/` and accessed through service
 - Controllers use DTOs; services work with domain entities internally
 - Inter-module communication via Spring events (`@DomainEvents`, `@EventListener`)
-- Swagger annotations required on all controllers and DTOs
+- Swagger annotations required on all controllers and DTOs (except `@ApiResponse`/`@ApiResponses` — those belong on `GlobalRestExceptionHandler`, not on controller methods)
 
 ## Frontend Architecture (Vue 3 + Composition API)
 
@@ -142,6 +143,7 @@ docker compose up -d                       # Start agent, server, and PostgreSQL
 - Use constructor injection; declare dependency fields as `private final`
 - Use YAML configuration (`application.yml`); externalize secrets via environment variables
 - Package by feature/domain, not by layer
+- Reuse or extend existing classes (DTOs, exceptions, utilities, endpoints) before creating new ones
 - Keep controllers thin; place business logic in services
 - Use ModelMapper for entity↔DTO conversions
 - Throw custom exceptions; handle them in @ExceptionHandler
@@ -149,6 +151,10 @@ docker compose up -d                       # Start agent, server, and PostgreSQL
 - Use parameterized queries via Spring Data JPA
 - Validate inputs with JSR-380 annotations (@NotNull, @Size, etc.)
 - Run `mvn clean install` before committing
+
+### REST Endpoints
+- No `@ApiResponse`/`@ApiResponses` annotations on controller methods; HTTP status codes and error responses are documented with these annotations on `GlobalRestExceptionHandler`
+- Throw custom exceptions from the module's `exception` package (e.g. `eu.bbmri_eric.quality.agent.dataquality.exception`), not alongside controllers or DTOs
 
 ### Vue 3 Frontend
 - **Instructions used**: `vue.instructions.md`
