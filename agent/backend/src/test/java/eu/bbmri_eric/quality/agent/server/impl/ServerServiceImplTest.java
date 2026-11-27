@@ -13,11 +13,14 @@ import static org.mockito.Mockito.when;
 
 import eu.bbmri_eric.quality.agent.common.EventPublisher;
 import eu.bbmri_eric.quality.agent.common.exception.EntityAlreadyExistsException;
+import eu.bbmri_eric.quality.agent.server.config.RegistrationStateMapper;
 import eu.bbmri_eric.quality.agent.server.domain.RegistrationStatus;
 import eu.bbmri_eric.quality.agent.server.domain.Server;
 import eu.bbmri_eric.quality.agent.server.domain.ServerConnectionStatus;
+import eu.bbmri_eric.quality.agent.server.domain.ServerInteraction;
 import eu.bbmri_eric.quality.agent.server.dto.DetailedServerDto;
 import eu.bbmri_eric.quality.agent.server.dto.ServerCreateDto;
+import eu.bbmri_eric.quality.agent.server.dto.ServerInteractionDto;
 import eu.bbmri_eric.quality.agent.server.event.ServerRegistrationEvent;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
@@ -45,8 +48,9 @@ class ServerServiceImplTest {
     SettingsService settingsService = mock(SettingsService.class);
     when(settingsService.getSettings())
         .thenReturn(SettingsDTO.builder().agentId("agent-1").build());
-    service =
-        new ServerServiceImpl(serverRepository, new ModelMapper(), settingsService, eventPublisher);
+    ModelMapper modelMapper = new ModelMapper();
+    new RegistrationStateMapper(modelMapper).addMappings();
+    service = new ServerServiceImpl(serverRepository, modelMapper, settingsService, eventPublisher);
   }
 
   private Server serverWithoutCredentials() {
@@ -139,6 +143,16 @@ class ServerServiceImplTest {
 
     DetailedServerDto dto = service.findById(server.getId());
 
+    assertThat(dto.getId()).isEqualTo(server.getId());
+    assertThat(dto.getName()).isEqualTo(server.getName());
+    assertThat(dto.getUrl()).isEqualTo(server.getUrl());
+    assertThat(dto.getStatus()).isEqualTo(server.getStatus());
+    assertThat(dto.getClientId()).isEqualTo("client-1");
+    assertThat(dto.getInteractions())
+        .hasSameSizeAs(server.getInteractions())
+        .extracting(ServerInteractionDto::getDescription)
+        .containsExactlyElementsOf(
+            server.getInteractions().stream().map(ServerInteraction::getDescription).toList());
     assertThat(dto.getRegistration()).isNotNull();
     assertThat(dto.getRegistration().getStatus()).isEqualTo(RegistrationStatus.ACTIVE);
     assertThat(dto.getRegistration().getAttempts()).isEqualTo(2);

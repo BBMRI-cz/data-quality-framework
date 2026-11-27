@@ -5,27 +5,33 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import eu.bbmri_eric.quality.agent.server.config.RegistrationStateMapper;
 import eu.bbmri_eric.quality.agent.server.domain.RegistrationStatus;
 import eu.bbmri_eric.quality.agent.server.domain.Server;
 import eu.bbmri_eric.quality.agent.server.domain.ServerConnectionStatus;
+import eu.bbmri_eric.quality.agent.server.dto.DetailedServerDto;
 import eu.bbmri_eric.quality.agent.server.dto.RegistrationStateDto;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.modelmapper.ModelMapper;
 
 class ServerRegistrationServiceImplTest {
 
   private static final String SERVER_URL = "https://central.example.com";
 
   private ServerRepository serverRepository;
+  private ModelMapper modelMapper;
   private ServerRegistrationServiceImpl service;
 
   @BeforeEach
   void setUp() {
     serverRepository = mock(ServerRepository.class);
-    service = new ServerRegistrationServiceImpl(serverRepository);
+    modelMapper = new ModelMapper();
+    new RegistrationStateMapper(modelMapper).addMappings();
+    service = new ServerRegistrationServiceImpl(serverRepository, modelMapper);
   }
 
   private Server server() {
@@ -109,5 +115,15 @@ class ServerRegistrationServiceImplTest {
     RegistrationStateDto dto = service.findByServerId(server.getId());
 
     assertThat(dto.getStatus()).isEqualTo(RegistrationStatus.FAILED);
+  }
+
+  @Test
+  void typeMaps_validate() {
+    Server server = server();
+    server.setRegistrationStatus(RegistrationStatus.FAILED);
+    modelMapper.map(server, RegistrationStateDto.class);
+    modelMapper.map(server, DetailedServerDto.class);
+
+    modelMapper.validate();
   }
 }

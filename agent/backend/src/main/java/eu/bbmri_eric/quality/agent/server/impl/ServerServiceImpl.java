@@ -64,9 +64,7 @@ class ServerServiceImpl implements ServerService {
         serverRepository
             .findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Server not found with id: " + id));
-    DetailedServerDto dto = modelMapper.map(server, DetailedServerDto.class);
-    dto.setRegistration(ServerRegistrationServiceImpl.toDto(server));
-    return dto;
+    return modelMapper.map(server, DetailedServerDto.class);
   }
 
   @Override
