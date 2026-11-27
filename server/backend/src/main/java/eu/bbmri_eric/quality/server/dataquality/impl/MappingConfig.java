@@ -60,6 +60,8 @@ public class MappingConfig {
             map(source.getVersion().getHash(), destination.getHash());
             map(source.getQualityCheck().getName(), destination.getName());
             map(source.getResult(), destination.getResult());
+            map(source.getEpsilon(), destination.getEpsilon());
+            map(source.getSensitivity(), destination.getSensitivity());
           }
         });
     modelMapper.addMappings(
@@ -72,6 +74,24 @@ public class MappingConfig {
             map(source.getTotalPatients(), destination.getTotalPatients());
             map(source.getTotalSamples(), destination.getTotalSamples());
             map(source.getQualityCheckResults(), destination.getResults());
+            map(source.getAgentVersion(), destination.getAgentVersion());
+            map(source.getPrivacy().getMechanism(), destination.getPrivacy().getMechanism());
+            map(source.getPrivacy().getEpsilon(), destination.getPrivacy().getEpsilon());
+            map(source.getPrivacy().getDelta(), destination.getPrivacy().getDelta());
+            map(source.getPrivacy().getMinThreshold(), destination.getPrivacy().getMinThreshold());
+            map(
+                source.getPrivacy().getCheckResultsEpsilon(),
+                destination.getPrivacy().getCheckResultsEpsilon());
+            map(
+                source.getPrivacy().getEntityTotalEpsilon(),
+                destination.getPrivacy().getEntityTotalEpsilon());
+            map(
+                source.getPrivacy().getEntityTotalMechanism(),
+                destination.getPrivacy().getEntityTotalMechanism());
+            map(source.getTotalPatientsEpsilon(), destination.getTotalPatientsEpsilon());
+            map(source.getTotalPatientsSensitivity(), destination.getTotalPatientsSensitivity());
+            map(source.getTotalSamplesEpsilon(), destination.getTotalSamplesEpsilon());
+            map(source.getTotalSamplesSensitivity(), destination.getTotalSamplesSensitivity());
           }
         });
   }

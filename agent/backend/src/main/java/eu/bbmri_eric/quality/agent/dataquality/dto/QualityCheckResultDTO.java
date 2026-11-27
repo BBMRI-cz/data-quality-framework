@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.agent.dataquality.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -37,11 +38,33 @@ public final class QualityCheckResultDTO {
       requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   private final Double result;
 
+  @Schema(
+      description = "Epsilon that produced the released value",
+      example = "0.8",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private Double epsilon;
+
+  @Schema(
+      description = "Sensitivity of the released query",
+      example = "1",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private Integer sensitivity;
+
   /** Constructor with hash, name, and result. */
   public QualityCheckResultDTO(String hash, String name, Double result) {
+    this(hash, name, result, null, null);
+  }
+
+  /** Constructor with hash, name, result, and privacy metadata of the released value. */
+  public QualityCheckResultDTO(
+      String hash, String name, Double result, Double epsilon, Integer sensitivity) {
     this.hash = hash;
     this.name = name != null ? name : "";
     this.result = result;
+    this.epsilon = epsilon;
+    this.sensitivity = sensitivity;
   }
 
   @Override
@@ -51,7 +74,9 @@ public final class QualityCheckResultDTO {
     var that = (QualityCheckResultDTO) obj;
     return Objects.equals(this.hash, that.hash)
         && Objects.equals(this.name, that.name)
-        && Objects.equals(this.result, that.result);
+        && Objects.equals(this.result, that.result)
+        && Objects.equals(this.epsilon, that.epsilon)
+        && Objects.equals(this.sensitivity, that.sensitivity);
   }
 
   @Override
@@ -70,6 +95,12 @@ public final class QualityCheckResultDTO {
         + ", "
         + "result="
         + result
+        + ", "
+        + "epsilon="
+        + epsilon
+        + ", "
+        + "sensitivity="
+        + sensitivity
         + ']';
   }
 }

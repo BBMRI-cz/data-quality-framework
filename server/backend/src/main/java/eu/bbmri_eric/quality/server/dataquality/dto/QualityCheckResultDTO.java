@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.server.dataquality.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -31,6 +32,20 @@ public class QualityCheckResultDTO {
       example = "0.95",
       requiredMode = Schema.RequiredMode.REQUIRED)
   private Double result;
+
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  @Schema(
+      description = "Epsilon that produced the released value, as reported by the agent",
+      example = "0.8",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private Double epsilon;
+
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  @Schema(
+      description = "Sensitivity of the released query, as reported by the agent",
+      example = "1",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  private Integer sensitivity;
 
   public QualityCheckResultDTO() {}
 
@@ -67,6 +82,22 @@ public class QualityCheckResultDTO {
 
   public void setResult(Double result) {
     this.result = result;
+  }
+
+  public Double getEpsilon() {
+    return epsilon;
+  }
+
+  public void setEpsilon(Double epsilon) {
+    this.epsilon = epsilon;
+  }
+
+  public Integer getSensitivity() {
+    return sensitivity;
+  }
+
+  public void setSensitivity(Integer sensitivity) {
+    this.sensitivity = sensitivity;
   }
 
   @Override

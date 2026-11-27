@@ -1,7 +1,10 @@
 package eu.bbmri_eric.quality.server.dataquality.domain;
 
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
@@ -33,6 +36,39 @@ public class Report {
 
   @Column(name = "total_samples")
   private Integer totalSamples;
+
+  @Column(name = "agent_version")
+  private String agentVersion;
+
+  @Embedded
+  @AttributeOverrides({
+    @AttributeOverride(name = "mechanism", column = @Column(name = "privacy_mechanism")),
+    @AttributeOverride(name = "epsilon", column = @Column(name = "privacy_epsilon")),
+    @AttributeOverride(name = "delta", column = @Column(name = "privacy_delta")),
+    @AttributeOverride(name = "minThreshold", column = @Column(name = "privacy_min_threshold")),
+    @AttributeOverride(
+        name = "checkResultsEpsilon",
+        column = @Column(name = "privacy_check_results_epsilon")),
+    @AttributeOverride(
+        name = "entityTotalEpsilon",
+        column = @Column(name = "privacy_entity_total_epsilon")),
+    @AttributeOverride(
+        name = "entityTotalMechanism",
+        column = @Column(name = "privacy_entity_total_mechanism"))
+  })
+  private ReportPrivacy privacy;
+
+  @Column(name = "total_patients_epsilon")
+  private Double totalPatientsEpsilon;
+
+  @Column(name = "total_patients_sensitivity")
+  private Integer totalPatientsSensitivity;
+
+  @Column(name = "total_samples_epsilon")
+  private Double totalSamplesEpsilon;
+
+  @Column(name = "total_samples_sensitivity")
+  private Integer totalSamplesSensitivity;
 
   @OneToMany(
       mappedBy = "report",
@@ -118,6 +154,114 @@ public class Report {
    */
   public void setTotalSamples(Integer totalSamples) {
     this.totalSamples = totalSamples;
+  }
+
+  /**
+   * Gets the version of the agent that produced this report.
+   *
+   * @return the agent version, or null if not reported
+   */
+  public String getAgentVersion() {
+    return agentVersion;
+  }
+
+  /**
+   * Sets the version of the agent that produced this report.
+   *
+   * @param agentVersion the agent version to set
+   */
+  public void setAgentVersion(String agentVersion) {
+    this.agentVersion = agentVersion;
+  }
+
+  /**
+   * Gets the privacy parameters that produced this report.
+   *
+   * @return the privacy metadata, or null if not reported
+   */
+  public ReportPrivacy getPrivacy() {
+    return privacy;
+  }
+
+  /**
+   * Sets the privacy parameters that produced this report.
+   *
+   * @param privacy the privacy metadata to set
+   */
+  public void setPrivacy(ReportPrivacy privacy) {
+    this.privacy = privacy;
+  }
+
+  /**
+   * Gets the epsilon spent on the released patient total.
+   *
+   * @return the epsilon, or null if not reported
+   */
+  public Double getTotalPatientsEpsilon() {
+    return totalPatientsEpsilon;
+  }
+
+  /**
+   * Sets the epsilon spent on the released patient total.
+   *
+   * @param totalPatientsEpsilon the epsilon to set
+   */
+  public void setTotalPatientsEpsilon(Double totalPatientsEpsilon) {
+    this.totalPatientsEpsilon = totalPatientsEpsilon;
+  }
+
+  /**
+   * Gets the sensitivity of the patient total query.
+   *
+   * @return the sensitivity, or null if not reported
+   */
+  public Integer getTotalPatientsSensitivity() {
+    return totalPatientsSensitivity;
+  }
+
+  /**
+   * Sets the sensitivity of the patient total query.
+   *
+   * @param totalPatientsSensitivity the sensitivity to set
+   */
+  public void setTotalPatientsSensitivity(Integer totalPatientsSensitivity) {
+    this.totalPatientsSensitivity = totalPatientsSensitivity;
+  }
+
+  /**
+   * Gets the epsilon spent on the released sample total.
+   *
+   * @return the epsilon, or null if not reported
+   */
+  public Double getTotalSamplesEpsilon() {
+    return totalSamplesEpsilon;
+  }
+
+  /**
+   * Sets the epsilon spent on the released sample total.
+   *
+   * @param totalSamplesEpsilon the epsilon to set
+   */
+  public void setTotalSamplesEpsilon(Double totalSamplesEpsilon) {
+    this.totalSamplesEpsilon = totalSamplesEpsilon;
+  }
+
+  /**
+   * Gets the sensitivity of the sample total query.
+   *
+   * @return the sensitivity, or null if not reported
+   */
+  public Integer getTotalSamplesSensitivity() {
+    return totalSamplesSensitivity;
+  }
+
+  /**
+   * Sets the sensitivity of the sample total query.
+   *
+   * @param totalSamplesSensitivity the sensitivity to set
+   */
+  public void setTotalSamplesSensitivity(Integer totalSamplesSensitivity) {
+    this.totalSamplesSensitivity = totalSamplesSensitivity;
   }
 
   /**

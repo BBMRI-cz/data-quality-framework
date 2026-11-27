@@ -17,6 +17,7 @@ import eu.bbmri_eric.quality.agent.dataquality.privacy.PrivacyBudget;
 import eu.bbmri_eric.quality.agent.dataquality.privacy.PrivacyParameters;
 import eu.bbmri_eric.quality.agent.dataquality.privacy.ResultHistoryRow;
 import eu.bbmri_eric.quality.agent.dataquality.privacy.TotalsHistoryRow;
+import eu.bbmri_eric.quality.agent.settings.NoiseMechanism;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import eu.bbmri_eric.quality.agent.settings.dto.SettingsDTO;
 import java.util.ArrayList;
@@ -46,15 +47,18 @@ import org.springframework.stereotype.Component;
 @Component
 class ObfuscationStep implements ReportPipelineStep {
 
-  private static final int RESULT_SENSITIVITY = 1;
-  private static final int PATIENT_SENSITIVITY = 1;
+  static final int RESULT_SENSITIVITY = 1;
+  static final int PATIENT_SENSITIVITY = 1;
 
   /**
    * Assumed maximum number of samples (secondary entities) per patient. Used as the sensitivity of
    * the noisy sample total; patients with more samples are protected proportionally less for this
    * number. Documented in docs/user/privacy.md.
    */
-  private static final int SECONDARY_ENTITY_SENSITIVITY = 20;
+  static final int SECONDARY_ENTITY_SENSITIVITY = 20;
+
+  /** Mechanism the entity totals always use, regardless of the configured one. */
+  static final NoiseMechanism ENTITY_TOTAL_MECHANISM = NoiseMechanism.LAPLACE;
 
   private final SettingsService settingsService;
   private final QualityCheckService qualityCheckService;

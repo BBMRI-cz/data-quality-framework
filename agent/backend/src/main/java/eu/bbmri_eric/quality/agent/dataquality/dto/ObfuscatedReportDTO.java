@@ -1,5 +1,6 @@
 package eu.bbmri_eric.quality.agent.dataquality.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 import java.util.Objects;
@@ -17,6 +18,47 @@ public class ObfuscatedReportDTO {
 
   @Schema(description = "Total number of samples", example = "250")
   private Integer totalSamples;
+
+  @Schema(
+      description = "Version of the agent that produced this report",
+      example = "0.7.0",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private String agentVersion;
+
+  @Schema(
+      description = "Privacy parameters that produced this report",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private PrivacyMetadataDTO privacy;
+
+  @Schema(
+      description = "Epsilon spent on the released patient total",
+      example = "0.1",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private Double totalPatientsEpsilon;
+
+  @Schema(
+      description = "Sensitivity of the patient total query",
+      example = "1",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private Integer totalPatientsSensitivity;
+
+  @Schema(
+      description = "Epsilon spent on the released sample total",
+      example = "0.1",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private Double totalSamplesEpsilon;
+
+  @Schema(
+      description = "Sensitivity of the sample total query",
+      example = "20",
+      requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private Integer totalSamplesSensitivity;
 
   public ObfuscatedReportDTO(List<QualityCheckResultDTO> results) {
     this.results = results;
