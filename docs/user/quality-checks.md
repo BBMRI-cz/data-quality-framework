@@ -26,9 +26,9 @@ The file is a JSON array with one entry per quality check:
 ```json
 [
   {
-    "name": "Patients missing a birth date",
-    "description": "Counts patients without a recorded birth date",
-    "query": "SELECT count(*) FROM patient WHERE birth_date IS NULL",
+    "name": "Patients missing a birth year",
+    "description": "Counts patients without a recorded birth year",
+    "query": "SELECT person_id FROM person WHERE year_of_birth IS NULL",
     "type": "SQL",
     "warningThreshold": 10,
     "errorThreshold": 30,

@@ -20,7 +20,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowCallbackHandler;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 @ExtendWith(MockitoExtension.class)
@@ -53,53 +53,176 @@ class OmopDataStoreTest {
   }
 
   @Test
-  void executeQuery_scalarResult_returnsCount() {
+  void executeQuery_countColumnFirst_failsWithPersonIdRequiredError() {
     OmopDataStore store = sqliteStore();
     sqliteTemplate.execute("CREATE TABLE person (person_id INTEGER)");
     sqliteTemplate.execute("INSERT INTO person VALUES (1),(2),(3)");
 
     ResultDTO result = store.executeQuery("SELECT COUNT(*) AS count FROM person");
 
-    assertEquals(3, result.rawResult());
-    assertTrue(result.idSet().isEmpty());
+    assertEquals(OmopDataStore.PERSON_ID_FIRST_COLUMN_MESSAGE, result.error());
+    assertNull(result.rawResult());
+  }
+
+  @Test
+  void executeQuery_firstColumnNotPersonId_failsWithPersonIdRequiredError() {
+    OmopDataStore store = sqliteStore();
+    sqliteTemplate.execute("CREATE TABLE person (person_id INTEGER, year_of_birth INTEGER)");
+    sqliteTemplate.execute("INSERT INTO person VALUES (1,1980)");
+
+    ResultDTO result = store.executeQuery("SELECT year_of_birth FROM person");
+
+    assertEquals(OmopDataStore.PERSON_ID_FIRST_COLUMN_MESSAGE, result.error());
+    assertNull(result.rawResult());
+  }
+
+  @Test
+  void executeQuery_personIdNotFirstColumn_failsWithPersonIdRequiredError() {
+    OmopDataStore store = sqliteStore();
+    sqliteTemplate.execute("CREATE TABLE person (person_id INTEGER, name TEXT)");
+    sqliteTemplate.execute("INSERT INTO person VALUES (1,'a')");
+
+    ResultDTO result = store.executeQuery("SELECT name, person_id FROM person");
+
+    assertEquals(OmopDataStore.PERSON_ID_FIRST_COLUMN_MESSAGE, result.error());
+    assertNull(result.rawResult());
+  }
+
+  @Test
+  void executeQuery_multipleRowsPerPatient_returnsDistinctPatientCount() {
+    OmopDataStore store = sqliteStore();
+    sqliteTemplate.execute("CREATE TABLE person (person_id INTEGER)");
+    sqliteTemplate.execute("INSERT INTO person VALUES (1),(2)");
+    sqliteTemplate.execute("CREATE TABLE condition_occurrence (person_id INTEGER)");
+    sqliteTemplate.execute("INSERT INTO condition_occurrence VALUES (1),(1),(1),(2)");
+
+    ResultDTO result = store.executeQuery("SELECT person_id FROM condition_occurrence");
+
+    assertEquals(2, result.rawResult());
+    assertEquals(2, result.idSet().size());
+    assertTrue(result.idSet().containsAll(List.of("1", "2")));
     assertNull(result.error());
   }
 
   @Test
-  void executeQuery_scalarResult_countLabelIsCaseInsensitive() {
+  void executeQuery_numericTextVariants_countAsOneCanonicalPatient() {
+    OmopDataStore store = sqliteStore();
+    sqliteTemplate.execute("CREATE TABLE person (person_id INTEGER)");
+    sqliteTemplate.execute("INSERT INTO person VALUES (1)");
+
+    ResultDTO result =
+        store.executeQuery(
+            "SELECT '1' AS person_id UNION ALL SELECT '01' UNION ALL SELECT '001' UNION ALL"
+                + " SELECT 1");
+
+    assertEquals(1, result.rawResult());
+    assertEquals(1, result.idSet().size());
+    assertTrue(result.idSet().contains("1"));
+    assertNull(result.error());
+  }
+
+  @Test
+  void executeQuery_realPersonIds_rejectsFractionAndCanonicalizesWholeNumbers() {
+    OmopDataStore store = sqliteStore();
+    sqliteTemplate.execute("CREATE TABLE person (person_id REAL)");
+    sqliteTemplate.execute("INSERT INTO person VALUES (1.0),(1)");
+
+    ResultDTO wholeNumbersResult = store.executeQuery("SELECT person_id FROM person");
+
+    assertEquals(1, wholeNumbersResult.rawResult());
+    assertEquals(1, wholeNumbersResult.idSet().size());
+    assertTrue(wholeNumbersResult.idSet().contains("1"));
+    assertNull(wholeNumbersResult.error());
+
+    sqliteTemplate.execute("INSERT INTO person VALUES (1.5)");
+    ResultDTO fractionResult = store.executeQuery("SELECT person_id FROM person");
+
+    assertEquals(OmopDataStore.NON_INTEGER_PERSON_ID_MESSAGE + "1.5", fractionResult.error());
+    assertNull(fractionResult.rawResult());
+  }
+
+  @Test
+  void executeQuery_trailingSemicolonAndLineComment_returnsCount() {
     OmopDataStore store = sqliteStore();
     sqliteTemplate.execute("CREATE TABLE person (person_id INTEGER)");
     sqliteTemplate.execute("INSERT INTO person VALUES (1),(2)");
 
-    ResultDTO result = store.executeQuery("SELECT COUNT(*) AS Count FROM person");
+    ResultDTO result = store.executeQuery("SELECT person_id FROM person; -- all patients");
 
     assertEquals(2, result.rawResult());
-    assertTrue(result.idSet().isEmpty());
     assertNull(result.error());
   }
 
   @Test
-  void executeQuery_rowsResult_returnsIds() {
+  void executeQuery_trailingSemicolonAndBlockComment_returnsCount() {
+    OmopDataStore store = sqliteStore();
+    sqliteTemplate.execute("CREATE TABLE person (person_id INTEGER)");
+    sqliteTemplate.execute("INSERT INTO person VALUES (1),(2)");
+
+    ResultDTO result = store.executeQuery("SELECT person_id FROM person; /* all patients */");
+
+    assertEquals(2, result.rawResult());
+    assertNull(result.error());
+  }
+
+  @Test
+  void executeQuery_commonTableExpression_returnsCount() {
+    OmopDataStore store = sqliteStore();
+    sqliteTemplate.execute("CREATE TABLE person (person_id INTEGER)");
+    sqliteTemplate.execute("INSERT INTO person VALUES (1),(2)");
+
+    ResultDTO result =
+        store.executeQuery("WITH x AS (SELECT person_id FROM person) SELECT person_id FROM x");
+
+    assertEquals(2, result.rawResult());
+    assertNull(result.error());
+  }
+
+  @Test
+  void executeQuery_upperCasePersonIdLabel_returnsCount() {
+    OmopDataStore store = sqliteStore();
+    sqliteTemplate.execute("CREATE TABLE person (person_id INTEGER)");
+    sqliteTemplate.execute("INSERT INTO person VALUES (1),(2)");
+
+    ResultDTO result = store.executeQuery("SELECT person_id AS PERSON_ID FROM person");
+
+    assertEquals(2, result.rawResult());
+    assertNull(result.error());
+  }
+
+  @Test
+  void executeQuery_qualifiedPersonIdColumn_returnsCount() {
+    OmopDataStore store = sqliteStore();
+    sqliteTemplate.execute("CREATE TABLE person (person_id INTEGER)");
+    sqliteTemplate.execute("INSERT INTO person VALUES (1),(2)");
+
+    ResultDTO result = store.executeQuery("SELECT p.person_id FROM person p");
+
+    assertEquals(2, result.rawResult());
+    assertNull(result.error());
+  }
+
+  @Test
+  void executeQuery_nonIntegerPersonId_returnsReadableError() {
     OmopDataStore store = sqliteStore();
     sqliteTemplate.execute("CREATE TABLE person (person_id TEXT)");
-    sqliteTemplate.execute("INSERT INTO person VALUES ('p1'),('p2')");
+    sqliteTemplate.execute("INSERT INTO person VALUES ('p1')");
 
     ResultDTO result = store.executeQuery("SELECT person_id FROM person");
 
-    assertEquals(2, result.rawResult());
-    assertTrue(result.idSet().containsAll(List.of("p1", "p2")));
-    assertNull(result.error());
+    assertEquals(OmopDataStore.NON_INTEGER_PERSON_ID_MESSAGE + "p1", result.error());
+    assertNull(result.rawResult());
   }
 
   @Test
-  void executeQuery_rowsResult_nullAndDuplicateIds_rowCountCountsRowsIdSetDedups() {
+  void executeQuery_duplicateAndNullIds_countedOnceAsDistinctPatients() {
     OmopDataStore store = sqliteStore();
     sqliteTemplate.execute("CREATE TABLE person (person_id INTEGER, name TEXT)");
     sqliteTemplate.execute("INSERT INTO person VALUES (1,'a'),(1,'b'),(NULL,'c'),(2,'d')");
 
     ResultDTO result = store.executeQuery("SELECT person_id, name FROM person");
 
-    assertEquals(4, result.rawResult());
+    assertEquals(2, result.rawResult());
     assertEquals(2, result.idSet().size());
     assertTrue(result.idSet().containsAll(List.of("1", "2")));
     assertNull(result.error());
@@ -122,7 +245,7 @@ class OmopDataStoreTest {
   void executeQuery_error_returnsErrorResult() {
     doThrow(new RuntimeException("syntax error"))
         .when(jdbcTemplate)
-        .query(anyString(), any(RowCallbackHandler.class));
+        .query(anyString(), any(ResultSetExtractor.class));
     OmopDataStore store = new OmopDataStore(jdbcTemplate);
 
     ResultDTO result = store.executeQuery("INVALID SQL");
