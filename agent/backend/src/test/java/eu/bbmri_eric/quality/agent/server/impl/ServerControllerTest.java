@@ -2,14 +2,21 @@ package eu.bbmri_eric.quality.agent.server.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.endsWith;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import eu.bbmri_eric.quality.agent.server.CentralServerClient;
+import eu.bbmri_eric.quality.agent.server.CentralServerClientFactory;
+import eu.bbmri_eric.quality.agent.server.RegistrationCredentials;
 import eu.bbmri_eric.quality.agent.server.domain.RegistrationStatus;
 import eu.bbmri_eric.quality.agent.server.domain.Server;
 import eu.bbmri_eric.quality.agent.server.domain.ServerConnectionStatus;
 import eu.bbmri_eric.quality.agent.server.dto.ServerCreateDto;
 import eu.bbmri_eric.quality.agent.server.dto.ServerUpdateDto;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,6 +24,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithUserDetails;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.json.JsonMapper;
@@ -33,6 +41,17 @@ class ServerControllerTest {
   @Autowired private JsonMapper objectMapper;
 
   @Autowired private ServerRepository serverRepository;
+
+  @MockitoBean private CentralServerClientFactory clientFactory;
+
+  private final CentralServerClient client = mock(CentralServerClient.class);
+
+  @BeforeEach
+  void setUp() {
+    when(clientFactory.createClient(anyString(), anyString(), anyString(), anyString()))
+        .thenReturn(client);
+    when(client.register()).thenReturn(new RegistrationCredentials("client-id", "client-secret"));
+  }
 
   @Test
   @WithUserDetails("admin")

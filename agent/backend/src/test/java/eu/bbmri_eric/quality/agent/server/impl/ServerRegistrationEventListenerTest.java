@@ -23,7 +23,9 @@ import eu.bbmri_eric.quality.agent.server.domain.Server;
 import eu.bbmri_eric.quality.agent.server.domain.ServerConnectionStatus;
 import eu.bbmri_eric.quality.agent.server.domain.ServerInteraction;
 import eu.bbmri_eric.quality.agent.server.event.ServerRegistrationEvent;
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -42,22 +44,31 @@ class ServerRegistrationEventListenerTest {
   private static final String RETRY_SUFFIX = "\nAttempts: 3 of 3. Automatic retry is scheduled.";
 
   private CentralServerClient client;
+  private CentralServerClientFactory clientFactory;
   private ServerRepository serverRepository;
   private Server server;
   private ServerRegistrationEventListener listener;
   private Logger listenerLogger;
   private ListAppender<ILoggingEvent> logAppender;
+  private final List<Duration> sleeps = new ArrayList<>();
 
   @BeforeEach
   void setUp() {
     client = mock(CentralServerClient.class);
-    CentralServerClientFactory clientFactory = mock(CentralServerClientFactory.class);
+    clientFactory = mock(CentralServerClientFactory.class);
     when(clientFactory.createClient(anyString(), anyString(), anyString(), anyString()))
         .thenReturn(client);
     serverRepository = mock(ServerRepository.class);
     server = new Server(SERVER_URL, "Central Server");
     when(serverRepository.findWithInteractionsByUrl(SERVER_URL)).thenReturn(Optional.of(server));
-    listener = new ServerRegistrationEventListener(clientFactory, serverRepository);
+    listener =
+        new ServerRegistrationEventListener(clientFactory, serverRepository) {
+          @Override
+          boolean sleep(Duration wait) {
+            sleeps.add(wait);
+            return true;
+          }
+        };
     listenerLogger = (Logger) LoggerFactory.getLogger(ServerRegistrationEventListener.class);
     logAppender = new ListAppender<>();
     logAppender.start();
@@ -358,5 +369,37 @@ class ServerRegistrationEventListenerTest {
     assertThat(server.getRegistrationErrorReason()).isEqualTo("UNAUTHORIZED");
     assertThat(server.getRegistrationErrorMessage())
         .isEqualTo(registrationDescriptions().getFirst());
+  }
+
+  @Test
+  void handleServerRegistration_transientFailures_backsOffExponentiallyBetweenAttempts() {
+    when(client.register())
+        .thenThrow(
+            RegistrationFailedException.forReason(
+                RegistrationFailureReason.UNREACHABLE, "Connection refused", null));
+
+    listener.handleServerRegistration(new ServerRegistrationEvent("agent-1", SERVER_URL));
+
+    assertThat(sleeps).containsExactly(Duration.ofSeconds(2), Duration.ofSeconds(4));
+  }
+
+  @Test
+  void handleServerRegistration_interruptedBackoff_recordsFinalFailureAfterFirstAttempt() {
+    when(client.register())
+        .thenThrow(
+            RegistrationFailedException.forReason(
+                RegistrationFailureReason.UNREACHABLE, "Connection refused", null));
+    ServerRegistrationEventListener interrupted =
+        new ServerRegistrationEventListener(clientFactory, serverRepository) {
+          @Override
+          boolean sleep(Duration wait) {
+            return false;
+          }
+        };
+
+    interrupted.handleServerRegistration(new ServerRegistrationEvent("agent-1", SERVER_URL));
+
+    verify(client).register();
+    assertThat(server.getStatus()).isEqualTo(ServerConnectionStatus.ERROR);
   }
 }
