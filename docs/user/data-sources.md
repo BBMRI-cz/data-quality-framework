@@ -51,7 +51,7 @@ databaseType: SQL
 sqlUrl: jdbc:calcite:directory=/opt/omop/csv
 ```
 
-If `/opt/omop/csv/person.csv` and `/opt/omop/csv/specimen.csv` exist, checks such as `SELECT COUNT(*) FROM person` work as expected.
+If `/opt/omop/csv/person.csv` and `/opt/omop/csv/specimen.csv` exist, checks such as `SELECT person_id FROM person` work as expected.
 
 ### CSV conventions
 

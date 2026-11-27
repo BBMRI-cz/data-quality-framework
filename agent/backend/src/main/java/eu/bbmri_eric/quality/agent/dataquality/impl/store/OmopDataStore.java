@@ -4,8 +4,6 @@ import eu.bbmri_eric.quality.agent.dataquality.DataStore;
 import eu.bbmri_eric.quality.agent.dataquality.dto.DBStatus;
 import eu.bbmri_eric.quality.agent.dataquality.dto.DatabaseHealthDTO;
 import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
-import java.sql.ResultSetMetaData;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -13,11 +11,15 @@ import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.support.JdbcUtils;
 
 @Slf4j
 public class OmopDataStore implements DataStore {
+
+  static final String PERSON_ID_FIRST_COLUMN_MESSAGE =
+      "SQL checks must return person_id as the first column; the result counts distinct patients.";
 
   private final JdbcTemplate jdbcTemplate;
 
@@ -72,39 +74,33 @@ public class OmopDataStore implements DataStore {
       return new ResultDTO("SQL data store not initialized");
     }
     try {
-      int[] rowCount = new int[1];
-      Number[] countValue = new Number[1];
+      String checkQuery = stripTrailingSemicolons(query);
+      String firstColumn =
+          jdbcTemplate.query(
+              "SELECT * FROM (\n" + checkQuery + "\n) q WHERE 1 = 0",
+              (ResultSetExtractor<String>) rs -> rs.getMetaData().getColumnLabel(1));
+      if (!"person_id".equalsIgnoreCase(firstColumn)) {
+        return new ResultDTO(PERSON_ID_FIRST_COLUMN_MESSAGE);
+      }
       Set<String> idSet = new HashSet<>();
       jdbcTemplate.query(
-          query,
-          (RowCallbackHandler)
-              rs -> {
-                rowCount[0]++;
-                Object firstValue = JdbcUtils.getResultSetValue(rs, 1);
-                ResultSetMetaData metaData = rs.getMetaData();
-                if (rowCount[0] == 1
-                    && metaData.getColumnCount() == 1
-                    && firstValue instanceof Number number
-                    && metaData.getColumnLabel(1).toLowerCase().startsWith("count")) {
-                  countValue[0] = number;
-                } else {
-                  countValue[0] = null;
-                }
-                if (firstValue != null) {
-                  idSet.add(firstValue.toString());
-                }
-              });
-      if (rowCount[0] == 0) {
-        return new ResultDTO(0, "Person", Collections.emptySet());
-      }
-      if (countValue[0] != null) {
-        return new ResultDTO(countValue[0].intValue(), "Person", Collections.emptySet());
-      }
-      return new ResultDTO(rowCount[0], "Person", idSet);
+          "SELECT DISTINCT q.person_id FROM (\n"
+              + checkQuery
+              + "\n) q JOIN person p ON p.person_id = q.person_id",
+          (RowCallbackHandler) rs -> idSet.add(JdbcUtils.getResultSetValue(rs, 1).toString()));
+      return new ResultDTO(idSet.size(), "Person", idSet);
     } catch (Exception e) {
       log.error("SQL query execution failed: {}", e.getMessage(), e);
       return new ResultDTO(e.getMessage());
     }
+  }
+
+  private static String stripTrailingSemicolons(String query) {
+    String stripped = query.strip();
+    while (stripped.endsWith(";")) {
+      stripped = stripped.substring(0, stripped.length() - 1).strip();
+    }
+    return stripped;
   }
 
   @Override
