@@ -79,6 +79,10 @@ export default defineConfig({
                             text: 'Troubleshooting',
                             items: [
                                 {
+                                    text: 'Connecting an agent to a server',
+                                    link: '/user/troubleshooting/registration'
+                                },
+                                {
                                     text: 'Why report contains N/A values',
                                     link: '/user/troubleshooting/report'
                                 }

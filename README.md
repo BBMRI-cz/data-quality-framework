@@ -46,6 +46,7 @@ docker compose up -d
   requests
 - **Security**: Report security vulnerabilities
   via [GitHub Security Advisories](https://github.com/BBMRI-cz/data-quality-framework/security/advisories)
+- **Connection problems**: [Connecting an agent to a central server](https://fdqf.bbmri-eric.eu/user/troubleshooting/registration)
 
 ## License
 

@@ -124,3 +124,4 @@ server's private signing key.
 
 - [Deployment Guide](../deployment.md)
 - [OIDC Configuration](../oidc-configuration.md)
+- [Approving and removing agents](../troubleshooting/registration.md#server-administrators)
