@@ -5,6 +5,9 @@
 /** Registration states after which the frontend stops polling for updates. */
 export const TERMINAL_REGISTRATION_STATES = ['REGISTERED_PENDING_APPROVAL', 'ACTIVE', 'FAILED'];
 
+/** User documentation page explaining registration statuses and failures. */
+export const REGISTRATION_HELP_URL = 'https://fdqf.bbmri-eric.eu/user/troubleshooting/registration';
+
 const LABELS = {
   UNREGISTERED: 'Unregistered',
   REGISTERING: 'Registering',
@@ -64,4 +67,16 @@ export function getRegistrationTooltip(status) {
  */
 export function canRetryRegistration(status) {
   return status === 'FAILED' || status === 'UNREGISTERED';
+}
+
+/**
+ * Get the documentation URL explaining a registration failure reason
+ * @param {string} reason - Registration failure reason (e.g. 'UNREACHABLE', 'RATE_LIMITED')
+ * @returns {string} Documentation URL, anchored at the section for the reason when given
+ */
+export function getRegistrationHelpUrl(reason) {
+  if (!reason || typeof reason !== 'string') {
+    return REGISTRATION_HELP_URL;
+  }
+  return `${REGISTRATION_HELP_URL}#${reason.toLowerCase().replaceAll('_', '-')}`;
 }

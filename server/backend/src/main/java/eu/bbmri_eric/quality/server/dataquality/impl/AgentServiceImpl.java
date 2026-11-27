@@ -18,6 +18,7 @@ import eu.bbmri_eric.quality.server.user.UserRole;
 import eu.bbmri_eric.quality.server.user.UserService;
 import eu.bbmri_eric.quality.server.user.dto.UserCreateDTO;
 import eu.bbmri_eric.quality.server.user.dto.UserDTO;
+import java.net.URI;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -36,6 +37,16 @@ class AgentServiceImpl implements AgentService {
   private static final Logger logger = LoggerFactory.getLogger(AgentServiceImpl.class);
 
   private static final String IPV4_MAPPED_IPV6_PREFIX = "::ffff:";
+
+  /** Base of the troubleshooting documentation linked from registration error responses. */
+  private static final String REGISTRATION_TROUBLESHOOTING_DOC =
+      "https://fdqf.bbmri-eric.eu/user/troubleshooting/registration";
+
+  private static final URI REGISTRATION_CONFLICT_DOC_TYPE =
+      URI.create(REGISTRATION_TROUBLESHOOTING_DOC + "#conflict");
+
+  private static final URI REGISTRATION_RATE_LIMITED_DOC_TYPE =
+      URI.create(REGISTRATION_TROUBLESHOOTING_DOC + "#rate-limited");
 
   private final AgentRepository agentRepository;
   private final ModelMapper modelMapper;
@@ -72,7 +83,7 @@ class AgentServiceImpl implements AgentService {
                 : ("Another agent (%s) is already registered from IP address %s. Delete that agent"
                         + " in the server UI to register a new agent from this address.")
                     .formatted(conflicting.getName(), clientIpAddress);
-        throw new TooManyRequestsException(detail);
+        throw new TooManyRequestsException(detail, REGISTRATION_RATE_LIMITED_DOC_TYPE);
       }
     }
     Agent agent = new Agent(createAgentDto.getId(), clientIpAddress);
@@ -82,7 +93,8 @@ class AgentServiceImpl implements AgentService {
       savedAgent = agentRepository.save(agent);
     } catch (DataIntegrityViolationException ex) {
       throw new EntityAlreadyExistsException(
-          "Agent %s already exists".formatted(createAgentDto.getId()));
+          "Agent %s already exists".formatted(createAgentDto.getId()),
+          REGISTRATION_CONFLICT_DOC_TYPE);
     }
     UserDTO agentUser =
         userService.createUser(
@@ -98,13 +110,15 @@ class AgentServiceImpl implements AgentService {
           ("Agent %s is already registered from IP address %s. Re-registration is only allowed"
                   + " from the same address (this request came from %s). Delete this agent in the"
                   + " server UI to register again from this address.")
-              .formatted(agent.getId(), agent.getIpAddress(), clientIpAddress));
+              .formatted(agent.getId(), agent.getIpAddress(), clientIpAddress),
+          REGISTRATION_CONFLICT_DOC_TYPE);
     }
     if (agent.getStatus() != AgentStatus.PENDING) {
       throw new EntityAlreadyExistsException(
           ("Agent %s has already been approved (status %s) and cannot re-register. An"
                   + " administrator must delete it in the server UI before it can register again.")
-              .formatted(agent.getId(), agent.getStatus()));
+              .formatted(agent.getId(), agent.getStatus()),
+          REGISTRATION_CONFLICT_DOC_TYPE);
     }
     agent.addInteraction(AgentInteractionType.REGISTRATION);
     if (!Objects.equals(createAgentDto.getVersion(), agent.getVersion())) {
