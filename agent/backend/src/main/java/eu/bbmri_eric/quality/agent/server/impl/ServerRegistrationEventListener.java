@@ -208,12 +208,13 @@ class ServerRegistrationEventListener {
   }
 
   /**
-   * Sleeps between registration attempts, occupying only the async task thread.
+   * Sleeps between registration attempts, occupying only the async task thread. Package-private so
+   * tests can skip the real wait.
    *
    * @param wait how long to wait
    * @return false when the thread was interrupted and retrying must be aborted
    */
-  private static boolean sleep(Duration wait) {
+  boolean sleep(Duration wait) {
     try {
       Thread.sleep(wait.toMillis());
       return true;
