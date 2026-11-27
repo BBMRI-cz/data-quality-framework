@@ -23,6 +23,7 @@ class ReportSender {
   private final ReportService reportService;
   private final CentralServerClientFactory clientFactory;
   private final ServerRepository serverRepository;
+  private final ServerInteractionRepository serverInteractionRepository;
   private final SettingsService settingsService;
   private final JsonMapper objectMapper;
 
@@ -30,11 +31,13 @@ class ReportSender {
       ReportService reportService,
       CentralServerClientFactory clientFactory,
       ServerRepository serverRepository,
+      ServerInteractionRepository serverInteractionRepository,
       SettingsService settingsService,
       JsonMapper objectMapper) {
     this.reportService = reportService;
     this.clientFactory = clientFactory;
     this.serverRepository = serverRepository;
+    this.serverInteractionRepository = serverInteractionRepository;
     this.settingsService = settingsService;
     this.objectMapper = objectMapper;
   }
@@ -63,14 +66,9 @@ class ReportSender {
                         agentId, server.getUrl(), server.getClientId(), server.getClientSecret());
                 client.sendReport(reportDTO);
                 String reportJson = objectMapper.writeValueAsString(reportDTO);
-                serverRepository
-                    .findWithInteractionsByUrl(server.getUrl())
-                    .ifPresent(
-                        reloaded -> {
-                          reloaded.addInteraction(
-                              new ServerInteraction(InteractionType.COMMUNICATION, reportJson));
-                          serverRepository.save(reloaded);
-                        });
+                var interaction = new ServerInteraction(InteractionType.COMMUNICATION, reportJson);
+                interaction.setServerId(server.getId());
+                serverInteractionRepository.save(interaction);
               } catch (Exception e) {
                 log.error("Failed to send report to server {}", server.getUrl(), e);
               }

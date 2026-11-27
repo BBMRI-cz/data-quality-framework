@@ -3,6 +3,9 @@ package eu.bbmri_eric.quality.agent.server.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
@@ -20,6 +23,7 @@ import eu.bbmri_eric.quality.agent.server.CentralServerClientFactory;
 import eu.bbmri_eric.quality.agent.server.domain.InteractionType;
 import eu.bbmri_eric.quality.agent.server.domain.Server;
 import eu.bbmri_eric.quality.agent.server.domain.ServerConnectionStatus;
+import eu.bbmri_eric.quality.agent.server.domain.ServerInteraction;
 import eu.bbmri_eric.quality.agent.settings.SettingsService;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -32,6 +36,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 /**
  * A send failure after the report has committed must leave the report GENERATED and must not flip
@@ -47,7 +52,7 @@ class ReportSendFailureIntegrationTest {
   private static final String SERVER_URL = "https://send-failure.example.com";
 
   @Autowired private ReportService reportService;
-  @Autowired private ServerRepository serverRepository;
+  @MockitoSpyBean private ServerRepository serverRepository;
   @Autowired private SettingsService settingsService;
 
   @MockitoBean private CentralServerClientFactory clientFactory;
@@ -110,11 +115,59 @@ class ReportSendFailureIntegrationTest {
     assertThat(reportService.findById(secondReportId).getStatus())
         .isEqualTo(ReportStatus.GENERATED);
     assertThat(reportService.findById(firstReportId).getStatus()).isEqualTo(ReportStatus.GENERATED);
-    Server serverWithInteractions =
-        serverRepository.findWithInteractionsByUrl(SERVER_URL).orElseThrow();
-    assertThat(serverWithInteractions.getInteractions())
-        .anyMatch(interaction -> interaction.getType() == InteractionType.COMMUNICATION);
+    await()
+        .atMost(Duration.ofSeconds(10))
+        .untilAsserted(
+            () ->
+                assertThat(
+                        serverRepository
+                            .findWithInteractionsByUrl(SERVER_URL)
+                            .orElseThrow()
+                            .getInteractions())
+                    .anyMatch(
+                        interaction -> interaction.getType() == InteractionType.COMMUNICATION));
     assertThat(sentReport.getValue().getTotalPatients()).isEqualTo(firstPublishedPatients);
+  }
+
+  @Test
+  void successfulSend_concurrentServerUpdate_preservesChangesAndInteractions() throws Exception {
+    String updatedClientSecret = "updated-client-secret";
+    String concurrentUpdateDescription = "Concurrent administrator update";
+    when(clientFactory.createClient(any(), any(), any(), any())).thenReturn(client);
+    doAnswer(
+            invocation -> {
+              Server concurrentlyUpdatedServer =
+                  serverRepository.findWithInteractionsByUrl(SERVER_URL).orElseThrow();
+              concurrentlyUpdatedServer.setClientSecret(updatedClientSecret);
+              concurrentlyUpdatedServer.addInteraction(
+                  new ServerInteraction(InteractionType.UPDATE, concurrentUpdateDescription));
+              serverRepository.save(concurrentlyUpdatedServer);
+              // Ignore setup and this deliberate update; the sender must not save a Server itself.
+              clearInvocations(serverRepository);
+              return null;
+            })
+        .when(client)
+        .sendReport(any());
+
+    Long reportId = createReport();
+    awaitReportStatus(reportId, ReportStatus.GENERATED);
+
+    await()
+        .atMost(Duration.ofSeconds(10))
+        .untilAsserted(
+            () -> {
+              Server freshlyQueriedServer =
+                  serverRepository.findWithInteractionsByUrl(SERVER_URL).orElseThrow();
+              assertThat(freshlyQueriedServer.getClientSecret()).isEqualTo(updatedClientSecret);
+              assertThat(freshlyQueriedServer.getInteractions())
+                  .anyMatch(
+                      interaction ->
+                          interaction.getType() == InteractionType.UPDATE
+                              && interaction.getDescription().equals(concurrentUpdateDescription))
+                  .anyMatch(interaction -> interaction.getType() == InteractionType.COMMUNICATION);
+            });
+    verify(serverRepository, never())
+        .save(argThat(savedServer -> savedServer.getId().equals(server.getId())));
   }
 
   private Long createReport() {
