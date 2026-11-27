@@ -6,6 +6,14 @@ import org.json.JSONObject;
 
 /** Provides connectivity to a database on which the Data Quality Checks should be executed. */
 public interface DataStore {
+
+  /**
+   * Maximum number of samples (secondary entities) counted per patient by {@link
+   * #countSecondaryEntities()}; also the sensitivity of the noisy sample total. Enforced by the
+   * OMOP and FHIR stores; documented in docs/user/privacy.md.
+   */
+  int SECONDARY_ENTITY_SENSITIVITY = 20;
+
   /**
    * Retrieves an entity of the specified type and ID from the data store.
    *

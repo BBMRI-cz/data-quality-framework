@@ -395,6 +395,51 @@ class ObfuscationStepTest {
   }
 
   @Test
+  void execute_withSensitivityTwoAndDriftAboveDefaultThreshold_reusesPreviousObfuscatedValue() {
+    // Drift 6 exceeds the default refresh threshold (5) but stays below the threshold scaled to
+    // sensitivity 2 (10), so the previous value is reused where sensitivity 1 drew fresh noise.
+    generatedReportWithResult(1L, null, 100, 95.5, 0.5);
+
+    Report report = new Report();
+    Result current = new Result("c1", 1L, 106, null, 80, 50, null, null, null);
+    current.setSensitivity(2);
+    report.setResults(new ArrayList<>(List.of(current)));
+
+    step.execute(report);
+
+    assertThat(current.getObfuscatedValue()).isEqualTo(95.5);
+    assertThat(current.getEpsilon()).isEqualTo(0.5);
+  }
+
+  @Test
+  void execute_replayOfHistoryUsesPerCheckRefreshThreshold() {
+    settingsService.updateSettings(
+        SettingsDTO.builder()
+            .epsilon(10.0)
+            .minThreshold(10)
+            .noiseMechanism(NoiseMechanism.LAPLACE)
+            .build());
+    // Same history and current raw value for both sensitivities, opposite decisions: replaying the
+    // reuse hop (100 -> 106) with threshold 5 advances the anchor to 106 (drift 4 -> reuse), with
+    // threshold 10 it stays at 100 (drift 10 -> fresh).
+    backdate(generatedReportWithResult(1L, null, 100, 95.5, 0.5), 2);
+    backdate(generatedReportWithResult(1L, null, 106, 95.5, 0.5), 1);
+
+    Report sensitivityOne = new Report();
+    Result reuse = new Result("c1", 1L, 110, null, 80, 50, null, null, null);
+    sensitivityOne.setResults(new ArrayList<>(List.of(reuse)));
+    step.execute(sensitivityOne);
+    assertThat(reuse.getObfuscatedValue()).isEqualTo(95.5);
+
+    Report sensitivityTwo = new Report();
+    Result fresh = new Result("c1", 1L, 110, null, 80, 50, null, null, null);
+    fresh.setSensitivity(2);
+    sensitivityTwo.setResults(new ArrayList<>(List.of(fresh)));
+    step.execute(sensitivityTwo);
+    assertThat(fresh.getObfuscatedValue()).isNotNull().isNotEqualTo(95.5);
+  }
+
+  @Test
   void execute_withChangedRawValue_appliesFreshNoise() {
     settingsService.updateSettings(
         SettingsDTO.builder()
@@ -883,6 +928,42 @@ class ObfuscationStepTest {
     // Totals always use Laplace: per-total ε = 0.1 → theory MAE = b = 20 / 0.1 = 200.
     // The Gaussian path would produce a much larger error (≈ 977) and is ruled out by this bound.
     assertThat(mae).isBetween(170.0, 230.0);
+  }
+
+  @Test
+  void execute_withLaplaceDefaults_resultNoiseMatchesSensitivityTwo() {
+    whenSettings(3.0, 50, NoiseMechanism.LAPLACE);
+
+    double mae = resultMeanAbsoluteError(2);
+
+    // Single result share ε = 3 × 0.8 = 2.4 → Laplace b = sensitivity / ε = 2 / 2.4 ≈ 0.83,
+    // which is also the theory MAE. Sensitivity 1 (b ≈ 0.42) lies far below the lower bound.
+    assertThat(mae).isBetween(0.75, 0.92);
+  }
+
+  @Test
+  void execute_withLaplaceDefaults_resultWithoutSensitivityUsesDefaultSensitivityOne() {
+    whenSettings(3.0, 50, NoiseMechanism.LAPLACE);
+
+    double mae = resultMeanAbsoluteError(null);
+
+    // Unset sensitivity falls back to 1: b = 1 / 2.4 ≈ 0.42. Sensitivity 2 (b ≈ 0.83) lies far
+    // above the upper bound.
+    assertThat(mae).isBetween(0.36, 0.48);
+  }
+
+  /** Executions never persist reports, so every call draws independent fresh noise. */
+  private double resultMeanAbsoluteError(Integer sensitivity) {
+    double sum = 0;
+    for (int i = 0; i < STATISTICAL_SAMPLES; i++) {
+      Report report = new Report();
+      Result result = new Result("c1", 1L, RAW_TOTAL, null, 80, 50, null, null, null);
+      result.setSensitivity(sensitivity);
+      report.setResults(new ArrayList<>(List.of(result)));
+      step.execute(report);
+      sum += Math.abs(result.getObfuscatedValue() - RAW_TOTAL);
+    }
+    return sum / STATISTICAL_SAMPLES;
   }
 
   /** Executions never persist reports, so every call draws independent fresh noise. */

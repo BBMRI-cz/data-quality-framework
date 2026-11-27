@@ -10,6 +10,9 @@ import eu.bbmri_eric.quality.agent.dataquality.DataStoreFactory;
 import eu.bbmri_eric.quality.agent.dataquality.FHIRServer;
 import eu.bbmri_eric.quality.agent.dataquality.domain.QualityCheck;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
+import eu.bbmri_eric.quality.agent.dataquality.domain.Result;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.modelmapper.ModelMapper;
@@ -40,6 +43,35 @@ class QualityChecksStepTest {
     verify(repository).findAllByActive(true);
     verify(repository, never()).findAll();
     assertEquals(1, report.getResults().size());
+  }
+
+  /** A persisted-style check whose counting can move its raw count by 2 per patient. */
+  static class CustomSensitivityCheck extends QualityCheck {
+    CustomSensitivityCheck(Long id) {
+      super(id, "Custom", "Overrides sensitivity", "define Test: true");
+    }
+
+    @Override
+    public int getSensitivity() {
+      return 2;
+    }
+  }
+
+  @Test
+  void execute_carriesCheckSensitivityOntoResults() {
+    QualityCheck defaultCheck = new QualityCheck("Default", "Uses default", "define Test: true");
+    defaultCheck.setId(1L);
+    QualityCheck customCheck = new CustomSensitivityCheck(2L);
+    when(repository.findAllByActive(true))
+        .thenReturn(new QualityCheck[] {defaultCheck, customCheck});
+
+    Report report = new Report();
+    qualityChecksStep.execute(report);
+
+    Map<Long, Integer> sensitivityByCheckId =
+        report.getResults().stream()
+            .collect(Collectors.toMap(Result::getCheckId, Result::getSensitivity));
+    assertEquals(Map.of(1L, 1, 2L, 2), sensitivityByCheckId);
   }
 
   @Test

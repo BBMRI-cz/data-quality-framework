@@ -5,8 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
 
 import eu.bbmri_eric.quality.agent.dataquality.dto.DBStatus;
 import eu.bbmri_eric.quality.agent.dataquality.dto.DatabaseHealthDTO;
@@ -128,6 +130,59 @@ class OmopDataStoreTest {
     ResultDTO result = store.executeQuery("INVALID SQL");
 
     assertEquals("syntax error", result.error());
+  }
+
+  @Test
+  void countSecondaryEntities_capsEachPatientAtTwenty() {
+    OmopDataStore store = sqliteStore();
+    sqliteTemplate.execute("CREATE TABLE specimen (specimen_id INTEGER, person_id INTEGER)");
+    sqliteTemplate.execute(
+        "WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 50)"
+            + " INSERT INTO specimen SELECT i, 1 FROM n");
+    sqliteTemplate.execute("INSERT INTO specimen VALUES (101, 2),(102, 2),(103, 2)");
+
+    // 50 specimens of patient 1 count as 20, plus the 3 of patient 2.
+    assertEquals(23, store.countSecondaryEntities());
+  }
+
+  @Test
+  void countSecondaryEntities_addingPatientWithHundredSpecimens_raisesCountByTwenty() {
+    OmopDataStore store = sqliteStore();
+    sqliteTemplate.execute("CREATE TABLE specimen (specimen_id INTEGER, person_id INTEGER)");
+    sqliteTemplate.execute("INSERT INTO specimen VALUES (1, 1),(2, 1),(3, 1),(4, 1),(5, 1)");
+    int baseline = store.countSecondaryEntities();
+    sqliteTemplate.execute(
+        "WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 100)"
+            + " INSERT INTO specimen SELECT 1000 + i, 2 FROM n");
+
+    // All hundred specimens belong to one patient and count as 20.
+    assertEquals(20, store.countSecondaryEntities() - baseline);
+  }
+
+  @Test
+  void countSecondaryEntities_excludesSpecimensWithoutPerson() {
+    OmopDataStore store = sqliteStore();
+    sqliteTemplate.execute("CREATE TABLE specimen (specimen_id INTEGER, person_id INTEGER)");
+    sqliteTemplate.execute("INSERT INTO specimen VALUES (1, 1),(2, 1),(3, NULL),(4, NULL)");
+
+    assertEquals(2, store.countSecondaryEntities());
+  }
+
+  @Test
+  void countSecondaryEntities_emptyTable_returnsZero() {
+    OmopDataStore store = sqliteStore();
+    sqliteTemplate.execute("CREATE TABLE specimen (specimen_id INTEGER, person_id INTEGER)");
+
+    assertEquals(0, store.countSecondaryEntities());
+  }
+
+  @Test
+  void countSecondaryEntities_queryFails_returnsNull() {
+    when(jdbcTemplate.queryForObject(anyString(), eq(Integer.class)))
+        .thenThrow(new RuntimeException("no such table: specimen"));
+    OmopDataStore store = new OmopDataStore(jdbcTemplate);
+
+    assertNull(store.countSecondaryEntities());
   }
 
   @Test

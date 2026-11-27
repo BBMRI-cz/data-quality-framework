@@ -90,6 +90,8 @@ class QualityChecksStep implements ReportPipelineStep {
     ResultDTO resultDTO = check.execute(dataStore);
     Result result = modelMapper.map(resultDTO, Result.class);
     modelMapper.map(check, result);
+    // Explicit, so the value never depends on ModelMapper introspecting the interface default.
+    result.setSensitivity(check.getSensitivity());
     report.addResult(result);
   }
 

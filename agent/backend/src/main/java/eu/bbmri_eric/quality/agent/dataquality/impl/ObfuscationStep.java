@@ -1,7 +1,9 @@
 package eu.bbmri_eric.quality.agent.dataquality.impl;
 
+import eu.bbmri_eric.quality.agent.dataquality.DataStore;
 import eu.bbmri_eric.quality.agent.dataquality.QualityCheckService;
 import eu.bbmri_eric.quality.agent.dataquality.ReportPipelineStep;
+import eu.bbmri_eric.quality.agent.dataquality.domain.DataQualityCheck;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Report;
 import eu.bbmri_eric.quality.agent.dataquality.domain.ReportStatus;
 import eu.bbmri_eric.quality.agent.dataquality.domain.Result;
@@ -38,23 +40,16 @@ import org.springframework.stereotype.Component;
  * drawing fresh noise. The reuse rule lives in {@link CountReleaser}; the anchor is reconstructed
  * from the publication history by {@link NoiseHistory}.
  *
- * <p>Check results use the configured noise mechanism with sensitivity {@link #RESULT_SENSITIVITY}.
- * Entity totals always use Laplace noise (pure ε-DP) and their own per-individual sensitivities,
- * since one patient can contribute many samples.
+ * <p>Check results use the configured noise mechanism with each check's declared sensitivity (see
+ * {@link DataQualityCheck#getSensitivity()}, carried onto the result as {@link
+ * Result#getSensitivity()}). Entity totals always use Laplace noise (pure ε-DP) and their own
+ * per-individual sensitivities, since one patient can contribute many samples.
  */
 @Slf4j
 @Component
 class ObfuscationStep implements ReportPipelineStep {
 
-  private static final int RESULT_SENSITIVITY = 1;
   private static final int PATIENT_SENSITIVITY = 1;
-
-  /**
-   * Assumed maximum number of samples (secondary entities) per patient. Used as the sensitivity of
-   * the noisy sample total; patients with more samples are protected proportionally less for this
-   * number. Documented in docs/user/privacy.md.
-   */
-  private static final int SECONDARY_ENTITY_SENSITIVITY = 20;
 
   private final SettingsService settingsService;
   private final QualityCheckService qualityCheckService;
@@ -104,10 +99,17 @@ class ObfuscationStep implements ReportPipelineStep {
       Result result = results.get(i);
       PreviousRelease previous = previousReleases.get(CheckInstanceKey.of(result));
       CountReleaser.Release release =
-          releaser.release(result.getRawValue(), previous, epsilons.get(i), RESULT_SENSITIVITY);
+          releaser.release(result.getRawValue(), previous, epsilons.get(i), sensitivityOf(result));
       result.setObfuscatedValue(release.value());
       result.setEpsilon(release.epsilon());
     }
+  }
+
+  /** The sensitivity a result was calibrated with; unset results fall back to the default of 1. */
+  private static int sensitivityOf(Result result) {
+    return result.getSensitivity() != null
+        ? result.getSensitivity()
+        : DataQualityCheck.DEFAULT_SENSITIVITY;
   }
 
   private void obfuscateEntityTotals(Report report, PrivacyParameters parameters) {
@@ -134,7 +136,7 @@ class ObfuscationStep implements ReportPipelineStep {
             TotalsHistoryRow::obfuscatedNumberOfSecondaryEntities,
             releaser,
             epsilonPerTotal,
-            SECONDARY_ENTITY_SENSITIVITY));
+            DataStore.SECONDARY_ENTITY_SENSITIVITY));
   }
 
   /** Releases one total: replays its history to the previous release, then releases or reuses. */
@@ -195,6 +197,10 @@ class ObfuscationStep implements ReportPipelineStep {
       List<Result> currentResults) {
     java.util.Set<CheckInstanceKey> wanted =
         currentResults.stream().map(CheckInstanceKey::of).collect(Collectors.toSet());
+    Map<CheckInstanceKey, Integer> sensitivityByKey = new HashMap<>();
+    for (Result result : currentResults) {
+      sensitivityByKey.putIfAbsent(CheckInstanceKey.of(result), sensitivityOf(result));
+    }
     Map<CheckInstanceKey, List<HistoryEntry>> seriesByKey = new HashMap<>();
     for (ResultHistoryRow row : reportRepository.findResultHistory(ReportStatus.GENERATED)) {
       CheckInstanceKey key = new CheckInstanceKey(row.checkId(), row.stratum());
@@ -204,9 +210,11 @@ class ObfuscationStep implements ReportPipelineStep {
       seriesByKey.computeIfAbsent(key, k -> new ArrayList<>()).add(row.toHistoryEntry());
     }
     Map<CheckInstanceKey, PreviousRelease> previousReleases = new HashMap<>();
+    // Replay each check's history with that check's own refresh threshold: the historical releases
+    // were decided with it, so replaying with another value would reconstruct an inexact anchor.
     seriesByKey.forEach(
         (key, series) ->
-            NoiseHistory.replay(series, PrivacyBudget.refreshThreshold(RESULT_SENSITIVITY))
+            NoiseHistory.replay(series, PrivacyBudget.refreshThreshold(sensitivityByKey.get(key)))
                 .ifPresent(previous -> previousReleases.put(key, previous)));
     return previousReleases;
   }

@@ -44,18 +44,11 @@ class DuplicateIdentifierCheck implements DataQualityCheck {
       for (Resource resource : patients) {
         Patient patient = (Patient) resource;
         String patientId = patient.getIdElement().getIdPart();
-        List<Identifier> identifiers = patient.getIdentifier();
-        for (Identifier ident : identifiers) {
-          log.debug(ident.toString());
-          if (getIdentifierSystem().equals(ident.getSystem())) {
-            String identValue = ident.getValue();
-            log.debug(identValue);
-            if (identValue != null && !identValue.isEmpty()) {
-              identifierMap
-                  .computeIfAbsent(identValue, k -> new ArrayList<>())
-                  .add("Patient/" + patientId);
-            }
-          }
+        String firstIdentifierValue = firstIdentifierValue(patient);
+        if (firstIdentifierValue != null) {
+          identifierMap
+              .computeIfAbsent(firstIdentifierValue, k -> new ArrayList<>())
+              .add("Patient/" + patientId);
         }
       }
       Set<String> duplicateIds = new HashSet<>();
@@ -70,6 +63,32 @@ class DuplicateIdentifierCheck implements DataQualityCheck {
       log.error("Error processing {}: {}", getName(), e.getMessage());
       return new ResultDTO(e.getMessage());
     }
+  }
+
+  /**
+   * Counts each patient through at most one identifier: the value of the first identifier in the
+   * configured system, or nothing when that identifier has no value. Adding a patient can then grow
+   * one duplicate bucket from a single unflagged holder to two flagged holders, moving the count by
+   * at most 2; removing a patient can likewise unflag the other holder. Any single-patient change
+   * therefore moves the count by at most 2.
+   */
+  @Override
+  public int getSensitivity() {
+    return 2;
+  }
+
+  /**
+   * Returns the value of the first identifier of this patient in the configured system, or {@code
+   * null} when the patient has none or that identifier's value is empty.
+   */
+  private String firstIdentifierValue(Patient patient) {
+    for (Identifier ident : patient.getIdentifier()) {
+      if (getIdentifierSystem().equals(ident.getSystem())) {
+        String value = ident.getValue();
+        return value != null && !value.isEmpty() ? value : null;
+      }
+    }
+    return null;
   }
 
   @Override

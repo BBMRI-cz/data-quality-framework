@@ -11,6 +11,13 @@ import eu.bbmri_eric.quality.agent.dataquality.dto.ResultDTO;
 public interface DataQualityCheck {
 
   /**
+   * Upper bound on how much one patient can change a check's raw count, used to calibrate the noise
+   * added to that check's result. Defaults to 1 because user-defined checks are expected to count
+   * patients, each at most once.
+   */
+  int DEFAULT_SENSITIVITY = 1;
+
+  /**
    * Executes the data quality check against the specified data store.
    *
    * @param dataStore the data store against which the data quality check should be executed
@@ -61,4 +68,15 @@ public interface DataQualityCheck {
    * @return the ID of the check, or {@code null} if not persisted
    */
   Long getId();
+
+  /**
+   * Returns the sensitivity assumed when adding noise to this check's result: the upper bound on
+   * how much a single patient can change the raw count. Checks whose counting can move the count by
+   * more should override this with their own bound.
+   *
+   * @return the sensitivity of this check's count, {@link #DEFAULT_SENSITIVITY} unless overridden
+   */
+  default int getSensitivity() {
+    return DEFAULT_SENSITIVITY;
+  }
 }
