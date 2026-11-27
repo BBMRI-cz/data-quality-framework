@@ -87,6 +87,18 @@ If registration with the central server fails for a transient reason (unreachabl
 
 A manual retry is possible via the API: `POST /api/servers/{id}/registration` answers `202 Accepted` when the retry was triggered (the outcome arrives asynchronously) or `409 Conflict` when the server already holds registration credentials.
 
+#### Registration Status
+
+The agent tracks the lifecycle of its registration with each central server separately from the connection status. The registration status is one of:
+
+*   **UNREGISTERED** - no registration has been attempted or claimed for this server.
+*   **REGISTERING** - a registration request has been dispatched and no outcome has arrived yet; after a manual retry or a scheduled sweep re-trigger, the status shows this state until the central server answers.
+*   **REGISTERED_PENDING_APPROVAL** - the central server accepted the registration and returned credentials; an administrator still needs to approve the agent in the server UI.
+*   **ACTIVE** - registered and approved; the agent exchanges data with the central server.
+*   **FAILED** - the last registration run failed. The recorded reason (for example `UNREACHABLE` or `CONFLICT`, exposed as `lastErrorReason`) and the full failure description (`lastErrorMessage`) are exposed alongside the status.
+
+The current state is available via `GET /api/servers/{id}/registration` (it is also embedded in the server detail response under `registration`), and the server detail page shows a registration card with the status badge, the attempt count, the date of the next scheduled automatic retry (`nextRetryAt`, when one is pending) and - in the `FAILED` state - the error reason and message. The error details are only shown for `FAILED`; a `REGISTERING` state that follows a failure shows just the pending retry date. While the status is `REGISTERING`, the page updates automatically (every 3 seconds, for up to 2 minutes); failed or never-attempted registrations offer a **Retry Registration** button, which is equivalent to the manual retry API call above.
+
 | Variable                               | Description                                                | Default |
 |:---------------------------------------|:------------------------------------------------------------|:--------|
 | `AGENT_CENTRAL_SERVER_CONNECT_TIMEOUT` | Timeout for establishing connections to the central server. | `5s`    |

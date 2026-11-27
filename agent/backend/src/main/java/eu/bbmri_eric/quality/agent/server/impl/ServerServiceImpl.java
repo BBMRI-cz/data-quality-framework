@@ -5,6 +5,7 @@ import static eu.bbmri_eric.quality.agent.server.impl.RegistrationRetryConstants
 import eu.bbmri_eric.quality.agent.common.EventPublisher;
 import eu.bbmri_eric.quality.agent.common.exception.EntityAlreadyExistsException;
 import eu.bbmri_eric.quality.agent.server.ServerService;
+import eu.bbmri_eric.quality.agent.server.domain.RegistrationStatus;
 import eu.bbmri_eric.quality.agent.server.domain.Server;
 import eu.bbmri_eric.quality.agent.server.dto.DetailedServerDto;
 import eu.bbmri_eric.quality.agent.server.dto.ServerCreateDto;
@@ -74,6 +75,11 @@ class ServerServiceImpl implements ServerService {
     }
     Server server = new Server(createDto.getUrl(), createDto.getName());
     server.setPublicKey(createDto.getPublicKey());
+    // Dispatch claim, same rule as the sweep: every dispatch persists an expiring retry date
+    // before publishing the event, so a crash before any outcome lets the sweep recover the retry.
+    server.setRegistrationStatus(RegistrationStatus.REGISTERING);
+    server.setRegistrationRetryCount(0);
+    server.setNextRegistrationRetryAt(LocalDateTime.now().plus(RETRY_DELAY));
     Server savedServer = serverRepository.save(server);
     String agentId = settingsService.getSettings().getAgentId();
     eventPublisher.publishEvent(new ServerRegistrationEvent(agentId, savedServer.getUrl()));
@@ -135,6 +141,7 @@ class ServerServiceImpl implements ServerService {
     }
     // Dispatch claim, same rule as the sweep: every dispatch persists an expiring retry date
     // before publishing the event, so a crash before any outcome lets the sweep recover the retry.
+    server.setRegistrationStatus(RegistrationStatus.REGISTERING);
     server.setRegistrationRetryCount(0);
     server.setNextRegistrationRetryAt(LocalDateTime.now().plus(RETRY_DELAY));
     serverRepository.save(server);

@@ -53,6 +53,62 @@
           <StatCard :number="server.clientId || 'N/A'" label="Client ID" number-class="text-dark" />
         </div>
 
+        <!-- Registration Status Card -->
+        <div v-if="registration" class="card registration-card mb-4 border-0 shadow-sm">
+          <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="mb-0">
+                <i class="bi bi-arrow-repeat me-2"></i>
+                Registration
+              </h5>
+              <small class="text-muted">Registration lifecycle with the central server</small>
+            </div>
+            <ActionButton
+              v-if="canRetryRegistration(registration.status)"
+              icon="bi bi-arrow-repeat"
+              text="Retry Registration"
+              :loading="isRetryingRegistration"
+              @click="retryRegistration"
+            />
+          </div>
+          <div class="card-body">
+            <span
+              class="badge mb-2"
+              :class="getRegistrationBadgeClass(registration.status)"
+              :title="getRegistrationTooltip(registration.status)"
+            >
+              {{ formatRegistrationStatus(registration.status) }}
+            </span>
+            <div class="text-muted small">
+              Automatic retry rounds: {{ registration.attempts }}
+              <template v-if="registration.registeredAt">
+                &middot; Registered {{ formatDateShort(registration.registeredAt) }}
+              </template>
+              <template v-if="registration.nextRetryAt">
+                &middot; Next automatic retry: {{ formatDateShort(registration.nextRetryAt) }}
+                {{ formatTime(registration.nextRetryAt) }}
+              </template>
+            </div>
+            <div v-if="registration.status === 'REGISTERING'" class="alert alert-info mt-3 mb-0">
+              <i class="bi bi-arrow-clockwise spinning me-2"></i>
+              {{
+                registrationTimedOut
+                  ? 'Still registering — the agent retries automatically.'
+                  : 'Registration in progress — this page updates automatically.'
+              }}
+            </div>
+            <div
+              v-if="registration.status === 'FAILED' && registration.lastErrorMessage"
+              class="registration-error mt-3"
+            >
+              <div v-if="registration.lastErrorReason" class="fw-semibold text-danger mb-1">
+                {{ registration.lastErrorReason }}
+              </div>
+              <pre class="json-viewer">{{ registration.lastErrorMessage }}</pre>
+            </div>
+          </div>
+        </div>
+
         <!-- Public Key Card -->
         <div class="card public-key-card mb-4 border-0 shadow-sm">
           <div class="card-header bg-white d-flex justify-content-between align-items-center">
@@ -93,6 +149,7 @@
               <option value="UPDATE">Update</option>
               <option value="COMMUNICATION">Communication</option>
               <option value="REGISTRATION">Registration</option>
+              <option value="STATUS_CHECK">Status check</option>
             </select>
           </div>
           <div class="filter-item">
@@ -213,6 +270,12 @@
   import { notificationService } from '@/services/notificationService.js';
   import { formatStatus, getStatusTextClass } from '@/utils/serverStatus.js';
   import { getInteractionTypeBadge } from '@/utils/interactionTypes.js';
+  import {
+    formatRegistrationStatus,
+    getRegistrationBadgeClass,
+    getRegistrationTooltip,
+    canRetryRegistration,
+  } from '@/utils/registrationStatus.js';
   import { formatDateShort, formatTime, isValidJson } from '@/utils/stringUtils.js';
 
   const route = useRoute();
@@ -229,7 +292,11 @@
     filteredInteractions,
     paginatedInteractions,
     totalPages,
+    registration,
+    registrationTimedOut,
+    isRetryingRegistration,
     fetchServer,
+    retryRegistration,
     onPageChanged,
     clearFilters,
     openJsonModal,
@@ -373,6 +440,10 @@
   .description-first-line {
     white-space: normal;
     word-break: break-word;
+  }
+
+  .registration-error {
+    margin: 0;
   }
 
   .json-viewer,

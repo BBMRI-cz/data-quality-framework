@@ -3,6 +3,7 @@ package eu.bbmri_eric.quality.agent.server.domain;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import jakarta.validation.ConstraintViolation;
@@ -391,6 +392,16 @@ class ServerTest {
     assertTrue(server.getInteractions().get(1).getDescription().contains("Status changed"));
     assertTrue(server.getInteractions().get(2).getDescription().contains("URL updated"));
     assertTrue(server.getInteractions().get(3).getDescription().contains("Name updated"));
+  }
+
+  @Test
+  void newServer_defaultsRegistrationFields() {
+    Server server = new Server("https://central.example.com", "Central Server");
+
+    assertEquals(RegistrationStatus.UNREGISTERED, server.getRegistrationStatus());
+    assertNull(server.getRegistrationErrorReason());
+    assertNull(server.getRegistrationErrorMessage());
+    assertNull(server.getRegistrationRegisteredAt());
   }
 
   /**

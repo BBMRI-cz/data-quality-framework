@@ -57,6 +57,27 @@ public class Server {
   @Column(name = "next_registration_retry_at")
   private LocalDateTime nextRegistrationRetryAt;
 
+  @NotNull
+  @Enumerated(EnumType.STRING)
+  @Column(name = "registration_status", nullable = false, length = 32)
+  private RegistrationStatus registrationStatus = RegistrationStatus.UNREGISTERED;
+
+  /**
+   * Name of the {@link eu.bbmri_eric.quality.agent.server.RegistrationFailureReason} of the last
+   * failed registration, or null when the last run did not fail.
+   */
+  @Size(max = 64)
+  @Column(name = "registration_error_reason", length = 64)
+  private String registrationErrorReason;
+
+  /** Full failure description recorded with the last failed registration, or null. */
+  @Column(name = "registration_error_message", columnDefinition = "TEXT")
+  private String registrationErrorMessage;
+
+  /** When the central server accepted this agent's registration, or null if never registered. */
+  @Column(name = "registration_registered_at")
+  private LocalDateTime registrationRegisteredAt;
+
   @OneToMany(mappedBy = "serverId", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<ServerInteraction> interactions = new ArrayList<>();
 
@@ -197,6 +218,38 @@ public class Server {
 
   public void setNextRegistrationRetryAt(LocalDateTime nextRegistrationRetryAt) {
     this.nextRegistrationRetryAt = nextRegistrationRetryAt;
+  }
+
+  public RegistrationStatus getRegistrationStatus() {
+    return registrationStatus;
+  }
+
+  public void setRegistrationStatus(RegistrationStatus registrationStatus) {
+    this.registrationStatus = registrationStatus;
+  }
+
+  public String getRegistrationErrorReason() {
+    return registrationErrorReason;
+  }
+
+  public void setRegistrationErrorReason(String registrationErrorReason) {
+    this.registrationErrorReason = registrationErrorReason;
+  }
+
+  public String getRegistrationErrorMessage() {
+    return registrationErrorMessage;
+  }
+
+  public void setRegistrationErrorMessage(String registrationErrorMessage) {
+    this.registrationErrorMessage = registrationErrorMessage;
+  }
+
+  public LocalDateTime getRegistrationRegisteredAt() {
+    return registrationRegisteredAt;
+  }
+
+  public void setRegistrationRegisteredAt(LocalDateTime registrationRegisteredAt) {
+    this.registrationRegisteredAt = registrationRegisteredAt;
   }
 
   public void addInteraction(ServerInteraction interaction) {
