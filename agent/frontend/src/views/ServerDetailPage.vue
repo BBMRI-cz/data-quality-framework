@@ -115,7 +115,9 @@
               <pre class="json-viewer">{{ registration.lastErrorMessage }}</pre>
             </div>
             <div
-              v-if="registration.status === 'REGISTERED_PENDING_APPROVAL'"
+              v-if="
+                registration.status === 'REGISTERED_PENDING_APPROVAL' && server.status === 'PENDING'
+              "
               class="text-muted small mt-3 mb-0"
             >
               Waiting for the central server's administrator to approve this agent.

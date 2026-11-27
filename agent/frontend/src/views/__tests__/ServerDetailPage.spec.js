@@ -180,6 +180,30 @@ describe('ServerDetailPage', () => {
   });
 
   it('offers the approval help link while pending approval', async () => {
+    serverService.get.mockResolvedValue({
+      ...serverWith([], {
+        status: 'REGISTERED_PENDING_APPROVAL',
+        lastErrorReason: null,
+        lastErrorMessage: null,
+        registeredAt: '2026-01-01T10:00:00Z',
+        attempts: 1,
+      }),
+      status: 'PENDING',
+    });
+    const wrapper = mountPage();
+    await flushPromises();
+
+    const card = wrapper.find('.registration-card');
+    expect(card.text()).toContain(
+      "Waiting for the central server's administrator to approve this agent."
+    );
+    const link = card.find('a[href$="#pending-approval"]');
+    expect(link.exists()).toBe(true);
+    expect(link.text()).toContain('How approval works');
+    wrapper.unmount();
+  });
+
+  it('hides the approval hint when pending approval but the connection status is ERROR', async () => {
     serverService.get.mockResolvedValue(
       serverWith([], {
         status: 'REGISTERED_PENDING_APPROVAL',
@@ -193,12 +217,11 @@ describe('ServerDetailPage', () => {
     await flushPromises();
 
     const card = wrapper.find('.registration-card');
-    expect(card.text()).toContain(
+    expect(card.exists()).toBe(true);
+    expect(card.text()).not.toContain(
       "Waiting for the central server's administrator to approve this agent."
     );
-    const link = card.find('a[href$="#pending-approval"]');
-    expect(link.exists()).toBe(true);
-    expect(link.text()).toContain('How approval works');
+    expect(card.find('a[href$="#pending-approval"]').exists()).toBe(false);
     wrapper.unmount();
   });
 
